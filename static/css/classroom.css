@@ -1,0 +1,45 @@
+/* ═══════════════════════════════════════════════
+   EduPlatform — classroom.css
+   Classroom-specific: course units, classwork,
+   grade table, submission cards
+   ═══════════════════════════════════════════════ */
+
+/* ── Content item row ── */
+.content-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.content-item:last-child { border-bottom: none; }
+.content-info { display: flex; align-items: center; gap: 10px; }
+.content-type-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+.icon-video { background: #e8eeff; }
+.icon-pdf   { background: #fde8e8; }
+.icon-note  { background: #f0efec; }
+
+/* ── Unit section ── */
+.unit-header { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); padding: 12px 0 6px; }
+
+/* ── Assignment card ── */
+.assignment-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px 20px; margin-bottom: 12px; }
+.assignment-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
+.assignment-title  { font-size: 15px; font-weight: 600; color: var(--brand-dark); }
+.assignment-meta   { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+
+/* ── Submission row ── */
+.submission-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.submission-row:last-child { border-bottom: none; }
+.grade-input  { width: 68px; font-family: 'JetBrains Mono', monospace; }
+.feedback-input { flex: 1; min-width: 130px; }
+
+/* ── Grade breakdown ── */
+.grade-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.grade-row:last-child { border-bottom: none; }
+.grade-bar-wrap { display: flex; align-items: center; gap: 10px; }
+.grade-bar-outer { width: 80px; }
+
+/* ── Scored result card (student view) ── */
+.score-result { background: var(--page-bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px 18px; margin-top: 10px; display: flex; gap: 24px; flex-wrap: wrap; }
+.score-result .score-col { min-width: 60px; }
+
+/* ── Countdown badge ── */
+.countdown { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; }
+.countdown.urgent { color: var(--danger); }
+.countdown.soon   { color: var(--warning); }
+.countdown.ok     { color: var(--success); }

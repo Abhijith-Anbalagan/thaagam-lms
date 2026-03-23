@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block extra_css %}<link rel="stylesheet" href="{% load static %}{% static 'css/classroom.css' %}">{% endblock %}
+{% block title %}Announcements — {{ classroom.name }}{% endblock %}
+{% block content %}
+{% include 'shared/classroom_tabs.html' with role='teacher' classroom=classroom active_tab='announcements' %}
+<div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;">
+  <div>
+    {% for a in announcements %}
+    <div class="announcement-card {% if a.is_pinned %}pinned{% endif %}">
+      {% if a.is_pinned %}<span class="badge badge-blue mb-8" style="display:inline-block;">📌 Pinned</span>{% endif %}
+      <div class="announcement-title">{{ a.title }}</div>
+      <div class="announcement-body mt-8">{{ a.body }}</div>
+      {% if a.meet_link %}<a href="{{ a.meet_link }}" target="_blank" class="meet-link">🎥 Join Live Class</a>{% endif %}
+      <div class="announcement-meta">{{ a.created_at|date:"M d, Y · H:i" }}</div>
+    </div>
+    {% empty %}<div class="empty-state"><p>No announcements yet.</p></div>{% endfor %}
+  </div>
+  <div class="card">
+    <h3 class="card-heading mb-16">Post Announcement</h3>
+    <form method="post">{% csrf_token %}
+      <div class="form-group"><label class="form-label">Title</label><input type="text" name="title" class="form-control" required></div>
+      <div class="form-group"><label class="form-label">Message</label><textarea name="body" class="form-control" rows="4" required></textarea></div>
+      <div class="form-group"><label class="form-label">Meet Link <span class="text-muted">(optional)</span></label><input type="url" name="meet_link" class="form-control" placeholder="https://meet.google.com/..."></div>
+      <div class="form-group flex gap-8" style="align-items:center;"><input type="checkbox" name="is_pinned" id="pin"><label for="pin" style="font-size:13px;cursor:pointer;">Pin this announcement</label></div>
+      <button type="submit" class="btn btn-primary btn-block">Post</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

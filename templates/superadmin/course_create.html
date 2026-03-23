@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Create Course{% endblock %}
+{% block content %}
+<div style="max-width:540px;">
+  <h1 class="page-title mb-24">Create Global Course</h1>
+  <div class="card">
+    <form method="post">{% csrf_token %}
+      <div class="form-group"><label class="form-label">Title</label><input type="text" name="title" class="form-control" required></div>
+      <div class="form-group"><label class="form-label">Content</label><textarea name="content" class="form-control" rows="5"></textarea></div>
+      <div class="form-group"><label class="form-label">Assign to School</label>
+        <select name="school" class="form-control"><option value="">— All Schools —</option>{% for s in form.school.field.queryset %}<option value="{{ s.pk }}">{{ s.name }}</option>{% endfor %}</select>
+      </div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select name="status" class="form-control"><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select>
+      </div>
+      <div class="flex gap-8"><button type="submit" class="btn btn-primary">Create</button><a href="{% url 'superadmin_dashboard' %}" class="btn btn-ghost">Cancel</a></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

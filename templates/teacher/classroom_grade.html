@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block extra_css %}<link rel="stylesheet" href="{% load static %}{% static 'css/classroom.css' %}">{% endblock %}
+{% block title %}Grades — {{ classroom.name }}{% endblock %}
+{% block content %}
+{% include 'shared/classroom_tabs.html' with role='teacher' classroom=classroom active_tab='grades' %}
+<h2 class="section-title mb-16">Grade Overview</h2>
+{% if grade_data %}
+<div class="card"><div class="table-wrap"><table>
+  <thead>
+    <tr>
+      <th>Student</th>
+      {% for a in assignments %}<th>{{ a.title|truncatechars:16 }}</th>{% endfor %}
+      <th>Total</th><th>%</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for row in grade_data %}
+  <tr>
+    <td><strong>{{ row.student.get_full_name|default:row.student.username }}</strong></td>
+    {% for a in assignments %}
+    <td class="mono">
+      {% for sub in row.submissions %}{% if sub.assignment == a %}
+        {% if sub.score is not None %}{{ sub.score }}/{{ a.max_score }}{% else %}<span class="badge badge-blue">Sub</span>{% endif %}
+      {% endif %}{% empty %}—{% endfor %}
+    </td>
+    {% endfor %}
+    <td class="mono"><strong>{{ row.total_score }}/{{ row.total_max }}</strong></td>
+    <td>
+      {% if row.percentage is not None %}
+      <div class="grade-bar-wrap">
+        <div class="grade-bar-outer"><div class="progress-wrap"><div class="progress-bar {% if row.percentage >= 70 %}success{% elif row.percentage < 50 %}danger{% endif %}" style="width:{{ row.percentage }}%"></div></div></div>
+        <span class="mono">{{ row.percentage }}%</span>
+      </div>
+      {% else %}—{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+{% else %}
+<div class="empty-state"><p>No students or grades yet.</p></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}{{ school.name }}{% endblock %}
+{% block content %}
+<div class="flex-between mb-24">
+  <h1 class="page-title">{{ school.name }}</h1>
+  <a href="{% url 'superadmin_schools_list' %}" class="btn btn-ghost">← Schools</a>
+</div>
+<div class="stat-grid">
+  <div class="stat-card"><div class="stat-value">{{ students.count }}</div><div class="stat-label">Students</div></div>
+  <div class="stat-card"><div class="stat-value">{{ teachers.count }}</div><div class="stat-label">Teachers</div></div>
+  <div class="stat-card"><div class="stat-value">{{ classrooms.count }}</div><div class="stat-label">Classrooms</div></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+  <div class="card">
+    <h2 class="section-title mb-16">Teachers</h2>
+    {% for t in teachers %}<div style="padding:8px 0;border-bottom:1px solid var(--border);">{{ t.get_full_name|default:t.username }} <span class="caption">{{ t.email }}</span></div>{% empty %}<p class="text-muted">None.</p>{% endfor %}
+  </div>
+  <div class="card">
+    <h2 class="section-title mb-16">Classrooms</h2>
+    {% for c in classrooms %}<div style="padding:8px 0;border-bottom:1px solid var(--border);">{{ c.name }} <span class="mono caption">{{ c.code }}</span></div>{% empty %}<p class="text-muted">None.</p>{% endfor %}
+  </div>
+</div>
+{% endblock %}

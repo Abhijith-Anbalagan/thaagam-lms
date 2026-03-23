@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block extra_css %}<link rel="stylesheet" href="{% load static %}{% static 'css/classroom.css' %}">{% endblock %}
+{% block title %}Chat — {{ classroom.name }}{% endblock %}
+{% block content %}
+{% include 'shared/classroom_tabs.html' with role='teacher' classroom=classroom active_tab='chat' %}
+<div class="chat-layout">
+  <div class="chat-sidebar">
+    <div class="chat-sidebar-heading">Student Inboxes</div>
+    {% for student in students_with_chats %}
+    <a href="?student={{ student.pk }}" class="chat-student-item {% if selected_student.pk == student.pk %}active{% endif %}">
+      {{ student.get_full_name|default:student.username }}
+    </a>
+    {% empty %}<div style="padding:16px;color:var(--text-muted);font-size:13px;">No messages yet.</div>{% endfor %}
+  </div>
+  <div class="chat-main">
+    {% if selected_student %}
+    <div class="chat-header">Chat with {{ selected_student.get_full_name|default:selected_student.username }}</div>
+    <div class="chat-messages" id="chat-messages">
+      {% for msg in messages %}
+      <div><div class="bubble {% if msg.sender == request.user %}sent{% else %}recv{% endif %}">
+        {{ msg.body }}<div class="bubble-time">{{ msg.created_at|date:"H:i" }}</div>
+      </div></div>
+      {% empty %}<div style="text-align:center;color:var(--text-muted);padding:32px;">Student will initiate the conversation.</div>{% endfor %}
+    </div>
+    <div class="chat-footer">
+      <input type="text" id="chat-input" class="form-control" placeholder="Type a reply…" autocomplete="off">
+      <button id="chat-send" class="btn btn-primary">Send</button>
+    </div>
+    {% else %}
+    <div class="empty-state" style="margin:auto;"><p>Select a student from the left.</p></div>
+    {% endif %}
+  </div>
+</div>
+{% if selected_student %}
+{% load static %}
+<script>
+  window.CHAT_CLASSROOM_ID = {{ classroom.pk }};
+  window.CHAT_MY_ID        = {{ request.user.pk }};
+  window.CHAT_RECEIVER_ID  = {{ selected_student.pk }};
+</script>
+<script src="{% static 'js/chat.js' %}"></script>
+{% endif %}
+{% endblock %}

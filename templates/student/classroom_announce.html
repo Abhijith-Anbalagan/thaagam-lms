@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Announcements — {{ classroom.name }}{% endblock %}
+{% block content %}
+{% include 'shared/classroom_tabs.html' with role='student' classroom=classroom active_tab='announcements' %}
+{% for a in announcements %}
+<div class="announcement-card {% if a.is_pinned %}pinned{% endif %}">
+  {% if a.is_pinned %}<span class="badge badge-blue mb-8" style="display:inline-block;">📌 Pinned</span>{% endif %}
+  <div class="announcement-title">{{ a.title }}</div>
+  <div class="announcement-body mt-8">{{ a.body }}</div>
+  {% if a.meet_link %}<a href="{{ a.meet_link }}" target="_blank" class="meet-link">🎥 Join Live Class</a>{% endif %}
+  <div class="announcement-meta">{{ a.posted_by.get_full_name|default:a.posted_by.username }} · {{ a.created_at|date:"M d, Y · H:i" }}</div>
+</div>
+{% empty %}<div class="empty-state"><p>No announcements yet.</p></div>{% endfor %}
+{% endblock %}

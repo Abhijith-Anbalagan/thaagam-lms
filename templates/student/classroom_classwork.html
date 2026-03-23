@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block extra_css %}<link rel="stylesheet" href="{% load static %}{% static 'css/classroom.css' %}">{% endblock %}
+{% block title %}Classwork — {{ classroom.name }}{% endblock %}
+{% block content %}
+{% load static %}
+{% include 'shared/classroom_tabs.html' with role='student' classroom=classroom active_tab='classwork' %}
+{% for item in assignment_data %}{% with a=item.assignment sub=item.submission %}
+<div class="assignment-card">
+  <div class="assignment-header">
+    <div class="assignment-title">{{ a.title }}</div>
+    <div class="flex gap-8" style="align-items:center;">
+      {% if sub %}
+        {% if sub.score is not None %}<span class="badge badge-success">✓ Graded</span>
+        {% else %}<span class="badge badge-blue">✓ Submitted</span>{% endif %}
+      {% elif a.is_overdue %}<span class="badge badge-danger">⚠ Overdue</span>
+      {% else %}<span class="badge badge-warning">Pending</span>{% endif %}
+      <span class="due-countdown caption" data-due="{{ a.due_date|date:'Y-m-d' }}T{{ a.due_date|date:'H:i' }}"></span>
+    </div>
+  </div>
+  <p class="assignment-meta">Due: {{ a.due_date|date:"M d, Y · H:i" }} · Max: <strong class="mono">{{ a.max_score }}</strong> pts</p>
+  <p class="text-muted mb-12">{{ a.description|default:"No description." }}</p>
+  {% if a.file %}<a href="{{ a.file.url }}" class="btn btn-sm btn-ghost mb-12" target="_blank">📎 Assignment File</a>{% endif %}
+  {% if sub and sub.score is not None %}
+  <div class="score-result">
+    <div class="score-col"><div class="overline">Score</div><div class="score-big">{{ sub.score }}<span style="font-size:15px;font-weight:400;">/{{ a.max_score }}</span></div></div>
+    <div class="score-col"><div class="overline">Grade</div><div class="score-big">{{ sub.letter_grade }}</div></div>
+    {% if sub.feedback %}<div style="flex:1;"><div class="overline">Feedback</div><p style="margin-top:4px;">{{ sub.feedback }}</p></div>{% endif %}
+  </div>
+  {% elif not a.is_overdue or sub %}
+  <form method="post" enctype="multipart/form-data" class="flex gap-8" style="align-items:center;margin-top:10px;">{% csrf_token %}
+    <input type="hidden" name="assignment_id" value="{{ a.pk }}">
+    <input type="file" name="file" class="form-control" style="max-width:300px;" {% if not sub %}required{% endif %}>
+    <button type="submit" class="btn btn-primary">{% if sub %}Re-submit{% else %}Submit{% endif %}</button>
+  </form>
+  {% if sub %}<p class="caption mt-8">Submitted {{ sub.submitted_at|date:"M d · H:i" }}{% if sub.is_late %} · <span style="color:var(--danger);">Late</span>{% endif %}</p>{% endif %}
+  {% endif %}
+</div>
+{% endwith %}{% empty %}<div class="empty-state"><p>No assignments yet.</p></div>{% endfor %}
+<script src="{% static 'js/countdown.js' %}"></script>
+{% endblock %}

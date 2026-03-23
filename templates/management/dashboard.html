@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Management Dashboard{% endblock %}
+{% block content %}
+<div class="flex-between mb-24">
+  <h1 class="page-title">Management Dashboard</h1>
+  <a href="{% url 'management_invite_teacher' %}" class="btn btn-primary">+ Invite Teacher</a>
+</div>
+<div class="stat-grid">
+  <div class="stat-card"><div class="stat-value">{{ total_teachers }}</div><div class="stat-label">My Teachers</div></div>
+  <div class="stat-card"><div class="stat-value">{{ total_classrooms }}</div><div class="stat-label">Classrooms</div></div>
+</div>
+<div class="card">
+  <h2 class="section-title mb-16">Teachers I Manage</h2>
+  {% if teachers %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Name</th><th>Email</th><th>Classrooms</th><th>Students</th></tr></thead>
+    <tbody>
+    {% for t in teachers %}
+    <tr>
+      <td><strong>{{ t.get_full_name|default:t.username }}</strong></td>
+      <td>{{ t.email }}</td>
+      <td>{{ t.classrooms.count }}</td>
+      <td>{% for c in t.classrooms.all %}{{ c.student_count }}{% if not forloop.last %} + {% endif %}{% endfor %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <div class="empty-state"><p>No teachers yet.</p><a href="{% url 'management_invite_teacher' %}" class="btn btn-primary">Invite First Teacher</a></div>
+  {% endif %}
+</div>
+{% if announcements %}
+<div class="card mt-16">
+  <h2 class="section-title mb-16">Recent Announcements</h2>
+  {% for a in announcements %}<div class="announcement-card"><div class="announcement-title">{{ a.title }}</div><div class="announcement-meta">{{ a.created_at|date:"M d, Y" }}</div></div>{% endfor %}
+</div>
+{% endif %}
+{% endblock %}

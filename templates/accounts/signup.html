@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Sign Up — EduPlatform{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">EduPlatform</div>
+    <p class="auth-subtitle">Create your account</p>
+    <form method="post">
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="toast toast-error mb-12">{{ form.non_field_errors }}</div>{% endif %}
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">First Name</label><input type="text" name="first_name" class="form-control" placeholder="First name"></div>
+        <div class="form-group"><label class="form-label">Last Name</label><input type="text" name="last_name" class="form-control" placeholder="Last name"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Username</label><input type="text" name="username" class="form-control" placeholder="Username">{% if form.username.errors %}<p class="form-error">{{ form.username.errors.0 }}</p>{% endif %}</div>
+      <div class="form-group"><label class="form-label">Email</label><input type="email" name="email" class="form-control" placeholder="your@email.com"></div>
+      <div class="form-group"><label class="form-label">Phone <span class="text-muted">(optional)</span></label><input type="text" name="phone" class="form-control" placeholder="+91..."></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Password</label><input type="password" name="password1" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Confirm</label><input type="password" name="password2" class="form-control"></div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block btn-lg">Create Account</button>
+    </form>
+    <div class="auth-footer">Already have an account? <a href="{% url 'login' %}">Sign in</a></div>
+  </div>
+</div>
+{% endblock %}

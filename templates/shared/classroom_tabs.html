@@ -1,0 +1,25 @@
+{% comment %}Include with: {% include 'shared/classroom_tabs.html' with role='teacher'|'student' classroom=classroom active_tab='...' %}{% endcomment %}
+<div class="classroom-header">
+  <div>
+    <h1 class="page-title">{{ classroom.name }}</h1>
+    {% if role == 'teacher' %}<div class="code-display mt-8">{{ classroom.code }}</div>{% endif %}
+  </div>
+  <a href="{% if role == 'teacher' %}{% url 'teacher_dashboard' %}{% else %}{% url 'student_dashboard' %}{% endif %}" class="btn btn-ghost btn-sm">← Dashboard</a>
+</div>
+<nav class="tab-nav">
+  {% if role == 'teacher' %}
+    <a href="{% url 'teacher_classroom_announce' classroom.pk %}"   class="tab-link {% if active_tab == 'announcements' %}active{% endif %}">Announcements</a>
+    <a href="{% url 'teacher_classroom_courses' classroom.pk %}"    class="tab-link {% if active_tab == 'courses' %}active{% endif %}">Courses</a>
+    <a href="{% url 'teacher_classroom_classwork' classroom.pk %}"  class="tab-link {% if active_tab == 'classwork' %}active{% endif %}">Classwork</a>
+    <a href="{% url 'teacher_classroom_peoples' classroom.pk %}"    class="tab-link {% if active_tab == 'peoples' %}active{% endif %}">People</a>
+    <a href="{% url 'teacher_classroom_grade' classroom.pk %}"      class="tab-link {% if active_tab == 'grades' %}active{% endif %}">Grades</a>
+    <a href="{% url 'teacher_classroom_chat' classroom.pk %}"       class="tab-link {% if active_tab == 'chat' %}active{% endif %}">Chat</a>
+  {% else %}
+    <a href="{% url 'student_classroom_announce' classroom.pk %}"   class="tab-link {% if active_tab == 'announcements' %}active{% endif %}">Announcements</a>
+    <a href="{% url 'student_classroom_courses' classroom.pk %}"    class="tab-link {% if active_tab == 'courses' %}active{% endif %}">Courses</a>
+    <a href="{% url 'student_classroom_classwork' classroom.pk %}"  class="tab-link {% if active_tab == 'classwork' %}active{% endif %}">Classwork</a>
+    <a href="{% url 'student_classroom_peoples' classroom.pk %}"    class="tab-link {% if active_tab == 'peoples' %}active{% endif %}">People</a>
+    <a href="{% url 'student_classroom_grade' classroom.pk %}"      class="tab-link {% if active_tab == 'grades' %}active{% endif %}">Grades</a>
+    <a href="{% url 'student_classroom_chat' classroom.pk %}"       class="tab-link {% if active_tab == 'chat' %}active{% endif %}">Chat</a>
+  {% endif %}
+</nav>

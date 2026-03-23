@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Student Dashboard{% endblock %}
+{% block content %}
+<div class="flex-between mb-24">
+  <h1 class="page-title">My Classes</h1>
+  <a href="{% url 'student_join_class' %}" class="btn btn-outline">+ Join Another Class</a>
+</div>
+{% if pending_assignments %}
+<div class="pending-banner mb-20">
+  <div class="flex-between mb-8"><h3 class="card-heading">📋 Pending Assignments ({{ pending_assignments|length }})</h3></div>
+  {% for a in pending_assignments|slice:":5" %}
+  <div class="pending-item">
+    <span><strong>{{ a.title }}</strong> — <span class="text-muted">{{ a.classroom.name }}</span></span>
+    <span class="badge badge-warning">Due {{ a.due_date|date:"M d" }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% if classrooms %}
+<div class="dashboard-grid">
+  {% for c in classrooms %}
+  <div class="classroom-card card-hover">
+    <a href="{% url 'student_classroom_announce' c.pk %}" style="text-decoration:none;color:inherit;display:block;">
+      <div class="class-name">{{ c.name }}</div>
+      <div class="class-teacher">{{ c.teacher.get_full_name|default:c.teacher.username }}</div>
+      <div class="class-meta"><span>👥 {{ c.student_count }}</span><span>📝 {{ c.assignments.count }} assignments</span></div>
+    </a>
+    <hr class="divider">
+    <a href="{% url 'student_leave_classroom' c.pk %}" class="caption" style="color:var(--text-muted);" onclick="return confirm('Leave {{ c.name }}?')">Leave class</a>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state"><p>You haven't joined any classes yet.</p><a href="{% url 'student_join_class' %}" class="btn btn-primary">Enter Class Code</a></div>
+{% endif %}
+{% if recent_announcements %}
+<div class="card mt-24">
+  <h2 class="section-title mb-16">Recent Announcements</h2>
+  {% for a in recent_announcements %}
+  <div class="announcement-card {% if a.is_pinned %}pinned{% endif %}">
+    <div class="flex-between"><div class="announcement-title">{{ a.title }}</div><span class="caption">{{ a.classroom.name }}</span></div>
+    <div class="announcement-meta">{{ a.created_at|date:"M d, Y · H:i" }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

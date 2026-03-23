@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block extra_css %}<link rel="stylesheet" href="{% load static %}{% static 'css/classroom.css' %}">{% endblock %}
+{% block title %}Classwork — {{ classroom.name }}{% endblock %}
+{% block content %}
+{% include 'shared/classroom_tabs.html' with role='teacher' classroom=classroom active_tab='classwork' %}
+<div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;">
+  <div>
+    {% for item in assignment_data %}{% with a=item.assignment subs=item.submissions %}
+    <div class="assignment-card">
+      <div class="assignment-header">
+        <div class="assignment-title">{{ a.title }}</div>
+        <span class="badge {% if a.is_overdue %}badge-danger{% else %}badge-warning{% endif %}">Due {{ a.due_date|date:"M d, Y" }}</span>
+      </div>
+      <p class="assignment-meta">{{ a.description|default:"No description." }} · Max: <strong class="mono">{{ a.max_score }}</strong> pts · {{ subs.count }} submission(s)</p>
+      {% if a.file %}<a href="{{ a.file.url }}" class="btn btn-sm btn-ghost mb-12" target="_blank">📎 File</a>{% endif %}
+      {% if subs %}
+      <div class="table-wrap mt-8"><table>
+        <thead><tr><th>Student</th><th>Submitted</th><th>Status</th><th>Grade</th></tr></thead>
+        <tbody>
+        {% for sub in subs %}
+        <tr>
+          <td>{{ sub.student.get_full_name|default:sub.student.username }}</td>
+          <td class="caption">{{ sub.submitted_at|date:"M d · H:i" }}</td>
+          <td>{% if sub.is_late %}<span class="badge badge-danger">Late</span>{% else %}<span class="badge badge-success">On time</span>{% endif %}</td>
+          <td>
+            <form method="post" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">{% csrf_token %}
+              <input type="hidden" name="action" value="grade">
+              <input type="hidden" name="submission_id" value="{{ sub.pk }}">
+              <input type="number" name="score" class="form-control grade-input" value="{{ sub.score|default:'' }}" min="0" max="{{ a.max_score }}" placeholder="pts">
+              <input type="text" name="feedback" class="form-control feedback-input" value="{{ sub.feedback }}" placeholder="Feedback...">
+              <button type="submit" class="btn btn-sm btn-primary">Save</button>
+              {% if sub.file %}<a href="{{ sub.file.url }}" class="btn btn-sm btn-ghost" target="_blank">File</a>{% endif %}
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+      {% else %}<p class="text-muted mt-8">No submissions yet.</p>{% endif %}
+    </div>
+    {% endwith %}{% empty %}<div class="empty-state"><p>No assignments yet.</p></div>{% endfor %}
+  </div>
+  <div class="card">
+    <h3 class="card-heading mb-16">Create Assignment</h3>
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}
+      <input type="hidden" name="action" value="create">
+      <div class="form-group"><label class="form-label">Title</label><input type="text" name="title" class="form-control" required></div>
+      <div class="form-group"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="3"></textarea></div>
+      <div class="form-group"><label class="form-label">Due Date & Time</label><input type="datetime-local" name="due_date" class="form-control" required></div>
+      <div class="form-group"><label class="form-label">Max Score</label><input type="number" name="max_score" class="form-control" value="20" min="1"></div>
+      <div class="form-group"><label class="form-label">Attachment <span class="text-muted">(optional)</span></label><input type="file" name="file" class="form-control"></div>
+      <button type="submit" class="btn btn-primary btn-block">Create</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

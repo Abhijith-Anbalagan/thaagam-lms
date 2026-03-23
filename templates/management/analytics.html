@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Analytics{% endblock %}
+{% block content %}
+<h1 class="page-title mb-24">Classroom Analytics</h1>
+<div class="card"><div class="table-wrap"><table>
+  <thead><tr><th>Classroom</th><th>Students</th><th>Assignments</th><th>Avg Score</th></tr></thead>
+  <tbody>
+  {% for row in data %}
+  <tr>
+    <td><strong>{{ row.classroom.name }}</strong></td>
+    <td>{{ row.total_students }}</td>
+    <td>{{ row.total_assignments }}</td>
+    <td class="mono">{% if row.avg_score %}{{ row.avg_score|floatformat:1 }}%{% else %}—{% endif %}</td>
+  </tr>
+  {% empty %}<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">No data yet.</td></tr>{% endfor %}
+  </tbody>
+</table></div></div>
+{% endblock %}

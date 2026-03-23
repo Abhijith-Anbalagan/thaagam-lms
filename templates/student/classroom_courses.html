@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block extra_css %}<link rel="stylesheet" href="{% load static %}{% static 'css/classroom.css' %}">{% endblock %}
+{% block title %}Courses — {{ classroom.name }}{% endblock %}
+{% block content %}
+{% include 'shared/classroom_tabs.html' with role='student' classroom=classroom active_tab='courses' %}
+{% for unit_name, contents in units.items %}
+<div class="card mb-16">
+  <div class="unit-header">📂 {{ unit_name }}</div>
+  {% for c in contents %}
+  <div class="content-item">
+    <div class="content-info">
+      <div class="content-type-icon {% if c.content_type == 'video' %}icon-video{% elif c.content_type == 'pdf' %}icon-pdf{% else %}icon-note{% endif %}">
+        {% if c.content_type == 'video' %}🎬{% elif c.content_type == 'pdf' %}📄{% else %}📝{% endif %}
+      </div>
+      <div><div class="sub-heading">{{ c.title }}</div><div class="caption">{{ c.get_content_type_display }}</div></div>
+    </div>
+    {% if c.video_url %}<a href="{{ c.video_url }}" target="_blank" class="btn btn-sm btn-primary">▶ Watch</a>
+    {% elif c.file %}<a href="{{ c.file.url }}" target="_blank" class="btn btn-sm btn-outline">⬇ Download</a>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% empty %}<div class="empty-state"><p>No content uploaded yet.</p></div>{% endfor %}
+{% endblock %}

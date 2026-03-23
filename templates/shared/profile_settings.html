@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Profile — EduPlatform{% endblock %}
+{% block content %}
+<div style="max-width:540px;">
+  <h1 class="page-title mb-24">My Profile</h1>
+  <div class="card">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">First Name</label><input type="text" name="first_name" value="{{ user.first_name }}" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Last Name</label><input type="text" name="last_name" value="{{ user.last_name }}" class="form-control"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Email</label><input type="email" name="email" value="{{ user.email }}" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Phone</label><input type="text" name="phone" value="{{ user.phone }}" class="form-control"></div>
+      <div class="form-group">
+        <label class="form-label">Avatar</label>
+        {% if user.avatar %}<img src="{{ user.avatar.url }}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;margin-bottom:8px;display:block;">{% endif %}
+        <input type="file" name="avatar" class="form-control" accept="image/*">
+      </div>
+      <div class="flex gap-8">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a href="{% url 'password_change' %}" class="btn btn-ghost">Change Password</a>
+        <a href="{% url 'logout' %}" class="btn btn-danger btn-sm" style="margin-left:auto;" onclick="return confirm('Sign out?')">Sign Out</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

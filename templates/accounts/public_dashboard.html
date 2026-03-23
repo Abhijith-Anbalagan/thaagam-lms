@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Welcome — EduPlatform{% endblock %}
+{% block content %}
+<div style="max-width:520px;margin:60px auto;">
+  <h1 class="page-title mb-16">Welcome to EduPlatform</h1>
+  <p class="text-muted mb-24">Your account is set up. Choose how to get started:</p>
+  <div class="card mb-16">
+    <h3 class="card-heading mb-12">Join a Classroom</h3>
+    <p class="text-muted mb-16">Enter the 6-character code from your teacher.</p>
+    {% if error %}<div class="toast toast-error mb-12">{{ error }}</div>{% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <div class="flex gap-8">
+        <input type="text" name="class_code" class="form-control mono" placeholder="ABC123" maxlength="6" style="text-transform:uppercase;letter-spacing:3px;font-size:17px;max-width:160px;" required>
+        <button type="submit" class="btn btn-primary">Join Class</button>
+      </div>
+    </form>
+  </div>
+  <div class="card">
+    <h3 class="card-heading mb-8">Waiting for an Invite?</h3>
+    <p class="text-muted">If you are a teacher or management member, check your email for an invitation link.</p>
+  </div>
+</div>
+{% endblock %}

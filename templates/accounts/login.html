@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Sign In — EduPlatform{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">EduPlatform</div>
+    <p class="auth-subtitle">Sign in to your account</p>
+    <form method="post">
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="toast toast-error mb-12">{{ form.non_field_errors }}</div>{% endif %}
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" name="username" class="form-control" autofocus placeholder="Username">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" placeholder="Password">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block btn-lg">Sign In</button>
+    </form>
+    <div class="auth-footer">
+      <a href="{% url 'password_reset' %}">Forgot password?</a> &nbsp;·&nbsp;
+      No account? <a href="{% url 'signup' %}">Sign up</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

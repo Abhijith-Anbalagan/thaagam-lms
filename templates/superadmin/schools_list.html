@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Schools{% endblock %}
+{% block content %}
+<div class="flex-between mb-24">
+  <h1 class="page-title">All Schools</h1>
+  <a href="{% url 'superadmin_create_school' %}" class="btn btn-primary">+ New School</a>
+</div>
+{% if mode == 'create' %}
+<div class="card mb-24" style="max-width:480px;">
+  <h3 class="card-heading mb-16">Create School</h3>
+  <form method="post">{% csrf_token %}
+    <div class="form-group"><label class="form-label">Name</label><input type="text" name="name" class="form-control" required></div>
+    <div class="form-group"><label class="form-label">Address</label><textarea name="address" class="form-control"></textarea></div>
+    <div class="flex gap-8"><button type="submit" class="btn btn-primary">Create</button><a href="{% url 'superadmin_schools_list' %}" class="btn btn-ghost">Cancel</a></div>
+  </form>
+</div>
+{% endif %}
+<div class="card"><div class="table-wrap"><table>
+  <thead><tr><th>School</th><th>Address</th><th>Students</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>
+  {% for school in schools %}
+  <tr>
+    <td><strong>{{ school.name }}</strong></td>
+    <td class="text-muted">{{ school.address|default:"—"|truncatechars:40 }}</td>
+    <td>{{ school.total_students }}</td>
+    <td>{% if school.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-danger">Suspended</span>{% endif %}</td>
+    <td class="flex gap-8">
+      <a href="{% url 'superadmin_school_detail' school.pk %}" class="btn btn-sm btn-ghost">Detail</a>
+      <a href="{% url 'superadmin_toggle_school' school.pk %}" class="btn btn-sm {% if school.is_active %}btn-danger{% else %}btn-success{% endif %}">
+        {% if school.is_active %}Suspend{% else %}Activate{% endif %}
+      </a>
+    </td>
+  </tr>
+  {% empty %}<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">No schools.</td></tr>{% endfor %}
+  </tbody>
+</table></div></div>
+{% endblock %}

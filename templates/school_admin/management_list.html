@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Management Users{% endblock %}
+{% block content %}
+<div class="flex-between mb-24">
+  <h1 class="page-title">Management Users</h1>
+  <a href="{% url 'school_admin_invite_management' %}" class="btn btn-primary">+ Invite</a>
+</div>
+<div class="card"><div class="table-wrap"><table>
+  <thead><tr><th>Name</th><th>Email</th><th>Teachers Managed</th></tr></thead>
+  <tbody>
+  {% for m in management %}
+  <tr>
+    <td><strong>{{ m.get_full_name|default:m.username }}</strong></td>
+    <td>{{ m.email }}</td>
+    <td>{{ m.sent_invites.filter.count }}</td>
+  </tr>
+  {% empty %}<tr><td colspan="3" style="text-align:center;color:var(--text-muted);">No management users yet.</td></tr>{% endfor %}
+  </tbody>
+</table></div></div>
+{% endblock %}

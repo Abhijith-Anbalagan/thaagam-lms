@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block extra_css %}<link rel="stylesheet" href="{% load static %}{% static 'css/classroom.css' %}">{% endblock %}
+{% block title %}Courses — {{ classroom.name }}{% endblock %}
+{% block content %}
+{% include 'shared/classroom_tabs.html' with role='teacher' classroom=classroom active_tab='courses' %}
+<div style="display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start;">
+  <div>
+    {% for unit_name, contents in units.items %}
+    <div class="card mb-16">
+      <div class="unit-header">📂 {{ unit_name }}</div>
+      {% for c in contents %}
+      <div class="content-item">
+        <div class="content-info">
+          <div class="content-type-icon {% if c.content_type == 'video' %}icon-video{% elif c.content_type == 'pdf' %}icon-pdf{% else %}icon-note{% endif %}">
+            {% if c.content_type == 'video' %}🎬{% elif c.content_type == 'pdf' %}📄{% else %}📝{% endif %}
+          </div>
+          <div><div class="sub-heading">{{ c.title }}</div><div class="caption">{{ c.get_content_type_display }}</div></div>
+        </div>
+        {% if c.video_url %}<a href="{{ c.video_url }}" target="_blank" class="btn btn-sm btn-outline">Watch</a>
+        {% elif c.file %}<a href="{{ c.file.url }}" target="_blank" class="btn btn-sm btn-ghost">Download</a>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% empty %}<div class="empty-state"><p>No content yet.</p></div>{% endfor %}
+  </div>
+  <div class="card">
+    <h3 class="card-heading mb-16">Add Content</h3>
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}
+      <div class="form-group"><label class="form-label">Title</label><input type="text" name="title" class="form-control" required></div>
+      <div class="form-group"><label class="form-label">Type</label><select name="content_type" class="form-control"><option value="video">🎬 Video</option><option value="pdf">📄 PDF</option><option value="note">📝 Note</option></select></div>
+      <div class="form-group"><label class="form-label">Unit / Chapter</label><input type="text" name="unit" class="form-control" placeholder="e.g. Unit 1 — Algebra"></div>
+      <div class="form-group"><label class="form-label">Video URL</label><input type="url" name="video_url" class="form-control" placeholder="YouTube / Drive link"></div>
+      <div class="form-group"><label class="form-label">File <span class="text-muted">(PDF / Note)</span></label><input type="file" name="file" class="form-control"></div>
+      <button type="submit" class="btn btn-primary btn-block">Add Content</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

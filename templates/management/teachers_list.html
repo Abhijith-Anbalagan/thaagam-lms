@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}My Teachers{% endblock %}
+{% block content %}
+<div class="flex-between mb-24">
+  <h1 class="page-title">My Teachers</h1>
+  <a href="{% url 'management_invite_teacher' %}" class="btn btn-primary">+ Invite Teacher</a>
+</div>
+<div class="card"><div class="table-wrap"><table>
+  <thead><tr><th>Name</th><th>Email</th><th>Classrooms</th></tr></thead>
+  <tbody>
+  {% for t in teachers %}
+  <tr><td><strong>{{ t.get_full_name|default:t.username }}</strong></td><td>{{ t.email }}</td><td>{{ t.classrooms.count }}</td></tr>
+  {% empty %}<tr><td colspan="3" style="text-align:center;color:var(--text-muted);">No teachers yet.</td></tr>{% endfor %}
+  </tbody>
+</table></div></div>
+{% endblock %}

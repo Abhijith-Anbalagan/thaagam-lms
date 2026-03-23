@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}School Reports{% endblock %}
+{% block content %}
+<h1 class="page-title mb-24">Reports — {{ school.name }}</h1>
+<div class="stat-grid">
+  <div class="stat-card"><div class="stat-value">{{ school.total_students }}</div><div class="stat-label">Students</div></div>
+  <div class="stat-card"><div class="stat-value">{{ school.total_teachers }}</div><div class="stat-label">Teachers</div></div>
+  <div class="stat-card"><div class="stat-value">{{ classrooms.count }}</div><div class="stat-label">Classrooms</div></div>
+  <div class="stat-card"><div class="stat-value mono">{% if avg_score %}{{ avg_score|floatformat:1 }}%{% else %}—{% endif %}</div><div class="stat-label">Avg Score</div></div>
+</div>
+<div class="card">
+  <h2 class="section-title mb-16">Classrooms</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Classroom</th><th>Code</th><th>Teacher</th><th>Students</th></tr></thead>
+    <tbody>
+    {% for c in classrooms %}
+    <tr>
+      <td><strong>{{ c.name }}</strong></td>
+      <td><span class="mono badge badge-blue">{{ c.code }}</span></td>
+      <td>{{ c.teacher.get_full_name|default:c.teacher.username }}</td>
+      <td>{{ c.student_count }}</td>
+    </tr>
+    {% empty %}<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">No classrooms.</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}People — {{ classroom.name }}{% endblock %}
+{% block content %}
+{% include 'shared/classroom_tabs.html' with role='teacher' classroom=classroom active_tab='peoples' %}
+<h2 class="section-title mb-16">Students ({{ students.count }})</h2>
+{% if students %}
+<div class="card"><div class="table-wrap"><table>
+  <thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Phone</th><th></th></tr></thead>
+  <tbody>
+  {% for s in students %}
+  <tr>
+    <td><strong>{{ s.get_full_name|default:s.username }}</strong></td>
+    <td class="mono caption">{{ s.username }}</td>
+    <td class="caption">{{ s.email }}</td>
+    <td class="caption">{{ s.phone|default:"—" }}</td>
+    <td>
+      <form method="post" style="display:inline;" onsubmit="return confirm('Remove {{ s.get_full_name|default:s.username }}?')">{% csrf_token %}
+        <input type="hidden" name="remove_student" value="{{ s.pk }}">
+        <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+{% else %}
+<div class="empty-state">
+  <p>No students yet. Share this code:</p>
+  <div class="code-display mt-8">{{ classroom.code }}</div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Create Classroom{% endblock %}
+{% block content %}
+<div style="max-width:480px;">
+  <h1 class="page-title mb-24">Create New Classroom</h1>
+  <div class="card">
+    <form method="post">{% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Classroom Name</label>
+        <input type="text" name="name" class="form-control" placeholder="e.g. Mathematics Grade 10 — Section A" required autofocus>
+        <p class="form-hint">A unique 6-character class code will be auto-generated.</p>
+      </div>
+      <div class="flex gap-8">
+        <button type="submit" class="btn btn-primary">Create Classroom</button>
+        <a href="{% url 'teacher_dashboard' %}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

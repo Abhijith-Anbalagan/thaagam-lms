@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Teacher Dashboard{% endblock %}
+{% block content %}
+<div class="flex-between mb-24">
+  <h1 class="page-title">My Classrooms</h1>
+  <a href="{% url 'teacher_create_classroom' %}" class="btn btn-primary">+ New Classroom</a>
+</div>
+{% if pending_submissions %}
+<div class="pending-banner mb-20">
+  <div class="flex-between mb-8"><h3 class="card-heading">⏳ Needs Grading ({{ pending_submissions|length }})</h3></div>
+  {% for sub in pending_submissions|slice:":5" %}
+  <div class="pending-item">
+    <span><strong>{{ sub.student.get_full_name|default:sub.student.username }}</strong> — <em>{{ sub.assignment.title }}</em> <span class="caption">({{ sub.assignment.classroom.name }})</span></span>
+    <a href="{% url 'teacher_classroom_classwork' sub.assignment.classroom.pk %}" class="btn btn-sm btn-outline">Grade</a>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% if classrooms %}
+<div class="dashboard-grid">
+  {% for c in classrooms %}
+  <a href="{% url 'teacher_classroom_announce' c.pk %}" class="classroom-card">
+    <div class="class-name">{{ c.name }}</div>
+    <div class="class-code">{{ c.code }}</div>
+    <div class="class-meta">
+      <span>👥 {{ c.student_count }} students</span>
+      <span>📝 {{ c.assignments.count }} assignments</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state"><p>No classrooms yet.</p><a href="{% url 'teacher_create_classroom' %}" class="btn btn-primary">Create First Classroom</a></div>
+{% endif %}
+{% endblock %}

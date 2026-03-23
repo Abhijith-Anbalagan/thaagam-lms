@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}School Admin — {{ school.name }}{% endblock %}
+{% block content %}
+<div class="flex-between mb-24">
+  <div><h1 class="page-title">{{ school.name }}</h1><p class="text-muted">School Admin Dashboard</p></div>
+  <div class="flex gap-8">
+    <a href="{% url 'school_admin_invite_management' %}" class="btn btn-primary">+ Invite Management</a>
+    <a href="{% url 'school_admin_reports' %}" class="btn btn-outline">Reports</a>
+  </div>
+</div>
+<div class="stat-grid">
+  <div class="stat-card"><div class="stat-value">{{ total_students }}</div><div class="stat-label">Students</div></div>
+  <div class="stat-card"><div class="stat-value">{{ total_teachers }}</div><div class="stat-label">Teachers</div></div>
+  <div class="stat-card"><div class="stat-value">{{ total_classrooms }}</div><div class="stat-label">Classrooms</div></div>
+  <div class="stat-card"><div class="stat-value">{{ management.count }}</div><div class="stat-label">Management</div></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+  <div class="card">
+    <h2 class="section-title mb-16">Management Groups</h2>
+    {% for m in management %}
+    <div class="flex-between" style="padding:9px 0;border-bottom:1px solid var(--border);">
+      <span class="sub-heading">{{ m.get_full_name|default:m.username }}</span>
+      <span class="caption">{{ m.email }}</span>
+    </div>
+    {% empty %}<p class="text-muted">No management users yet. <a href="{% url 'school_admin_invite_management' %}">Invite one</a>.</p>{% endfor %}
+  </div>
+  <div class="card">
+    <h2 class="section-title mb-16">Recent Announcements</h2>
+    {% for a in announcements %}
+    <div class="announcement-card {% if a.is_pinned %}pinned{% endif %}">
+      <div class="announcement-title">{{ a.title }}</div>
+      <div class="announcement-meta">{{ a.created_at|date:"M d, Y" }}</div>
+    </div>
+    {% empty %}<p class="text-muted">No announcements yet.</p>{% endfor %}
+  </div>
+</div>
+{% endblock %}
