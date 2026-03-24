@@ -3,10 +3,7 @@
 {% block content %}
 <div class="flex-between mb-24">
   <h1 class="page-title">My Classrooms</h1>
-  <div style="display:flex;gap:8px;">
-    <a href="{% url 'teacher_analytics' %}" class="btn btn-outline">Analytics</a>
-    <a href="{% url 'teacher_create_classroom' %}" class="btn btn-primary">+ New Classroom</a>
-  </div>
+  <a href="{% url 'teacher_create_classroom' %}" class="btn btn-primary">+ New Classroom</a>
 </div>
 {% if pending_submissions %}
 <div class="pending-banner mb-20">

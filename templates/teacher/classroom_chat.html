@@ -5,51 +5,32 @@
 {% include 'shared/classroom_tabs.html' with role='teacher' classroom=classroom active_tab='chat' %}
 <div class="chat-layout">
   <div class="chat-sidebar">
-    <div class="chat-sidebar-heading">Students</div>
+    <div class="chat-sidebar-heading">Student Inboxes</div>
     {% for student in students_with_chats %}
     <a href="?student={{ student.pk }}" class="chat-student-item {% if selected_student.pk == student.pk %}active{% endif %}">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span>{{ student.get_full_name|default:student.username }}</span>
-        {% if student.unread %}
-          <span style="background:var(--danger);color:#fff;border-radius:99px;font-size:11px;font-weight:600;padding:1px 7px;">{{ student.unread }}</span>
-        {% endif %}
-      </div>
+      {{ student.get_full_name|default:student.username }}
     </a>
-    {% empty %}
-    <div style="padding:16px;color:var(--text-muted);font-size:13px;">No students enrolled.</div>
-    {% endfor %}
+    {% empty %}<div style="padding:16px;color:var(--text-muted);font-size:13px;">No messages yet.</div>{% endfor %}
   </div>
-
   <div class="chat-main">
     {% if selected_student %}
-    <div class="chat-header">
-      💬 Chat with {{ selected_student.get_full_name|default:selected_student.username }}
-    </div>
+    <div class="chat-header">Chat with {{ selected_student.get_full_name|default:selected_student.username }}</div>
     <div class="chat-messages" id="chat-messages">
       {% for msg in messages %}
-      <div>
-        <div class="bubble {% if msg.sender == request.user %}sent{% else %}recv{% endif %}">
-          {{ msg.body }}
-          <div class="bubble-time">{{ msg.created_at|date:"H:i" }}</div>
-        </div>
-      </div>
-      {% empty %}
-      <div class="chat-empty">
-        <p>No messages yet.</p>
-        <p class="caption">The student will initiate the conversation.</p>
-      </div>
-      {% endfor %}
+      <div><div class="bubble {% if msg.sender == request.user %}sent{% else %}recv{% endif %}">
+        {{ msg.body }}<div class="bubble-time">{{ msg.created_at|date:"H:i" }}</div>
+      </div></div>
+      {% empty %}<div style="text-align:center;color:var(--text-muted);padding:32px;">Student will initiate the conversation.</div>{% endfor %}
     </div>
     <div class="chat-footer">
       <input type="text" id="chat-input" class="form-control" placeholder="Type a reply…" autocomplete="off">
       <button id="chat-send" class="btn btn-primary">Send</button>
     </div>
     {% else %}
-    <div class="chat-empty" style="margin:auto;"><p>Select a student from the left to start chatting.</p></div>
+    <div class="empty-state" style="margin:auto;"><p>Select a student from the left.</p></div>
     {% endif %}
   </div>
 </div>
-
 {% if selected_student %}
 {% load static %}
 <script>

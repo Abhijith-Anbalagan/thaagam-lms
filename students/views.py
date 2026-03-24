@@ -1,289 +1,168 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.utils import timezone
 from accounts.decorators import role_required
 from classrooms.models import Classroom, CourseContent
 from assignments.models import Assignment, Submission
 from announcements.models import Announcement
-from chat.models import Message
-from django.db.models import Q, Count, Avg
-from django.utils import timezone
-from .forms import JoinClassroomForm, SubmissionForm
 
-@login_required
+
+def _get_classroom(request, class_id):
+    return get_object_or_404(Classroom, pk=class_id, students=request.user)
+
+
 @role_required('student')
-def student_dashboard(request):
-    # Rule: Always filter by request.user.school
-    classrooms = Classroom.objects.filter(
-        school=request.user.school, 
-        students=request.user
-    ).select_related('teacher', 'school')
-    
-    # Get recent announcements
+def dashboard(request):
+    classrooms = request.user.joined_classrooms.select_related('teacher', 'school').all()
+
+    pending = []
+    for classroom in classrooms:
+        for a in classroom.assignments.filter(due_date__gte=timezone.now()):
+            if not Submission.objects.filter(assignment=a, student=request.user).exists():
+                pending.append(a)
+
     recent_announcements = Announcement.objects.filter(
-        Q(classroom__in=classrooms) | Q(classroom__isnull=True, school=request.user.school)
-    ).order_by('-created_at')[:5]
-    
-    # Get pending assignments
-    pending_assignments = Assignment.objects.filter(
-        classroom__in=classrooms,
-        due_date__gte=timezone.now()
-    ).exclude(
-        submissions__student=request.user
-    ).order_by('due_date')[:5]
-    
-    # Calculate overall stats
-    total_submissions = Submission.objects.filter(
-        student=request.user,
-        assignment__classroom__in=classrooms
-    ).count()
-    
-    graded_submissions = Submission.objects.filter(
-        student=request.user,
-        assignment__classroom__in=classrooms,
-        score__isnull=False
-    )
-    
-    avg_score = graded_submissions.aggregate(Avg('score'))['score__avg'] or 0
-    
-    context = {
+        classroom__in=classrooms
+    ).order_by('-created_at')[:10]
+
+    return render(request, 'student/dashboard.html', {
         'classrooms': classrooms,
+        'pending_assignments': pending,
         'recent_announcements': recent_announcements,
-        'pending_assignments': pending_assignments,
-        'total_submissions': total_submissions,
-        'avg_score': round(avg_score, 1) if avg_score else 0,
-    }
-    return render(request, 'student/dashboard.html', context)
+    })
 
-@login_required
-@role_required('student')
-def classroom_announce(request, id):
-    classroom = get_object_or_404(
-        Classroom, 
-        id=id, 
-        school=request.user.school, 
-        students=request.user
-    )
-    
-    # Fetch announcements for this classroom or school-wide
-    announcements = Announcement.objects.filter(
-        Q(classroom=classroom) | Q(classroom__isnull=True, school=request.user.school)
-    ).select_related('posted_by').order_by('-is_pinned', '-created_at')
-    
-    context = {
-        'classroom': classroom,
-        'announcements': announcements
-    }
-    return render(request, 'student/classroom_announce.html', context)
 
-@login_required
 @role_required('student')
-def classroom_courses(request, id):
-    classroom = get_object_or_404(
-        Classroom, 
-        id=id, 
-        school=request.user.school, 
-        students=request.user
-    )
-    
-    courses = CourseContent.objects.filter(
-        classroom=classroom
-    ).order_by('unit', 'created_at')
-    
-    # Group by unit
+def join_class(request):
+    error = None
+    if request.method == 'POST':
+        code = request.POST.get('class_code', '').strip().upper()
+        try:
+            classroom = Classroom.objects.get(code=code)
+            classroom.students.add(request.user)
+            request.user.role   = 'student'
+            request.user.school = classroom.school
+            request.user.save()
+            messages.success(request, f'Joined {classroom.name}!')
+            return redirect('student_dashboard')
+        except Classroom.DoesNotExist:
+            error = 'Class code not found. Try again.'
+    return render(request, 'student/join_class.html', {'error': error})
+
+
+@role_required('student')
+def leave_classroom(request, class_id):
+    classroom = _get_classroom(request, class_id)
+    classroom.students.remove(request.user)
+    messages.success(request, f'You left {classroom.name}.')
+    return redirect('student_dashboard')
+
+
+@role_required('student')
+def classroom_announce(request, class_id):
+    classroom     = _get_classroom(request, class_id)
+    announcements = Announcement.objects.filter(classroom=classroom)
+    return render(request, 'student/classroom_announce.html', {
+        'classroom': classroom, 'announcements': announcements, 'active_tab': 'announcements',
+    })
+
+
+@role_required('student')
+def classroom_courses(request, class_id):
+    classroom = _get_classroom(request, class_id)
+    contents  = classroom.course_contents.all()
     units = {}
-    for course in courses:
-        unit_name = course.unit or 'General'
-        if unit_name not in units:
-            units[unit_name] = []
-        units[unit_name].append(course)
-    
-    context = {
-        'classroom': classroom,
-        'courses': courses,
-        'units': units
-    }
-    return render(request, 'student/classroom_courses.html', context)
+    for c in contents:
+        units.setdefault(c.unit or 'General', []).append(c)
+    return render(request, 'student/classroom_courses.html', {
+        'classroom': classroom, 'units': units, 'active_tab': 'courses',
+    })
 
-@login_required
+
 @role_required('student')
-def classroom_classwork(request, id):
-    classroom = get_object_or_404(
-        Classroom, 
-        id=id, 
-        school=request.user.school, 
-        students=request.user
-    )
-    
-    assignments = Assignment.objects.filter(
-        classroom=classroom
-    ).order_by('-created_at')
-    
-    # Get student's submissions for these assignments
-    submissions = Submission.objects.filter(
-        assignment__classroom=classroom,
-        student=request.user
-    ).select_related('assignment')
-    
-    submission_dict = {sub.assignment_id: sub for sub in submissions}
-    
-    # Attach submission status to each assignment
-    for assignment in assignments:
-        assignment.student_submission = submission_dict.get(assignment.id)
-    
-    context = {
-        'classroom': classroom,
-        'assignments': assignments
-    }
-    return render(request, 'student/classroom_classwork.html', context)
+def classroom_classwork(request, class_id):
+    classroom = _get_classroom(request, class_id)
 
-@login_required
+    if request.method == 'POST':
+        assignment_id = request.POST.get('assignment_id')
+        assignment    = get_object_or_404(Assignment, pk=assignment_id, classroom=classroom)
+        file          = request.FILES.get('file')
+        if file:
+            sub, created = Submission.objects.get_or_create(
+                assignment=assignment, student=request.user, defaults={'file': file}
+            )
+            if not created:
+                if not assignment.is_overdue:
+                    sub.file = file; sub.save()
+                    messages.success(request, 'Submission updated.')
+                else:
+                    messages.error(request, 'Deadline has passed.')
+            else:
+                messages.success(request, 'Assignment submitted!')
+        return redirect('student_classroom_classwork', class_id=class_id)
+
+    assignment_data = []
+    for a in classroom.assignments.all():
+        try:    sub = Submission.objects.get(assignment=a, student=request.user)
+        except: sub = None
+        assignment_data.append({'assignment': a, 'submission': sub})
+
+    return render(request, 'student/classroom_classwork.html', {
+        'classroom': classroom, 'assignment_data': assignment_data, 'active_tab': 'classwork',
+    })
+
+
 @role_required('student')
-def classroom_peoples(request, id):
-    classroom = get_object_or_404(
-        Classroom, 
-        id=id, 
-        school=request.user.school, 
-        students=request.user
-    )
-    
-    students = classroom.students.all().order_by('first_name', 'last_name', 'username')
-    
-    context = {
-        'classroom': classroom,
-        'students': students,
-        'teacher': classroom.teacher,
-        'total_students': students.count()
-    }
-    return render(request, 'student/classroom_peoples.html', context)
+def classroom_peoples(request, class_id):
+    classroom = _get_classroom(request, class_id)
+    return render(request, 'student/classroom_peoples.html', {
+        'classroom': classroom, 'students': classroom.students.all(), 'active_tab': 'peoples',
+    })
 
-@login_required
+
 @role_required('student')
-def classroom_grades(request, id):
-    classroom = get_object_or_404(
-        Classroom, 
-        id=id, 
-        school=request.user.school, 
-        students=request.user
-    )
-    
-    submissions = Submission.objects.filter(
-        assignment__classroom=classroom,
-        student=request.user
-    ).select_related('assignment').order_by('-submitted_at')
-    
-    # Calculate stats
-    graded = submissions.filter(score__isnull=False)
-    total_score = sum(s.score for s in graded if s.score)
-    total_possible = sum(s.assignment.max_score for s in graded)
-    
-    avg_percentage = round((total_score / total_possible * 100), 1) if total_possible > 0 else 0
-    
-    context = {
-        'classroom': classroom,
-        'submissions': submissions,
-        'total_submissions': submissions.count(),
-        'graded_count': graded.count(),
-        'avg_percentage': avg_percentage
-    }
-    return render(request, 'student/classroom_grades.html', context)
+def classroom_grade(request, class_id):
+    classroom    = _get_classroom(request, class_id)
+    assignments  = classroom.assignments.all()
+    grade_data   = []
+    total_score  = total_max = 0
 
-@login_required
+    for a in assignments:
+        try:    sub = Submission.objects.get(assignment=a, student=request.user)
+        except: sub = None
+        grade_data.append({'assignment': a, 'submission': sub})
+        if sub and sub.score is not None:
+            total_score += sub.score
+            total_max   += a.max_score
+
+    overall_pct   = round(total_score / total_max * 100, 1) if total_max else None
+    chart_labels  = [d['assignment'].title   for d in grade_data if d['submission'] and d['submission'].score is not None]
+    chart_scores  = [d['submission'].score   for d in grade_data if d['submission'] and d['submission'].score is not None]
+    chart_max     = [d['assignment'].max_score for d in grade_data if d['submission'] and d['submission'].score is not None]
+
+    return render(request, 'student/classroom_grade.html', {
+        'classroom': classroom, 'grade_data': grade_data,
+        'total_score': total_score, 'total_max': total_max,
+        'overall_pct': overall_pct,
+        'chart_labels': chart_labels,
+        'chart_scores': chart_scores,
+        'chart_max':    chart_max,
+        'active_tab': 'grades',
+    })
+
+
 @role_required('student')
-def classroom_chat(request, id):
-    classroom = get_object_or_404(
-        Classroom,
-        id=id,
-        school=request.user.school,
-        students=request.user
-    )
-
-    teacher = classroom.teacher
-
-    # Load existing messages between this student and the teacher
-    chat_messages = Message.objects.filter(
+def classroom_chat(request, class_id):
+    classroom = _get_classroom(request, class_id)
+    teacher   = classroom.teacher
+    from chat.models import Message
+    msgs = Message.objects.filter(
         classroom=classroom,
         sender__in=[request.user, teacher],
         receiver__in=[request.user, teacher],
     ).order_by('created_at')
-
-    # Mark unread messages as read
-    chat_messages.filter(receiver=request.user, is_read=False).update(is_read=True)
-
-    context = {
-        'classroom': classroom,
-        'teacher': teacher,
-        'messages': chat_messages,
-    }
-    return render(request, 'student/classroom_chat.html', context)
-
-
-@login_required
-@role_required('student')
-def join_classroom(request):
-    if request.method == 'POST':
-        form = JoinClassroomForm(request.POST)
-        if form.is_valid():
-            code = form.cleaned_data['class_code']
-            try:
-                classroom = Classroom.objects.get(
-                    code=code,
-                    school=request.user.school
-                )
-                
-                # Check if already joined
-                if classroom.students.filter(id=request.user.id).exists():
-                    messages.warning(request, 'You are already enrolled in this classroom.')
-                else:
-                    classroom.students.add(request.user)
-                    messages.success(request, f'Successfully joined {classroom.name}!')
-                    return redirect('students:classroom_announce', id=classroom.id)
-                    
-            except Classroom.DoesNotExist:
-                messages.error(request, 'Invalid class code. Please check and try again.')
-    else:
-        form = JoinClassroomForm()
-    
-    return render(request, 'student/join_class.html', {'form': form})
-
-
-@login_required
-@role_required('student')
-def submit_assignment(request, assignment_id):
-    assignment = get_object_or_404(
-        Assignment,
-        id=assignment_id,
-        classroom__school=request.user.school,
-        classroom__students=request.user
-    )
-    
-    # Check if already submitted
-    existing_submission = Submission.objects.filter(
-        assignment=assignment,
-        student=request.user
-    ).first()
-    
-    if request.method == 'POST':
-        form = SubmissionForm(request.POST, request.FILES, instance=existing_submission)
-        if form.is_valid():
-            submission = form.save(commit=False)
-            submission.assignment = assignment
-            submission.student = request.user
-            submission.save()
-            
-            if existing_submission:
-                messages.success(request, 'Assignment resubmitted successfully!')
-            else:
-                messages.success(request, 'Assignment submitted successfully!')
-            
-            return redirect('students:classroom_classwork', id=assignment.classroom.id)
-    else:
-        form = SubmissionForm(instance=existing_submission)
-    
-    context = {
-        'assignment': assignment,
-        'classroom': assignment.classroom,
-        'form': form,
-        'existing_submission': existing_submission
-    }
-    return render(request, 'student/submit_assignment.html', context)
+    msgs.filter(receiver=request.user, is_read=False).update(is_read=True)
+    return render(request, 'student/classroom_chat.html', {
+        'classroom': classroom, 'teacher': teacher,
+        'messages': msgs, 'active_tab': 'chat',
+    })

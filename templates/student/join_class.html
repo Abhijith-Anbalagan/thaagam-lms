@@ -3,18 +3,14 @@
 {% block content %}
 <div style="max-width:460px;margin:60px auto;">
   <h1 class="page-title mb-24">Join a Classroom</h1>
-  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:28px;">
+  <div class="card">
     <p class="text-muted mb-16">Enter the 6-character code given by your teacher.</p>
+    {% if error %}<div class="toast toast-error mb-12">{{ error }}</div>{% endif %}
     <form method="post">{% csrf_token %}
-      <div class="form-group">
-        {{ form.class_code }}
-        {% if form.class_code.errors %}
-          <div class="form-error">{{ form.class_code.errors.0 }}</div>
-        {% endif %}
-      </div>
       <div class="flex gap-8">
-        <button type="submit" class="btn btn-primary">Join Classroom</button>
-        <a href="{% url 'students:dashboard' %}" class="btn btn-ghost">Cancel</a>
+        <input type="text" name="class_code" class="form-control mono" placeholder="ABC123" maxlength="6"
+               style="text-transform:uppercase;letter-spacing:4px;font-size:18px;max-width:170px;" required autofocus>
+        <button type="submit" class="btn btn-primary">Join</button>
       </div>
     </form>
   </div>

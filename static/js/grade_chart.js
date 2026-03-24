@@ -27,33 +27,28 @@
   }
 
   loadChartJs(function () {
-    const datasets = [
-      {
-        label: 'Score',
-        data: scores,
-        backgroundColor: 'rgba(76,104,215,0.75)',
-        borderColor:     '#4c68d7',
-        borderWidth: 1,
-        borderRadius: 5,
-      },
-    ];
-
-    if (maxArr && maxArr.length) {
-      datasets.push({
-        label: 'Max Score',
-        data: maxArr,
-        backgroundColor: 'rgba(232,230,224,0.8)',
-        borderColor:     '#ccc',
-        borderWidth: 1,
-        borderRadius: 5,
-      });
-    }
-
     new Chart(canvas.getContext('2d'), {
       type: 'bar',
       data: {
         labels,
-        datasets,
+        datasets: [
+          {
+            label: 'Your Score',
+            data: scores,
+            backgroundColor: 'rgba(76,104,215,0.75)',
+            borderColor:     '#4c68d7',
+            borderWidth: 1,
+            borderRadius: 5,
+          },
+          {
+            label: 'Max Score',
+            data: maxArr,
+            backgroundColor: 'rgba(232,230,224,0.8)',
+            borderColor:     '#ccc',
+            borderWidth: 1,
+            borderRadius: 5,
+          },
+        ],
       },
       options: {
         responsive: true,

@@ -1,16 +1,14 @@
 from django.urls import path
 from . import views
 
-app_name = 'students'
-
 urlpatterns = [
-    path('dashboard/', views.student_dashboard, name='dashboard'),
-    path('join-classroom/', views.join_classroom, name='join_classroom'),
-    path('classroom/<int:id>/announce/', views.classroom_announce, name='classroom_announce'),
-    path('classroom/<int:id>/courses/', views.classroom_courses, name='classroom_courses'),
-    path('classroom/<int:id>/classwork/', views.classroom_classwork, name='classroom_classwork'),
-    path('classroom/<int:id>/peoples/', views.classroom_peoples, name='classroom_peoples'),
-    path('classroom/<int:id>/grades/', views.classroom_grades, name='classroom_grades'),
-    path('classroom/<int:id>/chat/', views.classroom_chat, name='classroom_chat'),
-    path('assignment/<int:assignment_id>/submit/', views.submit_assignment, name='submit_assignment'),
+    path('dashboard/',                              views.dashboard,          name='student_dashboard'),
+    path('join/',                                   views.join_class,         name='student_join_class'),
+    path('leave/<int:class_id>/',                   views.leave_classroom,    name='student_leave_classroom'),
+    path('classroom/<int:class_id>/announce/',      views.classroom_announce, name='student_classroom_announce'),
+    path('classroom/<int:class_id>/courses/',       views.classroom_courses,  name='student_classroom_courses'),
+    path('classroom/<int:class_id>/classwork/',     views.classroom_classwork,name='student_classroom_classwork'),
+    path('classroom/<int:class_id>/peoples/',       views.classroom_peoples,  name='student_classroom_peoples'),
+    path('classroom/<int:class_id>/grades/',        views.classroom_grade,    name='student_classroom_grade'),
+    path('classroom/<int:class_id>/chat/',          views.classroom_chat,     name='student_classroom_chat'),
 ]

@@ -9,7 +9,6 @@ class Message(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'chat_message'
         ordering = ['created_at']
 
     def __str__(self):

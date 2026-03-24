@@ -1,93 +1,47 @@
 {% extends 'base.html' %}
 {% block title %}Student Dashboard{% endblock %}
-
 {% block content %}
-<div style="max-width:1200px;margin:0 auto;">
-  <div class="flex-between mb-24">
-    <h1 class="page-title">My Dashboard</h1>
-    <div style="display:flex;gap:8px;">
-      <a href="{% url 'student_analytics' %}" class="btn btn-outline">Analytics</a>
-      <a href="{% url 'students:join_classroom' %}" class="btn btn-primary">+ Join Classroom</a>
-    </div>
-  </div>
-
-  <!-- Stats Cards -->
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:32px;">
-    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:20px;">
-      <div class="overline mb-8">Enrolled Classes</div>
-      <div class="score-big">{{ classrooms.count }}</div>
-    </div>
-    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:20px;">
-      <div class="overline mb-8">Total Submissions</div>
-      <div class="score-big">{{ total_submissions }}</div>
-    </div>
-    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:20px;">
-      <div class="overline mb-8">Average Score</div>
-      <div class="score-big">{{ avg_score }}%</div>
-    </div>
-  </div>
-
-  <!-- Pending Assignments -->
-  {% if pending_assignments %}
-  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:24px;margin-bottom:24px;">
-    <h2 class="card-heading mb-16">Pending Assignments</h2>
-    <div style="display:flex;flex-direction:column;gap:12px;">
-      {% for assignment in pending_assignments %}
-      <div style="padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <div class="sub-heading">{{ assignment.title }}</div>
-          <div class="caption">{{ assignment.classroom.name }} • Due: {{ assignment.due_date|date:"M d, Y g:i A" }}</div>
-        </div>
-        <a href="{% url 'students:submit_assignment' assignment.id %}" class="btn btn-sm btn-primary">Submit</a>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
-
-  <!-- Recent Announcements -->
-  {% if recent_announcements %}
-  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:24px;margin-bottom:24px;">
-    <div class="flex-between mb-16">
-      <h2 class="card-heading">Recent Announcements</h2>
-      <a href="{% url 'announcements_feed' %}" class="btn btn-sm btn-outline">View All</a>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:12px;">
-      {% for announcement in recent_announcements %}
-      <div style="padding:12px;border-left:3px solid var(--brand-blue);background:#fafaf8;">
-        <div class="sub-heading">{{ announcement.title }}</div>
-        <div class="caption">{{ announcement.posted_by.get_full_name|default:announcement.posted_by.username }} • {{ announcement.created_at|date:"M d, Y" }}</div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
-
-  <!-- Classrooms Grid -->
-  <h2 class="section-title mb-16">My Classrooms</h2>
-  {% if classrooms %}
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;">
-    {% for classroom in classrooms %}
-    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:20px;">
-      <div class="flex-between mb-12">
-        <h3 class="card-heading">{{ classroom.name }}</h3>
-        <span class="code-display" style="font-size:14px;letter-spacing:2px;">{{ classroom.code }}</span>
-      </div>
-      <div class="caption mb-16">Teacher: {{ classroom.teacher.get_full_name|default:classroom.teacher.username }}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <a href="{% url 'students:classroom_announce' classroom.id %}" class="btn btn-sm btn-ghost">Announce</a>
-        <a href="{% url 'students:classroom_courses' classroom.id %}" class="btn btn-sm btn-ghost">Courses</a>
-        <a href="{% url 'students:classroom_classwork' classroom.id %}" class="btn btn-sm btn-ghost">Classwork</a>
-        <a href="{% url 'students:classroom_grades' classroom.id %}" class="btn btn-sm btn-ghost">Grades</a>
-      </div>
-    </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <div class="empty-state">
-    <p>You haven't joined any classrooms yet.</p>
-    <a href="{% url 'students:join_classroom' %}" class="btn btn-primary">Join Your First Class</a>
-  </div>
-  {% endif %}
+<div class="flex-between mb-24">
+  <h1 class="page-title">My Classes</h1>
+  <a href="{% url 'student_join_class' %}" class="btn btn-outline">+ Join Another Class</a>
 </div>
+{% if pending_assignments %}
+<div class="pending-banner mb-20">
+  <div class="flex-between mb-8"><h3 class="card-heading">📋 Pending Assignments ({{ pending_assignments|length }})</h3></div>
+  {% for a in pending_assignments|slice:":5" %}
+  <div class="pending-item">
+    <span><strong>{{ a.title }}</strong> — <span class="text-muted">{{ a.classroom.name }}</span></span>
+    <span class="badge badge-warning">Due {{ a.due_date|date:"M d" }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% if classrooms %}
+<div class="dashboard-grid">
+  {% for c in classrooms %}
+  <div class="classroom-card card-hover">
+    <a href="{% url 'student_classroom_announce' c.pk %}" style="text-decoration:none;color:inherit;display:block;">
+      <div class="class-name">{{ c.name }}</div>
+      <div class="class-teacher">{{ c.teacher.get_full_name|default:c.teacher.username }}</div>
+      <div class="class-meta"><span>👥 {{ c.student_count }}</span><span>📝 {{ c.assignments.count }} assignments</span></div>
+    </a>
+    <hr class="divider">
+    <a href="{% url 'student_leave_classroom' c.pk %}" class="caption" style="color:var(--text-muted);" onclick="return confirm('Leave {{ c.name }}?')">Leave class</a>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state"><p>You haven't joined any classes yet.</p><a href="{% url 'student_join_class' %}" class="btn btn-primary">Enter Class Code</a></div>
+{% endif %}
+{% if recent_announcements %}
+<div class="card mt-24">
+  <h2 class="section-title mb-16">Recent Announcements</h2>
+  {% for a in recent_announcements %}
+  <div class="announcement-card {% if a.is_pinned %}pinned{% endif %}">
+    <div class="flex-between"><div class="announcement-title">{{ a.title }}</div><span class="caption">{{ a.classroom.name }}</span></div>
+    <div class="announcement-meta">{{ a.created_at|date:"M d, Y · H:i" }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
 {% endblock %}
