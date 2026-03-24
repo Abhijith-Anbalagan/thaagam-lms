@@ -6,12 +6,29 @@
   <a href="{% url 'superadmin_create_school' %}" class="btn btn-primary">+ New School</a>
 </div>
 {% if mode == 'create' %}
-<div class="card mb-24" style="max-width:480px;">
+<div class="card mb-24" style="max-width:520px;">
   <h3 class="card-heading mb-16">Create School</h3>
   <form method="post">{% csrf_token %}
-    <div class="form-group"><label class="form-label">Name</label><input type="text" name="name" class="form-control" required></div>
-    <div class="form-group"><label class="form-label">Address</label><textarea name="address" class="form-control"></textarea></div>
-    <div class="flex gap-8"><button type="submit" class="btn btn-primary">Create</button><a href="{% url 'superadmin_schools_list' %}" class="btn btn-ghost">Cancel</a></div>
+    <div class="form-group"><label class="form-label">School Name</label><input type="text" name="name" class="form-control" value="{{ form.name.value|default:'' }}" required></div>
+    <div class="form-group"><label class="form-label">Address</label><textarea name="address" class="form-control">{{ form.address.value|default:'' }}</textarea></div>
+    <hr style="margin:16px 0;border-color:var(--border);">
+    <p class="text-muted" style="font-size:13px;margin-bottom:12px;">School Admin Account</p>
+    <div class="form-group">
+      <label class="form-label">Admin Name</label>
+      <input type="text" name="admin_name" class="form-control" value="{{ form.admin_name.value|default:'' }}" required>
+      {% if form.admin_name.errors %}<div class="form-error">{{ form.admin_name.errors.0 }}</div>{% endif %}
+    </div>
+    <div class="form-group">
+      <label class="form-label">Admin Email</label>
+      <input type="email" name="admin_email" class="form-control" value="{{ form.admin_email.value|default:'' }}" required>
+      {% if form.admin_email.errors %}<div class="form-error">{{ form.admin_email.errors.0 }}</div>{% endif %}
+    </div>
+    <div class="form-group">
+      <label class="form-label">Admin Password</label>
+      <input type="password" name="admin_password" class="form-control" required>
+      {% if form.admin_password.errors %}<div class="form-error">{{ form.admin_password.errors.0 }}</div>{% endif %}
+    </div>
+    <div class="flex gap-8"><button type="submit" class="btn btn-primary">Create School</button><a href="{% url 'superadmin_schools_list' %}" class="btn btn-ghost">Cancel</a></div>
   </form>
 </div>
 {% endif %}

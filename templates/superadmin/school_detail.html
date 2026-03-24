@@ -1,23 +1,273 @@
 {% extends 'base.html' %}
-{% block title %}{{ school.name }}{% endblock %}
+{% block title %}{{ school.name }} — Detail{% endblock %}
 {% block content %}
+
 <div class="flex-between mb-24">
-  <h1 class="page-title">{{ school.name }}</h1>
-  <a href="{% url 'superadmin_schools_list' %}" class="btn btn-ghost">← Schools</a>
+  <div>
+    <h1 class="page-title" id="display-school-name">{{ school.name }}</h1>
+    <p class="text-muted" id="display-school-address">{{ school.address|default:"No address provided" }}</p>
+  </div>
+  <div class="flex gap-8">
+    <a href="{% url 'superadmin_toggle_school' school.pk %}"
+       class="btn {% if school.is_active %}btn-danger{% else %}btn-primary{% endif %} btn-sm">
+      {% if school.is_active %}Suspend School{% else %}Activate School{% endif %}
+    </a>
+    <a href="{% url 'superadmin_schools_list' %}" class="btn btn-ghost">← Schools</a>
+  </div>
 </div>
-<div class="stat-grid">
-  <div class="stat-card"><div class="stat-value">{{ students.count }}</div><div class="stat-label">Students</div></div>
+
+<!-- Stat Cards -->
+<div class="stat-grid" style="margin-bottom:24px;">
   <div class="stat-card"><div class="stat-value">{{ teachers.count }}</div><div class="stat-label">Teachers</div></div>
+  <div class="stat-card"><div class="stat-value">{{ students.count }}</div><div class="stat-label">Students</div></div>
   <div class="stat-card"><div class="stat-value">{{ classrooms.count }}</div><div class="stat-label">Classrooms</div></div>
+  <div class="stat-card"><div class="stat-value">{{ management.count }}</div><div class="stat-label">Management</div></div>
 </div>
+
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+  <!-- ── School Details (Editable) ── -->
   <div class="card">
-    <h2 class="section-title mb-16">Teachers</h2>
-    {% for t in teachers %}<div style="padding:8px 0;border-bottom:1px solid var(--border);">{{ t.get_full_name|default:t.username }} <span class="caption">{{ t.email }}</span></div>{% empty %}<p class="text-muted">None.</p>{% endfor %}
+    <div class="flex-between mb-16">
+      <h2 class="section-title">School Details</h2>
+      <button class="btn btn-sm btn-ghost" onclick="toggleEdit('school')">✏️ Edit</button>
+    </div>
+
+    <!-- View Mode -->
+    <div id="school-view">
+      <table style="width:100%;font-size:14px;border-collapse:collapse;">
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 0;color:var(--text-muted);width:40%;">School Name</td>
+          <td style="padding:10px 0;font-weight:500;color:var(--text);" id="val-school-name">{{ school.name }}</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 0;color:var(--text-muted);">Address</td>
+          <td style="padding:10px 0;color:var(--text);" id="val-school-address">{{ school.address|default:"—" }}</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 0;color:var(--text-muted);">Status</td>
+          <td style="padding:10px 0;">
+            {% if school.is_active %}<span class="badge badge-success">Active</span>
+            {% else %}<span class="badge badge-danger">Suspended</span>{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;color:var(--text-muted);">Created</td>
+          <td style="padding:10px 0;color:var(--text);">{{ school.created_at|date:"M d, Y" }}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Edit Mode -->
+    <div id="school-edit" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">School Name</label>
+        <input type="text" id="input-school-name" class="form-control" value="{{ school.name }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Address</label>
+        <textarea id="input-school-address" class="form-control" rows="3">{{ school.address }}</textarea>
+      </div>
+      <div id="school-error" style="color:#e53e3e;font-size:13px;margin-bottom:8px;display:none;"></div>
+      <div class="flex gap-8">
+        <button class="btn btn-primary btn-sm" onclick="saveEdit('school')">Save Changes</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleEdit('school')">Cancel</button>
+      </div>
+    </div>
   </div>
+
+  <!-- ── Admin Details (Editable) ── -->
   <div class="card">
-    <h2 class="section-title mb-16">Classrooms</h2>
-    {% for c in classrooms %}<div style="padding:8px 0;border-bottom:1px solid var(--border);">{{ c.name }} <span class="mono caption">{{ c.code }}</span></div>{% empty %}<p class="text-muted">None.</p>{% endfor %}
+    <div class="flex-between mb-16">
+      <h2 class="section-title">School Admin</h2>
+      {% if admin %}<button class="btn btn-sm btn-ghost" onclick="toggleEdit('admin')">✏️ Edit</button>{% endif %}
+    </div>
+
+    {% if admin %}
+    <!-- View Mode -->
+    <div id="admin-view">
+      <table style="width:100%;font-size:14px;border-collapse:collapse;">
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 0;color:var(--text-muted);width:40%;">Name</td>
+          <td style="padding:10px 0;font-weight:500;color:var(--text);" id="val-admin-name">{{ admin.get_full_name|default:admin.username }}</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 0;color:var(--text-muted);">Email</td>
+          <td style="padding:10px 0;color:var(--text);" id="val-admin-email">{{ admin.email }}</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 0;color:var(--text-muted);">Username</td>
+          <td style="padding:10px 0;color:var(--text);font-family:'JetBrains Mono',monospace;">{{ admin.username }}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;color:var(--text-muted);">Joined</td>
+          <td style="padding:10px 0;color:var(--text);">{{ admin.date_joined|date:"M d, Y" }}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Edit Mode -->
+    <div id="admin-edit" style="display:none;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          <input type="text" id="input-admin-first" class="form-control" value="{{ admin.first_name }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          <input type="text" id="input-admin-last" class="form-control" value="{{ admin.last_name }}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="input-admin-email" class="form-control" value="{{ admin.email }}">
+      </div>
+      <div id="admin-error" style="color:#e53e3e;font-size:13px;margin-bottom:8px;display:none;"></div>
+      <div class="flex gap-8">
+        <button class="btn btn-primary btn-sm" onclick="saveEdit('admin')">Save Changes</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleEdit('admin')">Cancel</button>
+      </div>
+    </div>
+    {% else %}
+    <p class="text-muted">No admin assigned yet.</p>
+    {% endif %}
   </div>
+
+  <!-- Teachers -->
+  <div class="card">
+    <h2 class="section-title mb-16">Teachers <span style="font-size:13px;font-weight:400;color:var(--text-muted);">({{ teachers.count }})</span></h2>
+    {% if teachers %}
+    <div class="table-wrap"><table>
+      <thead><tr><th>Name</th><th>Email</th><th>Joined</th></tr></thead>
+      <tbody>
+        {% for t in teachers %}
+        <tr>
+          <td><strong>{{ t.get_full_name|default:t.username }}</strong></td>
+          <td class="text-muted">{{ t.email }}</td>
+          <td class="text-muted">{{ t.date_joined|date:"M d, Y" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<p class="text-muted">No teachers yet.</p>{% endif %}
+  </div>
+
+  <!-- Students -->
+  <div class="card">
+    <h2 class="section-title mb-16">Students <span style="font-size:13px;font-weight:400;color:var(--text-muted);">({{ students.count }})</span></h2>
+    {% if students %}
+    <div class="table-wrap"><table>
+      <thead><tr><th>Name</th><th>Email</th><th>Joined</th></tr></thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td><strong>{{ s.get_full_name|default:s.username }}</strong></td>
+          <td class="text-muted">{{ s.email }}</td>
+          <td class="text-muted">{{ s.date_joined|date:"M d, Y" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<p class="text-muted">No students yet.</p>{% endif %}
+  </div>
+
+  <!-- Management -->
+  <div class="card">
+    <h2 class="section-title mb-16">Management <span style="font-size:13px;font-weight:400;color:var(--text-muted);">({{ management.count }})</span></h2>
+    {% if management %}
+    <div class="table-wrap"><table>
+      <thead><tr><th>Name</th><th>Email</th><th>Joined</th></tr></thead>
+      <tbody>
+        {% for m in management %}
+        <tr>
+          <td><strong>{{ m.get_full_name|default:m.username }}</strong></td>
+          <td class="text-muted">{{ m.email }}</td>
+          <td class="text-muted">{{ m.date_joined|date:"M d, Y" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<p class="text-muted">No management users yet.</p>{% endif %}
+  </div>
+
+  <!-- Classrooms -->
+  <div class="card">
+    <h2 class="section-title mb-16">Classrooms <span style="font-size:13px;font-weight:400;color:var(--text-muted);">({{ classrooms.count }})</span></h2>
+    {% if classrooms %}
+    <div class="table-wrap"><table>
+      <thead><tr><th>Name</th><th>Code</th><th>Teacher</th></tr></thead>
+      <tbody>
+        {% for c in classrooms %}
+        <tr>
+          <td><strong>{{ c.name }}</strong></td>
+          <td><span class="mono" style="font-size:13px;background:#f0ede8;padding:2px 8px;border-radius:4px;">{{ c.code }}</span></td>
+          <td class="text-muted">{{ c.teacher.get_full_name|default:c.teacher.username }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<p class="text-muted">No classrooms yet.</p>{% endif %}
+  </div>
+
 </div>
+
+{% block extra_js %}
+<script>
+const EDIT_URL  = "{% url 'superadmin_school_edit' school.pk %}";
+const CSRF      = "{{ csrf_token }}";
+
+function toggleEdit(section) {
+  const view = document.getElementById(section + '-view');
+  const edit = document.getElementById(section + '-edit');
+  const err  = document.getElementById(section + '-error');
+  if (view.style.display === 'none') {
+    view.style.display = '';
+    edit.style.display = 'none';
+  } else {
+    view.style.display = 'none';
+    edit.style.display = '';
+  }
+  if (err) { err.style.display = 'none'; err.textContent = ''; }
+}
+
+function saveEdit(section) {
+  const err = document.getElementById(section + '-error');
+  let body  = new URLSearchParams({ section, csrfmiddlewaretoken: CSRF });
+
+  if (section === 'school') {
+    body.append('name',    document.getElementById('input-school-name').value.trim());
+    body.append('address', document.getElementById('input-school-address').value.trim());
+  } else {
+    body.append('first_name', document.getElementById('input-admin-first').value.trim());
+    body.append('last_name',  document.getElementById('input-admin-last').value.trim());
+    body.append('email',      document.getElementById('input-admin-email').value.trim());
+  }
+
+  fetch(EDIT_URL, { method: 'POST', body })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        if (section === 'school') {
+          document.getElementById('val-school-name').textContent    = data.name;
+          document.getElementById('val-school-address').textContent = data.address || '—';
+          document.getElementById('display-school-name').textContent    = data.name;
+          document.getElementById('display-school-address').textContent = data.address || 'No address provided';
+        } else {
+          document.getElementById('val-admin-name').textContent  = data.full_name;
+          document.getElementById('val-admin-email').textContent = data.email;
+          document.getElementById('input-admin-email').value     = data.email;
+        }
+        toggleEdit(section);
+      } else {
+        err.textContent    = data.error || 'Something went wrong.';
+        err.style.display  = 'block';
+      }
+    })
+    .catch(() => {
+      err.textContent   = 'Network error. Please try again.';
+      err.style.display = 'block';
+    });
+}
+</script>
+{% endblock %}
 {% endblock %}

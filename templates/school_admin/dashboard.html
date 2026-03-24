@@ -16,14 +16,47 @@
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
   <div class="card">
-    <h2 class="section-title mb-16">Management Groups</h2>
+    <h2 class="section-title mb-16">Management Members</h2>
+    <div id="management-list">
     {% for m in management %}
-    <div class="flex-between" style="padding:9px 0;border-bottom:1px solid var(--border);">
-      <span class="sub-heading">{{ m.get_full_name|default:m.username }}</span>
-      <span class="caption">{{ m.email }}</span>
+    <div class="flex-between" style="padding:9px 0;border-bottom:1px solid var(--border);" id="member-row-{{ m.id }}">
+      <div>
+        <span class="sub-heading">{{ m.get_full_name|default:m.username }}</span>
+        <span class="caption" style="display:block;font-size:12px;">{{ m.email }}</span>
+      </div>
+      <button class="btn btn-sm btn-danger" onclick="deleteMember({{ m.id }})">Delete</button>
     </div>
-    {% empty %}<p class="text-muted">No management users yet. <a href="{% url 'school_admin_invite_management' %}">Invite one</a>.</p>{% endfor %}
+    {% empty %}<p class="text-muted" id="no-management">No management users yet. <a href="{% url 'school_admin_invite_management' %}">Invite one</a>.</p>{% endfor %}
+    </div>
+
+    {% if pending_invites %}
+    <h3 class="section-title mt-20 mb-12" id="pending-heading" style="font-size:13px;color:var(--text-muted);">Pending Invitations</h3>
+    {% else %}
+    <h3 class="section-title mt-20 mb-12" id="pending-heading" style="font-size:13px;color:var(--text-muted);display:none;">Pending Invitations</h3>
+    {% endif %}
+    <div id="pending-list">
+    {% for inv in pending_invites %}
+    <div class="flex-between" style="padding:9px 0;border-bottom:1px solid var(--border);" id="invite-row-{{ inv.id }}">
+      <div>
+        <span class="sub-heading">{{ inv.email }}</span>
+        <span class="caption" style="display:block;font-size:11px;color:var(--text-muted);">Invited {{ inv.created_at|date:"M d, Y" }} · expires {{ inv.expires_at|date:"M d" }}</span>
+      </div>
+      <button
+        class="btn btn-sm btn-primary"
+        onclick="activateInvite({{ inv.id }}, '{{ inv.email }}')"
+        id="btn-{{ inv.id }}">
+        Activate
+      </button>
+      <button
+        class="btn btn-sm btn-danger"
+        onclick="deleteInvite({{ inv.id }})">
+        Delete
+      </button>
+    </div>
+    {% endfor %}
+    </div>
   </div>
+
   <div class="card">
     <h2 class="section-title mb-16">Recent Announcements</h2>
     {% for a in announcements %}
@@ -34,4 +67,111 @@
     {% empty %}<p class="text-muted">No announcements yet.</p>{% endfor %}
   </div>
 </div>
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+
+function postJSON(url) {
+  const body = new URLSearchParams({ csrfmiddlewaretoken: CSRF });
+  return fetch(url, {
+    method: 'POST', credentials: 'same-origin',
+    headers: { 'X-CSRFToken': CSRF }, body,
+  }).then(r => r.json());
+}
+
+function activateInvite(inviteId, email) {
+  const btn = document.getElementById('btn-' + inviteId);
+  btn.disabled    = true;
+  btn.textContent = 'Activating...';
+
+  postJSON(`/school-admin/invite-management/${inviteId}/activate/`)
+  .then(data => {
+    if (data.success) {
+      document.getElementById('invite-row-' + inviteId).remove();
+      checkPendingEmpty();
+
+      const noMsg = document.getElementById('no-management');
+      if (noMsg) noMsg.remove();
+
+      const list = document.getElementById('management-list');
+      const row  = document.createElement('div');
+      row.className    = 'flex-between';
+      row.id           = 'member-row-' + data.user.id;
+      row.style.cssText = 'padding:9px 0;border-bottom:1px solid var(--border);';
+      row.innerHTML = `
+        <div>
+          <span class="sub-heading">${data.user.name}</span>
+          <span class="caption" style="display:block;font-size:12px;">${data.user.email}</span>
+        </div>
+        <button class="btn btn-sm btn-danger" onclick="deleteMember(${data.user.id})">Delete</button>`;
+      list.appendChild(row);
+      updateStatCount('Management', 1);
+    } else {
+      btn.disabled    = false;
+      btn.textContent = 'Activate';
+      alert(data.error || 'Something went wrong.');
+    }
+  })
+  .catch(() => {
+    btn.disabled    = false;
+    btn.textContent = 'Activate';
+    alert('Network error. Please try again.');
+  });
+}
+
+function deleteInvite(inviteId) {
+  if (!confirm('Delete this pending invitation?')) return;
+  postJSON(`/school-admin/invite-management/${inviteId}/delete/`)
+  .then(data => {
+    if (data.success) {
+      document.getElementById('invite-row-' + inviteId).remove();
+      checkPendingEmpty();
+    } else {
+      alert(data.error || 'Could not delete invitation.');
+    }
+  })
+  .catch(() => alert('Network error. Please try again.'));
+}
+
+function deleteMember(userId) {
+  if (!confirm('Remove this management member? Their account will be deleted.')) return;
+  postJSON(`/school-admin/management/${userId}/delete/`)
+  .then(data => {
+    if (data.success) {
+      document.getElementById('member-row-' + userId).remove();
+      updateStatCount('Management', -1);
+      const list = document.getElementById('management-list');
+      if (!list.querySelector('[id^="member-row-"]')) {
+        const p = document.createElement('p');
+        p.className = 'text-muted';
+        p.id = 'no-management';
+        p.innerHTML = 'No management users yet. <a href="/school-admin/invite-management/">Invite one</a>.';
+        list.appendChild(p);
+      }
+    } else {
+      alert(data.error || 'Could not delete member.');
+    }
+  })
+  .catch(() => alert('Network error. Please try again.'));
+}
+
+function checkPendingEmpty() {
+  const remaining = document.querySelectorAll('#pending-list [id^="invite-row-"]');
+  if (remaining.length === 0) {
+    const h = document.getElementById('pending-heading');
+    if (h) h.style.display = 'none';
+  }
+}
+
+function updateStatCount(label, delta) {
+  document.querySelectorAll('.stat-card').forEach(card => {
+    if (card.querySelector('.stat-label').textContent.trim() === label) {
+      const val = card.querySelector('.stat-value');
+      val.textContent = parseInt(val.textContent) + delta;
+    }
+  });
+}
+</script>
+{% endblock %}
 {% endblock %}

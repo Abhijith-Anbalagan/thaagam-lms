@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}Add Concept — {{ course.title }}{% endblock %}
+{% block content %}
+
+<div class="flex-between mb-24">
+  <div>
+    <h1 class="page-title">Add Concept</h1>
+    <p class="text-muted">Course: <strong>{{ course.title }}</strong></p>
+  </div>
+  <a href="{% url 'superadmin_course_detail' course.pk %}" class="btn btn-ghost">← Back to Course</a>
+</div>
+
+<div class="card" style="max-width:680px;">
+  <form method="post" enctype="multipart/form-data">{% csrf_token %}
+
+    <!-- Concept Header -->
+    <div class="form-group">
+      <label class="form-label">Concept Header</label>
+      <input type="text" name="header" class="form-control"
+             placeholder="e.g. Chapter 1: Introduction to Algebra"
+             value="{{ form.header.value|default:'' }}" required>
+      {% if form.header.errors %}<div class="form-error">{{ form.header.errors.0 }}</div>{% endif %}
+    </div>
+
+    <!-- H3 Course -->
+    <div class="form-group">
+      <label class="form-label">H3 Course <span style="color:var(--text-muted);font-weight:400;">(sub-heading)</span></label>
+      <input type="text" name="h3_course" class="form-control"
+             placeholder="e.g. Variables and Expressions"
+             value="{{ form.h3_course.value|default:'' }}">
+    </div>
+
+    <hr style="margin:20px 0;border-color:var(--border);">
+
+    <!-- Upload Videos -->
+    <div class="form-group">
+      <label class="form-label">Upload Video</label>
+      <input type="file" name="videos" class="form-control" accept="video/*">
+      <p class="form-hint">Supported: mp4, mov, avi, mkv</p>
+      {% if form.videos.errors %}<div class="form-error">{{ form.videos.errors.0 }}</div>{% endif %}
+    </div>
+
+    <!-- Attach PDF -->
+    <div class="form-group">
+      <label class="form-label">Attach Course PDF</label>
+      <input type="file" name="pdf" class="form-control" accept=".pdf">
+      <p class="form-hint">Upload a PDF for this concept.</p>
+      {% if form.pdf.errors %}<div class="form-error">{{ form.pdf.errors.0 }}</div>{% endif %}
+    </div>
+
+    <hr style="margin:20px 0;border-color:var(--border);">
+
+    <!-- Quiz -->
+    <div class="form-group">
+      <label class="form-label">Quiz</label>
+      <textarea name="quiz" class="form-control" rows="4"
+                placeholder="Enter quiz questions or paste JSON...">{{ form.quiz.value|default:'' }}</textarea>
+      {% if form.quiz.errors %}<div class="form-error">{{ form.quiz.errors.0 }}</div>{% endif %}
+    </div>
+
+    <!-- Assignment -->
+    <div class="form-group">
+      <label class="form-label">Assignment</label>
+      <textarea name="assignment" class="form-control" rows="4"
+                placeholder="Describe the assignment instructions...">{{ form.assignment.value|default:'' }}</textarea>
+      {% if form.assignment.errors %}<div class="form-error">{{ form.assignment.errors.0 }}</div>{% endif %}
+    </div>
+
+    <hr style="margin:20px 0;border-color:var(--border);">
+
+    <!-- Actions -->
+    <div class="flex gap-8">
+      <button type="submit" class="btn btn-primary">Save Concept</button>
+      <a href="{% url 'superadmin_course_detail' course.pk %}" class="btn btn-ghost">Cancel</a>
+    </div>
+
+  </form>
+</div>
+
+{% endblock %}
