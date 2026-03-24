@@ -5,8 +5,7 @@
   <h1 class="page-title">Super Admin Dashboard</h1>
   <div class="flex gap-8">
     <a href="{% url 'superadmin_create_school' %}" class="btn btn-primary">+ New School</a>
-    <a href="{% url 'superadmin_create_school_admin' %}" class="btn btn-outline">+ School Admin</a>
-    <a href="{% url 'superadmin_course_create' %}" class="btn btn-ghost">+ Course</a>
+    <a href="{% url 'superadmin_course_list' %}" class="btn btn-ghost">+ Course</a>
   </div>
 </div>
 <div class="stat-grid">
@@ -34,5 +33,38 @@
     {% empty %}<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">No schools yet.</td></tr>{% endfor %}
     </tbody>
   </table></div>
+</div>
+
+<!-- Courses Section -->
+<div class="card" style="margin-top:20px;">
+  <div class="flex-between mb-16">
+    <h2 class="section-title">Courses</h2>
+    <a href="{% url 'superadmin_course_list' %}" class="btn btn-ghost btn-sm">View All / Create</a>
+  </div>
+  {% if courses %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;">
+    {% for course in courses %}
+    <div style="border:1px solid var(--border);border-radius:10px;padding:16px 18px;background:#fff;">
+      <div class="flex-between" style="margin-bottom:8px;">
+        <span style="font-size:15px;font-weight:600;color:var(--text);">{{ course.title }}</span>
+        <span class="badge {% if course.status == 'published' %}badge-success{% else %}badge-warning{% endif %}">
+          {{ course.get_status_display }}
+        </span>
+      </div>
+      {% if course.description %}
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 10px;line-height:1.5;">{{ course.description|truncatechars:60 }}</p>
+      {% endif %}
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">
+        {{ course.concepts.count }} concept{{ course.concepts.count|pluralize }}
+        &nbsp;·&nbsp;
+        {{ course.schools.count }} school{{ course.schools.count|pluralize }}
+      </div>
+      <a href="{% url 'superadmin_course_detail' course.pk %}" class="btn btn-sm btn-ghost">Open</a>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-muted" style="text-align:center;padding:24px 0;">No courses yet. <a href="{% url 'superadmin_course_list' %}">Create one</a>.</p>
+  {% endif %}
 </div>
 {% endblock %}

@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}{{ course.title }} — Concepts{% endblock %}
+{% block content %}
+
+<div class="flex-between mb-24">
+  <div>
+    <h1 class="page-title">{{ course.title }}</h1>
+    <p class="text-muted">{{ course.description }}</p>
+  </div>
+  <div class="flex gap-8">
+    <!-- Publish / Draft toggle -->
+    <form method="post" style="display:inline;">{% csrf_token %}
+      {% if course.status == 'draft' %}
+        <button type="submit" name="action" value="publish" class="btn btn-primary">Publish</button>
+      {% else %}
+        <button type="submit" name="action" value="draft" class="btn btn-outline">Move to Draft</button>
+      {% endif %}
+    </form>
+    <a href="{% url 'superadmin_concept_add' course.pk %}" class="btn btn-ghost">+ Add Concept</a>
+    <a href="{% url 'superadmin_course_list' %}" class="btn btn-ghost">← Courses</a>
+  </div>
+</div>
+
+<!-- Course meta -->
+<div class="flex gap-8 mb-24" style="flex-wrap:wrap;">
+  <span class="badge {% if course.status == 'published' %}badge-success{% else %}badge-warning{% endif %}">
+    {{ course.get_status_display }}
+  </span>
+  {% for school in course.schools.all %}
+  <span class="badge" style="background:#f0ede8;color:var(--text);">{{ school.name }}</span>
+  {% endfor %}
+</div>
+
+<!-- Concepts -->
+{% if concepts %}
+<div style="display:flex;flex-direction:column;gap:16px;">
+  {% for concept in concepts %}
+  <div class="card">
+    <div class="flex-between mb-12">
+      <div>
+        <h2 style="font-size:17px;font-weight:600;color:var(--text);margin:0 0 4px;">{{ concept.header }}</h2>
+        {% if concept.h3_course %}
+        <h3 style="font-size:14px;font-weight:500;color:var(--text-muted);margin:0;">{{ concept.h3_course }}</h3>
+        {% endif %}
+      </div>
+      <span style="font-size:12px;color:var(--text-muted);">Concept {{ forloop.counter }}</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;font-size:13px;">
+      {% if concept.videos %}
+      <div style="background:#f7f6f2;border-radius:8px;padding:10px 14px;">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Video</div>
+        <a href="{{ concept.videos.url }}" target="_blank" style="color:#4c68d7;font-weight:500;">▶ Watch</a>
+      </div>
+      {% endif %}
+      {% if concept.pdf %}
+      <div style="background:#f7f6f2;border-radius:8px;padding:10px 14px;">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">PDF</div>
+        <a href="{{ concept.pdf.url }}" target="_blank" style="color:#4c68d7;font-weight:500;">📄 Open</a>
+      </div>
+      {% endif %}
+      {% if concept.quiz %}
+      <div style="background:#f7f6f2;border-radius:8px;padding:10px 14px;">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Quiz</div>
+        <span style="color:var(--text);">{{ concept.quiz|truncatechars:40 }}</span>
+      </div>
+      {% endif %}
+      {% if concept.assignment %}
+      <div style="background:#f7f6f2;border-radius:8px;padding:10px 14px;">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Assignment</div>
+        <span style="color:var(--text);">{{ concept.assignment|truncatechars:40 }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:48px;color:var(--text-muted);">
+  <p style="font-size:15px;margin:0 0 16px;">No concepts yet.</p>
+  <a href="{% url 'superadmin_concept_add' course.pk %}" class="btn btn-primary">+ Add First Concept</a>
+</div>
+{% endif %}
+
+{% endblock %}
