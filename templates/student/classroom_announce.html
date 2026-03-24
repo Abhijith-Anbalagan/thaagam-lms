@@ -1,14 +1,35 @@
-{% extends 'base.html' %}
-{% block title %}Announcements — {{ classroom.name }}{% endblock %}
-{% block content %}
-{% include 'shared/classroom_tabs.html' with role='student' classroom=classroom active_tab='announcements' %}
-{% for a in announcements %}
-<div class="announcement-card {% if a.is_pinned %}pinned{% endif %}">
-  {% if a.is_pinned %}<span class="badge badge-blue mb-8" style="display:inline-block;">📌 Pinned</span>{% endif %}
-  <div class="announcement-title">{{ a.title }}</div>
-  <div class="announcement-body mt-8">{{ a.body }}</div>
-  {% if a.meet_link %}<a href="{{ a.meet_link }}" target="_blank" class="meet-link">🎥 Join Live Class</a>{% endif %}
-  <div class="announcement-meta">{{ a.posted_by.get_full_name|default:a.posted_by.username }} · {{ a.created_at|date:"M d, Y · H:i" }}</div>
+{% extends 'student/classroom_base.html' %}
+
+{% block classroom_content %}
+<h2 class="section-title mb-20">Announcements</h2>
+
+{% if announcements %}
+<div style="display:flex;flex-direction:column;gap:16px;">
+  {% for announcement in announcements %}
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:24px;{% if announcement.is_pinned %}border-left:4px solid var(--brand-blue);{% endif %}">
+    <div class="flex-between mb-12">
+      <h3 class="card-heading">{{ announcement.title }}</h3>
+      {% if announcement.is_pinned %}
+        <span class="badge badge-blue">📌 Pinned</span>
+      {% endif %}
+    </div>
+    
+    <div class="caption mb-12">
+      Posted by {{ announcement.posted_by.get_full_name|default:announcement.posted_by.username }} · 
+      {{ announcement.created_at|date:"M d, Y g:i A" }}
+    </div>
+    
+    <p style="white-space:pre-wrap;margin-bottom:16px;">{{ announcement.body }}</p>
+    
+    {% if announcement.meet_link %}
+    <a href="{{ announcement.meet_link }}" target="_blank" class="btn btn-sm btn-primary">🎥 Join Meeting</a>
+    {% endif %}
+  </div>
+  {% endfor %}
 </div>
-{% empty %}<div class="empty-state"><p>No announcements yet.</p></div>{% endfor %}
+{% else %}
+<div class="empty-state">
+  <p>No announcements posted yet.</p>
+</div>
+{% endif %}
 {% endblock %}

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}All Announcements{% endblock %}
+
+{% block content %}
+<div style="max-width:900px;margin:0 auto;">
+  <div class="flex-between mb-24">
+    <h1 class="page-title">All Announcements</h1>
+    <a href="{% url 'students:dashboard' %}" class="btn btn-ghost">← Back to Dashboard</a>
+  </div>
+
+  {% if announcements %}
+  <div style="display:flex;flex-direction:column;gap:16px;">
+    {% for a in announcements %}
+    <div class="announcement-card {% if a.is_pinned %}pinned{% endif %}">
+      <div class="flex-between mb-8">
+        <div>
+          {% if a.is_pinned %}
+            <span class="badge badge-blue mb-4" style="display:inline-block;">📌 Pinned</span>
+          {% endif %}
+          <div class="announcement-title">{{ a.title }}</div>
+        </div>
+        {% if a.classroom %}
+          <span class="badge badge-muted">{{ a.classroom.name }}</span>
+        {% else %}
+          <span class="badge" style="background:var(--brand-blue);color:#fff;">School-Wide</span>
+        {% endif %}
+      </div>
+
+      <div class="announcement-body">{{ a.body }}</div>
+
+      {% if a.meet_link %}
+      <a href="{{ a.meet_link }}" target="_blank" class="meet-link">🎥 Join Meeting</a>
+      {% endif %}
+
+      <div class="announcement-meta">
+        Posted by {{ a.posted_by.get_full_name|default:a.posted_by.username }} · 
+        {{ a.created_at|date:"M d, Y · H:i" }}
+        {% if a.classroom %}
+          · <a href="{% url 'students:classroom_announce' a.classroom.id %}" style="color:var(--brand-blue);">View in Classroom</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p>No announcements yet.</p>
+    <p class="caption">Your teachers will post updates here.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

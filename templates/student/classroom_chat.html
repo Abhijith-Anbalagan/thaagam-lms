@@ -1,32 +1,41 @@
-{% extends 'base.html' %}
-{% block title %}Chat — {{ classroom.name }}{% endblock %}
-{% block content %}
+{% extends 'student/classroom_base.html' %}
 {% load static %}
-{% include 'shared/classroom_tabs.html' with role='student' classroom=classroom active_tab='chat' %}
-<div class="chat-layout" style="grid-template-columns:1fr;">
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/classroom.css' %}">{% endblock %}
+{% block title %}Chat — {{ classroom.name }}{% endblock %}
+
+{% block classroom_content %}
+<div class="chat-layout">
   <div class="chat-main">
     <div class="chat-header">
-      💬 Chat with {{ teacher.get_full_name|default:teacher.username }}
-      <span class="role-badge" style="background:#0f6e56;margin-left:8px;">Teacher</span>
+      💬 Chat with
+      <strong>{{ teacher.get_full_name|default:teacher.username }}</strong>
+      <span class="role-badge" style="--role-color:#0f6e56;margin-left:8px;">Teacher</span>
     </div>
+
     <div class="chat-messages" id="chat-messages">
       {% for msg in messages %}
-      <div><div class="bubble {% if msg.sender == request.user %}sent{% else %}recv{% endif %}">
-        {{ msg.body }}<div class="bubble-time">{{ msg.created_at|date:"H:i" }}</div>
-      </div></div>
+      <div>
+        <div class="bubble {% if msg.sender == request.user %}sent{% else %}recv{% endif %}">
+          {{ msg.body }}
+          <div class="bubble-time">{{ msg.created_at|date:"H:i" }}</div>
+        </div>
+      </div>
       {% empty %}
-      <div style="text-align:center;color:var(--text-muted);padding:48px 24px;">
-        <p style="margin-bottom:8px;">No messages yet.</p>
+      <div class="chat-empty">
+        <p>No messages yet.</p>
         <p class="caption">Send a message to start a conversation with your teacher.</p>
       </div>
       {% endfor %}
     </div>
+
     <div class="chat-footer">
-      <input type="text" id="chat-input" class="form-control" placeholder="Ask your teacher something…" autocomplete="off">
+      <input type="text" id="chat-input" class="form-control"
+             placeholder="Ask your teacher something…" autocomplete="off">
       <button id="chat-send" class="btn btn-primary">Send</button>
     </div>
   </div>
 </div>
+
 <script>
   window.CHAT_CLASSROOM_ID = {{ classroom.pk }};
   window.CHAT_MY_ID        = {{ request.user.pk }};

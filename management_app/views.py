@@ -44,3 +44,9 @@ def teachers_list(request):
     my_invites = request.user.sent_invites.filter(role='teacher', accepted=True).values_list('email', flat=True)
     teachers   = User.objects.filter(email__in=my_invites, role='teacher')
     return render(request, 'management/teachers_list.html', {'teachers': teachers})
+
+
+@role_required('management')
+def announcements(request):
+    """Redirect to the shared school-wide announcements page."""
+    return redirect('announcements_school_wide')

@@ -4,45 +4,57 @@
 {% block content %}
 {% load static %}
 {% include 'shared/classroom_tabs.html' with role='student' classroom=classroom active_tab='grades' %}
-<div class="stat-grid mb-24">
-  <div class="stat-card"><div class="stat-value mono">{{ total_score }}/{{ total_max }}</div><div class="stat-label">Total Score</div></div>
-  <div class="stat-card"><div class="stat-value mono">{% if overall_pct is not None %}{{ overall_pct }}%{% else %}—{% endif %}</div><div class="stat-label">Overall %</div></div>
-  <div class="stat-card"><div class="stat-value mono">
-    {% if overall_pct is not None %}{% if overall_pct >= 90 %}A{% elif overall_pct >= 80 %}B{% elif overall_pct >= 70 %}C{% elif overall_pct >= 60 %}D{% else %}F{% endif %}{% else %}—{% endif %}
-  </div><div class="stat-label">Letter Grade</div></div>
-  <div class="stat-card"><div class="stat-value">{{ grade_data|length }}</div><div class="stat-label">Assignments</div></div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px;">
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:20px;">
+    <div class="overline mb-8">Total Submissions</div>
+    <div class="score-big">{{ total_submissions }}</div>
+  </div>
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:20px;">
+    <div class="overline mb-8">Graded</div>
+    <div class="score-big">{{ graded_count }}</div>
+  </div>
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:20px;">
+    <div class="overline mb-8">Average</div>
+    <div class="score-big">{{ avg_percentage }}%</div>
+  </div>
 </div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-  <div class="card">
-    <h2 class="section-title mb-16">Assignment Scores</h2>
-    {% for item in grade_data %}{% with a=item.assignment sub=item.submission %}
-    <div class="grade-row">
-      <div style="flex:1;"><div class="sub-heading">{{ a.title }}</div>
-        {% if sub and sub.score is not None %}
-        <div class="progress-wrap mt-8"><div class="progress-bar {% if sub.percentage >= 70 %}success{% elif sub.percentage < 50 %}danger{% endif %}" style="width:{{ sub.percentage }}%"></div></div>
-        <div class="caption mt-4">{{ sub.percentage }}% · {{ sub.letter_grade }}{% if sub.is_late %} · <span style="color:var(--danger);">Late</span>{% endif %}</div>
+
+<div class="card">
+  <h2 class="section-title mb-16">Assignment Grades</h2>
+  {% if submissions %}
+  <div style="display:flex;flex-direction:column;gap:12px;">
+    {% for sub in submissions %}
+    <div style="padding:16px;border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;justify-content:space-between;align-items:center;">
+      <div style="flex:1;">
+        <div class="sub-heading mb-4">{{ sub.assignment.title }}</div>
+        <div class="caption">Submitted: {{ sub.submitted_at|date:"M d, Y g:i A" }}{% if sub.is_late %} · <span style="color:var(--danger);">Late</span>{% endif %}</div>
+        {% if sub.score is not None %}
+          <div class="progress-wrap mt-8" style="max-width:300px;">
+            <div class="progress-bar {% if sub.percentage >= 70 %}success{% elif sub.percentage < 50 %}danger{% endif %}" style="width:{{ sub.percentage }}%"></div>
+          </div>
         {% endif %}
       </div>
-      <div class="mono" style="font-weight:600;margin-left:16px;">
-        {% if sub and sub.score is not None %}{{ sub.score }}/{{ a.max_score }}
-        {% elif sub %}<span class="badge badge-blue">Submitted</span>
-        {% elif a.is_overdue %}<span class="badge badge-danger">Missing</span>
-        {% else %}<span class="badge badge-warning">Pending</span>{% endif %}
+      <div style="text-align:right;">
+        {% if sub.score is not None %}
+          <div class="score-big" style="font-size:20px;">{{ sub.score }}/{{ sub.assignment.max_score }}</div>
+          <div class="caption">{{ sub.percentage }}% ({{ sub.letter_grade }})</div>
+          {% if sub.feedback %}
+            <div class="mt-8">
+              <span class="badge badge-blue">Has Feedback</span>
+            </div>
+          {% endif %}
+        {% else %}
+          <span class="badge badge-warning">Pending Review</span>
+        {% endif %}
       </div>
     </div>
-    {% endwith %}{% empty %}<p class="text-muted">No assignments yet.</p>{% endfor %}
+    {% endfor %}
   </div>
-  <div class="card">
-    <h2 class="section-title mb-16">Score Chart</h2>
-    {% if chart_labels %}<canvas id="gradeChart" height="260"></canvas>{% else %}<div class="empty-state"><p>No graded assignments yet.</p></div>{% endif %}
+  {% else %}
+  <div class="empty-state">
+    <p>No submissions yet.</p>
   </div>
+  {% endif %}
 </div>
-{% if chart_labels %}
-<script>
-  window.GRADE_LABELS = {{ chart_labels|safe }};
-  window.GRADE_SCORES = {{ chart_scores|safe }};
-  window.GRADE_MAX    = {{ chart_max|safe }};
-</script>
-<script src="{% static 'js/grade_chart.js' %}"></script>
-{% endif %}
 {% endblock %}

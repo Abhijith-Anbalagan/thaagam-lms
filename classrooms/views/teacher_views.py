@@ -142,21 +142,33 @@ def classroom_grade(request, classroom_id):
 def classroom_chat(request, classroom_id):
     classroom = _classroom(request, classroom_id)
     from chat.models import Message
-    from accounts.models import User
-    student_ids      = Message.objects.filter(classroom=classroom).values_list('sender_id', flat=True).distinct()
-    students_chatted = User.objects.filter(pk__in=student_ids, role='student')
-    selected         = None
-    chat_messages    = []
+    # Show all enrolled students in sidebar, not just those who messaged
+    all_students = classroom.students.all().order_by('first_name', 'last_name', 'username')
+    selected     = None
+    chat_messages = []
     sid = request.GET.get('student')
     if sid:
-        selected      = get_object_or_404(User, pk=sid)
+        from accounts.models import User
+        selected      = get_object_or_404(User, pk=sid, role='student')
         chat_messages = Message.objects.filter(
             classroom=classroom,
             sender__in=[request.user, selected],
             receiver__in=[request.user, selected],
         ).order_by('created_at')
         chat_messages.filter(receiver=request.user, is_read=False).update(is_read=True)
+    # Annotate unread counts per student
+    from django.db.models import Count, Q
+    unread_counts = {
+        row['sender_id']: row['cnt']
+        for row in Message.objects.filter(
+            classroom=classroom,
+            receiver=request.user,
+            is_read=False,
+        ).values('sender_id').annotate(cnt=Count('id'))
+    }
+    for student in all_students:
+        student.unread = unread_counts.get(student.pk, 0)
     return render(request, 'teacher/classroom_chat.html', {
-        'classroom': classroom, 'students_with_chats': students_chatted,
+        'classroom': classroom, 'students_with_chats': all_students,
         'selected_student': selected, 'messages': chat_messages, 'active_tab': 'chat',
     })

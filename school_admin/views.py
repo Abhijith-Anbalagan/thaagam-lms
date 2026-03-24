@@ -138,3 +138,9 @@ def reports(request):
     return render(request, 'school_admin/reports.html', {
         'school': school, 'classrooms': classrooms, 'avg_score': avg_score,
     })
+
+
+@role_required('school_admin')
+def announcements(request):
+    """Redirect to the shared school-wide announcements page."""
+    return redirect('announcements_school_wide')

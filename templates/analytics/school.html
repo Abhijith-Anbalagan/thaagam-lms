@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}School Analytics — {{ school.name }}{% endblock %}
+
+{% block content %}
+<div style="max-width:1100px;margin:0 auto;">
+  <div class="flex-between mb-24">
+    <h1 class="page-title">School Analytics</h1>
+    <a href="{{ user.get_dashboard_url }}" class="btn btn-ghost">← Dashboard</a>
+  </div>
+  <div class="caption mb-24">{{ school.name }}</div>
+
+  <!-- Overall Stats -->
+  <div class="stat-grid mb-24">
+    <div class="stat-card">
+      <div class="stat-value">{{ total_teachers }}</div>
+      <div class="stat-label">Teachers</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ total_students }}</div>
+      <div class="stat-label">Students</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ total_classrooms }}</div>
+      <div class="stat-label">Classrooms</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value mono">{% if overall_avg %}{{ overall_avg }}%{% else %}—{% endif %}</div>
+      <div class="stat-label">School Avg Score</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;">
+    <!-- Avg Score Chart -->
+    <div class="card">
+      <h2 class="section-title mb-16">Avg Score by Classroom</h2>
+      {% if chart_labels != '[]' %}
+      <canvas id="gradeChart" height="220"></canvas>
+      {% else %}
+      <div class="empty-state"><p>No graded submissions yet.</p></div>
+      {% endif %}
+    </div>
+
+    <!-- Classroom Table -->
+    <div class="card">
+      <h2 class="section-title mb-16">Classroom Overview</h2>
+      {% if classroom_data %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Classroom</th>
+              <th>Teacher</th>
+              <th>Students</th>
+              <th>Assignments</th>
+              <th>Avg Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in classroom_data %}
+            <tr>
+              <td><strong>{{ row.classroom.name }}</strong></td>
+              <td>{{ row.classroom.teacher.get_full_name|default:row.classroom.teacher.username }}</td>
+              <td>{{ row.total_students }}</td>
+              <td>{{ row.total_assignments }}</td>
+              <td class="mono">
+                {% if row.avg_score %}
+                  <span class="{% if row.avg_score >= 70 %}badge badge-success{% elif row.avg_score < 50 %}badge badge-danger{% else %}badge badge-warning{% endif %}">
+                    {{ row.avg_score }}%
+                  </span>
+                {% else %}—{% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" style="text-align:center;color:var(--text-muted);">No classrooms yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><p>No classrooms yet.</p></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% if chart_labels != '[]' %}
+<script>
+  window.GRADE_LABELS = {{ chart_labels|safe }};
+  window.GRADE_SCORES = {{ chart_scores|safe }};
+  window.GRADE_MAX    = null;
+</script>
+<script src="{% static 'js/grade_chart.js' %}"></script>
+{% endif %}
+{% endblock %}

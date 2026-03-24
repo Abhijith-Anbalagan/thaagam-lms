@@ -3,7 +3,11 @@
 {% block content %}
 <div class="flex-between mb-24">
   <h1 class="page-title">Management Dashboard</h1>
-  <a href="{% url 'management_invite_teacher' %}" class="btn btn-primary">+ Invite Teacher</a>
+  <div style="display:flex;gap:8px;">
+    <a href="{% url 'school_analytics' %}" class="btn btn-outline">Analytics</a>
+    <a href="{% url 'management_announcements' %}" class="btn btn-outline">Announcements</a>
+    <a href="{% url 'management_invite_teacher' %}" class="btn btn-primary">+ Invite Teacher</a>
+  </div>
 </div>
 <div class="stat-grid">
   <div class="stat-card"><div class="stat-value">{{ total_teachers }}</div><div class="stat-label">My Teachers</div></div>

@@ -4,6 +4,31 @@
    grade table, submission cards
    ═══════════════════════════════════════════════ */
 
+/* ── Classroom Tabs ── */
+.tab {
+  display: inline-block;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: color .15s, border-color .15s;
+}
+.tab:hover {
+  color: var(--brand-blue);
+  text-decoration: none;
+}
+.tab-active {
+  display: inline-block;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-blue);
+  text-decoration: none;
+  border-bottom: 2px solid var(--brand-blue);
+}
+
 /* ── Content item row ── */
 .content-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
 .content-item:last-child { border-bottom: none; }
@@ -43,3 +68,134 @@
 .countdown.urgent { color: var(--danger); }
 .countdown.soon   { color: var(--warning); }
 .countdown.ok     { color: var(--success); }
+
+/* ── Chat layout ── */
+.chat-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 0;
+  height: calc(100vh - 200px);
+  min-height: 480px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--card-bg);
+}
+
+/* Student view: no sidebar */
+.chat-layout.no-sidebar {
+  grid-template-columns: 1fr;
+}
+
+/* ── Chat sidebar (teacher view) ── */
+.chat-sidebar {
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.chat-sidebar-heading {
+  padding: 14px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.chat-student-item {
+  display: block;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-body);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: background .12s;
+}
+.chat-student-item:hover { background: var(--page-bg); text-decoration: none; }
+.chat-student-item.active { background: var(--brand-blue-light); color: var(--brand-blue); }
+
+/* ── Chat main panel ── */
+.chat-main {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.chat-header {
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--brand-dark);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.chat-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 48px 24px;
+  margin: auto;
+}
+.chat-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  background: var(--card-bg);
+}
+.chat-footer .form-control {
+  flex: 1;
+}
+
+/* ── Chat bubbles ── */
+.bubble {
+  display: inline-block;
+  max-width: 68%;
+  padding: 9px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: break-word;
+  position: relative;
+}
+.bubble.sent {
+  background: var(--brand-blue);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+  margin-left: auto;
+}
+.bubble.recv {
+  background: var(--page-bg);
+  color: var(--text-body);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+.bubble-time {
+  font-size: 10px;
+  opacity: .65;
+  margin-top: 4px;
+  text-align: right;
+}
+
+/* Align sent bubbles to the right */
+div:has(> .bubble.sent) {
+  display: flex;
+  justify-content: flex-end;
+}
+div:has(> .bubble.recv) {
+  display: flex;
+  justify-content: flex-start;
+}

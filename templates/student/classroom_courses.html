@@ -1,23 +1,36 @@
-{% extends 'base.html' %}
-{% block extra_css %}<link rel="stylesheet" href="{% load static %}{% static 'css/classroom.css' %}">{% endblock %}
-{% block title %}Courses — {{ classroom.name }}{% endblock %}
-{% block content %}
-{% include 'shared/classroom_tabs.html' with role='student' classroom=classroom active_tab='courses' %}
-{% for unit_name, contents in units.items %}
-<div class="card mb-16">
-  <div class="unit-header">📂 {{ unit_name }}</div>
-  {% for c in contents %}
-  <div class="content-item">
-    <div class="content-info">
-      <div class="content-type-icon {% if c.content_type == 'video' %}icon-video{% elif c.content_type == 'pdf' %}icon-pdf{% else %}icon-note{% endif %}">
-        {% if c.content_type == 'video' %}🎬{% elif c.content_type == 'pdf' %}📄{% else %}📝{% endif %}
+{% extends 'student/classroom_base.html' %}
+
+{% block classroom_content %}
+<h2 class="section-title mb-20">Course Materials</h2>
+
+{% if units %}
+  {% for unit_name, unit_courses in units.items %}
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:24px;margin-bottom:20px;">
+    <h3 class="card-heading mb-16">{{ unit_name }}</h3>
+    <div style="display:grid;gap:12px;">
+      {% for course in unit_courses %}
+      <div style="padding:16px;border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div class="sub-heading mb-4">{{ course.title }}</div>
+          <span class="badge badge-blue">{{ course.get_content_type_display }}</span>
+        </div>
+        <div>
+          {% if course.content_type == 'video' and course.video_url %}
+            <a href="{{ course.video_url }}" class="btn btn-sm btn-primary" target="_blank">Watch Video</a>
+          {% elif course.file %}
+            <a href="{{ course.file.url }}" class="btn btn-sm btn-primary" target="_blank">View Material</a>
+          {% else %}
+            <span class="text-muted">No file available</span>
+          {% endif %}
+        </div>
       </div>
-      <div><div class="sub-heading">{{ c.title }}</div><div class="caption">{{ c.get_content_type_display }}</div></div>
+      {% endfor %}
     </div>
-    {% if c.video_url %}<a href="{{ c.video_url }}" target="_blank" class="btn btn-sm btn-primary">▶ Watch</a>
-    {% elif c.file %}<a href="{{ c.file.url }}" target="_blank" class="btn btn-sm btn-outline">⬇ Download</a>{% endif %}
   </div>
   {% endfor %}
+{% else %}
+<div class="empty-state">
+  <p>No course materials uploaded yet.</p>
 </div>
-{% empty %}<div class="empty-state"><p>No content uploaded yet.</p></div>{% endfor %}
+{% endif %}
 {% endblock %}
