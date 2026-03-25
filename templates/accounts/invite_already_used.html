@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">EduPlatform</div>
+    <p class="auth-subtitle">
+      An account already exists for <strong>{{ email }}</strong>.
+    </p>
+    <a href="/login/" class="btn btn-primary btn-block">Login instead</a>
+  </div>
+</div>
+{% endblock %}
