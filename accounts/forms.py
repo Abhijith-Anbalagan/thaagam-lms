@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth import authenticate
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from .models import User
 
 
@@ -111,22 +111,5 @@ class ProfileForm(forms.ModelForm):
         fields = ['first_name', 'last_name', 'email', 'phone', 'avatar']
 
 
-# ─── Forgot / Reset Password ──────────────────────────────────────────────────
-
-class ForgotPasswordForm(forms.Form):
-    email = forms.EmailField(label='Email Address')
-
-
-
-class ResetPasswordForm(forms.Form):
-    password1 = forms.CharField(widget=forms.PasswordInput, label='New Password')
-    password2 = forms.CharField(widget=forms.PasswordInput, label='Confirm New Password')
-
-    def clean(self):
-        cd = super().clean()
-        if cd.get('password1') != cd.get('password2'):
-            raise forms.ValidationError('Passwords do not match.')
-        return cd
-    
-
-
+class PasswordChangeCustomForm(PasswordChangeForm):
+    pass

@@ -4,17 +4,23 @@ from django.utils import timezone
 
 class Assignment(models.Model):
     classroom   = models.ForeignKey(
-        'classrooms.Classroom', on_delete=models.CASCADE, related_name='assignments'
+        'classrooms.Classroom',
+        on_delete=models.CASCADE,
+        related_name='assignments',
     )
     title       = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     due_date    = models.DateTimeField()
     max_score   = models.PositiveIntegerField(default=20)
-    file        = models.FileField(upload_to='assignment_files/', blank=True, null=True)
+    file        = models.FileField(
+        upload_to='assignment_files/', blank=True, null=True,
+        help_text='Optional attachment (question paper, instructions, etc.)'
+    )
     created_at  = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering  = ['-created_at']
+        db_table  = 'assignments_assignment'   # ← locked — do NOT change
 
     def __str__(self):
         return f'{self.title} — {self.classroom.name}'
@@ -23,10 +29,21 @@ class Assignment(models.Model):
     def is_overdue(self):
         return timezone.now() > self.due_date
 
+    @property
+    def time_remaining(self):
+        delta = self.due_date - timezone.now()
+        if delta.total_seconds() <= 0:
+            return None
+        return delta
+
 
 class Submission(models.Model):
-    assignment   = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name='submissions')
-    student      = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='submissions')
+    assignment   = models.ForeignKey(
+        Assignment, on_delete=models.CASCADE, related_name='submissions'
+    )
+    student      = models.ForeignKey(
+        'accounts.User', on_delete=models.CASCADE, related_name='submissions'
+    )
     file         = models.FileField(upload_to='submissions/')
     submitted_at = models.DateTimeField(auto_now_add=True)
     score        = models.PositiveIntegerField(null=True, blank=True)
@@ -34,6 +51,8 @@ class Submission(models.Model):
 
     class Meta:
         unique_together = ['assignment', 'student']
+        ordering        = ['submitted_at']
+        db_table        = 'assignments_submission'   # ← locked — do NOT change
 
     def __str__(self):
         return f'{self.student.username} → {self.assignment.title}'
@@ -44,7 +63,7 @@ class Submission(models.Model):
 
     @property
     def percentage(self):
-        if self.score is not None and self.assignment.max_score:
+        if self.score is not None and self.assignment.max_score > 0:
             return round((self.score / self.assignment.max_score) * 100, 1)
         return None
 

@@ -7,6 +7,14 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load .env file
+_env_path = BASE_DIR / '.env'
+if _env_path.exists():
+    for _line in _env_path.read_text().splitlines():
+        if '=' in _line and not _line.startswith('#'):
+            _k, _v = _line.split('=', 1)
+            os.environ.setdefault(_k.strip(), _v.strip())
+
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-in-production')
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = ['*']
@@ -111,11 +119,13 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/login/'
 LOGOUT_REDIRECT_URL = '/login/'
 
-# Email
-EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST          = 'smtp.gmail.com'
-EMAIL_PORT          = 587
-EMAIL_USE_TLS       = True
-EMAIL_HOST_USER     = os.getenv('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL  = f'EduPlatform <{os.getenv("EMAIL_HOST_USER")}>'
+EMAIL_BACKEND     = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST        = 'smtp.gmail.com'
+EMAIL_PORT        = 587
+EMAIL_USE_TLS     = True
+EMAIL_HOST_USER     = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL  = f'EduPlatform <{os.environ.get("EMAIL_HOST_USER", "noreply@eduplatform.com")}>'
+
+# Base URL used in emails — change to your real domain in production
+SITE_URL = os.environ.get('SITE_URL', 'http://127.0.0.1:8000')

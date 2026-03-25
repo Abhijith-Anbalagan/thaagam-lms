@@ -1,6 +1,6 @@
 from django.forms import ValidationError
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth.password_validation import validate_password
@@ -10,11 +10,8 @@ from datetime import timedelta
 import uuid
 from classrooms.models import Classroom
 from .models import User, Invitation
-from .emails import send_verification_email, send_password_reset_email  # ✅ centralised email helpers
-from .forms import (
-    SignupForm, LoginForm, AcceptInviteForm, ProfileForm,
-    ForgotPasswordForm, ResetPasswordForm,
-)
+
+from .forms import SignupForm, LoginForm, AcceptInviteForm, ProfileForm, PasswordChangeCustomForm
 
 
 # ─── Signup ───────────────────────────────────────────────────────────────────
@@ -246,37 +243,17 @@ def profile_view(request):
     form = ProfileForm(request.POST or None, request.FILES or None, instance=request.user)
     if request.method == 'POST' and form.is_valid():
         form.save()
-        messages.success(request, 'Profile updated.')
+        messages.success(request, 'Profile updated successfully.')
         return redirect('profile')
     return render(request, 'shared/profile_settings.html', {'form': form})
 
 
-# ─── Resend Verification ──────────────────────────────────────────────────────
-
-def resend_verification_view(request):
-    if request.method == 'POST':
-        email = request.POST.get('email', '').strip()
-    elif request.method == 'GET':
-        email = request.GET.get('email', '').strip()
-    else:
-        return redirect('signup')
-
-    if email:
-        try:
-            user = User.objects.get(email__iexact=email, is_active=False, email_verified=False)
-            user.email_verification_token      = uuid.uuid4()
-            user.email_verification_expires_at = timezone.now() + timedelta(hours=24)
-            user.save()
-
-            verification_url = request.build_absolute_uri(
-                reverse('verify_email', args=[user.email_verification_token])
-            )
-            send_verification_email(user, verification_url)  # ✅ uses helper
-
-        except User.DoesNotExist:
-            pass  # Silently succeed — don't reveal whether account exists
-
-    return render(request, 'accounts/email_verification_sent.html', {
-        'email':  email,
-        'resent': True,
-    })
+@login_required
+def password_change_view(request):
+    form = PasswordChangeCustomForm(request.user, request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        user = form.save()
+        update_session_auth_hash(request, user)  # keep user logged in
+        messages.success(request, 'Password changed successfully.')
+        return redirect('profile')
+    return render(request, 'shared/profile_settings.html', {'form': request.user, 'pw_form': form, 'show_pw': True})
