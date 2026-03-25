@@ -153,6 +153,17 @@ def create_classroom(request):
     })
 
 
+# ── All Announcements ────────────────────────────────────────────────────────
+
+@role_required('teacher')
+def teacher_announcements(request):
+    from announcements.models import Announcement
+    announcements = Announcement.objects.filter(
+        posted_by=request.user
+    ).select_related('classroom').order_by('-created_at')
+    return render(request, 'teacher/announcements.html', {'announcements': announcements})
+
+
 # ── Post Announcement (dashboard button) ─────────────────────────────────────
 
 @role_required('teacher')
@@ -398,8 +409,8 @@ def my_classrooms(request):
 def my_learning(request):
     from superadmin.models import GlobalCourse
     courses = GlobalCourse.objects.filter(
-        schools=request.user.school, status='published'
-    ).prefetch_related('concepts')
+        school=request.user.school, status='published'
+    )
     return render(request, 'teacher/my_learning.html', {'courses': courses})
 
 

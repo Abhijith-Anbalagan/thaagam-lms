@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--brand:#4c68d7;--brand-dark:#3a54c0;--brand-soft:#eef1fb;--dark:#1a1f36;--page-bg:#f4f5f9;--card-bg:#fff;--border:#e8e8ec;--text-1:#1a1f36;--text-2:#5a5f7a;--text-3:#9496a8;--teacher:#0f6e56;--teacher-bg:#e1f5ee;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--shadow-sm:0 1px 4px rgba(26,31,54,.06);--shadow-md:0 4px 20px rgba(26,31,54,.10);--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;--nav-w:252px;--topbar-h:64px}
+:root{--brand:#4c68d7;--brand-dark:#3a54c0;--brand-soft:#eef1fb;--dark:#1a1f36;--page-bg:#f4f5f9;--card-bg:#fff;--border:#e8e8ec;--text-1:#1a1f36;--text-2:#5a5f7a;--text-3:#9496a8;--teacher:#0f6e56;--teacher-bg:#e1f5ee;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--shadow-sm:0 1px 4px rgba(26,31,54,.06);--shadow-md:0 4px 20px rgba(26,31,54,.10);--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;--nav-w:252px;--topbar-h:36.64px}
 html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);color:var(--text-1);font-size:14px;line-height:1.6;display:flex}
 .sidebar{width:var(--nav-w);min-height:100vh;background:var(--dark);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:200;box-shadow:2px 0 16px rgba(0,0,0,.18)}
 .sidebar-logo{padding:22px 20px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.07);text-decoration:none}
@@ -88,7 +88,6 @@ html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);col
 <div class="main">
   <header class="topbar">
     <div style="flex:1"></div>
-    <div class="search-wrap"><div class="search-box"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--text-3);flex-shrink:0"><circle cx="11" cy="11" r="8" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round"/></svg><input type="text" placeholder="Search students, classrooms, courses…" autocomplete="off"/></div></div>
     <div class="topbar-profile">
       <div class="topbar-av" id="profileBtn">{{ request.user.get_full_name|slice:":2"|upper }}</div>
       <div class="profile-dropdown" id="profileDropdown">
