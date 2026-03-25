@@ -1,45 +1,71 @@
+from django.forms import ValidationError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.auth.password_validation import validate_password
+from django.urls import reverse
+from django.utils import timezone
+from datetime import timedelta
+import uuid
+from classrooms.models import Classroom
 from .models import User, Invitation
 
 from .forms import SignupForm, LoginForm, AcceptInviteForm, ProfileForm, PasswordChangeCustomForm
 
 
+# ─── Signup ───────────────────────────────────────────────────────────────────
+
 def signup_view(request):
     if request.user.is_authenticated:
         return redirect(request.user.get_dashboard_url())
+
     form = SignupForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
-        user = form.save()
-        login(request, user)
-        return redirect('/public-dashboard/')
+        user = form.save(commit=False)
+        user.email_verification_token      = uuid.uuid4()
+        user.email_verification_expires_at = timezone.now() + timedelta(hours=24)
+        user.save()
+
+        verification_url = request.build_absolute_uri(
+            reverse('verify_email', args=[user.email_verification_token])
+        )
+        send_verification_email(user, verification_url)  # ✅ uses helper
+
+        return render(request, 'accounts/email_verification_sent.html', {'email': user.email})
+
     return render(request, 'accounts/signup.html', {'form': form})
 
+
+# ─── Login ────────────────────────────────────────────────────────────────────
 
 def login_view(request):
     if request.user.is_authenticated:
         return redirect(request.user.get_dashboard_url())
-    form = LoginForm(request, data=request.POST or None)
+
+    form = LoginForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         user = form.get_user()
         login(request, user)
         return redirect(user.get_dashboard_url())
+
     return render(request, 'accounts/login.html', {'form': form})
 
 
+# ─── Logout ───────────────────────────────────────────────────────────────────
+
 def logout_view(request):
     logout(request)
-    return redirect('/login/')
+    return redirect(reverse('login'))
 
+
+# ─── Public Dashboard ─────────────────────────────────────────────────────────
 
 @login_required
 def public_dashboard(request):
     error = None
     if request.method == 'POST':
         code = request.POST.get('class_code', '').strip().upper()
-        from classrooms.models import Classroom
         try:
             classroom = Classroom.objects.get(code=code)
             classroom.students.add(request.user)
@@ -53,36 +79,164 @@ def public_dashboard(request):
     return render(request, 'accounts/public_dashboard.html', {'error': error})
 
 
+# ─── Accept Invite ────────────────────────────────────────────────────────────
+
+
 def accept_invite_view(request, token):
-    invitation = get_object_or_404(Invitation, token=token)
-    if not invitation.is_valid:
-        return render(request, 'accounts/invite_invalid.html', {'invitation': invitation})
+    # ✅ Fix 3 — invalid token shows clean page instead of ugly 404
+    try:
+        invite = Invitation.objects.get(token=token)
+    except Invitation.DoesNotExist:
+        return render(request, 'accounts/invite_invalid.html')
 
-    form = AcceptInviteForm(request.POST or None)
-    if request.method == 'POST' and form.is_valid():
-        cd = form.cleaned_data
-        base = invitation.email.split('@')[0]
-        username, counter = base, 1
-        while User.objects.filter(username=username).exists():
-            username = f'{base}{counter}'; counter += 1
+    # ✅ Fix 4 — expired or already accepted
+    if not invite.is_valid:
+        return render(request, 'accounts/invite_expired.html')
 
-        user = User.objects.create(
-            username=username, email=invitation.email,
-            first_name=cd['first_name'], last_name=cd['last_name'],
-            role=invitation.role, school=invitation.school,
-        )
-        user.set_password(cd['password1'])
-        user.save()
-        invitation.accepted = True
-        invitation.save()
-        login(request, user)
-        messages.success(request, f'Welcome, {user.first_name}!')
-        return redirect(user.get_dashboard_url())
+    # ✅ Fix 1 — email already registered
+    if User.objects.filter(email=invite.email).exists():
+        return render(request, 'accounts/invite_already_used.html', {
+            'email': invite.email
+        })
+
+    if request.method == 'POST':
+        form = AcceptInviteForm(request.POST)
+        if form.is_valid():
+            username  = form.cleaned_data['username'].strip()
+            password  = form.cleaned_data['password1']
+
+            # ✅ Fix 6 — empty username after stripping whitespace
+            if not username:
+                form.add_error('username', 'Username cannot be blank')
+                return render(request, 'accounts/accept_invite.html', {
+                    'form': form, 'invitation': invite
+                })
+
+            # ✅ Fix 5 — password strength validation
+            try:
+                validate_password(password)
+            except ValidationError as e:
+                form.add_error('password1', e)
+                return render(request, 'accounts/accept_invite.html', {
+                    'form': form, 'invitation': invite
+                })
+
+            # ✅ Fix 1 — double check email uniqueness before save
+            if User.objects.filter(email=invite.email).exists():
+                form.add_error(None, 'This email is already registered.')
+                return render(request, 'accounts/accept_invite.html', {
+                    'form': form, 'invitation': invite
+                })
+
+            # All good — create user
+            user = User.objects.create_user(
+                username       = username,
+                email          = invite.email,
+                password       = password,
+                role           = invite.role,
+                school         = invite.school,
+                email_verified = True,
+            )
+
+            invite.accepted = True
+            invite.save()
+
+            messages.success(request, 'Account created! You can now log in.')
+            return redirect('/login/')
+
+    else:
+        form = AcceptInviteForm()
 
     return render(request, 'accounts/accept_invite.html', {
-        'form': form, 'invitation': invitation
+        'form':       form,
+        'invitation': invite,
+    })
+# ─── Email Verification ───────────────────────────────────────────────────────
+
+def verify_email_view(request, token):
+    try:
+        user = User.objects.get(email_verification_token=token)
+    except User.DoesNotExist:
+        messages.error(request, 'Invalid verification link.')
+        return redirect('login')
+
+    if not user.is_email_verification_valid:
+        messages.error(request, 'Verification link has expired.')
+        return redirect('resend_verification')
+
+    user.is_active                     = True
+    user.email_verified                = True
+    user.email_verification_token      = None
+    user.email_verification_expires_at = None
+    user.save()
+
+    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+    messages.success(request, 'Email verified successfully! Welcome to EduPlatform.')
+    return redirect('/public-dashboard/')
+
+
+# ─── Forgot Password ──────────────────────────────────────────────────────────
+
+def forgot_password_view(request):
+    if request.user.is_authenticated:
+        return redirect(request.user.get_dashboard_url())
+
+    form = ForgotPasswordForm(request.POST or None)
+    email_sent  = False
+    reset_email = None
+
+    if request.method == 'POST' and form.is_valid():
+        email       = form.cleaned_data['email']
+        reset_email = email
+        email_sent  = True
+
+        try:
+            user = User.objects.get(email__iexact=email, is_active=True)
+            user.password_reset_token      = uuid.uuid4()
+            user.password_reset_expires_at = timezone.now() + timedelta(hours=2)
+            user.save()
+
+            reset_url = request.build_absolute_uri(
+                reverse('reset_password', args=[user.password_reset_token])
+            )
+            send_password_reset_email(user, reset_url)  # ✅ uses helper
+
+        except User.DoesNotExist:
+            pass  # Silently succeed — don't reveal whether account exists
+
+    return render(request, 'accounts/forgot_password.html', {
+        'form':        form,
+        'email_sent':  email_sent,
+        'reset_email': reset_email,
     })
 
+
+# ─── Reset Password ───────────────────────────────────────────────────────────
+
+def reset_password_view(request, token):
+    try:
+        user = User.objects.get(password_reset_token=token)
+    except User.DoesNotExist:
+        messages.error(request, 'Invalid or expired reset link.')
+        return redirect('login')
+
+    if not user.is_password_reset_valid:
+        messages.error(request, 'This reset link has expired. Please request a new one.')
+        return redirect('forgot_password')
+
+    form = ResetPasswordForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        user.set_password(form.cleaned_data['password1'])
+        user.password_reset_token      = None
+        user.password_reset_expires_at = None
+        user.save()
+        messages.success(request, 'Password reset successfully. You can now sign in.')
+        return redirect('login')
+
+    return render(request, 'accounts/reset_password.html', {'form': form, 'token': token})
+
+
+# ─── Profile ──────────────────────────────────────────────────────────────────
 
 @login_required
 def profile_view(request):

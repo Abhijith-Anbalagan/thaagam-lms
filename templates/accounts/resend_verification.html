@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+{% block title %}Resend Verification — EduPlatform{% endblock %}
+{% block content %}
+<style>
+  body { overflow: hidden; }
+
+  .resend-page {
+    height: calc(100vh - 56px);
+    display: flex;
+    overflow: hidden;
+    background: var(--page-bg);
+  }
+
+  /* ── Left Panel ── */
+  .resend-welcome {
+    flex: 1;
+    background: var(--brand-dark);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 60px;
+    color: #fff;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .resend-welcome::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 260px; height: 260px;
+    border-radius: 50%;
+    background: rgba(76,104,215,.07);
+    pointer-events: none;
+  }
+
+  .resend-welcome .welcome-logo {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--brand-blue);
+    margin-bottom: 40px;
+    letter-spacing: -0.5px;
+  }
+
+  .resend-welcome h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 16px;
+    color: #fff;
+  }
+
+  .resend-welcome p {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.6);
+    max-width: 360px;
+    line-height: 1.7;
+  }
+
+  .resend-tips {
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .resend-tip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.88rem;
+    color: rgba(255,255,255,.7);
+  }
+
+  .tip-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--brand-blue);
+    flex-shrink: 0;
+  }
+
+  /* ── Right Panel ── */
+  .resend-form-panel {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    overflow: hidden;
+  }
+
+  .resend-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 40px;
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .resend-card h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--brand-dark);
+    margin-bottom: 6px;
+  }
+
+  .resend-card .subtitle {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+
+  .btn-resend-submit {
+    width: 100%;
+    padding: 12px;
+    background: var(--brand-blue);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 6px;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .btn-resend-submit:hover { background: var(--brand-blue-hover); }
+
+  .resend-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .resend-footer a {
+    color: var(--brand-blue);
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .resend-footer a:hover { text-decoration: underline; }
+
+  @media (max-width: 768px) {
+    .resend-welcome { display: none; }
+    .resend-form-panel { padding: 24px; }
+    body { overflow: auto; }
+    .resend-page { height: auto; min-height: calc(100vh - 56px); }
+  }
+</style>
+
+<div class="resend-page">
+
+  <!-- Left: Welcome Panel -->
+  <div class="resend-welcome">
+    <div class="welcome-logo">EduPlatform</div>
+    <h1>Need a new verification link?</h1>
+    <p>Links expire after 24 hours. Enter your email and we'll send you a fresh one right away.</p>
+    <div class="resend-tips">
+      <div class="resend-tip">
+        <span class="tip-dot"></span>
+        Make sure you're entering the email you signed up with.
+      </div>
+      <div class="resend-tip">
+        <span class="tip-dot"></span>
+        Check your spam or junk folder after requesting.
+      </div>
+      <div class="resend-tip">
+        <span class="tip-dot"></span>
+        Each new link invalidates the previous one.
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Form Panel -->
+  <div class="resend-form-panel">
+    <div class="resend-card">
+      <h2>Resend Verification</h2>
+      <p class="subtitle">Enter your email address and we'll send you a new verification link.</p>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="toast toast-{{ message.tags }} mb-12">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" name="email" class="form-control"
+                 autofocus placeholder="you@example.com"
+                 value="{{ request.GET.email|default:'' }}">
+        </div>
+        <button type="submit" class="btn-resend-submit">Send Verification Email</button>
+      </form>
+
+      <div class="resend-footer">
+        Already verified? <a href="{% url 'login' %}">Sign in</a>
+        &nbsp;·&nbsp;
+        New here? <a href="{% url 'signup' %}">Sign up</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
