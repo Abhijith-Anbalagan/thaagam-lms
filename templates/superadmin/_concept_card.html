@@ -1,0 +1,123 @@
+{# superadmin/_concept_card.html — included inside course_detail.html #}
+<div class="concept-card" id="concept-{{ concept.pk }}">
+
+  <!-- Header -->
+  <div class="concept-header-row">
+    <div style="flex:1;">
+      <div class="inline-edit-wrap">
+        <div class="view-text {% if not concept.header %}empty{% endif %}"
+             onclick="startEdit(this,'input')"
+             data-field="header" data-id="{{ concept.pk }}"
+             style="font-size:15px;font-weight:600;">
+          {{ concept.header|default:"Click to add header" }}
+        </div>
+      </div>
+      <div class="inline-edit-wrap" style="margin-top:4px;">
+        <div class="view-text {% if not concept.h3_course %}empty{% endif %}"
+             onclick="startEdit(this,'input')"
+             data-field="h3_course" data-id="{{ concept.pk }}"
+             style="font-size:12px;color:var(--text-muted);">
+          {{ concept.h3_course|default:"Click to add sub-heading" }}
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-8" style="margin-left:12px;align-items:center;">
+      <span style="font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;
+        {% if concept.level == 'beginner' %}background:#d1fae5;color:#065f46;
+        {% elif concept.level == 'intermediate' %}background:#fef3c7;color:#92400e;
+        {% else %}background:#fee2e2;color:#991b1b;{% endif %}">
+        {{ concept.get_level_display }}
+      </span>
+      <span style="font-size:11px;color:var(--text-muted);">Concept {{ forloop.counter }}</span>
+      <button class="delete-btn" onclick="deleteConcept({{ concept.pk }}, this)">🗑 Delete</button>
+    </div>
+  </div>
+
+  <!-- Concept body with tabs -->
+  <div class="concept-body-inner">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'videos-{{ concept.pk }}')">🎬 Videos</button>
+      <button class="tab-btn" onclick="switchTab(this,'pdf-{{ concept.pk }}')">📄 PDF</button>
+      <button class="tab-btn" onclick="switchTab(this,'quiz-{{ concept.pk }}')">❓ Quiz</button>
+      <button class="tab-btn" onclick="switchTab(this,'assignment-{{ concept.pk }}')">📝 Assignment</button>
+    </div>
+
+    <!-- Videos tab -->
+    <div class="tab-pane active" id="videos-{{ concept.pk }}">
+      {% for video in concept.videos.all %}
+      <div class="video-item" id="video-{{ video.pk }}">
+        <div class="video-item-thumb" onclick="playVideo('{{ video.file.url }}','{{ video.title|default:'Untitled'|escapejs }}')">
+          <video muted preload="metadata">
+            <source src="{{ video.file.url }}#t=0.5" type="video/mp4">
+          </video>
+        </div>
+        <div class="video-play-btn" onclick="playVideo('{{ video.file.url }}','{{ video.title|default:'Untitled'|escapejs }}')">
+          {{ video.title|default:"Untitled Video" }}
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Click to play ▶</div>
+        </div>
+        <button class="delete-btn" onclick="deleteVideo({{ video.pk }}, this)">🗑</button>
+      </div>
+      {% empty %}
+      <p style="font-size:13px;color:var(--text-muted);padding:8px 0;">No videos yet.</p>
+      {% endfor %}
+
+      <!-- Add video inline -->
+      <div class="add-video-form" id="add-video-form-{{ concept.pk }}" style="display:none;">
+        <p style="font-size:13px;font-weight:600;margin:0 0 10px;">Upload Video</p>
+        <div style="display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-bottom:10px;">
+          <input type="text" class="edit-input" placeholder="Title (optional)" id="vt-{{ concept.pk }}">
+          <input type="file" class="edit-input" accept="video/*" id="vf-{{ concept.pk }}">
+        </div>
+        <div class="flex gap-8">
+          <button class="btn-save" onclick="uploadVideo({{ concept.pk }})">Upload</button>
+          <button class="btn-cancel-edit"
+                  onclick="document.getElementById('add-video-form-{{ concept.pk }}').style.display='none'">Cancel</button>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-ghost" style="margin-top:8px;"
+              onclick="document.getElementById('add-video-form-{{ concept.pk }}').style.display='block'">+ Add Video</button>
+    </div>
+
+    <!-- PDF tab -->
+    <div class="tab-pane" id="pdf-{{ concept.pk }}">
+      {% if concept.pdf %}
+      <div style="background:#f7f6f2;border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;">
+        <span style="font-size:28px;">📄</span>
+        <div>
+          <p style="font-weight:600;font-size:14px;margin:0 0 4px;">PDF Document</p>
+          <a href="{{ concept.pdf.url }}" target="_blank" class="btn btn-ghost btn-sm">Open PDF →</a>
+        </div>
+      </div>
+      {% else %}
+      <p style="font-size:13px;color:var(--text-muted);">No PDF uploaded.</p>
+      {% endif %}
+    </div>
+
+    <!-- Quiz tab -->
+    <div class="tab-pane" id="quiz-{{ concept.pk }}">
+      <div id="quiz-rendered-{{ concept.pk }}">
+        {% if concept.quiz %}
+          <p style="font-size:13px;color:var(--text-muted);">Loading quiz…</p>
+        {% else %}
+          <p style="font-size:13px;color:var(--text-muted);">No quiz added.</p>
+        {% endif %}
+      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:10px;"
+              onclick="openQuizEditor({{ concept.pk }})">✏️ Edit Quiz</button>
+    </div>
+
+    <!-- Assignment tab -->
+    <div class="tab-pane" id="assignment-{{ concept.pk }}">
+      <div id="assignment-rendered-{{ concept.pk }}">
+        {% if concept.assignment %}
+          <p style="font-size:13px;color:var(--text-muted);">Loading…</p>
+        {% else %}
+          <p style="font-size:13px;color:var(--text-muted);">No assignment added.</p>
+        {% endif %}
+      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:10px;"
+              onclick="openAssignmentEditor({{ concept.pk }}, `{{ concept.assignment|escapejs }}`)">✏️ Edit Assignment</button>
+    </div>
+
+  </div>
+</div>

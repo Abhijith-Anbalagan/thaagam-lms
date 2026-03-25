@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+{% block title %}Admin Management — EduPlatform{% endblock %}
+{% block extra_css %}
+<style>
+  .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+  .search-bar { display:flex; align-items:center; gap:8px; background:#fff; border:1.5px solid var(--border); border-radius:8px; padding:6px 12px; width:240px; }
+  .search-bar input { border:none; outline:none; font-size:13px; color:var(--text-body); background:transparent; width:100%; }
+  .admin-card { display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:10px; border:1px solid var(--border); background:#fff; margin-bottom:10px; transition:box-shadow .15s; }
+  .admin-card:hover { box-shadow:var(--shadow-sm); }
+  .avatar { width:42px; height:42px; border-radius:50%; background:var(--brand-blue-light); color:var(--brand-blue); display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; flex-shrink:0; }
+  .pagination { display:flex; align-items:center; gap:6px; justify-content:center; margin-top:20px; flex-wrap:wrap; }
+  .pg-btn { min-width:34px; height:34px; border-radius:7px; border:1px solid var(--border); background:#fff; font-size:13px; font-weight:500; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:var(--text-body); transition:background .15s,color .15s,border-color .15s; }
+  .pg-btn:hover { background:var(--brand-blue-light); border-color:var(--brand-blue); color:var(--brand-blue); }
+  .pg-btn.active { background:var(--brand-blue); color:#fff; border-color:var(--brand-blue); }
+  .pg-btn:disabled { opacity:.4; cursor:not-allowed; }
+  .modal-wrap { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:1000; overflow-y:auto; }
+  .modal-box { background:#fff; border-radius:16px; max-width:440px; margin:70px auto; padding:28px; box-shadow:var(--shadow-md); }
+  .modal-hd { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+  .modal-hd h3 { margin:0; font-size:17px; font-weight:700; }
+  .modal-close { background:none; border:none; font-size:22px; cursor:pointer; color:var(--text-muted); line-height:1; }
+  .confirm-warn { font-size:13px; color:#e24b4a; background:#fff0f0; border-radius:8px; padding:10px 14px; margin:10px 0 20px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Admin Management</h1>
+    <p class="text-muted" style="margin-top:4px;font-size:13px;">{{ admins|length }} school admin{{ admins|length|pluralize }}</p>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <div class="search-bar">
+      <span style="color:var(--text-muted);">🔍</span>
+      <input type="text" id="admin-search" placeholder="Search admins…" oninput="filterAndRender()">
+    </div>
+    <a href="{% url 'superadmin_dashboard' %}" class="btn btn-ghost">← Dashboard</a>
+  </div>
+</div>
+
+<div class="card">
+  <div id="admin-list"></div>
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<!-- Transfer Modal -->
+<div class="modal-wrap" id="transfer-modal">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <h3>Transfer Admin</h3>
+      <button class="modal-close" onclick="closeTransfer()">✕</button>
+    </div>
+    <p style="font-size:14px;color:var(--text-muted);margin:0 0 14px;">
+      Transfer <strong id="transfer-name"></strong> to a different school.
+    </p>
+    <div class="form-group">
+      <label class="form-label">Select School</label>
+      <select id="transfer-school-select" class="form-control">
+       {% for school in schools_without_admin %}
+<option value="{{ school.pk }}">
+  {{ school.name }}{% if school.has_admin %} (has admin){% endif %}
+</option>
+{% empty %}
+<option disabled>No active schools available</option>
+{% endfor %}
+      </select>
+    </div>
+    <!-- Warning shown when selected school already has an admin -->
+    <p id="transfer-warn" style="display:none;font-size:12px;color:#e24b4a;
+       background:#fff0f0;padding:8px 12px;border-radius:6px;margin-top:6px;">
+      ⚠️ This school already has an admin. They will be unlinked.
+    </p>
+    <div style="display:flex;gap:10px;margin-top:12px;">
+      <button class="btn btn-primary" onclick="doTransfer()">Transfer</button>
+      <button class="btn btn-ghost" onclick="closeTransfer()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-wrap" id="del-modal">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <h3 style="color:#e24b4a;">⚠️ Delete Admin</h3>
+      <button class="modal-close" onclick="closeDelModal()">✕</button>
+    </div>
+    <p style="font-size:14px;color:var(--text-muted);margin:0;">You are about to permanently delete:</p>
+    <p style="font-size:15px;font-weight:600;color:var(--brand-dark);margin:8px 0 0;" id="del-admin-name"></p>
+    <p class="confirm-warn">This account will be permanently removed. This cannot be undone.</p>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-danger" id="del-confirm-btn">Yes, Delete</button>
+      <button class="btn btn-ghost" onclick="closeDelModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+const PER_PAGE = 10;
+let currentPage = 1;
+let deleteAdminId = null;
+let transferAdminId = null;
+
+const allAdmins = [
+  {% for admin in admins %}
+  {
+    id: {{ admin.pk }},
+    name: "{{ admin.get_full_name|default:admin.username|escapejs }}",
+    email: "{{ admin.email|escapejs }}",
+    school: "{{ admin.school.name|default:'No school'|escapejs }}",
+    active: {{ admin.is_active|yesno:'true,false' }},
+  },
+  {% endfor %}
+];
+
+let filtered = [...allAdmins];
+
+function filterAndRender() {
+  const q = document.getElementById('admin-search').value.toLowerCase();
+  filtered = allAdmins.filter(a => a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q) || a.school.toLowerCase().includes(q));
+  currentPage = 1;
+  render();
+}
+
+function render() {
+  const start = (currentPage - 1) * PER_PAGE;
+  const page  = filtered.slice(start, start + PER_PAGE);
+  const list  = document.getElementById('admin-list');
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<p class="text-muted" style="text-align:center;padding:40px 0;">No admins found.</p>';
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  list.innerHTML = page.map(a => `
+    <div class="admin-card" id="admin-card-${a.id}">
+      <div class="avatar">${a.name.charAt(0).toUpperCase()}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:600;color:var(--brand-dark);">${a.name}</div>
+        <div style="font-size:12px;color:var(--text-muted);">${a.email}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">🏫 <span id="school-lbl-${a.id}">${a.school}</span></div>
+      </div>
+      <span id="badge-${a.id}" class="badge ${a.active ? 'badge-success' : 'badge-danger'}">${a.active ? 'Active' : 'Suspended'}</span>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button class="btn btn-ghost btn-sm" onclick="openTransfer(${a.id}, '${a.name.replace(/'/g,"\\'")}')">Transfer</button>
+        <button id="toggle-btn-${a.id}" class="btn btn-sm ${a.active ? 'btn-outline' : 'btn-success'}" onclick="toggleAdmin(${a.id})">
+          ${a.active ? 'Suspend' : 'Activate'}
+        </button>
+        <button class="btn btn-sm btn-danger" onclick="openDelModal(${a.id}, '${a.name.replace(/'/g,"\\'")}')">🗑</button>
+      </div>
+    </div>`).join('');
+
+  renderPagination();
+}
+
+function renderPagination() {
+  const total = Math.ceil(filtered.length / PER_PAGE);
+  if (total <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
+  let html = `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+  for (let p = 1; p <= total; p++) {
+    html += `<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+  }
+  html += `<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===total?'disabled':''}>›</button>`;
+  html += `<span style="font-size:12px;color:var(--text-muted);margin-left:6px;">Page ${currentPage} of ${total}</span>`;
+  document.getElementById('pagination').innerHTML = html;
+}
+
+function goPage(p) {
+  const total = Math.ceil(filtered.length / PER_PAGE);
+  if (p < 1 || p > total) return;
+  currentPage = p;
+  render();
+}
+
+function toggleAdmin(id) {
+  fetch(`/superadmin/admins/${id}/action/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'action=toggle',
+  }).then(r => r.json()).then(d => {
+    if (!d.success) return;
+    const a = allAdmins.find(x => x.id === id);
+    a.active = d.is_active;
+    const badge = document.getElementById('badge-' + id);
+    const btn   = document.getElementById('toggle-btn-' + id);
+    if (badge) { badge.textContent = d.is_active ? 'Active' : 'Suspended'; badge.className = 'badge ' + (d.is_active ? 'badge-success' : 'badge-danger'); }
+    if (btn)   { btn.textContent = d.is_active ? 'Suspend' : 'Activate'; btn.className = 'btn btn-sm ' + (d.is_active ? 'btn-outline' : 'btn-success'); }
+  });
+}
+
+function openTransfer(id, name) {
+  transferAdminId = id;
+  document.getElementById('transfer-name').textContent = name;
+  document.getElementById('transfer-modal').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeTransfer() {
+  document.getElementById('transfer-modal').style.display = 'none';
+  document.body.style.overflow = '';
+  transferAdminId = null;
+}
+
+function doTransfer() {
+  const schoolId = document.getElementById('transfer-school-select').value;
+  fetch(`/superadmin/admins/${transferAdminId}/action/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `action=transfer&school_id=${schoolId}`,
+  }).then(r => r.json()).then(d => {
+    if (d.success) {
+      // Updates the school label on the card without page reload
+      const lbl = document.getElementById('school-lbl-' + transferAdminId);
+      if (lbl) lbl.textContent = d.school_name;
+      closeTransfer();
+    }
+  });
+}
+
+function openDelModal(id, name) {
+  deleteAdminId = id;
+  document.getElementById('del-admin-name').textContent = name;
+  document.getElementById('del-modal').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDelModal() {
+  document.getElementById('del-modal').style.display = 'none';
+  document.body.style.overflow = '';
+  deleteAdminId = null;
+}
+
+document.getElementById('del-confirm-btn').addEventListener('click', function () {
+  if (!deleteAdminId) return;
+  fetch(`/superadmin/admins/${deleteAdminId}/delete/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: '',
+  }).then(r => r.json()).then(d => {
+    if (d.success) {
+      const idx = allAdmins.findIndex(a => a.id === deleteAdminId);
+      if (idx > -1) allAdmins.splice(idx, 1);
+      filtered = filtered.filter(a => a.id !== deleteAdminId);
+      if ((currentPage - 1) * PER_PAGE >= filtered.length && currentPage > 1) currentPage--;
+      render();
+      closeDelModal();
+    }
+  });
+});
+
+[document.getElementById('transfer-modal'), document.getElementById('del-modal')].forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) { closeTransfer(); closeDelModal(); } });
+});
+
+render();
+</script>
+{% endblock %}

@@ -1,177 +1,349 @@
 {% extends 'base.html' %}
 {% block title %}School Admin — {{ school.name }}{% endblock %}
+{% block extra_css %}
+<style>
+  .member-row {
+    display:flex; align-items:center; gap:12px;
+    padding:10px 0; border-bottom:1px solid var(--border);
+    animation: slideIn .3s ease;
+  }
+  .member-row:last-child { border-bottom:none; }
+  @keyframes slideIn {
+    from { opacity:0; transform:translateY(-8px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .m-avatar {
+    width:36px; height:36px; border-radius:50%;
+    background:var(--brand-blue-light); color:var(--brand-blue);
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:700; flex-shrink:0;
+  }
+  .invite-row {
+    display:flex; align-items:center; gap:10px;
+    padding:10px 0; border-bottom:1px solid var(--border);
+  }
+  .invite-row:last-child { border-bottom:none; }
+  .pulse-dot {
+    width:8px; height:8px; border-radius:50%; background:#1d9e75;
+    display:inline-block; margin-right:6px;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50%      { opacity:.4; transform:scale(1.3); }
+  }
+  .live-badge {
+    font-size:11px; font-weight:600; color:#1d9e75;
+    background:#d4f5ea; border-radius:20px; padding:2px 9px;
+    display:inline-flex; align-items:center; gap:4px;
+  }
+  .section-hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .section-hd h2 { font-size:16px; font-weight:600; color:var(--brand-dark); margin:0; }
+</style>
+{% endblock %}
+
 {% block content %}
+
+<!-- Page Header -->
 <div class="flex-between mb-24">
-  <div><h1 class="page-title">{{ school.name }}</h1><p class="text-muted">School Admin Dashboard</p></div>
-  <div class="flex gap-8">
-    <a href="{% url 'school_admin_invite_management' %}" class="btn btn-primary">+ Invite Management</a>
-    <a href="{% url 'school_admin_reports' %}" class="btn btn-outline">Reports</a>
+  <div>
+    <h1 class="page-title">{{ school.name }}</h1>
+    <p class="text-muted" style="margin-top:4px;font-size:13px;">School Admin Dashboard</p>
   </div>
+  <div class="flex gap-8">
+  <a href="{% url 'school_admin_create_announcement' %}" class="btn btn-outline"> Announcement</a>
+  <a href="{% url 'school_admin_teachers_list' %}" class="btn btn-outline">Teachers</a>
+  <a href="{% url 'school_admin_students_list' %}" class="btn btn-outline">Students</a>
+  <a href="{% url 'school_admin_invite_management' %}" class="btn btn-primary"> Invite Management</a>
+  {% comment %} <a href="{% url 'school_admin_reports' %}" class="btn btn-outline">Reports</a> {% endcomment %}
 </div>
+</div>
+
+<!-- Stat Cards -->
 <div class="stat-grid">
   <div class="stat-card"><div class="stat-value">{{ total_students }}</div><div class="stat-label">Students</div></div>
   <div class="stat-card"><div class="stat-value">{{ total_teachers }}</div><div class="stat-label">Teachers</div></div>
   <div class="stat-card"><div class="stat-value">{{ total_classrooms }}</div><div class="stat-label">Classrooms</div></div>
-  <div class="stat-card"><div class="stat-value">{{ management.count }}</div><div class="stat-label">Management</div></div>
+  <div class="stat-card" id="stat-management">
+    <div class="stat-value" id="stat-management-val">{{ management.count }}</div>
+    <div class="stat-label">Management</div>
+  </div>
 </div>
+
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+  <!-- Management Members Card -->
   <div class="card">
-    <h2 class="section-title mb-16">Management Members</h2>
-    <div id="management-list">
-    {% for m in management %}
-    <div class="flex-between" style="padding:9px 0;border-bottom:1px solid var(--border);" id="member-row-{{ m.id }}">
-      <div>
-        <span class="sub-heading">{{ m.get_full_name|default:m.username }}</span>
-        <span class="caption" style="display:block;font-size:12px;">{{ m.email }}</span>
-      </div>
-      <button class="btn btn-sm btn-danger" onclick="deleteMember({{ m.id }})">Delete</button>
-    </div>
-    {% empty %}<p class="text-muted" id="no-management">No management users yet. <a href="{% url 'school_admin_invite_management' %}">Invite one</a>.</p>{% endfor %}
+    <div class="section-hd">
+      <h2>Management Team</h2>
+      <span class="live-badge"><span class="pulse-dot"></span>Live</span>
     </div>
 
-    {% if pending_invites %}
-    <h3 class="section-title mt-20 mb-12" id="pending-heading" style="font-size:13px;color:var(--text-muted);">Pending Invitations</h3>
-    {% else %}
-    <h3 class="section-title mt-20 mb-12" id="pending-heading" style="font-size:13px;color:var(--text-muted);display:none;">Pending Invitations</h3>
-    {% endif %}
-    <div id="pending-list">
-    {% for inv in pending_invites %}
-    <div class="flex-between" style="padding:9px 0;border-bottom:1px solid var(--border);" id="invite-row-{{ inv.id }}">
-      <div>
-        <span class="sub-heading">{{ inv.email }}</span>
-        <span class="caption" style="display:block;font-size:11px;color:var(--text-muted);">Invited {{ inv.created_at|date:"M d, Y" }} · expires {{ inv.expires_at|date:"M d" }}</span>
+    <!-- Active members -->
+    <div id="management-list">
+      {% for m in management %}
+      <div class="member-row" id="member-row-{{ m.id }}">
+        <div class="m-avatar">{{ m.get_full_name|default:m.username|first|upper }}</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;color:var(--brand-dark);">{{ m.get_full_name|default:m.username }}</div>
+          <div style="font-size:12px;color:var(--text-muted);">{{ m.email }}</div>
+        </div>
+        <button class="btn btn-sm btn-danger" onclick="deleteMember({{ m.id }})">🗑</button>
       </div>
-      <button
-        class="btn btn-sm btn-primary"
-        onclick="activateInvite({{ inv.id }}, '{{ inv.email }}')"
-        id="btn-{{ inv.id }}">
-        Activate
-      </button>
-      <button
-        class="btn btn-sm btn-danger"
-        onclick="deleteInvite({{ inv.id }})">
-        Delete
-      </button>
+      {% empty %}
+      <p class="text-muted" id="no-management" style="text-align:center;padding:20px 0;font-size:13px;">
+        No management users yet. <a href="{% url 'school_admin_invite_management' %}">Invite one</a>.
+      </p>
+      {% endfor %}
     </div>
-    {% endfor %}
+
+    <!-- Pending invitations -->
+    <div id="pending-section" style="margin-top:16px;{% if not pending_invites %}display:none;{% endif %}">
+      <p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:10px;">
+        Pending Invitations
+      </p>
+      <div id="pending-list">
+        {% for inv in pending_invites %}
+        <div class="invite-row" id="invite-row-{{ inv.id }}">
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:500;color:var(--brand-dark);">{{ inv.email }}</div>
+            <div style="font-size:11px;color:var(--text-muted);">
+              Invited {{ inv.created_at|date:"M d, Y" }} · expires {{ inv.expires_at|date:"M d" }}
+            </div>
+          </div>
+          <button class="btn btn-sm btn-primary" id="btn-{{ inv.id }}"
+                  onclick="activateInvite({{ inv.id }}, '{{ inv.email }}')">Activate</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteInvite({{ inv.id }})">🗑</button>
+        </div>
+        {% endfor %}
+      </div>
     </div>
   </div>
 
+  <!-- Announcements Card -->
   <div class="card">
-    <h2 class="section-title mb-16">Recent Announcements</h2>
-    {% for a in announcements %}
-    <div class="announcement-card {% if a.is_pinned %}pinned{% endif %}">
-      <div class="announcement-title">{{ a.title }}</div>
-      <div class="announcement-meta">{{ a.created_at|date:"M d, Y" }}</div>
+    <div class="section-hd">
+      <h2>Recent Announcements</h2>
     </div>
-    {% empty %}<p class="text-muted">No announcements yet.</p>{% endfor %}
+    {% for a in announcements %}
+<div class="announcement-card {% if a.is_pinned %}pinned{% endif %}">
+  <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
+    <div class="announcement-title">{{ a.title }}</div>
+    {% if a.is_pinned %}
+    <span style="font-size:11px; font-weight:600; color:#4c68d7; background:#eef1fd;
+                 border-radius:20px; padding:2px 8px; white-space:nowrap; flex-shrink:0;">
+      📌 Pinned
+    </span>
+    {% endif %}
+  </div>
+  <div class="announcement-meta" style="margin-bottom:6px;">{{ a.created_at|date:"M d, Y" }}</div>
+  <div style="font-size:13px; color:var(--text-muted); line-height:1.5;
+              display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+              overflow:hidden;">
+    {{ a.body|truncatechars:120 }}
   </div>
 </div>
+{% endfor %}
+  </div>
+
+</div>
+{% endblock %}
 
 {% block extra_js %}
 <script>
-const CSRF = '{{ csrf_token }}';
+const CSRF     = '{{ csrf_token }}';
+const POLL_URL = '/school-admin/management/poll/';
+const POLL_MS  = 5000;   // poll every 5 seconds
 
+// ── Track what's currently rendered ──
+let knownMembers = new Set([{% for m in management %}{{ m.id }},{% endfor %}]);
+let knownPending = new Set([{% for inv in pending_invites %}{{ inv.id }},{% endfor %}]);
+
+// ── Polling ──
+function startPolling() {
+  setInterval(async () => {
+    try {
+      const res  = await fetch(POLL_URL, { credentials: 'same-origin' });
+      const data = await res.json();
+      reconcileMembers(data.management);
+      reconcilePending(data.pending);
+    } catch(e) { /* silent fail — network hiccup */ }
+  }, POLL_MS);
+}
+
+function reconcileMembers(members) {
+  const incoming = new Set(members.map(m => m.id));
+
+  // Add new members that appeared (invitation accepted elsewhere)
+  members.forEach(m => {
+    if (!knownMembers.has(m.id)) {
+      addMemberRow(m);
+      knownMembers.add(m.id);
+      updateStatCount(1);
+      showToast(`✅ ${m.name} joined the management team`);
+    }
+  });
+
+  // Remove members deleted elsewhere
+  knownMembers.forEach(id => {
+    if (!incoming.has(id)) {
+      const row = document.getElementById('member-row-' + id);
+      if (row) row.remove();
+      knownMembers.delete(id);
+      updateStatCount(-1);
+      checkMembersEmpty();
+    }
+  });
+}
+
+function reconcilePending(pending) {
+  const incoming = new Set(pending.map(i => i.id));
+
+  // Add new pending invites
+  pending.forEach(inv => {
+    if (!knownPending.has(inv.id)) {
+      addPendingRow(inv);
+      knownPending.add(inv.id);
+      showPendingSection(true);
+    }
+  });
+
+  // Remove accepted/deleted invites
+  knownPending.forEach(id => {
+    if (!incoming.has(id)) {
+      const row = document.getElementById('invite-row-' + id);
+      if (row) row.remove();
+      knownPending.delete(id);
+    }
+  });
+
+  showPendingSection(knownPending.size > 0);
+}
+
+// ── DOM helpers ──
+function addMemberRow(m) {
+  const noMsg = document.getElementById('no-management');
+  if (noMsg) noMsg.remove();
+
+  const list = document.getElementById('management-list');
+  const div  = document.createElement('div');
+  div.className = 'member-row';
+  div.id        = 'member-row-' + m.id;
+  div.innerHTML = `
+    <div class="m-avatar">${m.name.charAt(0).toUpperCase()}</div>
+    <div style="flex:1;">
+      <div style="font-size:14px;font-weight:600;color:var(--brand-dark);">${m.name}</div>
+      <div style="font-size:12px;color:var(--text-muted);">${m.email}</div>
+    </div>
+    <button class="btn btn-sm btn-danger" onclick="deleteMember(${m.id})">🗑</button>`;
+  list.appendChild(div);
+}
+
+function addPendingRow(inv) {
+  const list = document.getElementById('pending-list');
+  const div  = document.createElement('div');
+  div.className = 'invite-row';
+  div.id        = 'invite-row-' + inv.id;
+  div.innerHTML = `
+    <div style="flex:1;">
+      <div style="font-size:14px;font-weight:500;color:var(--brand-dark);">${inv.email}</div>
+      <div style="font-size:11px;color:var(--text-muted);">Invited ${inv.created} · expires ${inv.expires}</div>
+    </div>
+    <button class="btn btn-sm btn-primary" id="btn-${inv.id}"
+            onclick="activateInvite(${inv.id}, '${inv.email}')">Activate</button>
+    <button class="btn btn-sm btn-danger" onclick="deleteInvite(${inv.id})">🗑</button>`;
+  list.appendChild(div);
+}
+
+function showPendingSection(show) {
+  document.getElementById('pending-section').style.display = show ? 'block' : 'none';
+}
+
+function checkMembersEmpty() {
+  const list = document.getElementById('management-list');
+  if (!list.querySelector('.member-row')) {
+    const p = document.createElement('p');
+    p.className = 'text-muted';
+    p.id        = 'no-management';
+    p.style     = 'text-align:center;padding:20px 0;font-size:13px;';
+    p.innerHTML = 'No management users yet. <a href="/school-admin/invite-management/">Invite one</a>.';
+    list.appendChild(p);
+  }
+}
+
+function updateStatCount(delta) {
+  const el = document.getElementById('stat-management-val');
+  if (el) el.textContent = Math.max(0, parseInt(el.textContent) + delta);
+}
+
+// ── Toast notification ──
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = `
+    position:fixed; bottom:24px; right:24px; z-index:9999;
+    background:#1a1f36; color:#fff; padding:12px 18px;
+    border-radius:10px; font-size:13px; font-weight:500;
+    box-shadow:0 4px 16px rgba(0,0,0,.2);
+    animation:slideIn .3s ease;
+  `;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+// ── Manual actions ──
 function postJSON(url) {
-  const body = new URLSearchParams({ csrfmiddlewaretoken: CSRF });
   return fetch(url, {
     method: 'POST', credentials: 'same-origin',
-    headers: { 'X-CSRFToken': CSRF }, body,
+    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ csrfmiddlewaretoken: CSRF }),
   }).then(r => r.json());
 }
 
 function activateInvite(inviteId, email) {
   const btn = document.getElementById('btn-' + inviteId);
-  btn.disabled    = true;
-  btn.textContent = 'Activating...';
-
+  btn.disabled = true; btn.textContent = 'Activating…';
   postJSON(`/school-admin/invite-management/${inviteId}/activate/`)
-  .then(data => {
-    if (data.success) {
-      document.getElementById('invite-row-' + inviteId).remove();
-      checkPendingEmpty();
-
-      const noMsg = document.getElementById('no-management');
-      if (noMsg) noMsg.remove();
-
-      const list = document.getElementById('management-list');
-      const row  = document.createElement('div');
-      row.className    = 'flex-between';
-      row.id           = 'member-row-' + data.user.id;
-      row.style.cssText = 'padding:9px 0;border-bottom:1px solid var(--border);';
-      row.innerHTML = `
-        <div>
-          <span class="sub-heading">${data.user.name}</span>
-          <span class="caption" style="display:block;font-size:12px;">${data.user.email}</span>
-        </div>
-        <button class="btn btn-sm btn-danger" onclick="deleteMember(${data.user.id})">Delete</button>`;
-      list.appendChild(row);
-      updateStatCount('Management', 1);
-    } else {
-      btn.disabled    = false;
-      btn.textContent = 'Activate';
-      alert(data.error || 'Something went wrong.');
-    }
-  })
-  .catch(() => {
-    btn.disabled    = false;
-    btn.textContent = 'Activate';
-    alert('Network error. Please try again.');
-  });
+    .then(data => {
+      if (data.success) {
+        document.getElementById('invite-row-' + inviteId)?.remove();
+        knownPending.delete(inviteId);
+        showPendingSection(knownPending.size > 0);
+        // member will appear via next poll automatically
+      } else {
+        btn.disabled = false; btn.textContent = 'Activate';
+        alert(data.error || 'Something went wrong.');
+      }
+    })
+    .catch(() => { btn.disabled = false; btn.textContent = 'Activate'; });
 }
 
 function deleteInvite(inviteId) {
   if (!confirm('Delete this pending invitation?')) return;
   postJSON(`/school-admin/invite-management/${inviteId}/delete/`)
-  .then(data => {
-    if (data.success) {
-      document.getElementById('invite-row-' + inviteId).remove();
-      checkPendingEmpty();
-    } else {
-      alert(data.error || 'Could not delete invitation.');
-    }
-  })
-  .catch(() => alert('Network error. Please try again.'));
+    .then(data => {
+      if (data.success) {
+        document.getElementById('invite-row-' + inviteId)?.remove();
+        knownPending.delete(inviteId);
+        showPendingSection(knownPending.size > 0);
+      }
+    });
 }
 
 function deleteMember(userId) {
-  if (!confirm('Remove this management member? Their account will be deleted.')) return;
+  if (!confirm('Remove this management member?')) return;
   postJSON(`/school-admin/management/${userId}/delete/`)
-  .then(data => {
-    if (data.success) {
-      document.getElementById('member-row-' + userId).remove();
-      updateStatCount('Management', -1);
-      const list = document.getElementById('management-list');
-      if (!list.querySelector('[id^="member-row-"]')) {
-        const p = document.createElement('p');
-        p.className = 'text-muted';
-        p.id = 'no-management';
-        p.innerHTML = 'No management users yet. <a href="/school-admin/invite-management/">Invite one</a>.';
-        list.appendChild(p);
+    .then(data => {
+      if (data.success) {
+        document.getElementById('member-row-' + userId)?.remove();
+        knownMembers.delete(userId);
+        updateStatCount(-1);
+        checkMembersEmpty();
       }
-    } else {
-      alert(data.error || 'Could not delete member.');
-    }
-  })
-  .catch(() => alert('Network error. Please try again.'));
+    });
 }
 
-function checkPendingEmpty() {
-  const remaining = document.querySelectorAll('#pending-list [id^="invite-row-"]');
-  if (remaining.length === 0) {
-    const h = document.getElementById('pending-heading');
-    if (h) h.style.display = 'none';
-  }
-}
-
-function updateStatCount(label, delta) {
-  document.querySelectorAll('.stat-card').forEach(card => {
-    if (card.querySelector('.stat-label').textContent.trim() === label) {
-      const val = card.querySelector('.stat-value');
-      val.textContent = parseInt(val.textContent) + delta;
-    }
-  });
-}
+// ── Start ──
+startPolling();
 </script>
-{% endblock %}
 {% endblock %}

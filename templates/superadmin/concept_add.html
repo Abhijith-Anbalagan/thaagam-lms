@@ -10,71 +10,232 @@
   <a href="{% url 'superadmin_course_detail' course.pk %}" class="btn btn-ghost">← Back to Course</a>
 </div>
 
-<div class="card" style="max-width:680px;">
-  <form method="post" enctype="multipart/form-data">{% csrf_token %}
+<form method="post" enctype="multipart/form-data">{% csrf_token %}
+<div style="display:flex;flex-direction:column;gap:20px;max-width:780px;">
 
-    <!-- Concept Header -->
+  <!-- ── Section 1: Basic Info ── -->
+  <div class="card">
+    <h2 class="section-title mb-20">📘 Concept Info</h2>
+
     <div class="form-group">
-      <label class="form-label">Concept Header</label>
+      <label class="form-label">Concept Header <span style="color:#e53e3e;">*</span></label>
       <input type="text" name="header" class="form-control"
              placeholder="e.g. Chapter 1: Introduction to Algebra"
              value="{{ form.header.value|default:'' }}" required>
+      <p class="form-hint">This is the main title of the concept shown to students.</p>
       {% if form.header.errors %}<div class="form-error">{{ form.header.errors.0 }}</div>{% endif %}
     </div>
 
-    <!-- H3 Course -->
     <div class="form-group">
-      <label class="form-label">H3 Course <span style="color:var(--text-muted);font-weight:400;">(sub-heading)</span></label>
+      <label class="form-label">Sub-heading <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
       <input type="text" name="h3_course" class="form-control"
              placeholder="e.g. Variables and Expressions"
              value="{{ form.h3_course.value|default:'' }}">
+      <p class="form-hint">A shorter description shown below the header.</p>
     </div>
+  </div>
 
-    <hr style="margin:20px 0;border-color:var(--border);">
-
-    <!-- Upload Videos -->
-    <div class="form-group">
-      <label class="form-label">Upload Video</label>
-      <input type="file" name="videos" class="form-control" accept="video/*">
-      <p class="form-hint">Supported: mp4, mov, avi, mkv</p>
-      {% if form.videos.errors %}<div class="form-error">{{ form.videos.errors.0 }}</div>{% endif %}
-    </div>
-
-    <!-- Attach PDF -->
-    <div class="form-group">
-      <label class="form-label">Attach Course PDF</label>
-      <input type="file" name="pdf" class="form-control" accept=".pdf">
-      <p class="form-hint">Upload a PDF for this concept.</p>
-      {% if form.pdf.errors %}<div class="form-error">{{ form.pdf.errors.0 }}</div>{% endif %}
-    </div>
-
-    <hr style="margin:20px 0;border-color:var(--border);">
-
-    <!-- Quiz -->
-    <div class="form-group">
-      <label class="form-label">Quiz</label>
-      <textarea name="quiz" class="form-control" rows="4"
-                placeholder="Enter quiz questions or paste JSON...">{{ form.quiz.value|default:'' }}</textarea>
-      {% if form.quiz.errors %}<div class="form-error">{{ form.quiz.errors.0 }}</div>{% endif %}
-    </div>
-
-    <!-- Assignment -->
-    <div class="form-group">
-      <label class="form-label">Assignment</label>
-      <textarea name="assignment" class="form-control" rows="4"
-                placeholder="Describe the assignment instructions...">{{ form.assignment.value|default:'' }}</textarea>
-      {% if form.assignment.errors %}<div class="form-error">{{ form.assignment.errors.0 }}</div>{% endif %}
-    </div>
-
-    <hr style="margin:20px 0;border-color:var(--border);">
-
-    <!-- Actions -->
-    <div class="flex gap-8">
-      <button type="submit" class="btn btn-primary">Save Concept</button>
-      <a href="{% url 'superadmin_course_detail' course.pk %}" class="btn btn-ghost">Cancel</a>
-    </div>
-
-  </form>
+  <!-- ADD after the Sub-heading form-group -->
+<div class="form-group">
+  <label class="form-label">Module Level</label>
+  <select name="level" class="form-control">
+    <option value="beginner">🟢 Beginner</option>
+    <option value="intermediate">🟡 Intermediate</option>
+    <option value="advanced">🔴 Advanced</option>
+  </select>
+  <p class="form-hint">This groups the concept under the correct module section.</p>
 </div>
 
+
+
+  <!-- ── Section 2: Videos ── -->
+  <div class="card">
+    <div class="flex-between mb-16">
+      <h2 class="section-title">🎬 Videos</h2>
+      <button type="button" class="btn btn-sm btn-ghost" onclick="addVideoRow()">+ Add Video</button>
+    </div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+      Upload one or more videos for this concept. Supported: mp4, mov, avi, mkv.
+    </p>
+
+    <div id="video-rows">
+      <!-- first row always visible -->
+      <div class="video-row" style="display:grid;grid-template-columns:1fr 2fr auto;gap:10px;align-items:center;margin-bottom:10px;">
+        <input type="text"  name="video_titles" class="form-control" placeholder="Video title (optional)">
+        <input type="file"  name="video_files"  class="form-control" accept="video/*">
+        <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)" style="visibility:hidden;">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Section 3: PDF ── -->
+  <div class="card">
+    <h2 class="section-title mb-16">📄 Course PDF</h2>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+      Attach a PDF document (notes, slides, reading material) for this concept.
+    </p>
+    <div class="form-group" style="margin:0;">
+      <input type="file" name="pdf" class="form-control" accept=".pdf">
+      {% if form.pdf.errors %}<div class="form-error">{{ form.pdf.errors.0 }}</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- ── Section 4: Quiz ── -->
+  <div class="card">
+    <div class="flex-between mb-16">
+      <h2 class="section-title">❓ Quiz</h2>
+      <button type="button" class="btn btn-sm btn-ghost" onclick="addQuizQuestion()">+ Add Question</button>
+    </div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+      Add multiple choice questions. Each question needs 4 options and one correct answer.
+    </p>
+
+    <div id="quiz-questions" style="display:flex;flex-direction:column;gap:16px;"></div>
+
+    <!-- Hidden textarea stores the JSON -->
+    <textarea name="quiz" id="quiz-data" style="display:none;">{{ form.quiz.value|default:'' }}</textarea>
+
+    <div id="quiz-empty" style="text-align:center;padding:24px;border:2px dashed var(--border);border-radius:8px;color:var(--text-muted);font-size:13px;">
+      No questions yet. Click "+ Add Question" to start building your quiz.
+    </div>
+  </div>
+
+  <!-- ── Section 5: Assignment ── -->
+  <div class="card">
+    <h2 class="section-title mb-16">📝 Assignment</h2>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+      Describe what students need to submit or complete for this concept.
+    </p>
+
+    <div class="form-group">
+      <label class="form-label">Assignment Title</label>
+      <input type="text" name="assignment_title" id="assignment-title" class="form-control"
+             placeholder="e.g. Solve 10 algebra problems">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Instructions</label>
+      <textarea name="assignment_instructions" id="assignment-instructions" class="form-control" rows="4"
+                placeholder="Describe what students need to do, submission format, deadline notes..."></textarea>
+    </div>
+    <div class="form-group" style="margin:0;">
+      <label class="form-label">Max Score</label>
+      <input type="number" name="assignment_max_score" id="assignment-max-score"
+             class="form-control" style="max-width:120px;" placeholder="20" min="1">
+    </div>
+
+    <!-- Hidden textarea stores combined assignment text -->
+    <textarea name="assignment" id="assignment-data" style="display:none;">{{ form.assignment.value|default:'' }}</textarea>
+  </div>
+
+  <!-- ── Actions ── -->
+  <div class="flex gap-8" style="padding-bottom:32px;">
+    <button type="submit" class="btn btn-primary" onclick="serializeData()">Save Concept</button>
+    <a href="{% url 'superadmin_course_detail' course.pk %}" class="btn btn-ghost">Cancel</a>
+  </div>
+
+</div>
+</form>
+
+{% block extra_js %}
+<script>
+// ── Videos ──
+function addVideoRow() {
+  const container = document.getElementById('video-rows');
+  const row = document.createElement('div');
+  row.className = 'video-row';
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 2fr auto;gap:10px;align-items:center;margin-bottom:10px;';
+  row.innerHTML = `
+    <input type="text"  name="video_titles" class="form-control" placeholder="Video title (optional)">
+    <input type="file"  name="video_files"  class="form-control" accept="video/*">
+    <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">✕</button>`;
+  container.appendChild(row);
+}
+
+function removeRow(btn) {
+  btn.closest('.video-row').remove();
+}
+
+// ── Quiz ──
+let quizQuestions = [];
+
+try {
+  const raw = document.getElementById('quiz-data').value.trim();
+  if (raw) quizQuestions = JSON.parse(raw);
+} catch(e) { quizQuestions = []; }
+
+function renderQuiz() {
+  const container = document.getElementById('quiz-questions');
+  const empty     = document.getElementById('quiz-empty');
+  container.innerHTML = '';
+  if (quizQuestions.length === 0) {
+    empty.style.display = 'block'; return;
+  }
+  empty.style.display = 'none';
+  quizQuestions.forEach((q, qi) => {
+    const div = document.createElement('div');
+    div.style.cssText = 'border:1px solid var(--border);border-radius:10px;padding:16px;background:#fafaf8;';
+    div.innerHTML = `
+      <div class="flex-between mb-12">
+        <span style="font-size:13px;font-weight:600;color:var(--text-muted);">Question ${qi + 1}</span>
+        <button type="button" class="btn btn-sm btn-danger" onclick="removeQuestion(${qi})">Remove</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Question</label>
+        <input type="text" class="form-control" value="${escHtml(q.question)}"
+               oninput="quizQuestions[${qi}].question=this.value" placeholder="Enter question...">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        ${q.options.map((opt, oi) => `
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="radio" name="correct_${qi}" value="${oi}"
+                 ${q.correct === oi ? 'checked' : ''}
+                 onchange="quizQuestions[${qi}].correct=${oi}"
+                 title="Mark as correct answer">
+          <input type="text" class="form-control" value="${escHtml(opt)}"
+                 oninput="quizQuestions[${qi}].options[${oi}]=this.value"
+                 placeholder="Option ${oi + 1}">
+        </div>`).join('')}
+      </div>
+      <p style="font-size:12px;color:var(--text-muted);">
+        ● Select the radio button next to the correct answer.
+        ${q.correct !== null ? `<strong style="color:#0f6e56;">Correct: Option ${q.correct + 1}</strong>` : '<span style="color:#e53e3e;">No correct answer selected</span>'}
+      </p>`;
+    container.appendChild(div);
+  });
+}
+
+function addQuizQuestion() {
+  quizQuestions.push({ question: '', options: ['', '', '', ''], correct: null });
+  renderQuiz();
+}
+
+function removeQuestion(index) {
+  quizQuestions.splice(index, 1);
+  renderQuiz();
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Serialize before submit ──
+function serializeData() {
+  // Quiz → JSON
+  document.getElementById('quiz-data').value = JSON.stringify(quizQuestions);
+
+  // Assignment → combined text
+  const title    = document.getElementById('assignment-title').value.trim();
+  const instruct = document.getElementById('assignment-instructions').value.trim();
+  const score    = document.getElementById('assignment-max-score').value.trim();
+  let combined   = '';
+  if (title)    combined += `Title: ${title}\n`;
+  if (score)    combined += `Max Score: ${score}\n`;
+  if (instruct) combined += `\nInstructions:\n${instruct}`;
+  document.getElementById('assignment-data').value = combined.trim();
+}
+
+// Init
+renderQuiz();
+</script>
+{% endblock %}
 {% endblock %}
