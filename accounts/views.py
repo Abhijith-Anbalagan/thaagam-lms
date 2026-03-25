@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import User, Invitation
-from .forms import SignupForm, LoginForm, AcceptInviteForm, ProfileForm
+
+from .forms import SignupForm, LoginForm, AcceptInviteForm, ProfileForm, PasswordChangeCustomForm
 
 
 def signup_view(request):
@@ -88,6 +89,17 @@ def profile_view(request):
     form = ProfileForm(request.POST or None, request.FILES or None, instance=request.user)
     if request.method == 'POST' and form.is_valid():
         form.save()
-        messages.success(request, 'Profile updated.')
+        messages.success(request, 'Profile updated successfully.')
         return redirect('profile')
     return render(request, 'shared/profile_settings.html', {'form': form})
+
+
+@login_required
+def password_change_view(request):
+    form = PasswordChangeCustomForm(request.user, request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        user = form.save()
+        update_session_auth_hash(request, user)  # keep user logged in
+        messages.success(request, 'Password changed successfully.')
+        return redirect('profile')
+    return render(request, 'shared/profile_settings.html', {'form': request.user, 'pw_form': form, 'show_pw': True})

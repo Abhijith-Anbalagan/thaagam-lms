@@ -1,54 +1,209 @@
 {% extends 'base.html' %}
-{% block title %}Schools{% endblock %}
+{% block title %}Schools — EduPlatform{% endblock %}
+{% block extra_css %}
+<style>
+  .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+  .search-bar { display:flex; align-items:center; gap:8px; background:#fff; border:1.5px solid var(--border); border-radius:8px; padding:6px 12px; width:260px; }
+  .search-bar input { border:none; outline:none; font-size:13px; color:var(--text-body); background:transparent; width:100%; }
+  .school-table td,.school-table th { vertical-align:middle; }
+  .dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:5px; }
+  .dot-active { background:#1d9e75; }
+  .dot-suspended { background:#e24b4a; }
+  .pagination { display:flex; align-items:center; gap:6px; justify-content:center; margin-top:20px; flex-wrap:wrap; }
+  .pg-btn { min-width:34px; height:34px; border-radius:7px; border:1px solid var(--border); background:#fff; font-size:13px; font-weight:500; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:var(--text-body); transition:background .15s,color .15s,border-color .15s; }
+  .pg-btn:hover { background:var(--brand-blue-light); border-color:var(--brand-blue); color:var(--brand-blue); }
+  .pg-btn.active { background:var(--brand-blue); color:#fff; border-color:var(--brand-blue); }
+  .pg-btn:disabled { opacity:.4; cursor:not-allowed; }
+  .confirm-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:1000; overflow-y:auto; }
+  .confirm-box { background:#fff; border-radius:16px; max-width:420px; margin:80px auto; padding:28px; box-shadow:var(--shadow-md); }
+  .confirm-title { font-size:17px; font-weight:700; color:#e24b4a; margin:0 0 8px; }
+  .confirm-warn { font-size:13px; color:#e24b4a; background:#fff0f0; border-radius:8px; padding:10px 14px; margin:12px 0 20px; }
+  .row-fade { animation:fadeOut .3s forwards; }
+  @keyframes fadeOut { to { opacity:0; transform:translateX(20px); } }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="flex-between mb-24">
-  <h1 class="page-title">All Schools</h1>
-  <a href="{% url 'superadmin_create_school' %}" class="btn btn-primary">+ New School</a>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">All Schools</h1>
+    <p class="text-muted" style="margin-top:4px;font-size:13px;">{{ schools|length }} school{{ schools|length|pluralize }} registered</p>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <div class="search-bar">
+      <span style="color:var(--text-muted);">🔍</span>
+      <input type="text" id="school-search" placeholder="Search schools…" oninput="filterAndRender()">
+    </div>
+    <a href="{% url 'superadmin_create_school' %}" class="btn btn-primary">+ New School</a>
+    <a href="{% url 'superadmin_dashboard' %}" class="btn btn-ghost">← Dashboard</a>
+  </div>
 </div>
-{% if mode == 'create' %}
-<div class="card mb-24" style="max-width:520px;">
-  <h3 class="card-heading mb-16">Create School</h3>
-  <form method="post">{% csrf_token %}
-    <div class="form-group"><label class="form-label">School Name</label><input type="text" name="name" class="form-control" value="{{ form.name.value|default:'' }}" required></div>
-    <div class="form-group"><label class="form-label">Address</label><textarea name="address" class="form-control">{{ form.address.value|default:'' }}</textarea></div>
-    <hr style="margin:16px 0;border-color:var(--border);">
-    <p class="text-muted" style="font-size:13px;margin-bottom:12px;">School Admin Account</p>
-    <div class="form-group">
-      <label class="form-label">Admin Name</label>
-      <input type="text" name="admin_name" class="form-control" value="{{ form.admin_name.value|default:'' }}" required>
-      {% if form.admin_name.errors %}<div class="form-error">{{ form.admin_name.errors.0 }}</div>{% endif %}
-    </div>
-    <div class="form-group">
-      <label class="form-label">Admin Email</label>
-      <input type="email" name="admin_email" class="form-control" value="{{ form.admin_email.value|default:'' }}" required>
-      {% if form.admin_email.errors %}<div class="form-error">{{ form.admin_email.errors.0 }}</div>{% endif %}
-    </div>
-    <div class="form-group">
-      <label class="form-label">Admin Password</label>
-      <input type="password" name="admin_password" class="form-control" required>
-      {% if form.admin_password.errors %}<div class="form-error">{{ form.admin_password.errors.0 }}</div>{% endif %}
-    </div>
-    <div class="flex gap-8"><button type="submit" class="btn btn-primary">Create School</button><a href="{% url 'superadmin_schools_list' %}" class="btn btn-ghost">Cancel</a></div>
-  </form>
+
+<div class="card">
+  <div class="table-wrap">
+    <table class="school-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>School Name</th>
+          <th>Address</th>
+          <th>Students</th>
+          <th>Teachers</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="school-tbody"></tbody>
+    </table>
+  </div>
+  <div class="pagination" id="pagination"></div>
 </div>
-{% endif %}
-<div class="card"><div class="table-wrap"><table>
-  <thead><tr><th>School</th><th>Address</th><th>Students</th><th>Status</th><th>Actions</th></tr></thead>
-  <tbody>
+
+<!-- Confirm Delete Modal -->
+<div class="confirm-modal" id="del-modal">
+  <div class="confirm-box">
+    <p class="confirm-title">⚠️ Delete School</p>
+    <p style="font-size:14px;color:var(--text-muted);margin:0;">You are about to permanently delete:</p>
+    <p style="font-size:15px;font-weight:600;color:var(--brand-dark);margin:8px 0 0;" id="del-school-name"></p>
+    <p class="confirm-warn">All classrooms will be deleted and all users will be unlinked. This cannot be undone.</p>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-danger" id="del-confirm-btn">Yes, Delete</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+const PER_PAGE = 10;
+let currentPage = 1;
+let deleteId = null;
+let deleteRowEl = null;
+
+// Build data array from Django
+const allSchools = [
   {% for school in schools %}
-  <tr>
-    <td><strong>{{ school.name }}</strong></td>
-    <td class="text-muted">{{ school.address|default:"—"|truncatechars:40 }}</td>
-    <td>{{ school.total_students }}</td>
-    <td>{% if school.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-danger">Suspended</span>{% endif %}</td>
-    <td class="flex gap-8">
-      <a href="{% url 'superadmin_school_detail' school.pk %}" class="btn btn-sm btn-ghost">Detail</a>
-      <a href="{% url 'superadmin_toggle_school' school.pk %}" class="btn btn-sm {% if school.is_active %}btn-danger{% else %}btn-success{% endif %}">
-        {% if school.is_active %}Suspend{% else %}Activate{% endif %}
-      </a>
-    </td>
-  </tr>
-  {% empty %}<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">No schools.</td></tr>{% endfor %}
-  </tbody>
-</table></div></div>
+  {
+    id: {{ school.pk }},
+    name: "{{ school.name|escapejs }}",
+    address: "{{ school.address|default:'—'|truncatechars:35|escapejs }}",
+    students: {{ school.total_students }},
+    teachers: {{ school.total_teachers }},
+    active: {{ school.is_active|yesno:'true,false' }},
+    toggleUrl: "{% url 'superadmin_toggle_school' school.pk %}",
+    detailUrl: "{% url 'superadmin_school_detail' school.pk %}",
+  },
+  {% endfor %}
+];
+
+let filtered = [...allSchools];
+
+function filterAndRender() {
+  const q = document.getElementById('school-search').value.toLowerCase();
+  filtered = allSchools.filter(s => s.name.toLowerCase().includes(q) || s.address.toLowerCase().includes(q));
+  currentPage = 1;
+  render();
+}
+
+function render() {
+  const start = (currentPage - 1) * PER_PAGE;
+  const page  = filtered.slice(start, start + PER_PAGE);
+  const tbody = document.getElementById('school-tbody');
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">
+      <div style="font-size:32px;margin-bottom:8px;">🏫</div>No schools found.</td></tr>`;
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = page.map((s, i) => `
+    <tr id="row-${s.id}">
+      <td style="color:var(--text-muted);font-size:12px;">${start + i + 1}</td>
+      <td><strong>${s.name}</strong></td>
+      <td style="color:var(--text-muted);max-width:180px;">${s.address}</td>
+      <td>${s.students}</td>
+      <td>${s.teachers}</td>
+      <td>
+        ${s.active
+          ? '<span class="dot dot-active"></span><span style="font-size:13px;color:#1d9e75;font-weight:500;">Active</span>'
+          : '<span class="dot dot-suspended"></span><span style="font-size:13px;color:#e24b4a;font-weight:500;">Suspended</span>'}
+      </td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          <a href="${s.detailUrl}" class="btn btn-ghost btn-sm">View</a>
+          <a href="${s.toggleUrl}" class="btn btn-sm ${s.active ? 'btn-outline' : 'btn-success'}" style="font-size:12px;">
+            ${s.active ? 'Suspend' : 'Activate'}
+          </a>
+          <button class="btn btn-sm btn-danger" onclick="openModal(${s.id}, '${s.name.replace(/'/g,"\\'")}')">🗑</button>
+        </div>
+      </td>
+    </tr>`).join('');
+
+  renderPagination();
+}
+
+function renderPagination() {
+  const total = Math.ceil(filtered.length / PER_PAGE);
+  if (total <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
+  let html = `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+  for (let p = 1; p <= total; p++) {
+    html += `<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+  }
+  html += `<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===total?'disabled':''}>›</button>`;
+  html += `<span style="font-size:12px;color:var(--text-muted);margin-left:6px;">Page ${currentPage} of ${total}</span>`;
+  document.getElementById('pagination').innerHTML = html;
+}
+
+function goPage(p) {
+  const total = Math.ceil(filtered.length / PER_PAGE);
+  if (p < 1 || p > total) return;
+  currentPage = p;
+  render();
+}
+
+function openModal(id, name) {
+  deleteId = id;
+  document.getElementById('del-school-name').textContent = name;
+  document.getElementById('del-modal').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('del-modal').style.display = 'none';
+  document.body.style.overflow = '';
+  deleteId = null;
+}
+
+document.getElementById('del-confirm-btn').addEventListener('click', function () {
+  if (!deleteId) return;
+  fetch(`/superadmin/schools/${deleteId}/delete/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: '',
+  }).then(r => r.json()).then(d => {
+    if (d.success) {
+      // Remove from data array and re-render
+      const idx = allSchools.findIndex(s => s.id === deleteId);
+      if (idx > -1) allSchools.splice(idx, 1);
+      filtered = filtered.filter(s => s.id !== deleteId);
+      if ((currentPage - 1) * PER_PAGE >= filtered.length && currentPage > 1) currentPage--;
+      render();
+      closeModal();
+    }
+  });
+});
+
+// Close on backdrop click
+document.getElementById('del-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// Initial render
+render();
+</script>
 {% endblock %}

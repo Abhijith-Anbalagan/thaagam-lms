@@ -1,0 +1,336 @@
+{% extends 'base.html' %}
+{% block title %}Platform Analytics — EduPlatform{% endblock %}
+{% block extra_css %}
+<style>
+  .sa-stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); gap:14px; margin-bottom:28px; }
+  .sa-stat { background:#fff; border:1px solid var(--border); border-radius:14px; padding:20px 22px; }
+  .sa-stat-icon { font-size:22px; margin-bottom:8px; }
+  .sa-stat-val { font-size:28px; font-weight:700; color:var(--brand-dark); font-family:'JetBrains Mono',monospace; }
+  .sa-stat-lbl { font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-top:3px; }
+
+  /* Search + Sort bar */
+  .toolbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+  .search-bar { display:flex; align-items:center; gap:8px; background:#fff; border:1.5px solid var(--border); border-radius:8px; padding:6px 12px; width:230px; }
+  .search-bar input { border:none; outline:none; font-size:13px; color:var(--text-body); background:transparent; width:100%; }
+  .sort-select { border:1.5px solid var(--border); border-radius:8px; padding:6px 10px; font-size:13px; color:var(--text-body); background:#fff; outline:none; cursor:pointer; }
+
+  /* Progress bar */
+  .bar-wrap { width:100px; background:var(--border); border-radius:4px; height:6px; display:inline-block; vertical-align:middle; margin-left:6px; }
+  .bar-fill { height:6px; border-radius:4px; transition:width .4s; }
+  .bar-blue { background:var(--brand-blue); }
+  .bar-green { background:#1d9e75; }
+
+  /* Export button */
+  .btn-export { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:8px; border:1.5px solid var(--border); background:#fff; font-size:13px; font-weight:500; color:var(--text-body); cursor:pointer; transition:background .15s,border-color .15s; }
+  .btn-export:hover { background:var(--brand-blue-light); border-color:var(--brand-blue); color:var(--brand-blue); }
+
+  /* Pagination */
+  .pagination { display:flex; align-items:center; gap:6px; justify-content:center; margin-top:20px; flex-wrap:wrap; }
+  .pg-btn { min-width:34px; height:34px; border-radius:7px; border:1px solid var(--border); background:#fff; font-size:13px; font-weight:500; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:var(--text-body); transition:background .15s,color .15s,border-color .15s; }
+  .pg-btn:hover { background:var(--brand-blue-light); border-color:var(--brand-blue); color:var(--brand-blue); }
+  .pg-btn.active { background:var(--brand-blue); color:#fff; border-color:var(--brand-blue); }
+  .pg-btn:disabled { opacity:.4; cursor:not-allowed; }
+
+  /* Sortable column headers */
+  th.sortable { cursor:pointer; user-select:none; white-space:nowrap; }
+  th.sortable:hover { color:var(--brand-blue); }
+  th.sortable .sort-icon { font-size:10px; margin-left:3px; color:var(--text-muted); }
+  th.sortable.asc .sort-icon::after { content:'▲'; }
+  th.sortable.desc .sort-icon::after { content:'▼'; }
+  th.sortable:not(.asc):not(.desc) .sort-icon::after { content:'⇅'; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="flex-between mb-24">
+  <div>
+    <h1 class="page-title">Platform Analytics</h1>
+    <p class="text-muted" style="margin-top:4px;font-size:13px;">Real-time platform-wide statistics</p>
+  </div>
+  <a href="{% url 'superadmin_dashboard' %}" class="btn btn-ghost">← Dashboard</a>
+</div>
+
+<!-- ── Stat Cards ── -->
+<div class="sa-stat-grid">
+  <div class="sa-stat">
+    <div class="sa-stat-icon">🏫</div>
+    <div class="sa-stat-val">{{ schools }}</div>
+    <div class="sa-stat-lbl">Total Schools</div>
+  </div>
+  <div class="sa-stat">
+    <div class="sa-stat-icon">✅</div>
+    <div class="sa-stat-val" style="color:#1d9e75;">{{ active_schools }}</div>
+    <div class="sa-stat-lbl">Active Schools</div>
+  </div>
+  <div class="sa-stat">
+    <div class="sa-stat-icon">🚫</div>
+    <div class="sa-stat-val" style="color:#e24b4a;">{{ suspended_schools }}</div>
+    <div class="sa-stat-lbl">Suspended</div>
+  </div>
+  <div class="sa-stat">
+    <div class="sa-stat-icon">🎓</div>
+    <div class="sa-stat-val">{{ total_students }}</div>
+    <div class="sa-stat-lbl">Students</div>
+  </div>
+  <div class="sa-stat">
+    <div class="sa-stat-icon">👩‍🏫</div>
+    <div class="sa-stat-val">{{ total_teachers }}</div>
+    <div class="sa-stat-lbl">Teachers</div>
+  </div>
+  <div class="sa-stat">
+    <div class="sa-stat-icon">🏛</div>
+    <div class="sa-stat-val">{{ total_classrooms }}</div>
+    <div class="sa-stat-lbl">Classrooms</div>
+  </div>
+</div>
+
+<!-- ── School Breakdown ── -->
+<div class="card">
+
+  <!-- Card header -->
+  <div class="flex-between mb-16">
+    <h2 style="font-size:16px;font-weight:600;color:var(--brand-dark);margin:0;">
+      School Breakdown
+      <span style="font-size:12px;font-weight:400;color:var(--text-muted);margin-left:6px;">
+        {{ school_breakdown|length }} school{{ school_breakdown|length|pluralize }}
+      </span>
+    </h2>
+    <!-- Export CSV button -->
+    <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+  </div>
+
+  <!-- Toolbar: Search + Sort -->
+  <div class="toolbar">
+    <div class="search-bar">
+      <span style="color:var(--text-muted);font-size:13px;">🔍</span>
+      <input type="text" id="school-search" placeholder="Search schools…" oninput="filterAndRender()">
+    </div>
+    <select class="sort-select" id="sort-select" onchange="filterAndRender()">
+      <option value="name_asc">Name A→Z</option>
+      <option value="name_desc">Name Z→A</option>
+      <option value="students_desc" selected>Most Students</option>
+      <option value="students_asc">Fewest Students</option>
+      <option value="teachers_desc">Most Teachers</option>
+      <option value="classrooms_desc">Most Classrooms</option>
+    </select>
+    <span id="result-count" style="font-size:12px;color:var(--text-muted);"></span>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th class="sortable" data-col="name" onclick="columnSort('name')">
+            School <span class="sort-icon"></span>
+          </th>
+          <th>Status</th>
+          <th class="sortable" data-col="sc" onclick="columnSort('sc')">
+            Students <span class="sort-icon"></span>
+          </th>
+          <th class="sortable" data-col="tc" onclick="columnSort('tc')">
+            Teachers <span class="sort-icon"></span>
+          </th>
+          <th class="sortable" data-col="cc" onclick="columnSort('cc')">
+            Classrooms <span class="sort-icon"></span>
+          </th>
+        </tr>
+      </thead>
+      <tbody id="breakdown-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- Summary row -->
+  <div id="summary-row" style="font-size:12px;color:var(--text-muted);margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;gap:20px;flex-wrap:wrap;"></div>
+
+  <div class="pagination" id="pagination"></div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const PER_PAGE = 10;
+let currentPage = 1;
+let sortCol = 'sc';
+let sortDir = 'desc';
+const MAX_SC = {{ max_students }};
+const MAX_TC = {{ max_teachers }};
+
+// Build full data array from Django
+const allRows = [
+  {% for s in school_breakdown %}
+  {
+    name:   "{{ s.name|escapejs }}",
+    active: {{ s.is_active|yesno:'true,false' }},
+    sc:     {{ s.sc }},
+    tc:     {{ s.tc }},
+    cc:     {{ s.cc }},   // classrooms count
+  },
+  {% endfor %}
+];
+
+let filtered = [...allRows];
+
+// ── Filter + Sort + Render ──────────────────────────────
+function filterAndRender() {
+  const q   = document.getElementById('school-search').value.toLowerCase();
+  const srt = document.getElementById('sort-select').value;
+
+  // Filter by search
+  filtered = allRows.filter(r => r.name.toLowerCase().includes(q));
+
+  // Sort
+  const [col, dir] = srt.split('_');
+  filtered.sort((a, b) => {
+    let va = col === 'name' ? a.name : a[col === 'students' ? 'sc' : col === 'teachers' ? 'tc' : col === 'classrooms' ? 'cc' : col];
+    let vb = col === 'name' ? b.name : b[col === 'students' ? 'sc' : col === 'teachers' ? 'tc' : col === 'classrooms' ? 'cc' : col];
+    if (typeof va === 'string') return dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+    return dir === 'asc' ? va - vb : vb - va;
+  });
+
+  currentPage = 1;
+  render();
+}
+
+function columnSort(col) {
+  // Toggle direction if same column clicked
+  if (sortCol === col) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortCol = col;
+    sortDir = col === 'name' ? 'asc' : 'desc';
+  }
+
+  // Update header arrow classes
+  document.querySelectorAll('th.sortable').forEach(th => {
+    th.classList.remove('asc', 'desc');
+    if (th.dataset.col === col) th.classList.add(sortDir);
+  });
+
+  // Sort filtered data
+  filtered.sort((a, b) => {
+    let va = a[col], vb = b[col];
+    if (typeof va === 'string') return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+    return sortDir === 'asc' ? va - vb : vb - va;
+  });
+
+  currentPage = 1;
+  renderTable();
+}
+
+// ── Render ──────────────────────────────────────────────
+function render() {
+  renderTable();
+  renderSummary();
+}
+
+function renderTable() {
+  const start = (currentPage - 1) * PER_PAGE;
+  const page  = filtered.slice(start, start + PER_PAGE);
+  const tbody = document.getElementById('breakdown-tbody');
+
+  // Result count
+  document.getElementById('result-count').textContent =
+    filtered.length !== allRows.length
+      ? `${filtered.length} of ${allRows.length} schools`
+      : '';
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted);">No schools found.</td></tr>`;
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = page.map((r, i) => {
+    const scPct = MAX_SC > 0 ? Math.round((r.sc / MAX_SC) * 100) : 0;
+    const tcPct = MAX_TC > 0 ? Math.round((r.tc / MAX_TC) * 100) : 0;
+
+    return `
+    <tr>
+      <td style="color:var(--text-muted);font-size:12px;">${start + i + 1}</td>
+      <td><strong>${r.name}</strong></td>
+      <td>
+        ${r.active
+          ? '<span class="badge badge-success">Active</span>'
+          : '<span class="badge badge-danger">Suspended</span>'}
+      </td>
+      <td>
+        <span style="font-weight:500;">${r.sc}</span>
+        <span class="bar-wrap"><span class="bar-fill bar-blue" style="width:${scPct}%"></span></span>
+      </td>
+      <td>
+        <span style="font-weight:500;">${r.tc}</span>
+        <span class="bar-wrap"><span class="bar-fill bar-green" style="width:${tcPct}%"></span></span>
+      </td>
+      <td>${r.cc}</td>
+    </tr>`;
+  }).join('');
+
+  renderPagination();
+}
+
+function renderSummary() {
+  const totalSc = filtered.reduce((s, r) => s + r.sc, 0);
+  const totalTc = filtered.reduce((s, r) => s + r.tc, 0);
+  const totalCc = filtered.reduce((s, r) => s + r.cc, 0);
+  const active  = filtered.filter(r => r.active).length;
+
+  document.getElementById('summary-row').innerHTML = `
+    <span>Showing <strong>${filtered.length}</strong> schools</span>
+    <span>Active: <strong style="color:#1d9e75;">${active}</strong></span>
+    <span>Suspended: <strong style="color:#e24b4a;">${filtered.length - active}</strong></span>
+    <span>Total Students: <strong>${totalSc}</strong></span>
+    <span>Total Teachers: <strong>${totalTc}</strong></span>
+    <span>Total Classrooms: <strong>${totalCc}</strong></span>
+  `;
+}
+
+function renderPagination() {
+  const total = Math.ceil(filtered.length / PER_PAGE);
+  if (total <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
+  let html = `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+  for (let p = 1; p <= total; p++) {
+    html += `<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+  }
+  html += `<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===total?'disabled':''}>›</button>`;
+  html += `<span style="font-size:12px;color:var(--text-muted);margin-left:6px;">Page ${currentPage} of ${total}</span>`;
+  document.getElementById('pagination').innerHTML = html;
+}
+
+function goPage(p) {
+  const total = Math.ceil(filtered.length / PER_PAGE);
+  if (p < 1 || p > total) return;
+  currentPage = p;
+  renderTable();
+}
+
+// ── Export CSV ──────────────────────────────────────────
+function exportCSV() {
+  const headers = ['#', 'School Name', 'Status', 'Students', 'Teachers', 'Classrooms'];
+  const csvRows = [headers.join(',')];
+  filtered.forEach((r, i) => {
+    csvRows.push([
+      i + 1,
+      `"${r.name.replace(/"/g, '""')}"`,
+      r.active ? 'Active' : 'Suspended',
+      r.sc,
+      r.tc,
+      r.cc,
+    ].join(','));
+  });
+  const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'school_breakdown.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Init
+render();
+</script>
+{% endblock %}

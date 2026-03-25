@@ -3,10 +3,10 @@
 {% block content %}
 <h1 class="page-title mb-24">Reports — {{ school.name }}</h1>
 <div class="stat-grid">
-  <div class="stat-card"><div class="stat-value">{{ school.total_students }}</div><div class="stat-label">Students</div></div>
-  <div class="stat-card"><div class="stat-value">{{ school.total_teachers }}</div><div class="stat-label">Teachers</div></div>
-  <div class="stat-card"><div class="stat-value">{{ classrooms.count }}</div><div class="stat-label">Classrooms</div></div>
-  <div class="stat-card"><div class="stat-value mono">{% if avg_score %}{{ avg_score|floatformat:1 }}%{% else %}—{% endif %}</div><div class="stat-label">Avg Score</div></div>
+<div class="stat-card"><div class="stat-value">{{ total_students }}</div><div class="stat-label">Students</div></div>
+<div class="stat-card"><div class="stat-value">{{ total_teachers }}</div><div class="stat-label">Teachers</div></div>
+<div class="stat-card"><div class="stat-value">{{ classrooms.count }}</div><div class="stat-label">Classrooms</div></div>
+<div class="stat-card"><div class="stat-value mono">{% if avg_score %}{{ avg_score|floatformat:1 }}%{% else %}—{% endif %}</div><div class="stat-label">Avg Score</div></div>
 </div>
 <div class="card">
   <h2 class="section-title mb-16">Classrooms</h2>

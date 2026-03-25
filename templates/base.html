@@ -15,18 +15,72 @@
 <body>
 
 {% if user.is_authenticated %}
-<nav class="navbar">
+ <nav class="navbar">
+  <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">☰</button>
   <a href="{{ user.get_dashboard_url }}" class="navbar-brand">EduPlatform</a>
-  <div class="navbar-links">
-    <a href="{{ user.get_dashboard_url }}" class="nav-link">Dashboard</a>
-    <a href="{% url 'profile' %}" class="nav-link">Profile</a>
-  </div>
-  <div class="navbar-user">
+  {% comment %} <div class="navbar-user">
     <span class="role-badge" style="background:{{ user.role_color }};">{{ user.get_role_display }}</span>
     <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
+    <a href="{% url 'profile' %}" class="nav-link">Profile</a>
     <a href="{% url 'logout' %}" class="nav-link">Sign Out</a>
-  </div>
+  </div> {% endcomment %}
+</nav> 
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-inner">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar">{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</div>
+        <div>
+          <div class="sidebar-name">{{ user.get_full_name|default:user.username }}</div>
+          <div class="sidebar-role" style="background:{{ user.role_color }};">{{ user.get_role_display }}</div>
+        </div>
+      </div>
+      <div class="sidebar-divider"></div>
+      <nav class="sidebar-nav">
+  {% if user.role == 'super_admin' %}
+  <a href="{% url 'superadmin_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}"><span class="sl-icon">🏠</span> Dashboard</a>
+  <a href="{% url 'superadmin_schools_list' %}" class="sidebar-link {% if request.resolver_match.url_name in 'superadmin_schools_list,superadmin_school_detail,superadmin_school_edit,superadmin_create_school' %}active{% endif %}"><span class="sl-icon">🏫</span> Schools</a>
+  <a href="{% url 'superadmin_all_admins' %}" class="sidebar-link {% if request.resolver_match.url_name == 'superadmin_all_admins' %}active{% endif %}"><span class="sl-icon">👤</span> Admins</a>
+  <a href="{% url 'superadmin_all_courses' %}" class="sidebar-link {% if request.resolver_match.url_name in 'superadmin_all_courses,superadmin_course_list,superadmin_course_detail,superadmin_concept_add,superadmin_concept_edit,superadmin_video_add' %}active{% endif %}"><span class="sl-icon">📘</span> Courses</a>
+  <a href="{% url 'superadmin_analytics' %}" class="sidebar-link {% if request.resolver_match.url_name == 'superadmin_analytics' %}active{% endif %}"><span class="sl-icon">📊</span> Analytics</a>
+
+  {% elif user.role == 'school_admin' %}
+  <a href="{% url 'school_admin_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_dashboard' %}active{% endif %}"><span class="sl-icon">🏠</span> Dashboard</a>
+  <a href="{% url 'school_admin_invite_management' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_invite_management' %}active{% endif %}"><span class="sl-icon">➕</span> Invite Management</a>
+  <a href="{% url 'school_admin_management_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_management_list' %}active{% endif %}"><span class="sl-icon">👥</span> Management</a>
+  <a href="{% url 'school_admin_teachers_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_teachers_list' %}active{% endif %}"><span class="sl-icon">👩🏫</span> Teachers</a>
+  <a href="{% url 'school_admin_students_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_students_list' %}active{% endif %}"><span class="sl-icon">🎓</span> Students</a>
+  <a href="{% url 'school_admin_create_announcement' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_create_announcement' %}active{% endif %}"><span class="sl-icon">📢</span> Announcement</a>
+  <a href="{% url 'school_admin_reports' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_reports' %}active{% endif %}"><span class="sl-icon">📊</span> Reports</a>
+
+  {% elif user.role == 'management' %}
+  <a href="#teachers" class="sidebar-link" onclick="switchMgmtTab('teachers');return false;"><span class="sl-icon">👩🏫</span> Teachers</a>
+  <a href="#classrooms" class="sidebar-link" onclick="switchMgmtTab('classrooms');return false;"><span class="sl-icon">🏛</span> Classrooms</a>
+  <a href="#students" class="sidebar-link" onclick="switchMgmtTab('students');return false;"><span class="sl-icon">🎓</span> Students</a>
+  <a href="#analytics" class="sidebar-link" onclick="switchMgmtTab('analytics');return false;"><span class="sl-icon">📊</span> Analytics</a>
+  <a href="#announcements" class="sidebar-link" onclick="switchMgmtTab('announcements');return false;"><span class="sl-icon">📢</span> Announcements</a>
+  <div class="sidebar-divider"></div>
+  <a href="{% url 'management_invite_teacher' %}" class="sidebar-link"><span class="sl-icon">➕</span> Invite Teacher</a>
+
+  {% elif user.role == 'teacher' %}
+  <a href="{% url 'teacher_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'teacher_dashboard' %}active{% endif %}"><span class="sl-icon">🏠</span> Dashboard</a>
+
+  {% elif user.role == 'student' %}
+  <a href="{% url 'student_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'student_dashboard' %}active{% endif %}"><span class="sl-icon">🏠</span> Dashboard</a>
+
+  {% endif %}
 </nav>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-bottom">
+        <a href="{% url 'profile' %}" class="sidebar-link"><span class="sl-icon">⚙️</span> Profile</a>
+        <a href="{% url 'logout' %}" class="sidebar-link sidebar-link-danger"><span class="sl-icon">🚪</span> Sign Out</a>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <main class="main-content" id="main-content">
+{% else %}
+<main id="main-content" style="padding:0;">
 {% endif %}
 
 {% if messages %}
@@ -37,10 +91,25 @@
 </div>
 {% endif %}
 
-<main class="main-content">
-  {% block content %}{% endblock %}
+{% block content %}{% endblock %}
+
+{% if user.is_authenticated %}
+  </main>
+</div>
+{% else %}
 </main>
+{% endif %}
 
 {% block extra_js %}{% endblock %}
+
+<script>
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('show');
+  document.body.classList.toggle('sidebar-open');
+}
+</script>
 </body>
 </html>

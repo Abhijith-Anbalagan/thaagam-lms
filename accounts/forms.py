@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from .models import User
 
 
@@ -47,3 +47,7 @@ class ProfileForm(forms.ModelForm):
     class Meta:
         model  = User
         fields = ['first_name', 'last_name', 'email', 'phone', 'avatar']
+
+
+class PasswordChangeCustomForm(PasswordChangeForm):
+    pass
