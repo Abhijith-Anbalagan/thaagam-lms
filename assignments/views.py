@@ -11,6 +11,7 @@ def assignment_detail(request, assignment_id):
     )
     classroom = assignment.classroom
 
+    # Grade POST handler
     if request.method == 'POST':
         sub_id   = request.POST.get('submission_id')
         score    = request.POST.get('score')
@@ -20,7 +21,7 @@ def assignment_detail(request, assignment_id):
             sub.score    = score
             sub.feedback = feedback
             sub.save()
-            messages.success(request, 'Grade saved.')
+            messages.success(request, f'Grade saved for {sub.student.get_full_name()}.')
         return redirect('assignment_detail', assignment_id=assignment_id)
 
     all_students = classroom.students.all()
@@ -36,13 +37,12 @@ def assignment_detail(request, assignment_id):
         if sub is None:
             not_submitted.append(student)
         elif sub.is_late:
-            # late + already graded = teacher reviewed a re-submission
             if sub.score is not None:
-                resubmitted.append(sub)
+                resubmitted.append(sub)   # late + already graded = re-reviewed
             else:
-                late.append(sub)
+                late.append(sub)          # late + not yet graded
         else:
-            submitted.append(sub)
+            submitted.append(sub)         # on time
 
     return render(request, 'teacher/assignment_detail.html', {
         'assignment':    assignment,
