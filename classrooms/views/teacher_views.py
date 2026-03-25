@@ -203,13 +203,32 @@ def post_announcement(request):
 @role_required('teacher')
 def classroom_announce(request, classroom_id):
     classroom = _get_classroom(request, classroom_id)
-    try:
-        from announcements.models import Announcement
-        announcements = Announcement.objects.filter(
-            school=request.user.school, classroom=classroom
-        ).order_by('-is_pinned', '-created_at')
-    except Exception:
-        announcements = []
+    from announcements.models import Announcement
+
+    if request.method == 'POST':
+        title     = request.POST.get('title', '').strip()
+        body      = request.POST.get('body', '').strip()
+        meet_link = request.POST.get('meet_link', '').strip()
+        is_pinned = bool(request.POST.get('is_pinned'))
+        if title and body:
+            Announcement.objects.create(
+                posted_by=request.user,
+                school=request.user.school,
+                classroom=classroom,
+                title=title,
+                body=body,
+                meet_link=meet_link,
+                is_pinned=is_pinned,
+                target='students',
+            )
+            messages.success(request, 'Announcement posted.')
+        else:
+            messages.error(request, 'Title and message are required.')
+        return redirect('teacher_classroom_announce', classroom_id=classroom_id)
+
+    announcements = Announcement.objects.filter(
+        school=request.user.school, classroom=classroom
+    ).order_by('-is_pinned', '-created_at')
 
     return render(request, 'teacher/classroom_announce.html', {
         'classroom':     classroom,
