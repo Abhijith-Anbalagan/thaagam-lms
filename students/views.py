@@ -1,10 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.http import JsonResponse
 from django.utils import timezone
+from django.db.models import Avg, Count, Sum
 from accounts.decorators import role_required
 from classrooms.models import Classroom, CourseContent
 from assignments.models import Assignment, Submission
 from announcements.models import Announcement
+from chat.models import Message
 
 
 def _get_classroom(request, class_id):
@@ -13,11 +16,11 @@ def _get_classroom(request, class_id):
 
 @role_required('student')
 def dashboard(request):
-    classrooms = request.user.joined_classrooms.select_related('teacher', 'school').all()
-    classroom  = classrooms.first()  # student is typically in one class
-
-    pending = []
+    classrooms    = request.user.joined_classrooms.select_related('teacher', 'school').all()
+    classroom     = classrooms.first()
+    pending       = []
     total_courses = 0
+
     for c in classrooms:
         total_courses += c.course_contents.count()
         for a in c.assignments.filter(due_date__gte=timezone.now()):
@@ -28,12 +31,18 @@ def dashboard(request):
         classroom__in=classrooms
     ).order_by('-created_at')[:6]
 
+    # Unread message count for badge
+    unread_count = Message.objects.filter(
+        receiver=request.user, is_read=False
+    ).count()
+
     return render(request, 'student/dashboard.html', {
-        'classrooms': classrooms,
-        'classroom': classroom,
-        'pending_assignments': pending,
-        'recent_announcements': recent_announcements,
-        'total_courses': total_courses,
+        'classrooms':            classrooms,
+        'classroom':             classroom,
+        'pending_assignments':   pending,
+        'recent_announcements':  recent_announcements,
+        'total_courses':         total_courses,
+        'unread_count':          unread_count,
     })
 
 
@@ -98,7 +107,8 @@ def classroom_classwork(request, class_id):
             )
             if not created:
                 if not assignment.is_overdue:
-                    sub.file = file; sub.save()
+                    sub.file = file
+                    sub.save()
                     messages.success(request, 'Submission updated.')
                 else:
                     messages.error(request, 'Deadline has passed.')
@@ -127,12 +137,11 @@ def classroom_peoples(request, class_id):
 
 @role_required('student')
 def classroom_grade(request, class_id):
-    classroom    = _get_classroom(request, class_id)
-    assignments  = classroom.assignments.all()
-    grade_data   = []
-    total_score  = total_max = 0
+    classroom   = _get_classroom(request, class_id)
+    grade_data  = []
+    total_score = total_max = 0
 
-    for a in assignments:
+    for a in classroom.assignments.all():
         try:    sub = Submission.objects.get(assignment=a, student=request.user)
         except: sub = None
         grade_data.append({'assignment': a, 'submission': sub})
@@ -140,19 +149,21 @@ def classroom_grade(request, class_id):
             total_score += sub.score
             total_max   += a.max_score
 
-    overall_pct   = round(total_score / total_max * 100, 1) if total_max else None
-    chart_labels  = [d['assignment'].title   for d in grade_data if d['submission'] and d['submission'].score is not None]
-    chart_scores  = [d['submission'].score   for d in grade_data if d['submission'] and d['submission'].score is not None]
-    chart_max     = [d['assignment'].max_score for d in grade_data if d['submission'] and d['submission'].score is not None]
+    overall_pct  = round(total_score / total_max * 100, 1) if total_max else None
+    chart_labels = [d['assignment'].title      for d in grade_data if d['submission'] and d['submission'].score is not None]
+    chart_scores = [d['submission'].score      for d in grade_data if d['submission'] and d['submission'].score is not None]
+    chart_max    = [d['assignment'].max_score  for d in grade_data if d['submission'] and d['submission'].score is not None]
 
     return render(request, 'student/classroom_grade.html', {
-        'classroom': classroom, 'grade_data': grade_data,
-        'total_score': total_score, 'total_max': total_max,
+        'classroom':   classroom,
+        'grade_data':  grade_data,
+        'total_score': total_score,
+        'total_max':   total_max,
         'overall_pct': overall_pct,
         'chart_labels': chart_labels,
         'chart_scores': chart_scores,
         'chart_max':    chart_max,
-        'active_tab': 'grades',
+        'active_tab':  'grades',
     })
 
 
@@ -160,7 +171,6 @@ def classroom_grade(request, class_id):
 def classroom_chat(request, class_id):
     classroom = _get_classroom(request, class_id)
     teacher   = classroom.teacher
-    from chat.models import Message
     msgs = Message.objects.filter(
         classroom=classroom,
         sender__in=[request.user, teacher],
@@ -168,6 +178,64 @@ def classroom_chat(request, class_id):
     ).order_by('created_at')
     msgs.filter(receiver=request.user, is_read=False).update(is_read=True)
     return render(request, 'student/classroom_chat.html', {
-        'classroom': classroom, 'teacher': teacher,
-        'messages': msgs, 'active_tab': 'chat',
+        'classroom':  classroom,
+        'teacher':    teacher,
+        'messages':   msgs,
+        'active_tab': 'chat',
     })
+
+
+@role_required('student')
+def student_analytics(request):
+    """Student's personal performance analytics across all classrooms."""
+    classrooms  = request.user.joined_classrooms.select_related('teacher', 'school').all()
+    submissions = Submission.objects.filter(
+        student=request.user, score__isnull=False
+    ).select_related('assignment__classroom')
+
+    # Per-classroom breakdown
+    classroom_stats = []
+    for c in classrooms:
+        c_subs = submissions.filter(assignment__classroom=c)
+        total  = c.assignments.count()
+        graded = c_subs.count()
+        avg    = c_subs.aggregate(avg=Avg('score'))['avg']
+        classroom_stats.append({
+            'classroom':          c,
+            'total_assignments':  total,
+            'graded':             graded,
+            'submitted':          Submission.objects.filter(assignment__classroom=c, student=request.user).count(),
+            'avg_score':          round(avg, 1) if avg else None,
+        })
+
+    # Overall numbers
+    all_subs      = Submission.objects.filter(student=request.user)
+    total_score   = sum(s.score for s in submissions if s.score is not None)
+    total_max     = sum(s.assignment.max_score for s in submissions)
+    overall_pct   = round(total_score / total_max * 100, 1) if total_max else None
+
+    # Chart data — last 10 graded submissions ordered by date
+    recent_graded = submissions.order_by('assignment__due_date')[:10]
+    chart_labels  = [s.assignment.title for s in recent_graded]
+    chart_scores  = [s.score            for s in recent_graded]
+    chart_max     = [s.assignment.max_score for s in recent_graded]
+
+    return render(request, 'student/analytics.html', {
+        'classrooms':       classrooms,
+        'classroom_stats':  classroom_stats,
+        'total_submitted':  all_subs.count(),
+        'total_graded':     submissions.count(),
+        'overall_pct':      overall_pct,
+        'total_score':      total_score,
+        'total_max':        total_max,
+        'chart_labels':     chart_labels,
+        'chart_scores':     chart_scores,
+        'chart_max':        chart_max,
+    })
+
+
+@role_required('student')
+def unread_count_api(request):
+    """JSON endpoint — returns unread message count for the logged-in student."""
+    count = Message.objects.filter(receiver=request.user, is_read=False).count()
+    return JsonResponse({'unread': count})
