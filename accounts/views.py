@@ -1,17 +1,44 @@
-from django.forms import ValidationError
-from django.shortcuts import render, redirect, get_object_or_404
+import uuid
+from datetime import timedelta
+
+from django.contrib import messages
 from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from django.contrib import messages
 from django.contrib.auth.password_validation import validate_password
+from django.core.mail import send_mail
+from django.forms import ValidationError
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
-from datetime import timedelta
-import uuid
+from django.views.decorators.http import require_http_methods
+
 from classrooms.models import Classroom
 from .models import User, Invitation
+from .forms import (
+    SignupForm, LoginForm, AcceptInviteForm,
+    ProfileForm, PasswordChangeCustomForm,
+    ForgotPasswordForm, ResetPasswordForm,
+)
 
-from .forms import SignupForm, LoginForm, AcceptInviteForm, ProfileForm, PasswordChangeCustomForm
+
+# ─── Email Helpers ────────────────────────────────────────────────────────────
+
+def send_verification_email(user, verification_url):
+    send_mail(
+        subject        = 'Verify your EduPlatform email',
+        message        = f'Hi {user.username},\n\nClick to verify your account:\n{verification_url}\n\nExpires in 24 hours.',
+        from_email     = 'noreply@eduplatform.com',
+        recipient_list = [user.email],
+    )
+
+
+def send_password_reset_email(user, reset_url):
+    send_mail(
+        subject        = 'Reset your EduPlatform password',
+        message        = f'Hi {user.username},\n\nClick to reset your password:\n{reset_url}\n\nExpires in 2 hours.\n\nIf you did not request this, ignore this email.',
+        from_email     = 'noreply@eduplatform.com',
+        recipient_list = [user.email],
+    )
 
 
 # ─── Signup ───────────────────────────────────────────────────────────────────
@@ -30,7 +57,7 @@ def signup_view(request):
         verification_url = request.build_absolute_uri(
             reverse('verify_email', args=[user.email_verification_token])
         )
-        send_verification_email(user, verification_url)  # ✅ uses helper
+        send_verification_email(user, verification_url)
 
         return render(request, 'accounts/email_verification_sent.html', {'email': user.email})
 
@@ -49,11 +76,12 @@ def login_view(request):
         login(request, user)
         return redirect(user.get_dashboard_url())
 
-    return render(request, 'accounts/login.html', {'form': form})
+    return render(request, 'registration/login.html', {'form': form})
 
 
 # ─── Logout ───────────────────────────────────────────────────────────────────
 
+@require_http_methods(["GET", "POST"])
 def logout_view(request):
     logout(request)
     return redirect(reverse('login'))
@@ -81,19 +109,15 @@ def public_dashboard(request):
 
 # ─── Accept Invite ────────────────────────────────────────────────────────────
 
-
 def accept_invite_view(request, token):
-    # ✅ Fix 3 — invalid token shows clean page instead of ugly 404
     try:
         invite = Invitation.objects.get(token=token)
     except Invitation.DoesNotExist:
         return render(request, 'accounts/invite_invalid.html')
 
-    # ✅ Fix 4 — expired or already accepted
     if not invite.is_valid:
         return render(request, 'accounts/invite_expired.html')
 
-    # ✅ Fix 1 — email already registered
     if User.objects.filter(email=invite.email).exists():
         return render(request, 'accounts/invite_already_used.html', {
             'email': invite.email
@@ -102,17 +126,15 @@ def accept_invite_view(request, token):
     if request.method == 'POST':
         form = AcceptInviteForm(request.POST)
         if form.is_valid():
-            username  = form.cleaned_data['username'].strip()
-            password  = form.cleaned_data['password1']
+            username = form.cleaned_data['username'].strip()
+            password = form.cleaned_data['password1']
 
-            # ✅ Fix 6 — empty username after stripping whitespace
             if not username:
                 form.add_error('username', 'Username cannot be blank')
                 return render(request, 'accounts/accept_invite.html', {
                     'form': form, 'invitation': invite
                 })
 
-            # ✅ Fix 5 — password strength validation
             try:
                 validate_password(password)
             except ValidationError as e:
@@ -121,14 +143,12 @@ def accept_invite_view(request, token):
                     'form': form, 'invitation': invite
                 })
 
-            # ✅ Fix 1 — double check email uniqueness before save
             if User.objects.filter(email=invite.email).exists():
                 form.add_error(None, 'This email is already registered.')
                 return render(request, 'accounts/accept_invite.html', {
                     'form': form, 'invitation': invite
                 })
 
-            # All good — create user
             user = User.objects.create_user(
                 username       = username,
                 email          = invite.email,
@@ -142,7 +162,7 @@ def accept_invite_view(request, token):
             invite.save()
 
             messages.success(request, 'Account created! You can now log in.')
-            return redirect('/login/')
+            return redirect('login')
 
     else:
         form = AcceptInviteForm()
@@ -151,6 +171,8 @@ def accept_invite_view(request, token):
         'form':       form,
         'invitation': invite,
     })
+
+
 # ─── Email Verification ───────────────────────────────────────────────────────
 
 def verify_email_view(request, token):
@@ -171,8 +193,39 @@ def verify_email_view(request, token):
     user.save()
 
     login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-    messages.success(request, 'Email verified successfully! Welcome to EduPlatform.')
+    messages.success(request, 'Email verified! Welcome to EduPlatform.')
     return redirect('/public-dashboard/')
+
+
+# ─── Resend Verification ──────────────────────────────────────────────────────
+
+def resend_verification_view(request):
+    email = request.GET.get('email') or request.POST.get('email')
+
+    if not email:
+        return redirect('login')
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        messages.error(request, 'No account found with that email.')
+        return redirect('login')
+
+    if user.email_verified:
+        messages.success(request, 'Your email is already verified. Please login.')
+        return redirect('login')
+
+    user.email_verification_token      = uuid.uuid4()
+    user.email_verification_expires_at = timezone.now() + timedelta(hours=24)
+    user.save()
+
+    verification_url = request.build_absolute_uri(
+        reverse('verify_email', args=[user.email_verification_token])
+    )
+    send_verification_email(user, verification_url)
+
+    messages.success(request, 'Verification email resent! Check your inbox.')
+    return render(request, 'accounts/email_verification_sent.html', {'email': email})
 
 
 # ─── Forgot Password ──────────────────────────────────────────────────────────
@@ -181,7 +234,7 @@ def forgot_password_view(request):
     if request.user.is_authenticated:
         return redirect(request.user.get_dashboard_url())
 
-    form = ForgotPasswordForm(request.POST or None)
+    form        = ForgotPasswordForm(request.POST or None)
     email_sent  = False
     reset_email = None
 
@@ -199,10 +252,10 @@ def forgot_password_view(request):
             reset_url = request.build_absolute_uri(
                 reverse('reset_password', args=[user.password_reset_token])
             )
-            send_password_reset_email(user, reset_url)  # ✅ uses helper
+            send_password_reset_email(user, reset_url)
 
         except User.DoesNotExist:
-            pass  # Silently succeed — don't reveal whether account exists
+            pass  # silently succeed — don't reveal if account exists
 
     return render(request, 'accounts/forgot_password.html', {
         'form':        form,
@@ -233,7 +286,10 @@ def reset_password_view(request, token):
         messages.success(request, 'Password reset successfully. You can now sign in.')
         return redirect('login')
 
-    return render(request, 'accounts/reset_password.html', {'form': form, 'token': token})
+    return render(request, 'accounts/reset_password.html', {
+        'form':  form,
+        'token': token,
+    })
 
 
 # ─── Profile ──────────────────────────────────────────────────────────────────
@@ -253,7 +309,13 @@ def password_change_view(request):
     form = PasswordChangeCustomForm(request.user, request.POST or None)
     if request.method == 'POST' and form.is_valid():
         user = form.save()
-        update_session_auth_hash(request, user)  # keep user logged in
+        update_session_auth_hash(request, user)
         messages.success(request, 'Password changed successfully.')
         return redirect('profile')
-    return render(request, 'shared/profile_settings.html', {'form': request.user, 'pw_form': form, 'show_pw': True})
+    return render(request, 'shared/profile_settings.html', {
+        'form':    request.user,
+        'pw_form': form,
+        'show_pw': True,
+    })
+    
+    
