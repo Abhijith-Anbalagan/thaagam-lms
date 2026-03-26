@@ -1,6 +1,6 @@
 from django import forms
 from accounts.models import User
-from .models import School, GlobalCourse, GlobalConcept
+from .models import School, GlobalCourse, GlobalConcept, GlobalConceptVideo
 
 
 class SchoolForm(forms.ModelForm):
@@ -35,13 +35,17 @@ class GlobalCourseForm(forms.ModelForm):
 
     class Meta:
         model  = GlobalCourse
-        fields = ['title', 'description', 'schools']
+        fields = ['title', 'description', 'cover_image', 'language',
+                  'total_hours', 'is_free', 'has_certificate', 'summary', 'schools']
+        widgets = {
+            'summary': forms.Textarea(attrs={'rows': 4}),
+        }
 
 
 class GlobalConceptForm(forms.ModelForm):
     class Meta:
         model  = GlobalConcept
-        fields = ['header', 'h3_course', 'videos', 'pdf', 'quiz', 'assignment']
+        fields = ['header', 'h3_course', 'level', 'pdf', 'quiz', 'assignment']  # added level
         widgets = {
             'quiz':       forms.Textarea(attrs={'rows': 4}),
             'assignment': forms.Textarea(attrs={'rows': 4}),

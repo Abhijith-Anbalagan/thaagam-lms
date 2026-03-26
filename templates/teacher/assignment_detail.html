@@ -1,0 +1,481 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>{{ assignment.title }} — Classwork</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --brand:#4c68d7;--brand-dark:#3a54c0;--brand-soft:#eef1fb;
+  --dark:#1a1f36;--page-bg:#f7f6f2;--card-bg:#fff;--border:#e4e3de;
+  --text-1:#1a1f36;--text-2:#5a5f7a;--text-3:#9496a8;
+  --teacher:#0f6e56;--teacher-bg:#e1f5ee;
+  --radius-md:8px;--radius-lg:12px;--radius-xl:16px;
+  --shadow-sm:0 1px 3px rgba(26,31,54,.06);
+  --shadow-md:0 4px 16px rgba(26,31,54,.08);
+  --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+  --nav-w:240px;
+}
+body{font-family:var(--font);background:var(--page-bg);color:var(--text-1);min-height:100vh;display:flex;font-size:14px;line-height:1.6}
+
+/* Sidebar (minimal, matches dashboard) */
+.sidebar{width:var(--nav-w);min-height:100vh;background:var(--dark);display:flex;flex-direction:column;position:fixed;left:0;top:0;z-index:100}
+.sidebar-logo{padding:20px 20px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.07)}
+.logo-mark{width:34px;height:34px;background:var(--brand);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;color:#fff;flex-shrink:0}
+.logo-text{font-size:15px;font-weight:600;color:#fff}
+.logo-sub{font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.6px;text-transform:uppercase;margin-top:1px}
+.nav-section{padding:12px 0}
+.nav-label{font-size:10px;font-weight:500;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.3);padding:8px 20px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:rgba(255,255,255,.55);text-decoration:none;font-size:13.5px;transition:background .15s,color .15s;position:relative}
+.nav-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85)}
+.nav-item.active{background:rgba(76,104,215,.2);color:#fff}
+.nav-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--brand);border-radius:0 2px 2px 0}
+.nav-icon{width:18px;height:18px;flex-shrink:0;opacity:.7}
+.nav-item.active .nav-icon,.nav-item:hover .nav-icon{opacity:1}
+.sidebar-bottom{margin-top:auto;padding:16px;border-top:1px solid rgba(255,255,255,.07)}
+.user-chip{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-md)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--teacher);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0}
+.user-name{font-size:13px;font-weight:500;color:#fff}
+.user-role{font-size:11px;color:rgba(255,255,255,.4);background:rgba(15,110,86,.3);padding:1px 6px;border-radius:4px;display:inline-block;margin-top:1px}
+
+/* Main */
+.main{margin-left:var(--nav-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+/* Topbar */
+.topbar{background:var(--card-bg);border-bottom:1px solid var(--border);padding:0 28px;height:60px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-2)}
+.breadcrumb a{color:var(--text-2);text-decoration:none}
+.breadcrumb a:hover{color:var(--brand)}
+.breadcrumb-sep{color:var(--text-3)}
+.breadcrumb-current{color:var(--text-1);font-weight:500}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:var(--radius-md);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;text-decoration:none}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-primary:hover{background:var(--brand-dark)}
+.btn-ghost{background:none;color:var(--text-2);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--page-bg)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-green{background:var(--teacher);color:#fff}
+.btn-green:hover{background:#0a5a44}
+
+/* Page */
+.page{padding:28px;display:flex;flex-direction:column;gap:20px}
+
+/* Assignment Header Card */
+.assignment-header{background:linear-gradient(130deg,#1a3b2f 0%,#0f6e56 60%,#1a6e4a 100%);border-radius:var(--radius-xl);padding:28px 32px;position:relative;overflow:hidden}
+.assignment-header::before{content:'';position:absolute;right:-40px;top:-60px;width:240px;height:240px;border-radius:50%;background:rgba(255,255,255,.04)}
+.ah-top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.ah-title{font-size:22px;font-weight:600;color:#fff;margin-bottom:6px}
+.ah-meta{display:flex;gap:16px;flex-wrap:wrap}
+.ah-chip{font-size:12px;color:rgba(255,255,255,.7);display:flex;align-items:center;gap:5px}
+.ah-stats{display:flex;gap:20px;flex-shrink:0;z-index:1}
+.ahs{text-align:center}
+.ahs-val{font-size:24px;font-weight:600;color:#fff;font-family:var(--mono)}
+.ahs-lbl{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
+.status-pill{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500}
+.pill-overdue{background:rgba(226,75,74,.2);color:#ff9a99;border:1px solid rgba(226,75,74,.3)}
+.pill-active{background:rgba(15,110,86,.25);color:#6ee7b7;border:1px solid rgba(15,110,86,.3)}
+
+/* Card */
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:14px;font-weight:600}
+
+/* Tab Bar */
+.tab-bar{display:flex;border-bottom:1px solid var(--border);background:var(--card-bg);border-radius:var(--radius-lg) var(--radius-lg) 0 0;overflow:hidden}
+.tab-btn{flex:1;padding:13px 16px;font-size:13px;font-weight:500;color:var(--text-2);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:7px;font-family:var(--font)}
+.tab-btn:hover{background:#fafaf8;color:var(--text-1)}
+.tab-btn.active{color:var(--brand);border-bottom-color:var(--brand);background:#fff}
+.tab-count{font-size:11px;font-weight:600;padding:1px 7px;border-radius:20px;background:var(--page-bg)}
+.tab-btn.active .tab-count{background:var(--brand-soft);color:var(--brand)}
+.tab-count.red{background:#fee2e2;color:#991b1b}
+.tab-count.amber{background:#fef3c7;color:#92400e}
+.tab-count.green{background:#dcfce7;color:#166534}
+.tab-count.blue{background:var(--brand-soft);color:var(--brand)}
+
+/* Tab Panels */
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* Student Row */
+.student-list{display:flex;flex-direction:column}
+.student-row{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--border);transition:background .1s}
+.student-row:last-child{border-bottom:none}
+.student-row:hover{background:#fafaf8}
+.s-avatar{width:36px;height:36px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0}
+.s-info{flex:1;min-width:0}
+.s-name{font-size:13.5px;font-weight:500}
+.s-sub{font-size:12px;color:var(--text-2);margin-top:1px}
+.s-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.badge{font-size:11.5px;font-weight:500;padding:3px 8px;border-radius:20px;display:inline-block}
+.badge-green{background:#dcfce7;color:#166534}
+.badge-amber{background:#fef3c7;color:#92400e}
+.badge-red{background:#fee2e2;color:#991b1b}
+.badge-blue{background:var(--brand-soft);color:var(--brand)}
+.badge-gray{background:#f3f4f6;color:#374151}
+.badge-purple{background:#eeedfe;color:#534ab7}
+.mono{font-family:var(--mono);font-size:12px}
+
+/* Grade Form (inline) */
+.grade-form{display:none;padding:14px 20px;background:#fafaf8;border-top:1px solid var(--border);gap:12px;align-items:flex-end;flex-wrap:wrap}
+.grade-form.open{display:flex}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-label{font-size:11px;font-weight:500;color:var(--text-2);letter-spacing:.4px;text-transform:uppercase}
+.form-input{border:1px solid var(--border);border-radius:var(--radius-md);padding:7px 11px;font-family:var(--font);font-size:13px;color:var(--text-1);background:#fff;outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--brand)}
+.score-input{width:90px}
+.feedback-input{width:280px}
+
+/* File viewer button */
+.btn-file{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:var(--radius-md);font-size:12px;font-weight:500;background:#f3f4f6;color:var(--text-1);border:1px solid var(--border);text-decoration:none;transition:all .15s}
+.btn-file:hover{background:var(--border)}
+
+/* Empty state */
+.empty-state{padding:40px 20px;text-align:center;color:var(--text-3)}
+.empty-icon{font-size:32px;margin-bottom:10px}
+.empty-title{font-size:14px;font-weight:500;color:var(--text-2);margin-bottom:4px}
+.empty-sub{font-size:12.5px}
+
+/* Description card */
+.desc-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;box-shadow:var(--shadow-sm)}
+.desc-label{font-size:11px;font-weight:500;letter-spacing:.6px;text-transform:uppercase;color:var(--text-3);margin-bottom:8px}
+.desc-text{font-size:13.5px;color:var(--text-1);line-height:1.7}
+
+/* Messages */
+.alert{padding:10px 16px;border-radius:var(--radius-md);font-size:13px;margin-bottom:4px}
+.alert-success{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">EP</div>
+    <div>
+      <div class="logo-text">EduPlatform</div>
+      <div class="logo-sub">Teacher Portal</div>
+    </div>
+  </div>
+  <nav class="nav-section">
+    <div class="nav-label">Main</div>
+    <a class="nav-item" href="{% url 'teacher_dashboard' %}">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke-width="1.8"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke-width="1.8"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke-width="1.8"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke-width="1.8"/></svg>
+      <span>Dashboard</span>
+    </a>
+    <a class="nav-item active" href="{% url 'teacher_classroom_classwork' classroom.id %}">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Assignments</span>
+    </a>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="avatar">{{ request.user.get_full_name|slice:":2"|upper }}</div>
+      <div>
+        <div class="user-name">{{ request.user.get_full_name }}</div>
+        <div class="user-role">teacher</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="breadcrumb">
+      <a href="{% url 'teacher_dashboard' %}">Dashboard</a>
+      <span class="breadcrumb-sep">›</span>
+      <a href="{% url 'teacher_classroom_classwork' classroom.id %}">{{ classroom.name }}</a>
+      <span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">{{ assignment.title }}</span>
+    </div>
+    <div class="topbar-right">
+      <a href="{% url 'teacher_classroom_classwork' classroom.id %}" class="btn btn-ghost btn-sm">← Back to Classwork</a>
+    </div>
+  </header>
+
+  <div class="page">
+
+    {% for message in messages %}
+    <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+
+    <!-- Assignment Header -->
+    <div class="assignment-header">
+      <div class="ah-top">
+        <div>
+          <div class="ah-title">{{ assignment.title }}</div>
+          <div class="ah-meta">
+            <span class="ah-chip">
+              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              {{ classroom.name }}
+            </span>
+            <span class="ah-chip">
+              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Due {{ assignment.due_date|date:"M j, Y · g:i A" }}
+            </span>
+            <span class="ah-chip">
+              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Max score: {{ assignment.max_score }}
+            </span>
+            {% if assignment.file %}
+            <a href="{{ assignment.file.url }}" target="_blank" class="ah-chip" style="color:rgba(255,255,255,.8)">
+              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Attachment
+            </a>
+            {% endif %}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px;z-index:1">
+          {% if assignment.is_overdue %}
+          <span class="status-pill pill-overdue">Overdue</span>
+          {% else %}
+          <span class="status-pill pill-active">Active</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="ah-stats" style="margin-top:20px">
+        <div class="ahs"><div class="ahs-val">{{ submitted|length }}</div><div class="ahs-lbl">Submitted</div></div>
+        <div class="ahs"><div class="ahs-val">{{ not_submitted|length }}</div><div class="ahs-lbl">Not Submitted</div></div>
+        <div class="ahs"><div class="ahs-val">{{ late|length }}</div><div class="ahs-lbl">Late</div></div>
+        <div class="ahs"><div class="ahs-val">{{ resubmitted|length }}</div><div class="ahs-lbl">Resubmitted</div></div>
+      </div>
+    </div>
+
+    <!-- Description -->
+    {% if assignment.description %}
+    <div class="desc-card">
+      <div class="desc-label">Description / Instructions</div>
+      <div class="desc-text">{{ assignment.description|linebreaks }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Tab Card -->
+    <div class="card">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('submitted', this)">
+          ✅ Submitted
+          <span class="tab-count green">{{ submitted|length }}</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('late', this)">
+          ⏰ Late
+          <span class="tab-count amber">{{ late|length }}</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('resubmitted', this)">
+          🔁 Resubmitted
+          <span class="tab-count purple" style="background:#eeedfe;color:#534ab7">{{ resubmitted|length }}</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('not_submitted', this)">
+          ❌ Not Submitted
+          <span class="tab-count red">{{ not_submitted|length }}</span>
+        </button>
+      </div>
+
+      <!-- Submitted -->
+      <div id="tab-submitted" class="tab-panel active">
+        <div class="student-list">
+          {% for sub in submitted %}
+          <div>
+            <div class="student-row">
+              <div class="s-avatar">{{ sub.student.get_full_name|slice:":2"|upper }}</div>
+              <div class="s-info">
+                <div class="s-name">{{ sub.student.get_full_name }}</div>
+                <div class="s-sub">
+                  <span class="mono">@{{ sub.student.username }}</span>
+                  · Submitted {{ sub.submitted_at|date:"M j, g:i A" }}
+                </div>
+              </div>
+              <div class="s-actions">
+                {% if sub.file %}
+                <a href="{{ sub.file.url }}" target="_blank" class="btn-file">
+                  <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  View File
+                </a>
+                {% endif %}
+                {% if sub.score is not None %}
+                  <span class="badge badge-green mono">{{ sub.score }}/{{ assignment.max_score }}</span>
+                  <span class="badge badge-blue">{{ sub.letter_grade }}</span>
+                  <button class="btn btn-ghost btn-sm" onclick="toggleGrade('grade-{{ sub.id }}')">Edit Grade</button>
+                {% else %}
+                  <button class="btn btn-green btn-sm" onclick="toggleGrade('grade-{{ sub.id }}')">+ Grade</button>
+                {% endif %}
+              </div>
+            </div>
+            <!-- Inline Grade Form -->
+            <form method="POST" action="{% url 'assignment_detail' assignment.id %}" id="grade-{{ sub.id }}" class="grade-form">
+              {% csrf_token %}
+              <input type="hidden" name="submission_id" value="{{ sub.id }}">
+              <div class="form-group">
+                <label class="form-label">Score (max {{ assignment.max_score }})</label>
+                <input class="form-input score-input" type="number" name="score" min="0" max="{{ assignment.max_score }}" value="{{ sub.score|default:'' }}" placeholder="e.g. 18" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Feedback (optional)</label>
+                <input class="form-input feedback-input" type="text" name="feedback" value="{{ sub.feedback }}" placeholder="Great work! / Needs improvement…">
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm">Save Grade</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="toggleGrade('grade-{{ sub.id }}')">Cancel</button>
+            </form>
+          </div>
+          {% empty %}
+          <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <div class="empty-title">No submissions yet</div>
+            <div class="empty-sub">Students who submit on time will appear here.</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Late -->
+      <div id="tab-late" class="tab-panel">
+        <div class="student-list">
+          {% for sub in late %}
+          <div>
+            <div class="student-row">
+              <div class="s-avatar" style="background:#faeeda;color:#854f0b">{{ sub.student.get_full_name|slice:":2"|upper }}</div>
+              <div class="s-info">
+                <div class="s-name">{{ sub.student.get_full_name }} <span class="badge badge-amber" style="font-size:10px;vertical-align:middle">LATE</span></div>
+                <div class="s-sub">
+                  <span class="mono">@{{ sub.student.username }}</span>
+                  · Submitted {{ sub.submitted_at|date:"M j, g:i A" }}
+                  (due {{ assignment.due_date|date:"M j" }})
+                </div>
+              </div>
+              <div class="s-actions">
+                {% if sub.file %}
+                <a href="{{ sub.file.url }}" target="_blank" class="btn-file">View File</a>
+                {% endif %}
+                {% if sub.score is not None %}
+                  <span class="badge badge-green mono">{{ sub.score }}/{{ assignment.max_score }}</span>
+                  <span class="badge badge-blue">{{ sub.letter_grade }}</span>
+                  <button class="btn btn-ghost btn-sm" onclick="toggleGrade('late-{{ sub.id }}')">Edit Grade</button>
+                {% else %}
+                  <button class="btn btn-green btn-sm" onclick="toggleGrade('late-{{ sub.id }}')">+ Grade</button>
+                {% endif %}
+              </div>
+            </div>
+            <form method="POST" action="{% url 'assignment_detail' assignment.id %}" id="late-{{ sub.id }}" class="grade-form">
+              {% csrf_token %}
+              <input type="hidden" name="submission_id" value="{{ sub.id }}">
+              <div class="form-group">
+                <label class="form-label">Score (max {{ assignment.max_score }})</label>
+                <input class="form-input score-input" type="number" name="score" min="0" max="{{ assignment.max_score }}" value="{{ sub.score|default:'' }}" placeholder="e.g. 15" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Feedback (optional)</label>
+                <input class="form-input feedback-input" type="text" name="feedback" value="{{ sub.feedback }}" placeholder="Accepted late. Note: …">
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm">Save Grade</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="toggleGrade('late-{{ sub.id }}')">Cancel</button>
+            </form>
+          </div>
+          {% empty %}
+          <div class="empty-state">
+            <div class="empty-icon">✅</div>
+            <div class="empty-title">No late submissions</div>
+            <div class="empty-sub">All submissions were on time.</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Resubmitted -->
+      <div id="tab-resubmitted" class="tab-panel">
+        <div class="student-list">
+          {% for sub in resubmitted %}
+          <div>
+            <div class="student-row">
+              <div class="s-avatar" style="background:#eeedfe;color:#534ab7">{{ sub.student.get_full_name|slice:":2"|upper }}</div>
+              <div class="s-info">
+                <div class="s-name">{{ sub.student.get_full_name }} <span class="badge badge-purple" style="background:#eeedfe;color:#534ab7;font-size:10px;vertical-align:middle">RESUBMITTED</span></div>
+                <div class="s-sub">
+                  <span class="mono">@{{ sub.student.username }}</span>
+                  · Last submitted {{ sub.submitted_at|date:"M j, g:i A" }}
+                </div>
+              </div>
+              <div class="s-actions">
+                {% if sub.file %}
+                <a href="{{ sub.file.url }}" target="_blank" class="btn-file">View File</a>
+                {% endif %}
+                {% if sub.score is not None %}
+                  <span class="badge badge-green mono">{{ sub.score }}/{{ assignment.max_score }}</span>
+                  <span class="badge badge-blue">{{ sub.letter_grade }}</span>
+                  <button class="btn btn-ghost btn-sm" onclick="toggleGrade('resub-{{ sub.id }}')">Edit Grade</button>
+                {% else %}
+                  <button class="btn btn-green btn-sm" onclick="toggleGrade('resub-{{ sub.id }}')">+ Grade</button>
+                {% endif %}
+              </div>
+            </div>
+            <form method="POST" action="{% url 'assignment_detail' assignment.id %}" id="resub-{{ sub.id }}" class="grade-form">
+              {% csrf_token %}
+              <input type="hidden" name="submission_id" value="{{ sub.id }}">
+              <div class="form-group">
+                <label class="form-label">Score (max {{ assignment.max_score }})</label>
+                <input class="form-input score-input" type="number" name="score" min="0" max="{{ assignment.max_score }}" value="{{ sub.score|default:'' }}" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Feedback (optional)</label>
+                <input class="form-input feedback-input" type="text" name="feedback" value="{{ sub.feedback }}" placeholder="Revised submission reviewed.">
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm">Save Grade</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="toggleGrade('resub-{{ sub.id }}')">Cancel</button>
+            </form>
+          </div>
+          {% empty %}
+          <div class="empty-state">
+            <div class="empty-icon">🔁</div>
+            <div class="empty-title">No resubmissions</div>
+            <div class="empty-sub">Resubmitted work appears here once reviewed.</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Not Submitted -->
+      <div id="tab-not_submitted" class="tab-panel">
+        <div class="student-list">
+          {% for student in not_submitted %}
+          <div class="student-row">
+            <div class="s-avatar" style="background:#fee2e2;color:#991b1b">{{ student.get_full_name|slice:":2"|upper }}</div>
+            <div class="s-info">
+              <div class="s-name">{{ student.get_full_name }}</div>
+              <div class="s-sub"><span class="mono">@{{ student.username }}</span> · {{ student.email }}</div>
+            </div>
+            <div class="s-actions">
+              <span class="badge badge-red">Not Submitted</span>
+            </div>
+          </div>
+          {% empty %}
+          <div class="empty-state">
+            <div class="empty-icon">🎉</div>
+            <div class="empty-title">Everyone submitted!</div>
+            <div class="empty-sub">All students have submitted this assignment.</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div><!-- /card -->
+  </div><!-- /page -->
+</div><!-- /main -->
+
+<script>
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+function toggleGrade(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+}
+</script>
+</body>
+</html>

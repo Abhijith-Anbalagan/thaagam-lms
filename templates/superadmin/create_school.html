@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}New School — EduPlatform{% endblock %}
+{% block extra_css %}
+<style>
+  .form-card { background:#fff; border:1px solid var(--border); border-radius:16px; padding:36px; max-width:560px; margin:0 auto; box-shadow:0 2px 12px rgba(0,0,0,0.06); }
+  .section-divider { display:flex; align-items:center; gap:12px; margin:24px 0 18px; }
+  .section-divider span { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); white-space:nowrap; }
+  .section-divider::before, .section-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex-between mb-28" style="max-width:560px;margin-left:auto;margin-right:auto;">
+  <h1 class="page-title">New School</h1>
+  <a href="{% url 'superadmin_dashboard' %}" class="btn btn-ghost">← Back to Dashboard</a>
+</div>
+
+<div class="form-card">
+  <form method="post">{% csrf_token %}
+
+    <div class="section-divider"><span>🏫 School Info</span></div>
+
+    <div class="form-group">
+      <label class="form-label">School Name <span style="color:#e53e3e;">*</span></label>
+      <input type="text" name="name" class="form-control"
+             placeholder="e.g. Sunrise Public School"
+             value="{{ form.name.value|default:'' }}" required>
+      {% if form.name.errors %}<div class="form-error">{{ form.name.errors.0 }}</div>{% endif %}
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Address</label>
+      <textarea name="address" class="form-control" rows="2"
+                placeholder="School address (optional)">{{ form.address.value|default:'' }}</textarea>
+    </div>
+
+    <div class="section-divider"><span>👤 Admin Account</span></div>
+
+    <div class="form-group">
+      <label class="form-label">Admin Full Name <span style="color:#e53e3e;">*</span></label>
+      <input type="text" name="admin_name" class="form-control"
+             placeholder="e.g. John Smith"
+             value="{{ form.admin_name.value|default:'' }}" required>
+      {% if form.admin_name.errors %}<div class="form-error">{{ form.admin_name.errors.0 }}</div>{% endif %}
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group">
+        <label class="form-label">Admin Email <span style="color:#e53e3e;">*</span></label>
+        <input type="email" name="admin_email" class="form-control"
+               placeholder="admin@school.com"
+               value="{{ form.admin_email.value|default:'' }}" required>
+        {% if form.admin_email.errors %}<div class="form-error">{{ form.admin_email.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password <span style="color:#e53e3e;">*</span></label>
+        <input type="password" name="admin_password" class="form-control"
+               placeholder="Min. 8 characters" required>
+        {% if form.admin_password.errors %}<div class="form-error">{{ form.admin_password.errors.0 }}</div>{% endif %}
+      </div>
+    </div>
+
+    <div class="flex gap-8" style="margin-top:8px;">
+      <button type="submit" class="btn btn-primary">Create School</button>
+      <a href="{% url 'superadmin_dashboard' %}" class="btn btn-ghost">Cancel</a>
+    </div>
+
+  </form>
+</div>
+{% endblock %}

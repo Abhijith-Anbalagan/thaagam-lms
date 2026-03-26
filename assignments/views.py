@@ -1,38 +1,55 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from accounts.decorators import role_required
-from classrooms.models import Classroom
 from .models import Assignment, Submission
 
 
-@role_required('student')
-def submit_assignment(request, assignment_id):
-    assignment = get_object_or_404(Assignment, pk=assignment_id)
-    classroom  = assignment.classroom
+@role_required('teacher')
+def assignment_detail(request, assignment_id):
+    assignment = get_object_or_404(
+        Assignment, pk=assignment_id, classroom__teacher=request.user
+    )
+    classroom = assignment.classroom
 
-    # Ensure student is in this classroom
-    if not classroom.students.filter(pk=request.user.pk).exists():
-        messages.error(request, 'You are not enrolled in this classroom.')
-        return redirect('student_dashboard')
-
+    # Grade POST handler
     if request.method == 'POST':
-        file = request.FILES.get('file')
-        if file:
-            sub, created = Submission.objects.get_or_create(
-                assignment=assignment, student=request.user,
-                defaults={'file': file}
-            )
-            if not created:
-                if not assignment.is_overdue:
-                    sub.file = file
-                    sub.save()
-                    messages.success(request, 'Submission updated.')
-                else:
-                    messages.error(request, 'Deadline has passed — cannot re-submit.')
-            else:
-                messages.success(request, 'Assignment submitted!')
-        return redirect('student_classroom_classwork', class_id=classroom.pk)
+        sub_id   = request.POST.get('submission_id')
+        score    = request.POST.get('score')
+        feedback = request.POST.get('feedback', '')
+        if sub_id and score is not None:
+            sub          = get_object_or_404(Submission, pk=sub_id, assignment=assignment)
+            sub.score    = score
+            sub.feedback = feedback
+            sub.save()
+            messages.success(request, f'Grade saved for {sub.student.get_full_name()}.')
+        return redirect('assignment_detail', assignment_id=assignment_id)
 
-    return render(request, 'student/classroom_classwork.html', {
-        'assignment': assignment, 'classroom': classroom,
+    all_students = classroom.students.all()
+    sub_map      = {s.student_id: s for s in assignment.submissions.select_related('student')}
+
+    submitted     = []
+    not_submitted = []
+    late          = []
+    resubmitted   = []
+
+    for student in all_students:
+        sub = sub_map.get(student.pk)
+        if sub is None:
+            not_submitted.append(student)
+        elif sub.is_late:
+            if sub.score is not None:
+                resubmitted.append(sub)   # late + already graded = re-reviewed
+            else:
+                late.append(sub)          # late + not yet graded
+        else:
+            submitted.append(sub)         # on time
+
+    return render(request, 'teacher/assignment_detail.html', {
+        'assignment':    assignment,
+        'classroom':     classroom,
+        'submitted':     submitted,
+        'not_submitted': not_submitted,
+        'late':          late,
+        'resubmitted':   resubmitted,
+        'active_tab':    'classwork',
     })

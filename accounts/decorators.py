@@ -1,6 +1,7 @@
 from functools import wraps
 from django.shortcuts import redirect
 from django.contrib import messages
+from django.urls import reverse
 
 
 def role_required(*roles):
@@ -14,7 +15,7 @@ def role_required(*roles):
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
             if not request.user.is_authenticated:
-                return redirect('/login/')
+                return redirect(reverse('login'))
             if request.user.role not in roles:
                 messages.error(request, 'You do not have permission to access this page.')
                 return redirect(request.user.get_dashboard_url())

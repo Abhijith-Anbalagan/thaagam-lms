@@ -1,14 +1,61 @@
 {% extends 'base.html' %}
 {% block title %}Announcements — {{ classroom.name }}{% endblock %}
+{% block extra_css %}
+<style>
+  :root{--page-bg:#f4f5f9 !important;--card-bg:#fff;--border:#e8e8ec;--text-1:#1a1f36;--text-2:#5a5f7a;--text-3:#9496a8;--brand:#4c68d7;--brand-soft:#eef1fb;--radius-lg:14px;--shadow-sm:0 1px 4px rgba(26,31,54,.06);--shadow-md:0 4px 20px rgba(26,31,54,.10)}
+  .ann-card{background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:14px;box-shadow:var(--shadow-sm);transition:box-shadow .15s}
+  .ann-card:hover{box-shadow:var(--shadow-md)}
+  .ann-card.pinned{border-left:3px solid var(--brand)}
+  .ann-card-title{font-size:15px;font-weight:700;color:var(--text-1);margin-bottom:6px}
+  .ann-card-body{font-size:13.5px;color:var(--text-2);line-height:1.6}
+  .ann-card-meta{font-size:12px;color:var(--text-3);margin-top:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .meet-link{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:13px;font-weight:600;color:var(--brand);text-decoration:none}
+  .meet-link:hover{text-decoration:underline}
+  .badge{font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:20px;display:inline-block}
+  .badge-blue{background:var(--brand-soft);color:var(--brand)}
+  .badge-green{background:#dcfce7;color:#15803d}
+  .badge-gray{background:#f1f1f4;color:#5a5f7a}
+  .pin{font-size:10px;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;margin-left:6px;font-weight:600}
+  .card-head{padding:17px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .card-title{font-size:14px;font-weight:700;color:var(--text-1)}
+  .empty-state{text-align:center;padding:48px 20px;color:var(--text-3);font-size:13px}
+  .empty-state .icon{font-size:40px;margin-bottom:12px}
+</style>
+{% endblock %}
+
 {% block content %}
 {% include 'shared/classroom_tabs.html' with role='student' classroom=classroom active_tab='announcements' %}
-{% for a in announcements %}
-<div class="announcement-card {% if a.is_pinned %}pinned{% endif %}">
-  {% if a.is_pinned %}<span class="badge badge-blue mb-8" style="display:inline-block;">📌 Pinned</span>{% endif %}
-  <div class="announcement-title">{{ a.title }}</div>
-  <div class="announcement-body mt-8">{{ a.body }}</div>
-  {% if a.meet_link %}<a href="{{ a.meet_link }}" target="_blank" class="meet-link">🎥 Join Live Class</a>{% endif %}
-  <div class="announcement-meta">{{ a.posted_by.get_full_name|default:a.posted_by.username }} · {{ a.created_at|date:"M d, Y · H:i" }}</div>
+
+<div class="flex-between mb-20">
+  <div>
+    <h1 class="page-title" style="font-size:20px;">Announcements</h1>
+    <p class="text-muted" style="font-size:13px;margin-top:2px;">{{ announcements|length }} announcement{{ announcements|length|pluralize }}</p>
+  </div>
 </div>
-{% empty %}<div class="empty-state"><p>No announcements yet.</p></div>{% endfor %}
+
+{% if announcements %}
+  {% for a in announcements %}
+  <div class="ann-card {% if a.is_pinned %}pinned{% endif %}">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        {% if a.is_pinned %}<span class="badge badge-blue">📌 Pinned</span>{% endif %}
+        <div class="ann-card-title">{{ a.title }}</div>
+      </div>
+      <span class="badge {% if a.target == 'all' %}badge-gray{% elif a.target == 'students' %}badge-green{% else %}badge-blue{% endif %}">
+        {{ a.get_target_display }}
+      </span>
+    </div>
+    <div class="ann-card-body">{{ a.body }}</div>
+    {% if a.meet_link %}
+    <a href="{{ a.meet_link }}" target="_blank" class="meet-link">🎥 Join Live Class</a>
+    {% endif %}
+    <div class="ann-card-meta">
+      <span>👤 {{ a.posted_by.get_full_name|default:a.posted_by.username }}</span>
+      <span>🕐 {{ a.created_at|date:"M d, Y · H:i" }}</span>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="empty-state"><div class="icon">📢</div><p>No announcements yet. Your teacher will post updates here.</p></div>
+{% endif %}
 {% endblock %}
