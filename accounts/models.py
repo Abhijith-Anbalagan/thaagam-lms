@@ -63,14 +63,16 @@ class User(AbstractUser):
         }.get(self.role, '#9e9c95')
 
     def get_dashboard_url(self):
+        if self.is_superuser:
+             return '/superadmin/dashboard/'
         return {
-            'super_admin':  '/superadmin/dashboard/',
-            'school_admin': '/school-admin/dashboard/',
-            'management':   '/management/dashboard/',
-            'teacher':      '/teacher/dashboard/',
-            'student':      '/student/dashboard/',
-            'public':       '/public-dashboard/',
-        }.get(self.role, '/login/')
+          'super_admin':  '/superadmin/dashboard/',
+          'school_admin': '/school-admin/dashboard/',
+          'management':   '/management/dashboard/',
+          'teacher':      '/teacher/dashboard/',
+          'student':      '/student/dashboard/',
+          'public':       '/public-dashboard/',
+    }.get(self.role, '/login/')
 
     @property
     def is_email_verification_valid(self):
