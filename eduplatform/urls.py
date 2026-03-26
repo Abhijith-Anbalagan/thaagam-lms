@@ -12,6 +12,7 @@ urlpatterns = [
 
     # Auth & shared account views
     path('', include('accounts.urls')),
+    path('password-reset/', include('accounts.urls')),
 
     # Role-based dashboards
     path('superadmin/', include('superadmin.urls')),
@@ -35,6 +36,9 @@ urlpatterns = [
 
     # Analytics
     path('analytics/', include('analytics.urls')),
+    
+    # Django built-in password reset
+    path('password-reset/', include('django.contrib.auth.urls'))
     
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
