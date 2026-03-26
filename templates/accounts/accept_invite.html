@@ -1,24 +1,66 @@
 {% extends 'base.html' %}
+
 {% block title %}Accept Invitation{% endblock %}
+
 {% block content %}
+
 <div class="auth-page">
   <div class="auth-card">
+
     <div class="auth-logo">EduPlatform</div>
-    <p class="auth-subtitle">Invited as <strong>{{ invitation.role|title }}</strong> at <strong>{{ invitation.school.name }}</strong></p>
+
+    <p class="auth-subtitle">
+      Joining <strong>{{ invitation.school.name }}</strong>
+      as <strong>{{ invitation.role|title }}</strong>
+    </p>
+
     <form method="post">
       {% csrf_token %}
-      {% if form.non_field_errors %}<div class="toast toast-error mb-12">{{ form.non_field_errors }}</div>{% endif %}
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">First Name</label><input type="text" name="first_name" class="form-control" required></div>
-        <div class="form-group"><label class="form-label">Last Name</label><input type="text" name="last_name" class="form-control" required></div>
+
+      {% if form.errors %}
+  <div class="toast toast-error mb-12">
+    Please enter a strong password
+  </div>
+{% endif %}
+
+      <!-- Username -->
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" name="username" class="form-control"
+               value="{{ form.username.value|default:'' }}" required>
       </div>
-      <div class="form-group"><label class="form-label">Email</label><input type="email" value="{{ invitation.email }}" class="form-control" disabled></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Set Password</label><input type="password" name="password1" class="form-control" required></div>
-        <div class="form-group"><label class="form-label">Confirm</label><input type="password" name="password2" class="form-control" required></div>
+
+      <!-- Email (readonly) -->
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" value="{{ invitation.email }}"
+               class="form-control" disabled>
+        <small class="form-hint">This email was used to invite you</small>
       </div>
-      <button type="submit" class="btn btn-primary btn-block">Accept & Create Account</button>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" name="password1" class="form-control" required>
+      </div>
+
+      <!-- Confirm Password -->
+      <div class="form-group">
+        <label class="form-label">Confirm Password</label>
+        <input type="password" name="password2" class="form-control" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">
+        Create Account
+      </button>
+
     </form>
+
+    <p class="auth-footer">
+      Already have an account? <a href="/login/">Login</a>
+    </p>
+
   </div>
 </div>
+
 {% endblock %}

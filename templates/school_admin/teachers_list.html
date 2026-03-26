@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Teachers — {{ request.user.school.name }}{% endblock %}
+{% block content %}
+<div class="flex-between mb-24">
+  <h1 class="page-title">Teachers</h1>
+  <a href="{% url 'school_admin_dashboard' %}" class="btn btn-ghost">← Dashboard</a>
+</div>
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Username</th>
+          <th>Classrooms</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in teachers %}
+        <tr>
+          <td><strong>{{ t.get_full_name|default:t.username }}</strong></td>
+          <td>{{ t.email }}</td>
+          <td><span class="mono">{{ t.username }}</span></td>
+          <td>{{ t.classroom_count }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" style="text-align:center;color:var(--text-muted);">No teachers yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

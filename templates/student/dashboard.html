@@ -1,47 +1,230 @@
 {% extends 'base.html' %}
-{% block title %}Student Dashboard{% endblock %}
+{% block title %}Student Dashboard — EduPlatform{% endblock %}
+{% block extra_css %}
+<style>
+  /* ── Welcome Banner (from teacher) ── */
+  .wb { background:linear-gradient(135deg,#0c2a1a 0%,#3b6d11 55%,#2d5a0e 100%); border-radius:20px; padding:28px 32px; display:flex; align-items:center; gap:32px; position:relative; overflow:hidden; box-shadow:0 8px 32px rgba(59,109,17,.22); margin-bottom:28px; }
+  .wb-orb { position:absolute; border-radius:50%; pointer-events:none; }
+  .wb h2  { font-size:22px; font-weight:700; color:#fff; margin-bottom:5px; letter-spacing:-.3px; }
+  .wb p   { font-size:13.5px; color:rgba(255,255,255,.65); }
+  .wb-actions { display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; }
+  .wb-stats { display:flex; gap:0; flex-shrink:0; z-index:1; }
+  .bstat { text-align:center; padding:0 24px; }
+  .bstat+.bstat { border-left:1px solid rgba(255,255,255,.12); }
+  .bstat-val { font-family:'JetBrains Mono',monospace; font-size:28px; font-weight:700; color:#fff; line-height:1; }
+  .bstat-lbl { font-size:11px; color:rgba(255,255,255,.45); margin-top:4px; text-transform:uppercase; letter-spacing:.05em; }
+  .btn-glass { display:inline-flex; align-items:center; gap:7px; padding:9px 18px; border-radius:40px; font-size:13px; font-weight:600; background:rgba(255,255,255,.13); color:#fff; border:1.5px solid rgba(255,255,255,.2); cursor:pointer; text-decoration:none; transition:all .15s; }
+  .btn-glass:hover { background:rgba(255,255,255,.22); color:#fff; text-decoration:none; }
+
+  /* ── Stat grid (from superadmin) ── */
+  .sa-stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:14px; margin-bottom:28px; }
+  .sa-stat { background:#fff; border:1px solid var(--border); border-radius:14px; padding:20px 22px; }
+  .sa-stat-icon { font-size:22px; margin-bottom:8px; }
+  .sa-stat-val { font-size:28px; font-weight:700; color:var(--brand-dark); font-family:'JetBrains Mono',monospace; }
+  .sa-stat-lbl { font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-top:3px; }
+
+  /* ── Section header (from superadmin) ── */
+  .section-hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .section-hd h2 { font-size:16px; font-weight:600; color:var(--brand-dark); margin:0; }
+
+  /* ── Quick access buttons (big, easy to tap) ── */
+  .quick-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:28px; }
+  .quick-btn { display:flex; align-items:center; gap:14px; padding:18px 20px; background:#fff; border:1px solid var(--border); border-radius:14px; text-decoration:none; color:var(--brand-dark); transition:box-shadow .15s,transform .15s; cursor:pointer; }
+  .quick-btn:hover { box-shadow:0 4px 20px rgba(26,31,54,.10); transform:translateY(-2px); text-decoration:none; color:var(--brand-dark); }
+  .quick-btn-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+  .quick-btn-icon.announce { background:#eef1fb; }
+  .quick-btn-icon.chat     { background:#e1f5ee; }
+  .quick-btn-icon.classwork{ background:#fdf0e0; }
+  .quick-btn-icon.grades   { background:#eeedfe; }
+  .quick-btn-label { font-size:15px; font-weight:700; }
+  .quick-btn-sub   { font-size:12px; color:var(--text-muted); margin-top:2px; }
+
+  /* ── Announcement list (from teacher ann-item) ── */
+  .ann-item { display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--border); transition:background .1s; }
+  .ann-item:last-child { border-bottom:none; }
+  .ann-icon { width:38px; height:38px; border-radius:10px; background:var(--brand-blue-light,#eef1fb); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .ann-title { font-size:13.5px; font-weight:600; color:var(--brand-dark); }
+  .ann-meta  { font-size:12px; color:var(--text-muted); margin-top:2px; }
+  .pin { font-size:10px; background:#fef3c7; color:#92400e; padding:2px 7px; border-radius:4px; margin-left:6px; font-weight:600; }
+
+  /* ── Pending assignments ── */
+  .pending-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); gap:12px; }
+  .pending-row:last-child { border-bottom:none; }
+
+  @media(max-width:768px) {
+    .wb-stats { display:none; }
+    .quick-grid { grid-template-columns:1fr 1fr; }
+    .wb { padding:20px; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="flex-between mb-24">
-  <h1 class="page-title">My Classes</h1>
-  <a href="{% url 'student_join_class' %}" class="btn btn-outline">+ Join Another Class</a>
-</div>
-{% if pending_assignments %}
-<div class="pending-banner mb-20">
-  <div class="flex-between mb-8"><h3 class="card-heading">📋 Pending Assignments ({{ pending_assignments|length }})</h3></div>
-  {% for a in pending_assignments|slice:":5" %}
-  <div class="pending-item">
-    <span><strong>{{ a.title }}</strong> — <span class="text-muted">{{ a.classroom.name }}</span></span>
-    <span class="badge badge-warning">Due {{ a.due_date|date:"M d" }}</span>
+
+<!-- ── Welcome Banner (teacher style) ── -->
+<div class="wb">
+  <div class="wb-orb" style="right:-30px;top:-70px;width:220px;height:220px;background:rgba(255,255,255,.05)"></div>
+  <div class="wb-orb" style="right:110px;bottom:-80px;width:150px;height:150px;background:rgba(255,255,255,.04)"></div>
+  <div style="flex:1;z-index:1">
+    <h2>Hello, {{ request.user.first_name|default:request.user.username }}! 👋</h2>
+    <p>
+      {% if classroom %}
+        You are in <strong style="color:#fff;">{{ classroom.name }}</strong> · {{ classroom.school.name }}
+      {% else %}
+        Welcome to EduPlatform — join a class to get started.
+      {% endif %}
+    </p>
+    <div class="wb-actions">
+      {% if classroom %}
+        <a href="{% url 'student_classroom_announce' classroom.pk %}" class="btn-glass">📢 Announcements</a>
+        <a href="{% url 'student_classroom_chat' classroom.pk %}" class="btn-glass">💬 Chat with Teacher</a>
+      {% else %}
+        <a href="{% url 'student_join_class' %}" class="btn-glass">+ Join a Class</a>
+      {% endif %}
+    </div>
   </div>
-  {% endfor %}
+  <div class="wb-stats">
+    <div class="bstat">
+      <div class="bstat-val">{{ total_courses }}</div>
+      <div class="bstat-lbl">Courses</div>
+    </div>
+    <div class="bstat">
+      <div class="bstat-val">{{ pending_assignments|length }}</div>
+      <div class="bstat-lbl">Pending</div>
+    </div>
+    <div class="bstat">
+      <div class="bstat-val">{{ recent_announcements|length }}</div>
+      <div class="bstat-lbl">Updates</div>
+    </div>
+  </div>
 </div>
-{% endif %}
-{% if classrooms %}
-<div class="dashboard-grid">
-  {% for c in classrooms %}
-  <div class="classroom-card card-hover">
-    <a href="{% url 'student_classroom_announce' c.pk %}" style="text-decoration:none;color:inherit;display:block;">
-      <div class="class-name">{{ c.name }}</div>
-      <div class="class-teacher">{{ c.teacher.get_full_name|default:c.teacher.username }}</div>
-      <div class="class-meta"><span>👥 {{ c.student_count }}</span><span>📝 {{ c.assignments.count }} assignments</span></div>
+
+<!-- ── Stat Cards (superadmin style) ── -->
+<div class="sa-stat-grid">
+  <div class="sa-stat">
+    <div class="sa-stat-icon">📚</div>
+    <div class="sa-stat-val">{{ total_courses }}</div>
+    <div class="sa-stat-lbl">Courses</div>
+  </div>
+  <div class="sa-stat">
+    <div class="sa-stat-icon">📝</div>
+    <div class="sa-stat-val">{{ pending_assignments|length }}</div>
+    <div class="sa-stat-lbl">Pending Tasks</div>
+  </div>
+  <div class="sa-stat">
+    <div class="sa-stat-icon">📢</div>
+    <div class="sa-stat-val">{{ recent_announcements|length }}</div>
+    <div class="sa-stat-lbl">Announcements</div>
+  </div>
+  {% if classroom %}
+  <div class="sa-stat">
+    <div class="sa-stat-icon">👥</div>
+    <div class="sa-stat-val">{{ classroom.student_count }}</div>
+    <div class="sa-stat-lbl">Classmates</div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ── Quick Access (only if in a classroom) ── -->
+{% if classroom %}
+<div class="card" style="margin-bottom:20px;">
+  <div class="section-hd">
+    <h2>Quick Access</h2>
+    <span style="font-size:12px;color:var(--text-muted);">{{ classroom.name }}</span>
+  </div>
+  <div class="quick-grid">
+    <a href="{% url 'student_classroom_announce' classroom.pk %}" class="quick-btn">
+      <div class="quick-btn-icon announce">📢</div>
+      <div>
+        <div class="quick-btn-label">Announcements</div>
+        <div class="quick-btn-sub">{{ recent_announcements|length }} new update{{ recent_announcements|length|pluralize }}</div>
+      </div>
     </a>
-    <hr class="divider">
-    <a href="{% url 'student_leave_classroom' c.pk %}" class="caption" style="color:var(--text-muted);" onclick="return confirm('Leave {{ c.name }}?')">Leave class</a>
+    <a href="{% url 'student_classroom_chat' classroom.pk %}" class="quick-btn">
+      <div class="quick-btn-icon chat">💬</div>
+      <div>
+        <div class="quick-btn-label">Chat</div>
+        <div class="quick-btn-sub">Message your teacher</div>
+      </div>
+    </a>
+    <a href="{% url 'student_classroom_courses' classroom.pk %}" class="quick-btn">
+      <div class="quick-btn-icon grades">📚</div>
+      <div>
+        <div class="quick-btn-label">Courses</div>
+        <div class="quick-btn-sub">{{ total_courses }} item{{ total_courses|pluralize }} available</div>
+      </div>
+    </a>
+    <a href="{% url 'student_classroom_classwork' classroom.pk %}" class="quick-btn">
+      <div class="quick-btn-icon classwork">📝</div>
+      <div>
+        <div class="quick-btn-label">Classwork</div>
+        <div class="quick-btn-sub">{% if pending_assignments %}{{ pending_assignments|length }} pending{% else %}All caught up!{% endif %}</div>
+      </div>
+    </a>
+    <a href="{% url 'student_classroom_grade' classroom.pk %}" class="quick-btn">
+      <div class="quick-btn-icon announce">📊</div>
+      <div>
+        <div class="quick-btn-label">My Grades</div>
+        <div class="quick-btn-sub">Scores &amp; feedback</div>
+      </div>
+    </a>
+    <a href="{% url 'student_classroom_peoples' classroom.pk %}" class="quick-btn">
+      <div class="quick-btn-icon chat">👥</div>
+      <div>
+        <div class="quick-btn-label">People</div>
+        <div class="quick-btn-sub">{{ classroom.student_count }} classmate{{ classroom.student_count|pluralize }}</div>
+      </div>
+    </a>
   </div>
-  {% endfor %}
 </div>
 {% else %}
-<div class="empty-state"><p>You haven't joined any classes yet.</p><a href="{% url 'student_join_class' %}" class="btn btn-primary">Enter Class Code</a></div>
+<div class="card" style="margin-bottom:20px;text-align:center;padding:40px;">
+  <div style="font-size:40px;margin-bottom:12px;">🏫</div>
+  <p style="font-size:15px;font-weight:600;color:var(--brand-dark);margin-bottom:6px;">You haven't joined a class yet</p>
+  <p class="text-muted" style="margin-bottom:18px;">Ask your teacher for the class code to get started.</p>
+  <a href="{% url 'student_join_class' %}" class="btn btn-primary">Enter Class Code</a>
+</div>
 {% endif %}
+
+<!-- ── Recent Announcements (superadmin section style) ── -->
 {% if recent_announcements %}
-<div class="card mt-24">
-  <h2 class="section-title mb-16">Recent Announcements</h2>
+<div class="card" style="margin-bottom:20px;">
+  <div class="section-hd">
+    <h2>Recent Announcements</h2>
+    {% if classroom %}<a href="{% url 'student_classroom_announce' classroom.pk %}" class="btn btn-ghost btn-sm">View All →</a>{% endif %}
+  </div>
   {% for a in recent_announcements %}
-  <div class="announcement-card {% if a.is_pinned %}pinned{% endif %}">
-    <div class="flex-between"><div class="announcement-title">{{ a.title }}</div><span class="caption">{{ a.classroom.name }}</span></div>
-    <div class="announcement-meta">{{ a.created_at|date:"M d, Y · H:i" }}</div>
+  <div class="ann-item">
+    <div class="ann-icon">{% if a.is_pinned %}📌{% else %}📢{% endif %}</div>
+    <div style="flex:1;">
+      <div class="ann-title">{{ a.title }}{% if a.is_pinned %}<span class="pin">Pinned</span>{% endif %}</div>
+      <div class="ann-meta">{{ a.classroom.name }} · {{ a.created_at|date:"M d, Y · H:i" }}</div>
+    </div>
+    {% if a.meet_link %}
+    <a href="{{ a.meet_link }}" target="_blank" class="btn btn-outline btn-sm">🎥 Join</a>
+    {% endif %}
   </div>
   {% endfor %}
 </div>
 {% endif %}
+
+<!-- ── Pending Assignments (superadmin section style) ── -->
+{% if pending_assignments %}
+<div class="card">
+  <div class="section-hd">
+    <h2>Pending Assignments</h2>
+    <span class="badge badge-warning">{{ pending_assignments|length }} due</span>
+  </div>
+  {% for a in pending_assignments|slice:":5" %}
+  <div class="pending-row">
+    <div>
+      <div style="font-weight:600;color:var(--brand-dark);font-size:14px;">{{ a.title }}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Due {{ a.due_date|date:"M d, Y · H:i" }}</div>
+    </div>
+    <a href="{% url 'student_classroom_classwork' a.classroom.pk %}" class="btn btn-ghost btn-sm">Submit →</a>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 {% endblock %}

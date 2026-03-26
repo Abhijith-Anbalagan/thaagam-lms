@@ -12,6 +12,7 @@ urlpatterns = [
 
     # Auth & shared account views
     path('', include('accounts.urls')),
+    path('password-reset/', include('accounts.urls')),
 
     # Role-based dashboards
     path('superadmin/', include('superadmin.urls')),
@@ -35,8 +36,17 @@ urlpatterns = [
 
     # Analytics
     path('analytics/', include('analytics.urls')),
-
+    
     # Django built-in password reset
-    path('password-reset/', include('django.contrib.auth.urls')),
+    path('password-reset/', include('django.contrib.auth.urls'))
+    
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Serve media files in both DEBUG and non-DEBUG (dev only)
+if not settings.DEBUG:
+    from django.views.static import serve
+    from django.urls import re_path
+    urlpatterns += [
+        re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+    ]

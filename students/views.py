@@ -14,21 +14,26 @@ def _get_classroom(request, class_id):
 @role_required('student')
 def dashboard(request):
     classrooms = request.user.joined_classrooms.select_related('teacher', 'school').all()
+    classroom  = classrooms.first()  # student is typically in one class
 
     pending = []
-    for classroom in classrooms:
-        for a in classroom.assignments.filter(due_date__gte=timezone.now()):
+    total_courses = 0
+    for c in classrooms:
+        total_courses += c.course_contents.count()
+        for a in c.assignments.filter(due_date__gte=timezone.now()):
             if not Submission.objects.filter(assignment=a, student=request.user).exists():
                 pending.append(a)
 
     recent_announcements = Announcement.objects.filter(
         classroom__in=classrooms
-    ).order_by('-created_at')[:10]
+    ).order_by('-created_at')[:6]
 
     return render(request, 'student/dashboard.html', {
         'classrooms': classrooms,
+        'classroom': classroom,
         'pending_assignments': pending,
         'recent_announcements': recent_announcements,
+        'total_courses': total_courses,
     })
 
 

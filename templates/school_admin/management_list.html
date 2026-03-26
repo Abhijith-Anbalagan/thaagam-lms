@@ -12,7 +12,8 @@
   <tr>
     <td><strong>{{ m.get_full_name|default:m.username }}</strong></td>
     <td>{{ m.email }}</td>
-    <td>{{ m.sent_invites.filter.count }}</td>
+    {% comment %} <td>{{ m.sent_invites.filter.count }}</td> {% endcomment %}
+    <td>{{ m.invite_count }}</td>
   </tr>
   {% empty %}<tr><td colspan="3" style="text-align:center;color:var(--text-muted);">No management users yet.</td></tr>{% endfor %}
   </tbody>
