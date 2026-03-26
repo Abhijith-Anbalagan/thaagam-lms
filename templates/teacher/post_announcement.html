@@ -2,12 +2,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Chat — {{ classroom.name }}</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Post Announcement — EduPlatform</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--brand:#4c68d7;--brand-dark:#3a54c0;--brand-soft:#eef1fb;--dark:#1a1f36;--page-bg:#f4f5f9;--card-bg:#fff;--border:#e8e8ec;--text-1:#1a1f36;--text-2:#5a5f7a;--text-3:#9496a8;--teacher:#0f6e56;--teacher-bg:#e1f5ee;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--shadow-sm:0 1px 4px rgba(26,31,54,.06);--shadow-md:0 4px 20px rgba(26,31,54,.10);--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;--nav-w:252px;--topbar-h:36.64px}
+:root{--brand:#4c68d7;--brand-dark:#3a54c0;--brand-soft:#eef1fb;--dark:#1a1f36;--page-bg:#f4f5f9;--card-bg:#fff;--border:#e8e8ec;--text-1:#1a1f36;--text-2:#5a5f7a;--text-3:#9496a8;--teacher:#0f6e56;--teacher-bg:#e1f5ee;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--shadow-sm:0 1px 4px rgba(26,31,54,.06);--shadow-md:0 4px 20px rgba(26,31,54,.10);--font:'Inter',sans-serif;--nav-w:252px;--topbar-h:64px}
 html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);color:var(--text-1);font-size:14px;line-height:1.6;display:flex}
 .sidebar{width:var(--nav-w);min-height:100vh;background:var(--dark);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:200;box-shadow:2px 0 16px rgba(0,0,0,.18)}
 .sidebar-logo{padding:22px 20px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.07);text-decoration:none}
@@ -37,31 +38,38 @@ html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);col
 .pd-item{display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:13px;font-weight:500;color:var(--text-1);text-decoration:none;transition:background .12s}
 .pd-item:hover{background:var(--page-bg)}.pd-item svg{width:15px;height:15px;color:var(--text-3);flex-shrink:0}
 .pd-item.danger{color:#b03030}.pd-item.danger svg{color:#b03030}.pd-divider{height:1px;background:var(--border);margin:2px 0}
-.page{padding:28px 32px;display:flex;flex-direction:column;gap:20px;flex:1}
-.tabs-row{display:flex;gap:6px;flex-wrap:wrap}
-.tab{font-size:13px;font-weight:500;padding:8px 16px;border-radius:30px;border:1.5px solid var(--border);background:var(--card-bg);color:var(--text-2);text-decoration:none;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
-.tab:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-soft)}.tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
-.chat-layout{display:grid;grid-template-columns:240px 1fr;gap:0;background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;flex:1;min-height:500px}
-.chat-sidebar{border-right:1px solid var(--border);display:flex;flex-direction:column}
-.chat-sidebar-head{padding:14px 16px;font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border);background:var(--page-bg)}
-.chat-student-item{display:block;padding:12px 16px;font-size:13.5px;font-weight:500;color:var(--text-2);text-decoration:none;border-bottom:1px solid var(--border);transition:background .1s}
-.chat-student-item:hover{background:var(--page-bg);color:var(--text-1)}
-.chat-student-item.active{background:var(--brand-soft);color:var(--brand);font-weight:600}
-.chat-main{display:flex;flex-direction:column}
-.chat-header{padding:14px 20px;font-size:14px;font-weight:600;border-bottom:1px solid var(--border);background:var(--page-bg)}
-.chat-messages{flex:1;padding:20px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;min-height:360px}
-.bubble{max-width:70%;padding:10px 14px;border-radius:var(--radius-lg);font-size:13.5px;line-height:1.5;position:relative}
-.bubble.sent{background:var(--brand);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
-.bubble.recv{background:var(--page-bg);color:var(--text-1);align-self:flex-start;border-bottom-left-radius:4px;border:1px solid var(--border)}
-.bubble-time{font-size:10px;opacity:.6;margin-top:4px;text-align:right}
-.chat-footer{display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--border);background:var(--card-bg)}
-.chat-footer input{flex:1;padding:10px 14px;font-family:var(--font);font-size:13px;border:1.5px solid var(--border);border-radius:40px;outline:none;background:var(--page-bg);transition:border-color .15s}
-.chat-footer input:focus{border-color:var(--brand);background:#fff}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:40px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
-.btn-primary{background:var(--brand);color:#fff}.btn-primary:hover{background:var(--brand-dark)}
-.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;color:var(--text-3);font-size:13px;padding:40px}
-.empty-state .icon{font-size:40px;margin-bottom:12px}
-@media(max-width:768px){:root{--nav-w:0px}.sidebar{display:none}.page{padding:16px}.chat-layout{grid-template-columns:1fr}}
+.page{padding:28px 32px;display:flex;flex-direction:column;gap:22px}
+.page-header h1{font-size:20px;font-weight:700}
+.page-header p{font-size:13px;color:var(--text-2);margin-top:4px}
+/* FORM */
+.form-card{background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:32px;max-width:620px;box-shadow:var(--shadow-sm)}
+.form-group{margin-bottom:20px}
+.form-label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text-1)}
+.form-hint{font-size:12px;color:var(--text-3);margin-top:4px}
+.form-card input[type=text],.form-card input[type=url],.form-card textarea{width:100%;padding:10px 14px;font-family:var(--font);font-size:13.5px;border:1.5px solid var(--border);border-radius:var(--radius-md);background:var(--page-bg);color:var(--text-1);outline:none;transition:border-color .15s;resize:vertical}
+.form-card input:focus,.form-card textarea:focus{border-color:var(--brand);background:#fff}
+.form-card input::placeholder,.form-card textarea::placeholder{color:var(--text-3)}
+/* CLASSROOM CHECKBOXES */
+.classroom-grid{display:flex;flex-direction:column;gap:8px}
+.classroom-option{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:var(--radius-md);cursor:pointer;transition:all .15s;background:var(--page-bg)}
+.classroom-option:hover{border-color:var(--brand);background:var(--brand-soft)}
+.classroom-option input[type=checkbox]{width:16px;height:16px;accent-color:var(--brand);cursor:pointer;flex-shrink:0}
+.classroom-option.checked{border-color:var(--brand);background:var(--brand-soft)}
+.classroom-name{font-size:13.5px;font-weight:600;color:var(--text-1)}
+.classroom-meta{font-size:12px;color:var(--text-3);margin-top:1px}
+.classroom-code{font-family:var(--mono);font-size:11px;font-weight:700;background:var(--brand);color:#fff;padding:2px 8px;border-radius:4px;margin-left:auto;flex-shrink:0}
+/* PIN ROW */
+.pin-row{display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-md);background:var(--page-bg);transition:all .15s}
+.pin-row:hover{border-color:var(--brand);background:var(--brand-soft)}
+.pin-row input{width:16px;height:16px;accent-color:var(--brand);cursor:pointer}
+/* ACTIONS */
+.form-actions{display:flex;gap:10px;margin-top:8px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 22px;border-radius:40px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;text-decoration:none}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 4px 12px rgba(76,104,215,.3)}.btn-primary:hover{background:var(--brand-dark)}
+.btn-ghost{background:transparent;color:var(--text-2);border:1.5px solid var(--border)}.btn-ghost:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-soft)}
+/* ALERT */
+.alert-error{background:#fce8e8;color:#b03030;padding:12px 16px;border-radius:var(--radius-md);font-size:13px;margin-bottom:20px}
+@media(max-width:768px){:root{--nav-w:0px}.sidebar{display:none}.page{padding:16px}}
 </style>
 </head>
 <body>
@@ -72,8 +80,8 @@ html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);col
   </a>
   <nav class="nav-group">
     <div class="nav-label">Main</div>
-    <a class="nav-item" href="{% url 'teacher_dashboard' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke-width="2"/></svg>Dashboard</a>
-    <a class="nav-item active" href="{% url 'teacher_my_classrooms' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>My Classrooms</a>
+    <a class="nav-item active" href="{% url 'teacher_dashboard' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke-width="2"/></svg>Dashboard</a>
+    <a class="nav-item" href="{% url 'teacher_my_classrooms' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>My Classrooms</a>
     <a class="nav-item" href="{% url 'teacher_my_learning' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>My Learning</a>
     <a class="nav-item" href="#"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Messages</a>
   </nav>
@@ -91,9 +99,16 @@ html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);col
     </div>
   </div>
 </aside>
+
 <div class="main">
   <header class="topbar">
     <div style="flex:1"></div>
+    <div class="search-wrap">
+      <div class="search-box">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--text-3);flex-shrink:0"><circle cx="11" cy="11" r="8" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round"/></svg>
+        <input type="text" placeholder="Search students, classrooms, courses…" autocomplete="off"/>
+      </div>
+    </div>
     <div class="topbar-profile">
       <div class="topbar-av" id="profileBtn">{{ request.user.get_full_name|slice:":2"|upper }}</div>
       <div class="profile-dropdown" id="profileDropdown">
@@ -103,65 +118,88 @@ html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);col
       </div>
     </div>
   </header>
+
   <div class="page">
-    <div class="tabs-row">
-      <a class="tab" href="{% url 'teacher_classroom_announce' classroom.id %}">📢 Announce</a>
-      <a class="tab" href="{% url 'teacher_classroom_courses' classroom.id %}">📚 Courses</a>
-      <a class="tab" href="{% url 'teacher_classroom_classwork' classroom.id %}">📝 Classwork</a>
-      <a class="tab" href="{% url 'teacher_classroom_peoples' classroom.id %}">👥 People</a>
-      <a class="tab" href="{% url 'teacher_classroom_grade' classroom.id %}">📊 Progress</a>
-      <a class="tab active" href="{% url 'teacher_classroom_chat' classroom.id %}">💬 Chat</a>
+    <div class="page-header">
+      <h1>Post Announcement</h1>
+      <p>Send an announcement to students in one or more of your classrooms.</p>
     </div>
-    <div class="chat-layout">
-      <!-- Student list -->
-      <div class="chat-sidebar">
-        <div class="chat-sidebar-head">Students</div>
-        {% for student in classroom.students.all %}
-        <a href="?student={{ student.pk }}" class="chat-student-item {% if selected_student.pk == student.pk %}active{% endif %}">
-          {{ student.get_full_name }}
-        </a>
-        {% empty %}
-        <div style="padding:16px;font-size:13px;color:var(--text-3)">No students yet.</div>
+
+    <div class="form-card">
+      {% if messages %}
+        {% for msg in messages %}
+        <div class="alert-error">{{ msg }}</div>
         {% endfor %}
-      </div>
-      <!-- Chat window -->
-      <div class="chat-main">
-        {% if selected_student %}
-        <div class="chat-header">💬 Chat with {{ selected_student.get_full_name }}</div>
-        <div class="chat-messages" id="chat-messages">
-          {% for msg in chat_messages %}
-          <div class="bubble {% if msg.sender == request.user %}sent{% else %}recv{% endif %}">
-            {{ msg.body }}
-            <div class="bubble-time">{{ msg.created_at|date:"H:i" }}</div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label class="form-label">Title *</label>
+          <input type="text" name="title" required placeholder="e.g. Week 3 Quiz reminder">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Message *</label>
+          <textarea name="body" rows="5" required placeholder="Details…"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Google Meet Link <span style="color:var(--text-3);font-weight:400">(optional)</span></label>
+          <input type="url" name="meet_link" placeholder="https://meet.google.com/…">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Send to Classrooms *</label>
+          <p class="form-hint" style="margin-bottom:10px">Select one or more classrooms — all enrolled students will receive this announcement.</p>
+          {% if classrooms %}
+          <div class="classroom-grid" id="classroomGrid">
+            {% for classroom in classrooms %}
+            <label class="classroom-option" id="opt-{{ classroom.id }}">
+              <input type="checkbox" name="classrooms" value="{{ classroom.id }}" onchange="toggleChecked(this)">
+              <div style="flex:1">
+                <div class="classroom-name">{{ classroom.name }}</div>
+                <div class="classroom-meta">{{ classroom.students.count }} student{{ classroom.students.count|pluralize }}</div>
+              </div>
+              <span class="classroom-code">{{ classroom.code }}</span>
+            </label>
+            {% endfor %}
           </div>
-          {% empty %}
-          <div class="empty-state"><div class="icon">💬</div><p>No messages yet.</p></div>
-          {% endfor %}
+          {% else %}
+          <p style="font-size:13px;color:var(--text-3);padding:12px 0">No classrooms yet. <a href="{% url 'teacher_create_classroom' %}" style="color:var(--brand)">Create one first.</a></p>
+          {% endif %}
         </div>
-        <div class="chat-footer">
-          <input type="text" id="chat-input" placeholder="Type a reply…" autocomplete="off"/>
-          <button id="chat-send" class="btn btn-primary">Send</button>
+
+        <div class="form-group">
+          <label class="pin-row">
+            <input type="checkbox" name="is_pinned">
+            📌 Pin this announcement
+          </label>
         </div>
-        <script>
-          window.CHAT_CLASSROOM_ID = {{ classroom.pk }};
-          window.CHAT_MY_ID        = {{ request.user.pk }};
-          window.CHAT_RECEIVER_ID  = {{ selected_student.pk }};
-        </script>
-        <script src="{% static 'js/chat.js' %}"></script>
-        {% else %}
-        <div class="empty-state"><div class="icon">👈</div><p>Select a student from the left to view their messages.</p></div>
-        {% endif %}
-      </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Post Announcement
+          </button>
+          <a href="{% url 'teacher_dashboard' %}" class="btn btn-ghost">Cancel</a>
+        </div>
+      </form>
     </div>
   </div>
 </div>
+
 <script>
-  const btn=document.getElementById('profileBtn'),dropdown=document.getElementById('profileDropdown');
-  btn.addEventListener('click',e=>{e.stopPropagation();dropdown.classList.toggle('open')});
-  document.addEventListener('click',()=>dropdown.classList.remove('open'));
-  // Auto-scroll chat
-  const msgs=document.getElementById('chat-messages');
-  if(msgs) msgs.scrollTop=msgs.scrollHeight;
+  function toggleChecked(cb) {
+    const label = cb.closest('.classroom-option');
+    label.classList.toggle('checked', cb.checked);
+  }
+
+  const btn = document.getElementById('profileBtn');
+  const dropdown = document.getElementById('profileDropdown');
+  btn.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.toggle('open'); });
+  document.addEventListener('click', () => dropdown.classList.remove('open'));
 </script>
 </body>
 </html>

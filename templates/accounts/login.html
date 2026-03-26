@@ -1,20 +1,271 @@
 {% extends 'base.html' %}
 {% block title %}Sign In — EduPlatform{% endblock %}
+
 {% block content %}
-<div class="auth-page">
-  <div class="auth-card">
-    <div class="auth-logo">EduPlatform</div>
-    <p class="auth-subtitle">Sign in to your account</p>
-    <form method="post">
-      {% csrf_token %}
-      {% if form.non_field_errors %}<div class="toast toast-error mb-12">{{ form.non_field_errors }}</div>{% endif %}
-      <div class="form-group">
-        <label class="form-label">Username</label>
-        <input type="text" name="username" class="form-control" autofocus placeholder="Username">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Password</label>
-        <input type="password" name="password" class="form-control" placeholder="Password">
+<style>
+  /* ── Layout & Background ── */
+  body { 
+    overflow: hidden; 
+    background-color: var(--page-bg);
+  }
+
+  .login-page {
+    height: calc(100vh - 56px);
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ── Left Panel (The Brand Experience) ── */
+  .login-welcome {
+    flex: 1.2; /* Slightly wider for impact */
+    background: linear-gradient(135deg, var(--brand-dark) 0%, #252b46 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Subtle background decoration */
+  .login-welcome::after {
+    content: "";
+    position: absolute;
+    top: -10%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: var(--brand-blue);
+    filter: blur(120px);
+    opacity: 0.15;
+    border-radius: 50%;
+  }
+
+  .welcome-logo {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--brand-blue);
+    margin-bottom: 60px;
+    letter-spacing: -0.5px;
+    text-transform: uppercase;
+  }
+
+  .login-welcome h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 24px;
+    letter-spacing: -1px;
+    background: linear-gradient(to right, #ffffff, #a5b4fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .login-welcome p {
+    font-size: 1.15rem;
+    color: rgba(255,255,255,0.7);
+    max-width: 420px;
+    line-height: 1.6;
+    margin-bottom: 40px;
+  }
+
+  .welcome-feature {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 1rem;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 18px;
+    transition: transform 0.2s ease;
+  }
+  
+  .welcome-feature:hover { transform: translateX(5px); }
+
+  .welcome-feature .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px; /* Squircle dots look more modern */
+    background: var(--brand-blue);
+    box-shadow: 0 0 15px rgba(76, 104, 215, 0.4);
+  }
+
+  /* ── Right Panel (The Action) ── */
+  .login-form-panel {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    background: var(--page-bg);
+  }
+
+  .login-card {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: 24px; /* Softer corners */
+    box-shadow: 0 20px 40px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.02);
+    padding: 48px;
+    width: 100%;
+    max-width: 440px;
+    transition: y 0.3s ease;
+  }
+
+  .login-card h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--brand-dark);
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+
+  .login-card .subtitle {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-bottom: 32px;
+  }
+
+  /* ── Form Inputs ── */
+  .form-group { margin-bottom: 20px; }
+  
+  .form-label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    color: var(--brand-dark);
+    display: block;
+  }
+
+  .form-control {
+    height: 48px;
+    padding: 12px 16px;
+    border: 2px solid #f0f0f0; /* Thicker, lighter border */
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+  }
+
+  .form-control:focus {
+    border-color: var(--brand-blue);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(76, 104, 215, 0.1);
+  }
+
+  /* ── Buttons ── */
+  .btn-signin {
+    width: 100%;
+    height: 48px;
+    background: var(--brand-dark); /* Darker buttons often look more premium */
+    color: #fff;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 12px;
+    box-shadow: 0 4px 12px rgba(26, 31, 54, 0.2);
+  }
+
+  .btn-signin:hover {
+    background: #000;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(26, 31, 54, 0.3);
+  }
+
+  .login-footer {
+    text-align: center;
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid #f0f0f0;
+    font-size: 0.9rem;
+  }
+
+  /* ── Errors ── */
+  .toast-error {
+    background: #fff5f5;
+    color: #c53030;
+    border: 1px solid #feb2b2;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* ── Mobile Optimization ── */
+  @media (max-width: 992px) {
+    .login-welcome { padding: 40px; }
+    .login-welcome h1 { font-size: 2.2rem; }
+  }
+
+  @media (max-width: 768px) {
+    .login-welcome { display: none; }
+    .login-form-panel { padding: 20px; background: #fff; }
+    .login-card { box-shadow: none; border: none; padding: 20px; }
+  }
+</style>
+
+<div class="login-page">
+  <div class="login-welcome">
+    <div class="welcome-logo">EduPlatform</div>
+    <h1>The future of learning, <br>managed better.</h1>
+    <p>Empowering educators and students with a unified workspace for growth and collaboration.</p>
+    
+    <div class="welcome-features">
+      <div class="welcome-feature"><span class="dot"></span> <span>Manage classrooms & students</span></div>
+      <div class="welcome-feature"><span class="dot"></span> <span>Real-time progress tracking</span></div>
+      <div class="welcome-feature"><span class="dot"></span> <span>Seamless school communication</span></div>
+    </div>
+  </div>
+
+  <div class="login-form-panel">
+    <div class="login-card">
+      <h2>Sign In</h2>
+      <p class="subtitle">Welcome back! Please enter your details.</p>
+
+      <form method="post">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="toast-error">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+            <div>
+              {% for error in form.non_field_errors %}
+                <p style="margin:0">{{ error|safe }}</p>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" name="email" class="form-control" autofocus
+                 placeholder="name@company.com"
+                 value="{{ form.email.value|default_if_none:'' }}">
+          {% if form.email.errors %}
+            <p class="form-error">{{ form.email.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" name="password" class="form-control" placeholder="••••••••">
+          {% if form.password.errors %}
+            <p class="form-error">{{ form.password.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        <button type="submit" class="btn-signin">Sign in to Account</button>
+      </form>
+
+      <div class="login-footer">
+        <div style="margin-bottom: 8px;">
+            <a href="{% url 'forgot_password' %}" style="font-weight: 600;">Forgot password?</a>
+        </div>
+        <span>Don't have an account?</span> <a href="{% url 'signup' %}" style="font-weight: 600;">Create one for free</a>
       </div>
       <button type="submit" class="btn btn-primary btn-block btn-lg">Sign In</button>
     </form>

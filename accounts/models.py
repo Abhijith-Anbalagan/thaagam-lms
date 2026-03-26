@@ -15,6 +15,16 @@ class User(AbstractUser):
         ('public', 'Public'),
     ]
 
+    username = models.CharField(
+        max_length=150,
+        unique=False,
+        validators=[AbstractUser.username_validator],
+    )
+    email = models.EmailField(unique=True)     # ← email is the login field
+
+    USERNAME_FIELD  = 'email'
+    REQUIRED_FIELDS = ['username']
+
     role   = models.CharField(max_length=20, choices=ROLES, default='public')
     school = models.ForeignKey(
         'superadmin.School', null=True, blank=True,
@@ -22,6 +32,21 @@ class User(AbstractUser):
     )
     phone  = models.CharField(max_length=15, blank=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
+
+    # ── Email verification ────────────────────────────────────────────────────
+    email_verified                 = models.BooleanField(default=False)
+    email_verification_token       = models.UUIDField(null=True, blank=True, unique=True)
+    email_verification_expires_at  = models.DateTimeField(null=True, blank=True)
+
+    # ✅ Fix #9: dedicated password-reset fields — no longer reusing
+    # email_verification fields, which avoids clobbering a pending
+    # email verification when the same user requests a password reset.
+    password_reset_token      = models.UUIDField(null=True, blank=True, unique=True)
+    password_reset_expires_at = models.DateTimeField(null=True, blank=True)
+
+    # ✅ Fix #12: removed pointless `constraints = []` from Meta
+    class Meta:
+        pass
 
     def __str__(self):
         return f'{self.username} ({self.role})'
@@ -46,6 +71,23 @@ class User(AbstractUser):
             'student':      '/student/dashboard/',
             'public':       '/public-dashboard/',
         }.get(self.role, '/login/')
+
+    @property
+    def is_email_verification_valid(self):
+        return (
+            self.email_verification_token is not None and
+            self.email_verification_expires_at is not None and
+            timezone.now() < self.email_verification_expires_at
+        )
+
+    # ✅ Fix #9: dedicated property for password reset validity check
+    @property
+    def is_password_reset_valid(self):
+        return (
+            self.password_reset_token is not None and
+            self.password_reset_expires_at is not None and
+            timezone.now() < self.password_reset_expires_at
+        )
 
 
 def _default_expiry():

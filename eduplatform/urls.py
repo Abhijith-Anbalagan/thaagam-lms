@@ -35,6 +35,7 @@ urlpatterns = [
 
     # Analytics
     path('analytics/', include('analytics.urls')),
+    
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

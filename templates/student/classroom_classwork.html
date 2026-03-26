@@ -1,40 +1,124 @@
 {% extends 'base.html' %}
-{% block extra_css %}<link rel="stylesheet" href="{% load static %}{% static 'css/classroom.css' %}">{% endblock %}
 {% block title %}Classwork — {{ classroom.name }}{% endblock %}
+{% block extra_css %}
+<style>
+  :root{--page-bg:#f4f5f9;--card-bg:#fff;--border:#e8e8ec;--text-1:#1a1f36;--text-2:#5a5f7a;--text-3:#9496a8;--brand:#4c68d7;--brand-soft:#eef1fb;--radius-lg:14px;--shadow-sm:0 1px 4px rgba(26,31,54,.06);--shadow-md:0 4px 20px rgba(26,31,54,.10)}
+  .asgn-card{background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:14px;box-shadow:var(--shadow-sm);transition:box-shadow .15s}
+  .asgn-card:hover{box-shadow:var(--shadow-md)}
+  .asgn-title{font-size:15px;font-weight:700;color:var(--text-1)}
+  .asgn-meta{font-size:12px;color:var(--text-3);margin:6px 0 10px}
+  .asgn-desc{font-size:13.5px;color:var(--text-2);margin-bottom:14px;line-height:1.6}
+  .score-box{background:var(--page-bg);border:1.5px solid var(--border);border-radius:10px;padding:14px 18px;margin-top:12px;display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+  .score-col{min-width:56px}
+  .score-big{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:var(--text-1)}
+  .overline{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3)}
+  .submit-form{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+  .badge{font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:20px;display:inline-block}
+  .badge-amber{background:#fef3c7;color:#92400e}
+  .badge-green{background:#dcfce7;color:#15803d}
+  .badge-blue{background:var(--brand-soft);color:var(--brand)}
+  .badge-red{background:#fce8e8;color:#b03030}
+  .btn-submit{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:30px;font-size:13px;font-weight:600;background:var(--brand);color:#fff;border:none;cursor:pointer;transition:all .15s}
+  .btn-submit:hover{background:#3a54c0}
+  .btn-file{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:30px;font-size:12.5px;font-weight:600;background:transparent;color:var(--text-2);border:1.5px solid var(--border);text-decoration:none;transition:all .15s}
+  .btn-file:hover{border-color:var(--brand);color:var(--brand)}
+  .progress-wrap{background:var(--border);border-radius:99px;height:5px;overflow:hidden;margin-top:8px}
+  .progress-bar{height:100%;border-radius:99px;background:var(--brand);transition:width .3s}
+  .progress-bar.success{background:#15803d}
+  .progress-bar.danger{background:#b03030}
+  .empty-state{text-align:center;padding:48px 20px;color:var(--text-3);font-size:13px}
+  .empty-state .icon{font-size:40px;margin-bottom:12px}
+  .form-control{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:6px;font-size:14px;font-family:'Inter',sans-serif;color:var(--text-1);background:var(--card-bg);transition:border-color .15s}
+  .form-control:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(76,104,215,.12)}
+  .countdown{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600}
+  .countdown.ok{color:#15803d}
+  .countdown.soon{color:#92400e}
+  .countdown.urgent{color:#b03030}
+</style>
+{% endblock %}
+
 {% block content %}
 {% load static %}
 {% include 'shared/classroom_tabs.html' with role='student' classroom=classroom active_tab='classwork' %}
-{% for item in assignment_data %}{% with a=item.assignment sub=item.submission %}
-<div class="assignment-card">
-  <div class="assignment-header">
-    <div class="assignment-title">{{ a.title }}</div>
-    <div class="flex gap-8" style="align-items:center;">
-      {% if sub %}
-        {% if sub.score is not None %}<span class="badge badge-success">✓ Graded</span>
-        {% else %}<span class="badge badge-blue">✓ Submitted</span>{% endif %}
-      {% elif a.is_overdue %}<span class="badge badge-danger">⚠ Overdue</span>
-      {% else %}<span class="badge badge-warning">Pending</span>{% endif %}
-      <span class="due-countdown caption" data-due="{{ a.due_date|date:'Y-m-d' }}T{{ a.due_date|date:'H:i' }}"></span>
-    </div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+  <div>
+    <h1 style="font-size:20px;font-weight:700;color:var(--text-1,#1a1f36);">Classwork</h1>
+    <p style="font-size:13px;color:var(--text-3,#9496a8);margin-top:2px;">{{ assignment_data|length }} assignment{{ assignment_data|length|pluralize }}</p>
   </div>
-  <p class="assignment-meta">Due: {{ a.due_date|date:"M d, Y · H:i" }} · Max: <strong class="mono">{{ a.max_score }}</strong> pts</p>
-  <p class="text-muted mb-12">{{ a.description|default:"No description." }}</p>
-  {% if a.file %}<a href="{{ a.file.url }}" class="btn btn-sm btn-ghost mb-12" target="_blank">📎 Assignment File</a>{% endif %}
-  {% if sub and sub.score is not None %}
-  <div class="score-result">
-    <div class="score-col"><div class="overline">Score</div><div class="score-big">{{ sub.score }}<span style="font-size:15px;font-weight:400;">/{{ a.max_score }}</span></div></div>
-    <div class="score-col"><div class="overline">Grade</div><div class="score-big">{{ sub.letter_grade }}</div></div>
-    {% if sub.feedback %}<div style="flex:1;"><div class="overline">Feedback</div><p style="margin-top:4px;">{{ sub.feedback }}</p></div>{% endif %}
-  </div>
-  {% elif not a.is_overdue or sub %}
-  <form method="post" enctype="multipart/form-data" class="flex gap-8" style="align-items:center;margin-top:10px;">{% csrf_token %}
-    <input type="hidden" name="assignment_id" value="{{ a.pk }}">
-    <input type="file" name="file" class="form-control" style="max-width:300px;" {% if not sub %}required{% endif %}>
-    <button type="submit" class="btn btn-primary">{% if sub %}Re-submit{% else %}Submit{% endif %}</button>
-  </form>
-  {% if sub %}<p class="caption mt-8">Submitted {{ sub.submitted_at|date:"M d · H:i" }}{% if sub.is_late %} · <span style="color:var(--danger);">Late</span>{% endif %}</p>{% endif %}
-  {% endif %}
 </div>
-{% endwith %}{% empty %}<div class="empty-state"><p>No assignments yet.</p></div>{% endfor %}
+
+{% if assignment_data %}
+  {% for item in assignment_data %}{% with a=item.assignment sub=item.submission %}
+  <div class="asgn-card">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
+      <div class="asgn-title">{{ a.title }}</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        {% if sub and sub.score is not None %}
+          <span class="badge badge-green">✓ Graded</span>
+        {% elif sub %}
+          <span class="badge badge-blue">✓ Submitted</span>
+        {% elif a.is_overdue %}
+          <span class="badge badge-red">⚠ Overdue</span>
+        {% else %}
+          <span class="badge badge-amber">Pending</span>
+        {% endif %}
+        <span class="due-countdown countdown" data-due="{{ a.due_date|date:'Y-m-d' }}T{{ a.due_date|date:'H:i' }}"></span>
+      </div>
+    </div>
+
+    <div class="asgn-meta">🕐 Due: {{ a.due_date|date:"M d, Y · H:i" }} &nbsp;·&nbsp; Max: <strong style="font-family:'JetBrains Mono',monospace;">{{ a.max_score }}</strong> pts</div>
+
+    {% if a.description %}
+    <div class="asgn-desc">{{ a.description }}</div>
+    {% endif %}
+
+    {% if a.file %}
+    <a href="{{ a.file.url }}" class="btn-file mb-12" target="_blank" style="margin-bottom:12px;">📎 View Assignment File</a>
+    {% endif %}
+
+    {% if sub and sub.score is not None %}
+    <div class="score-box">
+      <div class="score-col">
+        <div class="overline">Score</div>
+        <div class="score-big">{{ sub.score }}<span style="font-size:14px;font-weight:400;">/{{ a.max_score }}</span></div>
+      </div>
+      <div class="score-col">
+        <div class="overline">Grade</div>
+        <div class="score-big">{{ sub.letter_grade }}</div>
+      </div>
+      <div class="score-col">
+        <div class="overline">Percentage</div>
+        <div class="score-big" style="font-size:18px;">{{ sub.percentage }}%</div>
+      </div>
+      {% if sub.feedback %}
+      <div style="flex:1;min-width:160px;">
+        <div class="overline">Feedback</div>
+        <p style="margin-top:4px;font-size:13px;line-height:1.6;color:var(--text-2);">{{ sub.feedback }}</p>
+      </div>
+      {% endif %}
+    </div>
+    {% if sub.is_late %}<p style="font-size:12px;color:#b03030;margin-top:8px;">⚠ Submitted late</p>{% endif %}
+
+    {% elif not a.is_overdue or sub %}
+    <form method="post" enctype="multipart/form-data" class="submit-form">
+      {% csrf_token %}
+      <input type="hidden" name="assignment_id" value="{{ a.pk }}">
+      <input type="file" name="file" class="form-control" style="max-width:280px;" {% if not sub %}required{% endif %}>
+      <button type="submit" class="btn-submit">{% if sub %}Re-submit{% else %}Submit{% endif %}</button>
+    </form>
+    {% if sub %}
+    <p style="font-size:12px;color:var(--text-3);margin-top:8px;">
+      Submitted {{ sub.submitted_at|date:"M d · H:i" }}
+      {% if sub.is_late %} · <span style="color:#b03030;">Late</span>{% endif %}
+    </p>
+    {% endif %}
+    {% endif %}
+  </div>
+  {% endwith %}{% endfor %}
+{% else %}
+  <div class="empty-state"><div class="icon">📝</div><p>No assignments yet. Your teacher will post assignments here.</p></div>
+{% endif %}
+
 <script src="{% static 'js/countdown.js' %}"></script>
 {% endblock %}
