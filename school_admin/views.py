@@ -13,6 +13,7 @@ from assignments.models import Submission
 @role_required('school_admin')
 def dashboard(request):
     from announcements.models import Announcement
+    from datetime import date
     school        = request.user.school
     teachers      = User.objects.filter(school=school, role='teacher')
     students      = User.objects.filter(school=school, role='student')
@@ -31,6 +32,7 @@ def dashboard(request):
         'total_teachers': teachers.count(),
         'total_students': students.count(),
         'total_classrooms': classrooms.count(),
+        'today': date.today(),
     })
 
 
@@ -39,6 +41,16 @@ def invite_management(request):
     if request.method == 'POST':
         email = request.POST.get('email', '').strip()
         if email:
+            # Check if user already exists
+            if User.objects.filter(email__iexact=email).exists():
+                messages.error(request, f'{email} is already a registered user.')
+                return redirect('school_admin_invite_management')
+
+            # Check if a pending invite already exists
+            if Invitation.objects.filter(email__iexact=email, accepted=False).exists():
+                messages.error(request, f'An invitation has already been sent to {email}.')
+                return redirect('school_admin_invite_management')
+
             inv = Invitation.objects.create(
                 email=email, role='management',
                 school=request.user.school, invited_by=request.user,

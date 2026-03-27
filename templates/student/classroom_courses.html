@@ -1,98 +1,85 @@
-{% extends 'base.html' %}
-{% block title %}Courses — {{ classroom.name }}{% endblock %}
-{% block extra_css %}
-<style>
-  :root{--page-bg:#f4f5f9 !important;--card-bg:#fff;--border:#e8e8ec;--text-1:#1a1f36;--text-2:#5a5f7a;--text-3:#9496a8;--brand:#4c68d7;--brand-soft:#eef1fb;--radius-lg:14px;--shadow-sm:0 1px 4px rgba(26,31,54,.06);--shadow-md:0 4px 20px rgba(26,31,54,.10)}
-  .unit-section{background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow-sm)}
-  .unit-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--page-bg);border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
-  .unit-header:hover{background:var(--brand-soft)}
-  .unit-title{font-size:13px;font-weight:700;color:var(--text-1);text-transform:uppercase;letter-spacing:.05em}
-  .unit-count{font-size:11px;color:var(--text-3)}
-  .unit-arrow{font-size:12px;transition:transform .2s}
-  .unit-arrow.open{transform:rotate(90deg)}
-  .unit-body{padding:0 20px}
-  .content-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);gap:12px}
-  .content-row:last-child{border-bottom:none}
-  .content-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-  .icon-video{background:#eef1fb}
-  .icon-pdf{background:#fce8e8}
-  .icon-note{background:#e1f5ee}
-  .content-title{font-size:13.5px;font-weight:600;color:var(--text-1)}
-  .content-type{font-size:12px;color:var(--text-3);margin-top:2px}
-  .btn-watch{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:30px;font-size:12.5px;font-weight:600;background:var(--brand);color:#fff;border:none;text-decoration:none;transition:all .15s}
-  .btn-watch:hover{background:#3a54c0;color:#fff}
-  .btn-dl{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:30px;font-size:12.5px;font-weight:600;background:transparent;color:var(--brand);border:1.5px solid var(--brand);text-decoration:none;transition:all .15s}
-  .btn-dl:hover{background:var(--brand-soft)}
-  .empty-state{text-align:center;padding:60px 20px;color:var(--text-3)}
-  .empty-state .icon{font-size:40px;margin-bottom:12px}
-</style>
-{% endblock %}
+{% extends 'student/base_student.html' %}
+
+{% block title %}Courses - {{ classroom.name }}{% endblock %}
+{% block topbar_context %}{{ classroom.name }}{% endblock %}
+{% block topbar_title %}Course content{% endblock %}
 
 {% block content %}
-{% include 'shared/classroom_tabs.html' with role='student' classroom=classroom active_tab='courses' %}
+<section class="mb-8 rounded-[2rem] bg-gradient-to-r from-blue-600 via-blue-500 to-violet-500 p-8 text-white shadow-2xl shadow-blue-500/20">
+    <p class="text-sm font-semibold uppercase tracking-[0.28em] text-blue-100">Learning materials</p>
+    <h1 class="mt-3 text-3xl font-bold">{{ classroom.name }}</h1>
+    <p class="mt-2 text-sm text-blue-50">{{ units|length }} unit{{ units|length|pluralize }} ready to explore.</p>
+</section>
 
-<div class="flex-between mb-20">
-  <div>
-    <h1 class="page-title" style="font-size:20px;">Course Content</h1>
-    <p class="text-muted" style="font-size:13px;margin-top:2px;">{{ units|length }} unit{{ units|length|pluralize }}</p>
-  </div>
-</div>
+<nav class="mb-8 flex flex-wrap gap-3">
+    <a href="{% url 'student_classroom_announce' classroom.id %}" class="student-tab rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200">Announcements</a>
+    <a href="{% url 'student_classroom_courses' classroom.id %}" class="student-tab active rounded-2xl px-4 py-2.5 text-sm font-semibold">Courses</a>
+    <a href="{% url 'student_classroom_classwork' classroom.id %}" class="student-tab rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200">Classwork</a>
+    <a href="{% url 'student_classroom_peoples' classroom.id %}" class="student-tab rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200">People</a>
+    <a href="{% url 'student_classroom_grade' classroom.id %}" class="student-tab rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200">Grades</a>
+    <a href="{% url 'student_classroom_chat' classroom.id %}" class="student-tab rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200">Chat</a>
+</nav>
 
 {% if units %}
-  {% for unit_name, contents in units.items %}
-  <div class="unit-section">
-    <div class="unit-header" onclick="toggleUnit(this)">
-      <div>
-        <span class="unit-title">📂 {{ unit_name }}</span>
-        <span class="unit-count" style="margin-left:10px;">{{ contents|length }} item{{ contents|length|pluralize }}</span>
-      </div>
-      <span class="unit-arrow open">▶</span>
-    </div>
-    <div class="unit-body open">
-      {% for c in contents %}
-      <div class="content-row">
-        <div style="display:flex;align-items:center;gap:12px;">
-          <div class="content-icon {% if c.content_type == 'video' %}icon-video{% elif c.content_type == 'pdf' %}icon-pdf{% else %}icon-note{% endif %}">
-            {% if c.content_type == 'video' %}🎬{% elif c.content_type == 'pdf' %}📄{% else %}📝{% endif %}
-          </div>
-          <div>
-            <div class="sub-heading">{{ c.title }}</div>
-            <div class="caption">{{ c.get_content_type_display }}</div>
-          </div>
+<section class="space-y-5">
+    {% for unit_name, contents in units.items %}
+    <article class="overflow-hidden rounded-[1.75rem] border border-white/70 bg-white shadow-panel">
+        <button type="button" class="flex w-full items-center justify-between bg-slate-50 px-6 py-5 text-left transition hover:bg-slate-100" onclick="toggleUnit(this)">
+            <div>
+                <h2 class="text-xl font-semibold text-slate-900">{{ unit_name }}</h2>
+                <p class="mt-1 text-sm text-slate-500">{{ contents|length }} learning item{{ contents|length|pluralize }}</p>
+            </div>
+            <i data-lucide="chevron-down" class="unit-arrow h-5 w-5 text-slate-500 transition-transform"></i>
+        </button>
+        <div class="unit-body divide-y divide-slate-100">
+            {% for c in contents %}
+            <div class="flex flex-col gap-4 p-6 lg:flex-row lg:items-center lg:justify-between">
+                <div class="flex gap-4">
+                    <div class="flex h-14 w-14 items-center justify-center rounded-2xl {% if c.content_type == 'video' %}bg-blue-100 text-blue-600{% elif c.content_type == 'pdf' %}bg-rose-100 text-rose-600{% else %}bg-emerald-100 text-emerald-600{% endif %}">
+                        {% if c.content_type == 'video' %}
+                        <i data-lucide="play" class="h-6 w-6"></i>
+                        {% elif c.content_type == 'pdf' %}
+                        <i data-lucide="file-text" class="h-6 w-6"></i>
+                        {% else %}
+                        <i data-lucide="file" class="h-6 w-6"></i>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-slate-900">{{ c.title }}</h3>
+                        <p class="mt-1 text-sm text-slate-500">{{ c.get_content_type_display }}</p>
+                    </div>
+                </div>
+                <div>
+                    {% if c.video_url %}
+                    <a href="{{ c.video_url }}" target="_blank" class="inline-flex rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">Watch lesson</a>
+                    {% elif c.file %}
+                    <a href="{{ c.file.url }}" target="_blank" class="inline-flex rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700">Download file</a>
+                    {% else %}
+                    <span class="inline-flex rounded-2xl bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-500">No file yet</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
         </div>
-        <div>
-          {% if c.video_url %}
-          <a href="{{ c.video_url }}" target="_blank" class="btn-watch">▶ Watch</a>
-          {% elif c.file %}
-          <a href="{{ c.file.url }}" target="_blank" class="btn-dl">⬇ Download</a>
-          {% else %}
-          <span style="font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:20px;background:#f1f1f4;color:#5a5f7a;">No file</span>
-          {% endif %}
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endfor %}
+    </article>
+    {% endfor %}
+</section>
 {% else %}
-  <div class="empty-state">
-    <div style="font-size:40px;margin-bottom:12px;">📚</div>
-    <p>No content uploaded yet.</p>
-    <p class="caption">Your teacher will add videos, PDFs, and notes here.</p>
-  </div>
+<section class="rounded-[1.75rem] border border-dashed border-slate-300 bg-white p-12 text-center text-slate-500 shadow-panel">
+    <i data-lucide="book-open" class="mx-auto h-10 w-10"></i>
+    <h2 class="mt-4 text-lg font-semibold text-slate-900">No content yet</h2>
+    <p class="mt-2 text-sm">Your teacher will add videos, notes, and downloadable resources here.</p>
+</section>
 {% endif %}
-
 {% endblock %}
 
 {% block extra_js %}
 <script>
-function toggleUnit(header) {
-  const body  = header.nextElementSibling;
-  const arrow = header.querySelector('.unit-arrow');
-  body.classList.toggle('open');
-  arrow.classList.toggle('open');
-  if (!body.classList.contains('open')) body.style.display = 'none';
-  else body.style.display = '';
-}
+    function toggleUnit(button) {
+        const body = button.nextElementSibling;
+        const arrow = button.querySelector('.unit-arrow');
+        body.classList.toggle('hidden');
+        arrow.classList.toggle('rotate-180');
+    }
 </script>
 {% endblock %}

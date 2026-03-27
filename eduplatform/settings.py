@@ -20,6 +20,7 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
+    'daphne',                          # must be first — overrides runserver with ASGI
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -115,9 +116,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/login/'
-LOGOUT_REDIRECT_URL = '/login/'
+LOGIN_URL           = '/login/'
+LOGIN_REDIRECT_URL  = '/public-dashboard/'
+LOGOUT_REDIRECT_URL = '/'
 
 EMAIL_BACKEND     = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST        = 'smtp.gmail.com'

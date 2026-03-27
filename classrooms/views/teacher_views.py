@@ -672,16 +672,26 @@ def teacher_messages(request):
 @role_required('teacher')
 def classroom_chat(request, classroom_id):
     classroom = _get_classroom(request, classroom_id)
-    try:
-        from chat.models import Message
+    from chat.models import Message
+
+    student_id       = request.GET.get('student')
+    selected_student = None
+    chat_messages    = []
+
+    if student_id:
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        selected_student = get_object_or_404(User, pk=student_id)
         chat_messages = Message.objects.filter(
-            classroom=classroom
+            classroom=classroom,
+            sender__in=[request.user, selected_student],
+            receiver__in=[request.user, selected_student],
         ).select_related('sender').order_by('created_at')
-    except Exception:
-        chat_messages = []
+        chat_messages.filter(receiver=request.user, is_read=False).update(is_read=True)
 
     return render(request, 'teacher/classroom_chat.html', {
-        'classroom':     classroom,
-        'chat_messages': chat_messages,
-        'active_tab':    'chat',
+        'classroom':        classroom,
+        'selected_student': selected_student,
+        'chat_messages':    chat_messages,
+        'active_tab':       'chat',
     })
