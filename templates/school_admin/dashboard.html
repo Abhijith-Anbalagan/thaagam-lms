@@ -24,26 +24,51 @@
   </div>
 </div>
 
-<div class="card">
-  <div style="padding: 20px;">
-    <h3>Management Team</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Email</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for m in management %}
-        <tr>
-          <td><strong>{{ m.get_full_name|default:m.username }}</strong></td>
-          <td>{{ m.email }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="2" style="text-align:center;color:var(--text-muted);">No management members yet. <a href="{% url 'school_admin_invite_management' %}">Invite one</a></td>
-        </tr>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+  <!-- Management Members Card -->
+  <div class="card">
+    <div class="section-hd">
+      <h2>Management Team</h2>
+      <span class="live-badge"><span class="pulse-dot"></span>Live</span>
+    </div>
+
+    <!-- Active members -->
+    <div id="management-list">
+      {% for m in management %}
+      <div class="member-row" id="member-row-{{ m.id }}">
+        <div class="m-avatar">{{ m.get_full_name|default:m.username|first|upper }}</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;color:var(--brand-dark);">{{ m.get_full_name|default:m.username }}</div>
+          <div style="font-size:12px;color:var(--text-muted);">{{ m.email }}</div>
+        </div>
+        <button class="btn btn-sm btn-danger" onclick="deleteMember({{m.id}})">🗑</button>
+      </div>
+      {% empty %}
+      <p class="text-muted" id="no-management" style="text-align:center;padding:20px 0;font-size:13px;">
+        No management users yet. <a href="{% url 'school_admin_invite_management' %}">Invite one</a>.
+      </p>
+      {% endfor %}
+    </div>
+
+    <!-- Pending invitations -->
+    <div id="pending-section" style="margin-top:16px;{% if not pending_invites %}display:none;{% endif %}">
+      <p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:10px;">
+        Pending Invitations
+      </p>
+      <div id="pending-list">
+        {% for inv in pending_invites %}
+        <div class="invite-row" id="invite-row-{{ inv.id }}">
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:500;color:var(--brand-dark);">{{ inv.email }}</div>
+            <div style="font-size:11px;color:var(--text-muted);">
+              Invited {{ inv.created_at|date:"M d, Y" }} · expires {{ inv.expires_at|date:"M d" }}
+            </div>
+          </div>
+          <button class="btn btn-sm btn-primary" id="btn-{{ inv.id }}"
+                  onclick="activateInvite({{ inv.id }}, '{{ inv.email }}')">Activate</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteInvite({{ inv.id }})">🗑</button>
+        </div>
         {% endfor %}
       </tbody>
     </table>

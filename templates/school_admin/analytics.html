@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %}School Analytics{% endblock %}
+{% block content %}
+<h1 class="page-title mb-24">School Analytics Dashboard</h1>
+
+<!-- School Metrics Overview -->
+<div class="metrics-grid mb-32">
+  <div class="metric-card">
+    <div class="metric-value">{{ school_metrics.total_students }}</div>
+    <div class="metric-label">Total Students</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value">{{ school_metrics.total_teachers }}</div>
+    <div class="metric-label">Total Teachers</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value">{{ school_metrics.total_classrooms }}</div>
+    <div class="metric-label">Total Classrooms</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value">{% if school_metrics.avg_classroom_performance %}{{ school_metrics.avg_classroom_performance|floatformat:1 }}{% else %}—{% endif %}</div>
+    <div class="metric-label">Avg Classroom Performance</div>
+  </div>
+</div>
+
+<!-- Teacher Performance -->
+<div class="card mb-32">
+  <h2 class="card-title">Teacher Performance</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Teacher</th>
+          <th>Classrooms</th>
+          <th>Students</th>
+          <th>Avg Student Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for teacher in teacher_performance %}
+        <tr>
+          <td><strong>{{ teacher.username }}</strong></td>
+          <td>{{ teacher.classroom_count }}</td>
+          <td>{{ teacher.student_count }}</td>
+          <td class="mono">{% if teacher.avg_student_score %}{{ teacher.avg_student_score|floatformat:1 }}%{% else %}—{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" style="text-align:center;color:var(--text-muted);">No teacher data available.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Classroom Performance -->
+<div class="card mb-32">
+  <h2 class="card-title">Classroom Performance</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Classroom</th>
+          <th>Students</th>
+          <th>Assignments</th>
+          <th>Submissions</th>
+          <th>Avg Score</th>
+          <th>Submission Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for classroom in classroom_performance %}
+        <tr>
+          <td><strong>{{ classroom.name }}</strong></td>
+          <td>{{ classroom.student_count }}</td>
+          <td>{{ classroom.assignment_count }}</td>
+          <td>{{ classroom.submission_count }}</td>
+          <td class="mono">{% if classroom.avg_score %}{{ classroom.avg_score|floatformat:1 }}%{% else %}—{% endif %}</td>
+          <td class="mono">{{ classroom.submission_rate }}%</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No classroom data available.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Student Progress Overview -->
+<div class="card">
+  <h2 class="card-title">Student Progress Overview</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Assignments</th>
+          <th>Submissions</th>
+          <th>Avg Score</th>
+          <th>Completed</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in student_progress %}
+        <tr>
+          <td><strong>{{ student.username }}</strong></td>
+          <td>{{ student.assignment_count }}</td>
+          <td>{{ student.submission_count }}</td>
+          <td class="mono">{% if student.avg_score %}{{ student.avg_score|floatformat:1 }}%{% else %}—{% endif %}</td>
+          <td>{{ student.completed_assignments }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" style="text-align:center;color:var(--text-muted);">No student data available.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.metric-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.metric-label {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+</style>
+{% endblock %}

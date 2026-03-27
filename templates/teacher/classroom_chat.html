@@ -127,7 +127,12 @@ html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);col
       <!-- Chat window -->
       <div class="chat-main">
         {% if selected_student %}
-        <div class="chat-header">💬 Chat with {{ selected_student.get_full_name }}</div>
+        <div class="chat-header">💬 Chat with {{ selected_student.get_full_name }}
+          <span style="float:right;display:flex;align-items:center;gap:6px;font-weight:400;">
+            <span id="chat-status-dot" style="width:9px;height:9px;border-radius:50%;background:#ef4444;display:inline-block;"></span>
+            <span id="chat-status-text" style="font-size:12px;color:var(--text-3);">Reconnecting…</span>
+          </span>
+        </div>
         <div class="chat-messages" id="chat-messages">
           {% for msg in chat_messages %}
           <div class="bubble {% if msg.sender == request.user %}sent{% else %}recv{% endif %}">
@@ -157,11 +162,8 @@ html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);col
 </div>
 <script>
   const btn=document.getElementById('profileBtn'),dropdown=document.getElementById('profileDropdown');
-  btn.addEventListener('click',e=>{e.stopPropagation();dropdown.classList.toggle('open')});
-  document.addEventListener('click',()=>dropdown.classList.remove('open'));
-  // Auto-scroll chat
-  const msgs=document.getElementById('chat-messages');
-  if(msgs) msgs.scrollTop=msgs.scrollHeight;
+  if(btn) btn.addEventListener('click',e=>{e.stopPropagation();dropdown.classList.toggle('open')});
+  document.addEventListener('click',()=>{ if(dropdown) dropdown.classList.remove('open'); });
 </script>
 </body>
 </html>

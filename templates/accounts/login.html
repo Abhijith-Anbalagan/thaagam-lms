@@ -4,16 +4,19 @@
 {% block content %}
 <style>
   /* ── Layout & Background ── */
-  body { 
-    overflow: hidden; 
+ body { 
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
     background-color: var(--page-bg);
-  }
+}
 
-  .login-page {
-    height: calc(100vh - 56px);
+ .login-page {
+    min-height: 100vh;
+    height: 100%;
     display: flex;
     overflow: hidden;
-  }
+}
 
   /* ── Left Panel (The Brand Experience) ── */
   .login-welcome {
@@ -58,7 +61,7 @@
     margin-bottom: 24px;
     letter-spacing: -1px;
     background: linear-gradient(to right, #ffffff, #a5b4fc);
-    -webkit-background-clip: text;
+    
     -webkit-text-fill-color: transparent;
   }
 
