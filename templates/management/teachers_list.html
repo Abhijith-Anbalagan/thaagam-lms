@@ -1,16 +1,223 @@
 {% extends 'base.html' %}
 {% block title %}My Teachers{% endblock %}
+{% block extra_css %}
+<style>
+:root {
+  --brand:       #4c68d7;
+  --brand-dark:  #3a54c0;
+  --brand-soft:  #eef1fb;
+  --page-bg:     #f4f5f9;
+  --card-bg:     #ffffff;
+  --border:      #e8e8ec;
+  --text-1:      #1a1f36;
+  --text-2:      #5a5f7a;
+  --text-3:      #9496a8;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --shadow-sm:   0 1px 4px rgba(26,31,54,.06);
+  --shadow-md:   0 4px 20px rgba(26,31,54,.10);
+  --font:        'Inter', sans-serif;
+  --mono:        'JetBrains Mono', monospace;
+}
+.teachers-page { padding: 28px 32px; display: flex; flex-direction: column; gap: 22px; }
+
+.page-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.page-title  { font-size: 22px; font-weight: 700; color: var(--text-1); margin: 0; }
+
+.search-box { display: flex; align-items: center; gap: 8px; background: var(--card-bg); border: 1.5px solid var(--border); border-radius: 40px; padding: 8px 16px; transition: border-color .15s; min-width: 240px; }
+.search-box:focus-within { border-color: var(--brand); }
+.search-box input { border: none; background: none; font-family: var(--font); font-size: 13px; color: var(--text-1); outline: none; width: 100%; }
+.search-box input::placeholder { color: var(--text-3); }
+
+.stat-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+.s-card { background: var(--card-bg); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 18px 20px; box-shadow: var(--shadow-sm); transition: box-shadow .15s, transform .15s; }
+.s-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.s-icon { font-size: 22px; margin-bottom: 8px; }
+.s-val  { font-size: 24px; font-weight: 700; color: var(--brand); font-family: var(--mono); line-height: 1; }
+.s-lbl  { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--text-3); margin-top: 4px; }
+
+.card { background: var(--card-bg); border: 1.5px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+.card-head { padding: 17px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.card-title { font-size: 14px; font-weight: 700; }
+
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 40px; font-family: var(--font); font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; text-decoration: none; }
+.btn-primary { background: var(--brand); color: #fff; box-shadow: 0 4px 12px rgba(76,104,215,.3); }
+.btn-primary:hover { background: var(--brand-dark); }
+.btn-sm { padding: 6px 14px; font-size: 12px; }
+
+.dt { width: 100%; border-collapse: collapse; }
+.dt th { font-size: 11px; font-weight: 700; color: var(--text-3); text-align: left; padding: 10px 18px; border-bottom: 1px solid var(--border); letter-spacing: .5px; text-transform: uppercase; background: var(--page-bg); }
+.dt td { padding: 13px 18px; font-size: 13.5px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.dt tr:last-child td { border-bottom: none; }
+.dt tr:hover td { background: #fafaf9; }
+
+.t-av { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--brand), #7b93f0); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.t-cell { display: flex; align-items: center; gap: 12px; }
+
+.badge { font-size: 11.5px; font-weight: 600; padding: 3px 10px; border-radius: 20px; display: inline-block; }
+.badge-blue  { background: var(--brand-soft); color: var(--brand); }
+.badge-green { background: #dcfce7; color: #15803d; }
+.badge-gray  { background: #f1f1f4; color: #5a5f7a; }
+
+.classroom-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+.cc-chip { font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 30px; background: var(--brand-soft); color: var(--brand); white-space: nowrap; }
+
+.teacher-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; padding: 18px; }
+.teacher-card { border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 20px; background: var(--card-bg); transition: box-shadow .2s, transform .15s; }
+.teacher-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.tc-avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, var(--brand), #7b93f0); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 14px; }
+.tc-name  { font-size: 15px; font-weight: 700; color: var(--text-1); margin-bottom: 3px; }
+.tc-email { font-size: 12.5px; color: var(--text-3); margin-bottom: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tc-meta  { display: flex; gap: 12px; flex-wrap: wrap; }
+.tc-stat  { font-size: 12px; color: var(--text-2); }
+.tc-stat strong { color: var(--text-1); font-weight: 700; }
+
+.view-toggle { display: flex; gap: 4px; }
+.vt-btn { width: 32px; height: 32px; border-radius: var(--radius-md); border: 1.5px solid var(--border); background: var(--card-bg); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s; color: var(--text-3); }
+.vt-btn:hover { border-color: var(--brand); color: var(--brand); }
+.vt-btn.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.vt-btn svg { width: 14px; height: 14px; }
+
+.empty-state { padding: 48px; text-align: center; color: var(--text-3); font-size: 13px; }
+.hidden { display: none !important; }
+.mono { font-family: var(--mono); }
+@media (max-width: 768px) { .teachers-page { padding: 16px; } }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="flex-between mb-24">
-  <h1 class="page-title">My Teachers</h1>
-  <a href="{% url 'management_invite_teacher' %}" class="btn btn-primary">+ Invite Teacher</a>
+<div class="teachers-page">
+
+  <div class="page-header">
+    <h1 class="page-title">My Teachers</h1>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div class="search-box">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--text-3);flex-shrink:0"><circle cx="11" cy="11" r="8" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round"/></svg>
+        <input type="text" id="teacherSearch" placeholder="Search teachers…" autocomplete="off">
+      </div>
+      <div class="view-toggle">
+        <button class="vt-btn active" id="btn-table" onclick="setView('table')" title="Table view">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h16M4 18h16" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <button class="vt-btn" id="btn-grid" onclick="setView('grid')" title="Grid view">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1" stroke-width="2"/></svg>
+        </button>
+      </div>
+      <a href="{% url 'management_invite_teacher' %}" class="btn btn-primary">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2.5" stroke-linecap="round"/></svg>
+        Invite Teacher
+      </a>
+    </div>
+  </div>
+
+  <div class="stat-row">
+    <div class="s-card"><div class="s-icon">👩‍🏫</div><div class="s-val">{{ teachers|length }}</div><div class="s-lbl">Total Teachers</div></div>
+    <div class="s-card"><div class="s-icon">🏛</div><div class="s-val">{{ total_classrooms|default:"0" }}</div><div class="s-lbl">Classrooms</div></div>
+    <div class="s-card"><div class="s-icon">🎓</div><div class="s-val">{{ total_students|default:"0" }}</div><div class="s-lbl">Students</div></div>
+    <div class="s-card"><div class="s-icon">📝</div><div class="s-val">{{ total_assignments|default:"0" }}</div><div class="s-lbl">Assignments</div></div>
+  </div>
+
+  <!-- TABLE VIEW -->
+  <div class="card" id="view-table">
+    <div class="card-head">
+      <span class="card-title">All Teachers</span>
+      <span class="badge badge-gray">{{ teachers|length }}</span>
+    </div>
+    {% if teachers %}
+    <div style="overflow-x:auto">
+      <table class="dt" id="teacherTable">
+        <thead><tr><th>Teacher</th><th>Email</th><th>Classrooms</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for t in teachers %}
+        <tr class="teacher-row" data-name="{{ t.get_full_name|lower|default:t.username|lower }}" data-email="{{ t.email|lower }}">
+          <td>
+            <div class="t-cell">
+              <div class="t-av">{{ t.first_name|first|upper }}{{ t.last_name|first|upper }}</div>
+              <div>
+                <div style="font-weight:700;">{{ t.get_full_name|default:t.username }}</div>
+                <div style="font-size:11.5px;color:var(--text-3);margin-top:1px;">Joined {{ t.date_joined|date:"M Y" }}</div>
+              </div>
+            </div>
+          </td>
+          <td style="color:var(--text-2);">{{ t.email }}</td>
+          <td>
+            {% if t.classrooms.count %}
+            <div class="classroom-chips">
+              {% for cls in t.classrooms.all|slice:":3" %}
+              <span class="cc-chip">{{ cls.code }}</span>
+              {% endfor %}
+              {% if t.classrooms.count > 3 %}
+              <span class="cc-chip" style="background:var(--page-bg);color:var(--text-2);">+{{ t.classrooms.count|add:"-3" }}</span>
+              {% endif %}
+            </div>
+            {% else %}<span class="badge badge-gray">None</span>{% endif %}
+          </td>
+          <td><span class="badge badge-green">Active</span></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div id="no-results" class="empty-state hidden">No teachers match your search.</div>
+    {% else %}
+    <div class="empty-state">
+      <div style="font-size:40px;margin-bottom:12px">👩‍🏫</div>
+      <p style="font-size:15px;font-weight:600;margin-bottom:6px;color:var(--text-2)">No teachers yet</p>
+      <p style="margin-bottom:18px">Invite your first teacher to get started.</p>
+      <a href="{% url 'management_invite_teacher' %}" class="btn btn-primary" style="display:inline-flex">+ Invite Teacher</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- GRID VIEW -->
+  <div class="card hidden" id="view-grid">
+    <div class="card-head">
+      <span class="card-title">All Teachers</span>
+      <span class="badge badge-gray">{{ teachers|length }}</span>
+    </div>
+    {% if teachers %}
+    <div class="teacher-grid">
+      {% for t in teachers %}
+      <div class="teacher-card teacher-card-item" data-name="{{ t.get_full_name|lower|default:t.username|lower }}" data-email="{{ t.email|lower }}">
+        <div class="tc-avatar">{{ t.first_name|first|upper }}{{ t.last_name|first|upper }}</div>
+        <div class="tc-name">{{ t.get_full_name|default:t.username }}</div>
+        <div class="tc-email">{{ t.email }}</div>
+        <div class="tc-meta">
+          <div class="tc-stat">🏛 <strong>{{ t.classrooms.count }}</strong> classroom{{ t.classrooms.count|pluralize }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">No teachers yet.</div>
+    {% endif %}
+  </div>
+
 </div>
-<div class="card"><div class="table-wrap"><table>
-  <thead><tr><th>Name</th><th>Email</th><th>Classrooms</th></tr></thead>
-  <tbody>
-  {% for t in teachers %}
-  <tr><td><strong>{{ t.get_full_name|default:t.username }}</strong></td><td>{{ t.email }}</td><td>{{ t.classrooms.count }}</td></tr>
-  {% empty %}<tr><td colspan="3" style="text-align:center;color:var(--text-muted);">No teachers yet.</td></tr>{% endfor %}
-  </tbody>
-</table></div></div>
+
+<script>
+function setView(v) {
+  document.getElementById('view-table').classList.toggle('hidden', v !== 'table');
+  document.getElementById('view-grid').classList.toggle('hidden', v !== 'grid');
+  document.getElementById('btn-table').classList.toggle('active', v === 'table');
+  document.getElementById('btn-grid').classList.toggle('active', v === 'grid');
+}
+
+document.getElementById('teacherSearch').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  let visible = 0;
+  document.querySelectorAll('.teacher-row').forEach(row => {
+    const match = !q || row.dataset.name.includes(q) || row.dataset.email.includes(q);
+    row.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+  document.querySelectorAll('.teacher-card-item').forEach(card => {
+    const match = !q || card.dataset.name.includes(q) || card.dataset.email.includes(q);
+    card.style.display = match ? '' : 'none';
+  });
+  const noRes = document.getElementById('no-results');
+  if (noRes) noRes.classList.toggle('hidden', visible > 0 || !q);
+});
+</script>
 {% endblock %}

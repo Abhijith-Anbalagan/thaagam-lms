@@ -1,6 +1,8 @@
 from django import forms
+from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from .models import User
+
 
 
 
@@ -40,7 +42,6 @@ class SignupForm(forms.ModelForm):
 
 
 # ─── Login ────────────────────────────────────────────────────────────────────
-
 class LoginForm(forms.Form):
     email    = forms.EmailField(label='Email', widget=forms.EmailInput(attrs={'autofocus': True}))
     password = forms.CharField(label='Password', widget=forms.PasswordInput)
@@ -54,6 +55,7 @@ class LoginForm(forms.Form):
         self.user = None
         super().__init__(*args, **kwargs)
 
+    # ← REPLACE YOUR EXISTING clean() WITH THIS
     def clean(self):
         cleaned_data = super().clean()
         email    = cleaned_data.get('email')
@@ -65,11 +67,13 @@ class LoginForm(forms.Form):
             except User.DoesNotExist:
                 raise forms.ValidationError(self.error_messages['invalid_login'])
 
-            if not user.is_active or not user.email_verified:
-               raise forms.ValidationError(
-                     f'Your email is not verified. '
-                     f'<a href="/resend-verification/?email={user.email}">Click here to resend verification email.</a>'
-    )
+            # Skip email verification check for admin/staff users
+            if not user.is_superuser and not user.is_staff:
+                if not user.is_active or not user.email_verified:
+                    raise forms.ValidationError(
+                        f'Your email is not verified. '
+                        f'<a href="/resend-verification/?email={user.email}">Click here to resend verification email.</a>'
+                    )
 
             self.user = authenticate(request=None, email=email, password=password)
             if self.user is None:
@@ -79,7 +83,6 @@ class LoginForm(forms.Form):
 
     def get_user(self):
         return self.user
-
 
 # ─── Accept Invite ────────────────────────────────────────────────────────────
 
@@ -111,5 +114,38 @@ class ProfileForm(forms.ModelForm):
         fields = ['first_name', 'last_name', 'email', 'phone', 'avatar']
 
 
+
+
 class PasswordChangeCustomForm(PasswordChangeForm):
     pass
+
+
+class ForgotPasswordForm(forms.Form):
+    email = forms.EmailField(
+        label='Email Address',
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter your registered email'
+        })
+    )
+
+
+class ResetPasswordForm(forms.Form):
+    password1 = forms.CharField(
+        widget=forms.PasswordInput(attrs={'placeholder': 'New Password'}),
+        label='New Password'
+    )
+    password2 = forms.CharField(
+        widget=forms.PasswordInput(attrs={'placeholder': 'Confirm New Password'}),
+        label='Confirm New Password'
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get('password1')
+        password2 = cleaned_data.get('password2')
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError('Passwords do not match.')
+        return cleaned_data
+    
+    
