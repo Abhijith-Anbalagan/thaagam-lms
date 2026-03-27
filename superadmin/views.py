@@ -73,14 +73,14 @@ def schools_list(request):
 @role_required('super_admin')
 def school_detail(request, school_id):
     school     = get_object_or_404(School, pk=school_id)
-    admin      = User.objects.filter(school=school, role='school_admin').first()
+    admins     = User.objects.filter(school=school, role='school_admin').order_by('id')  # Get ALL admins
     teachers   = User.objects.filter(school=school, role='teacher')
     students   = User.objects.filter(school=school, role='student')
     management = User.objects.filter(school=school, role='management')
     from classrooms.models import Classroom
     classrooms = Classroom.objects.filter(school=school)
     return render(request, 'superadmin/school_detail.html', {
-        'school': school, 'admin': admin,
+        'school': school, 'admins': admins,  # Changed from 'admin' to 'admins'
         'teachers': teachers, 'students': students,
         'management': management, 'classrooms': classrooms,
     })
@@ -107,18 +107,24 @@ def school_edit(request, school_id):
         return JsonResponse({'error': list(form.errors.values())[0][0]}, status=400)
 
     elif section == 'admin':
-        admin = User.objects.filter(school=school, role='school_admin').first()
-        if not admin:
-            return JsonResponse({'error': 'No admin found for this school.'}, status=404)
+        # Get the admin ID from the request
+        admin_id = request.POST.get('admin_id')
+        if not admin_id:
+            return JsonResponse({'error': 'Admin ID is required.'}, status=400)
+        
+        admin = get_object_or_404(User, pk=admin_id, school=school, role='school_admin')
+        
         # check email uniqueness if changed
         new_email = request.POST.get('email', '').strip()
         if new_email != admin.email and User.objects.filter(email=new_email).exclude(pk=admin.pk).exists():
             return JsonResponse({'error': 'This email is already in use.'}, status=400)
+        
         form = AdminEditForm(request.POST, instance=admin)
         if form.is_valid():
             form.save()
             return JsonResponse({
                 'success':    True,
+                'admin_id':   admin.pk,
                 'full_name':  admin.get_full_name() or admin.username,
                 'email':      admin.email,
                 'username':   admin.username,
@@ -127,40 +133,92 @@ def school_edit(request, school_id):
 
     return JsonResponse({'error': 'Invalid section.'}, status=400)
 
-
 @role_required('super_admin')
 def create_school(request):
     form = SchoolForm(request.POST or None)
-    if request.method == 'POST' and form.is_valid():
-        cd    = form.cleaned_data
-        email = cd['admin_email']
-        if User.objects.filter(email=email).exists():
-            form.add_error('admin_email', 'A user with this email already exists.')
-        else:
-            school = form.save()
-            base = email.split('@')[0]; username = base; i = 1
+    if request.method == 'POST':
+        if not form.is_valid():
+            # Show form field errors (name missing etc.)
+            for field, errs in form.errors.items():
+                for e in errs:
+                    messages.error(request, f'{field}: {e}')
+            return render(request, 'superadmin/create_school.html', {'form': form})
+
+        # Collect dynamic admin inputs — admins[1][name], admins[1][email], admins[1][password]
+        admins_data = []
+        for i in range(1, 4):
+            name     = request.POST.get(f'admins[{i}][name]', '').strip()
+            email    = request.POST.get(f'admins[{i}][email]', '').strip()
+            password = request.POST.get(f'admins[{i}][password]', '').strip()
+            if email:  # only include if email is filled
+                admins_data.append({
+                    'name':     name,
+                    'email':    email,
+                    'password': password,
+                    'index':    i,
+                })
+
+        # Must have at least 1 admin
+        if not admins_data:
+            messages.error(request, 'Please add at least one admin account.')
+            return render(request, 'superadmin/create_school.html', {'form': form})
+
+        # Validate each admin before saving anything
+        errors = []
+        for a in admins_data:
+            if not a['name']:
+                errors.append(f"Admin {a['index']}: Full name is required.")
+            if not a['password']:
+                errors.append(f"Admin {a['index']}: Password is required.")
+            if User.objects.filter(email=a['email']).exists():
+                errors.append(f"Admin {a['index']}: Email '{a['email']}' is already in use.")
+
+        if errors:
+            for e in errors:
+                messages.error(request, e)
+            return render(request, 'superadmin/create_school.html', {'form': form})
+
+        # ---- All valid — now save ----
+
+        # 1. Save school
+        school = form.save()
+
+        # 2. Create each admin user
+        from django.core.mail import send_mail
+        for a in admins_data:
+            # Generate unique username from email prefix
+            base     = a['email'].split('@')[0]
+            username = base
+            counter  = 1
             while User.objects.filter(username=username).exists():
-                username = f'{base}{i}'; i += 1
-            admin_user = User(
+                username = f'{base}{counter}'
+                counter += 1
+
+            user = User(
                 username=username,
-                email=email,
-                first_name=cd['admin_name'],
+                email=a['email'],
+                first_name=a['name'],
                 role='school_admin',
                 school=school,
             )
-            admin_user.set_password(cd['admin_password'])
-            admin_user.save()
-            from django.core.mail import send_mail
+            user.set_password(a['password'])
+            user.save()
+
             send_mail(
                 'Your EduPlatform School Admin Account',
-                f'Login: {email}\nPassword: {cd["admin_password"]}\nURL: /login/',
-                'noreply@eduplatform.com', [email], fail_silently=True,
+                f"Login: {a['email']}\nPassword: {a['password']}\nURL: /login/",
+                'noreply@eduplatform.com',
+                [a['email']],
+                fail_silently=True,
             )
-            messages.success(request, f'School "{school.name}" and admin account created.')
-            return redirect('superadmin_schools_list')
+
+        messages.success(
+            request,
+            f'School "{school.name}" created with {len(admins_data)} admin account(s).'
+        )
+        return redirect('superadmin_dashboard')   # ← redirects to dashboard
+
     return render(request, 'superadmin/create_school.html', {'form': form})
-
-
 
 @role_required('super_admin')
 def delete_school(request, school_id):
@@ -168,8 +226,13 @@ def delete_school(request, school_id):
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     school = get_object_or_404(School, pk=school_id)
     name = school.name
+    
+    # Delete all admin accounts associated with this school
+    User.objects.filter(school=school, role='school_admin').delete()
+    
+    # Delete the school
     school.delete()
-    messages.success(request, f'School "{name}" permanently deleted.')
+    messages.success(request, f'School "{name}" and its admin accounts permanently deleted.')
     return JsonResponse({'success': True})
 
 
