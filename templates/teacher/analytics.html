@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% block title %}Teacher Analytics{% endblock %}
+{% block content %}
+<h1 class="page-title mb-24">Teacher Analytics Dashboard</h1>
+
+<!-- Class Performance Overview -->
+<div class="card mb-32">
+  <h2 class="card-title">Class Performance Overview</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Classroom</th>
+          <th>Students</th>
+          <th>Assignments</th>
+          <th>Avg Score</th>
+          <th>Submission Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for classroom in class_performance %}
+        <tr>
+          <td><strong>{{ classroom.name }}</strong></td>
+          <td>{{ classroom.student_count }}</td>
+          <td>{{ classroom.assignment_count }}</td>
+          <td class="mono">{% if classroom.avg_score %}{{ classroom.avg_score|floatformat:1 }}%{% else %}—{% endif %}</td>
+          <td class="mono">{{ classroom.submission_rate }}%</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" style="text-align:center;color:var(--text-muted);">No classroom data available.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Student-wise Performance -->
+<div class="card mb-32">
+  <h2 class="card-title">Student Performance</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Classrooms</th>
+          <th>Assignments</th>
+          <th>Submissions</th>
+          <th>Avg Score</th>
+          <th>Completed</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in student_performance %}
+        <tr>
+          <td><strong>{{ student.username }}</strong></td>
+          <td>{{ student.classroom_count }}</td>
+          <td>{{ student.assignment_count }}</td>
+          <td>{{ student.submission_count }}</td>
+          <td class="mono">{% if student.avg_score %}{{ student.avg_score|floatformat:1 }}%{% else %}—{% endif %}</td>
+          <td>{{ student.completed_count }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No student data available.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Assignment Analytics -->
+<div class="card mb-32">
+  <h2 class="card-title">Assignment Analytics</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Assignment</th>
+          <th>Due Date</th>
+          <th>Total Students</th>
+          <th>Submissions</th>
+          <th>Late Submissions</th>
+          <th>Avg Score</th>
+          <th>Submission Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for assignment in assignment_analytics %}
+        <tr>
+          <td><strong>{{ assignment.title }}</strong></td>
+          <td>{{ assignment.due_date|date:"M d, Y" }}</td>
+          <td>{{ assignment.total_students }}</td>
+          <td>{{ assignment.submissions_count }}</td>
+          <td>{{ assignment.late_submissions }}</td>
+          <td class="mono">{% if assignment.avg_score %}{{ assignment.avg_score|floatformat:1 }}%{% else %}—{% endif %}</td>
+          <td class="mono">{{ assignment.submission_rate }}%</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" style="text-align:center;color:var(--text-muted);">No assignment data available.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Students Needing Attention -->
+<div class="card">
+  <h2 class="card-title">Students Needing Attention</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Avg Score</th>
+          <th>Submissions</th>
+          <th>Late Submissions</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in weak_students %}
+        <tr>
+          <td><strong>{{ student.username }}</strong></td>
+          <td class="mono">{% if student.avg_score %}{{ student.avg_score|floatformat:1 }}%{% else %}—{% endif %}</td>
+          <td>{{ student.submission_count }}</td>
+          <td>{{ student.late_count }}</td>
+          <td>
+            {% if student.avg_score and student.avg_score < 60 %}
+              <span class="badge badge-danger">Low Performance</span>
+            {% elif student.submission_count == 0 %}
+              <span class="badge badge-warning">No Submissions</span>
+            {% else %}
+              <span class="badge badge-info">Needs Monitoring</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" style="text-align:center;color:var(--text-muted);">All students are performing well!</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-danger {
+  background: #fee;
+  color: #c33;
+}
+
+.badge-warning {
+  background: #ffeaa7;
+  color: #d63031;
+}
+
+.badge-info {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+</style>
+{% endblock %}

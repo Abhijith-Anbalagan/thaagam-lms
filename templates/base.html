@@ -67,7 +67,7 @@
 
   {% elif user.role == 'student' %}
   <a href="{% url 'student_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'student_dashboard' %}active{% endif %}"><span class="sl-icon">🏠</span> Dashboard</a>
-
+  
   {% endif %}
 </nav>
       <div class="sidebar-divider"></div>
