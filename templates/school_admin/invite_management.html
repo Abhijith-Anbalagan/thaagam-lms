@@ -1,20 +1,22 @@
 {% extends 'base.html' %}
 {% block title %}Invite Management{% endblock %}
 {% block content %}
-<div style="max-width:460px;">
-  <h1 class="page-title mb-24">Invite Management User</h1>
-  <div class="card">
-    <form method="post">{% csrf_token %}
-      <div class="form-group">
-        <label class="form-label">Email Address</label>
-        <input type="email" name="email" class="form-control" placeholder="colleague@school.com" required>
-        <p class="form-hint">An invite link (valid 48 h) will be sent to this address.</p>
-      </div>
-      <div class="flex gap-8">
-        <button type="submit" class="btn btn-primary">Send Invite</button>
-        <a href="{% url 'school_admin_dashboard' %}" class="btn btn-ghost">Cancel</a>
-      </div>
-    </form>
+<div style="display:flex; justify-content:center; padding:40px 16px;">
+  <div style="width:100%; max-width:680px;">
+    <h1 class="page-title mb-24">Invite Management User</h1>
+    <div class="card">
+      <form method="post">{% csrf_token %}
+        <div class="form-group">
+          <label class="form-label" style="font-size:1.1rem;">Email Address</label>
+          <input type="email" name="email" class="form-control" placeholder="colleague@school.com" required style="padding:14px 16px; font-size:1.1rem;">
+          <p class="form-hint">An invite link (valid 48 h) will be sent to this address.</p>
+        </div>
+        <div class="flex gap-8">
+          <button type="submit" class="btn btn-primary" style="padding:12px 32px; font-size:1.1rem;">Send Invite</button>
+          <a href="{% url 'school_admin_dashboard' %}" class="btn btn-ghost" style="padding:12px 32px; font-size:1.1rem;">Cancel</a>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 {% endblock %}

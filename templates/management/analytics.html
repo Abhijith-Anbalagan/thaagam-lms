@@ -1,18 +1,185 @@
 {% extends 'base.html' %}
-{% block title %}Analytics{% endblock %}
+{% block title %}Classroom Analytics{% endblock %}
+{% block extra_css %}
+<style>
+:root {
+  --brand:       #4c68d7;
+  --brand-dark:  #3a54c0;
+  --brand-soft:  #eef1fb;
+  --page-bg:     #f4f5f9;
+  --card-bg:     #ffffff;
+  --border:      #e8e8ec;
+  --text-1:      #1a1f36;
+  --text-2:      #5a5f7a;
+  --text-3:      #9496a8;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --shadow-sm:   0 1px 4px rgba(26,31,54,.06);
+  --shadow-md:   0 4px 20px rgba(26,31,54,.10);
+  --font:        'Inter', sans-serif;
+  --mono:        'JetBrains Mono', monospace;
+}
+.ana-page { padding: 28px 32px; display: flex; flex-direction: column; gap: 22px; }
+
+.ana-banner {
+  background: linear-gradient(135deg, #1a1f36 0%, #2d3561 60%, #3d4d9e 100%);
+  border-radius: var(--radius-xl); padding: 26px 32px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: relative; overflow: hidden;
+  box-shadow: 0 8px 32px rgba(26,31,54,.2);
+}
+.ana-banner-orb { position: absolute; border-radius: 50%; pointer-events: none; }
+.ana-banner h2 { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+.ana-banner p  { font-size: 13px; color: rgba(255,255,255,.55); }
+.ana-banner-stats { display: flex; gap: 0; z-index: 1; }
+.bstat { text-align: center; padding: 0 24px; }
+.bstat + .bstat { border-left: 1px solid rgba(255,255,255,.12); }
+.bstat-val { font-family: var(--mono); font-size: 26px; font-weight: 700; color: #fff; line-height: 1; }
+.bstat-lbl { font-size: 11px; color: rgba(255,255,255,.45); margin-top: 4px; }
+
+.stat-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+.s-card { background: var(--card-bg); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 18px 20px; box-shadow: var(--shadow-sm); transition: box-shadow .15s, transform .15s; }
+.s-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.s-icon { font-size: 22px; margin-bottom: 8px; }
+.s-val  { font-size: 24px; font-weight: 700; color: var(--brand); font-family: var(--mono); line-height: 1; }
+.s-lbl  { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--text-3); margin-top: 4px; }
+
+.card { background: var(--card-bg); border: 1.5px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+.card-head { padding: 17px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.card-title { font-size: 14px; font-weight: 700; }
+
+.dt { width: 100%; border-collapse: collapse; }
+.dt th { font-size: 11px; font-weight: 700; color: var(--text-3); text-align: left; padding: 10px 18px; border-bottom: 1px solid var(--border); letter-spacing: .5px; text-transform: uppercase; background: var(--page-bg); }
+.dt td { padding: 14px 18px; font-size: 13.5px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.dt tr:last-child td { border-bottom: none; }
+.dt tr:hover td { background: #fafaf9; }
+
+.score-cell { display: flex; align-items: center; gap: 12px; }
+.score-bar-wrap { flex: 1; background: var(--border); border-radius: 99px; height: 6px; overflow: hidden; min-width: 80px; }
+.score-bar-fill { height: 100%; border-radius: 99px; }
+.score-good { background: #1d9e75; }
+.score-avg  { background: var(--brand); }
+.score-low  { background: #d97706; }
+.score-val  { font-family: var(--mono); font-size: 13px; font-weight: 700; white-space: nowrap; min-width: 40px; }
+
+.badge { font-size: 11.5px; font-weight: 600; padding: 3px 10px; border-radius: 20px; display: inline-block; }
+.badge-blue  { background: var(--brand-soft); color: var(--brand); }
+.badge-green { background: #dcfce7; color: #15803d; }
+.badge-amber { background: #fef3c7; color: #92400e; }
+.badge-gray  { background: #f1f1f4; color: #5a5f7a; }
+
+.cc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; padding: 18px; }
+.cc-card { border: 1.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: var(--card-bg); transition: box-shadow .2s, transform .15s; }
+.cc-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.cc-head { padding: 16px 18px 12px; background: linear-gradient(135deg, #eef1fb, #dde3f8); }
+.cc-name { font-size: 14px; font-weight: 700; }
+.cc-body { padding: 14px 18px; }
+.cc-stat-row { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text-2); padding: 4px 0; }
+.cc-stat-row span:last-child { font-weight: 700; color: var(--text-1); }
+
+.empty-state { padding: 48px; text-align: center; color: var(--text-3); font-size: 13px; }
+.mono { font-family: var(--mono); }
+@media (max-width: 768px) { .ana-page { padding: 16px; } .ana-banner-stats { display: none; } }
+</style>
+{% endblock %}
+
 {% block content %}
-<h1 class="page-title mb-24">Classroom Analytics</h1>
-<div class="card"><div class="table-wrap"><table>
-  <thead><tr><th>Classroom</th><th>Students</th><th>Assignments</th><th>Avg Score</th></tr></thead>
-  <tbody>
-  {% for row in data %}
-  <tr>
-    <td><strong>{{ row.classroom.name }}</strong></td>
-    <td>{{ row.total_students }}</td>
-    <td>{{ row.total_assignments }}</td>
-    <td class="mono">{% if row.avg_score %}{{ row.avg_score|floatformat:1 }}%{% else %}—{% endif %}</td>
-  </tr>
-  {% empty %}<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">No data yet.</td></tr>{% endfor %}
-  </tbody>
-</table></div></div>
+<div class="ana-page">
+
+  <div class="ana-banner">
+    <div class="ana-banner-orb" style="right:-20px;top:-60px;width:200px;height:200px;background:rgba(255,255,255,.05)"></div>
+    <div class="ana-banner-orb" style="left:200px;bottom:-80px;width:160px;height:160px;background:rgba(255,255,255,.04)"></div>
+    <div style="z-index:1">
+      <h2>📊 Classroom Analytics</h2>
+      <p>Performance overview across {{ data|length }} classroom{{ data|length|pluralize }}</p>
+    </div>
+    <div class="ana-banner-stats">
+      <div class="bstat"><div class="bstat-val">{{ data|length }}</div><div class="bstat-lbl">Classrooms</div></div>
+      <div class="bstat"><div class="bstat-val">{{ total_students|default:"—" }}</div><div class="bstat-lbl">Students</div></div>
+      <div class="bstat"><div class="bstat-val">{{ overall_avg|default:"—" }}{% if overall_avg %}%{% endif %}</div><div class="bstat-lbl">Overall Avg</div></div>
+    </div>
+  </div>
+
+  {% if data %}
+  <div class="stat-row">
+    <div class="s-card"><div class="s-icon">🏛</div><div class="s-val">{{ data|length }}</div><div class="s-lbl">Classrooms</div></div>
+    <div class="s-card"><div class="s-icon">🎓</div><div class="s-val">{{ total_students|default:"0" }}</div><div class="s-lbl">Students</div></div>
+    <div class="s-card"><div class="s-icon">📝</div><div class="s-val">{{ total_assignments|default:"0" }}</div><div class="s-lbl">Assignments</div></div>
+    <div class="s-card"><div class="s-icon">🏆</div><div class="s-val">{{ overall_avg|default:"—" }}{% if overall_avg %}%{% endif %}</div><div class="s-lbl">Overall Avg</div></div>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-head"><span class="card-title">All Classrooms — Performance Summary</span></div>
+    {% if data %}
+    <div style="overflow-x:auto">
+      <table class="dt">
+        <thead>
+          <tr><th>Classroom</th><th>Students</th><th>Assignments</th><th>Avg Score</th><th>Grade</th></tr>
+        </thead>
+        <tbody>
+        {% for row in data %}
+        <tr>
+          <td>
+            <div style="font-weight:700;">{{ row.classroom.name }}</div>
+            <div style="font-size:11.5px;color:var(--text-3);margin-top:2px;">{{ row.classroom.code }}</div>
+          </td>
+          <td class="mono">{{ row.total_students }}</td>
+          <td class="mono">{{ row.total_assignments }}</td>
+          <td style="min-width:160px;">
+            {% if row.avg_score %}
+            <div class="score-cell">
+              <div class="score-bar-wrap">
+                <div class="score-bar-fill {% if row.avg_score >= 70 %}score-good{% elif row.avg_score >= 50 %}score-avg{% else %}score-low{% endif %}"
+                     style="width:{{ row.avg_score }}%"></div>
+              </div>
+              <span class="score-val" style="color:{% if row.avg_score >= 70 %}#1d9e75{% elif row.avg_score >= 50 %}var(--brand){% else %}#d97706{% endif %}">
+                {{ row.avg_score|floatformat:1 }}%
+              </span>
+            </div>
+            {% else %}<span style="color:var(--text-3);">—</span>{% endif %}
+          </td>
+          <td>
+            {% if row.avg_score %}
+              {% if row.avg_score >= 70 %}<span class="badge badge-green">Good</span>
+              {% elif row.avg_score >= 50 %}<span class="badge badge-blue">Average</span>
+              {% else %}<span class="badge badge-amber">Needs Attention</span>{% endif %}
+            {% else %}<span class="badge badge-gray">No Data</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div style="font-size:40px;margin-bottom:12px">📊</div>
+      <p style="font-size:15px;font-weight:600;margin-bottom:6px;color:var(--text-2)">No analytics data yet</p>
+      <p>Data will appear once classrooms have students and assignments.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if data %}
+  <div class="card">
+    <div class="card-head"><span class="card-title">Classroom Breakdown</span></div>
+    <div class="cc-grid">
+      {% for row in data %}
+      <div class="cc-card">
+        <div class="cc-head">
+          <div class="cc-name">{{ row.classroom.name }}</div>
+          <div style="font-size:11px;font-family:var(--mono);color:var(--text-2);margin-top:3px;">{{ row.classroom.code }}</div>
+        </div>
+        <div class="cc-body">
+          <div class="cc-stat-row"><span>👥 Students</span><span>{{ row.total_students }}</span></div>
+          <div class="cc-stat-row"><span>📝 Assignments</span><span>{{ row.total_assignments }}</span></div>
+          <div class="cc-stat-row"><span>🏆 Avg Score</span><span>{% if row.avg_score %}{{ row.avg_score|floatformat:1 }}%{% else %}—{% endif %}</span></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
 {% endblock %}

@@ -1,20 +1,634 @@
 {% extends 'base.html' %}
 {% block title %}Add Concept — {{ course.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ═══════════════════════════════════════════════════════
+   CONCEPT ADD FORM — Professional CSS Styling
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Layout & Container ── */
+.concept-form-wrapper { max-width: 800px; margin: 0 auto; padding: 24px 0; }
+
+/* ── Progress Bar Styling ── */
+.progress-wizard {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 32px;
+  max-width: 100%;
+}
+
+.wizard-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.wizard-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.wizard-circle.done {
+  background: linear-gradient(135deg, #0f6e56, #1d9e75);
+  color: white;
+}
+
+.wizard-circle.active {
+  background: linear-gradient(135deg, #4c68d7, #6b82f5);
+  color: white;
+  box-shadow: 0 4px 16px rgba(76, 104, 215, 0.4);
+}
+
+.wizard-circle.idle {
+  background: #e8e8ec;
+  color: #9496a8;
+}
+
+.wizard-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: color 0.3s ease;
+}
+
+.wizard-step.active .wizard-label {
+  color: #4c68d7;
+}
+
+.wizard-line {
+  flex: 1;
+  height: 3px;
+  background: #e8e8ec;
+  margin: 0 8px;
+  transition: background 0.3s ease;
+}
+
+.wizard-line.done {
+  background: linear-gradient(90deg, #0f6e56, #1d9e75);
+}
+
+/* ── Header Section ── */
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--border);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.form-header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--brand-dark);
+}
+
+.form-header-meta {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ── Form Cards/Sections ── */
+.form-card {
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 28px;
+  margin-bottom: 24px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.form-card:hover {
+  border-color: #4c68d7;
+  box-shadow: 0 4px 16px rgba(76, 104, 215, 0.12);
+}
+
+.form-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 2px solid var(--border);
+}
+
+.form-card-icon {
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #f0f3ff, #fff0f5);
+  border-radius: 12px;
+}
+
+.form-card-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--brand-dark);
+}
+
+.form-card-desc {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ── Form Groups ── */
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group:last-of-type {
+  margin-bottom: 0;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-dark);
+  letter-spacing: 0.3px;
+}
+
+.form-label-required {
+  color: #e24b4a;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 13px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  background: #fff;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #4c68d7;
+  box-shadow: 0 0 0 3px rgba(76, 104, 215, 0.1);
+  background: #fafbff;
+}
+
+.form-control::placeholder {
+  color: #b0b5c4;
+}
+
+textarea.form-control {
+  resize: vertical;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height: 100px;
+}
+
+.form-hint {
+  margin: 6px 0 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.form-error {
+  margin: 6px 0 0 0;
+  font-size: 12px;
+  color: #e24b4a;
+  font-weight: 600;
+}
+
+/* ── Two-Column Layout ── */
+.form-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+@media (max-width: 600px) {
+  .form-two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Difficulty Level Selection ── */
+.level-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.level-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 600;
+  background: #fff;
+}
+
+.level-option:hover {
+  border-color: #4c68d7;
+  background: #f0f3ff;
+}
+
+.level-option input[type="radio"] {
+  margin-right: 8px;
+  accent-color: #4c68d7;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+/* ── Video Upload Section ── */
+.video-rows-container {
+  background: #fafbff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.video-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  background: #fff;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.video-row:hover {
+  border-color: var(--border);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.video-row:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Quiz Section ── */
+.quiz-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.quiz-question-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  background: #fafaf8;
+  transition: all 0.3s ease;
+}
+
+.quiz-question-card:hover {
+  border-color: #4c68d7;
+  box-shadow: 0 2px 8px rgba(76, 104, 215, 0.1);
+}
+
+.quiz-question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1.5px solid var(--border);
+}
+
+.quiz-number {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4c68d7;
+  background: #f0f3ff;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.quiz-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+}
+
+.quiz-option-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quiz-option-item input[type="radio"] {
+  accent-color: #0f6e56;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.quiz-option-item input[type="text"] {
+  flex: 1;
+}
+
+.quiz-empty-state {
+  text-align: center;
+  padding: 32px 20px;
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+  background: #fafbff;
+}
+
+.quiz-empty-state div {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+/* ── PDF Upload — Drag & Drop Style ── */
+.pdf-upload-box {
+  border: 2px dashed #4c68d7;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #f8f9ff;
+}
+
+.pdf-upload-box:hover {
+  border-color: #6b82f5;
+  background: #f0f3ff;
+  box-shadow: 0 4px 12px rgba(76, 104, 215, 0.15);
+}
+
+.pdf-upload-box.dragover {
+  border-color: #0f6e56;
+  background: #f0faf6;
+}
+
+.pdf-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.pdf-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-dark);
+  margin-bottom: 4px;
+}
+
+.pdf-subtext {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ── Buttons ── */
+.btn {
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #4c68d7, #6b82f5);
+  color: white;
+  box-shadow: 0 4px 12px rgba(76, 104, 215, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(76, 104, 215, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--brand-blue);
+  border: 1.5px solid var(--border);
+}
+
+.btn-ghost:hover {
+  background: #f0f3ff;
+  border-color: #4c68d7;
+}
+
+.btn-danger {
+  background: #fff5f5;
+  color: #e24b4a;
+  border: 1px solid #f5d5d5;
+}
+
+.btn-danger:hover {
+  background: #ffe5e5;
+  color: #c92a2a;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.btn-add {
+  background: transparent;
+  border: 1.5px dashed #4c68d7;
+  color: #4c68d7;
+  padding: 12px 16px;
+  width: 100%;
+  margin-top: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.btn-add:hover {
+  background: #f0f3ff;
+  border-color: #6b82f5;
+  color: #6b82f5;
+}
+
+/* ── Form Actions ── */
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 2px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.form-actions .btn {
+  flex: 1;
+  min-width: 140px;
+}
+
+@media (max-width: 600px) {
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .form-actions .btn {
+    flex: none;
+    width: 100%;
+  }
+}
+
+/* ── Section Helper Text ── */
+.section-intro {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  line-height: 1.6;
+  padding: 0;
+}
+
+/* ── Responsive Design ── */
+@media (max-width: 768px) {
+  .form-card {
+    padding: 20px;
+  }
+  
+  .form-card-header {
+    gap: 10px;
+  }
+  
+  .form-card-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 22px;
+  }
+  
+  .video-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .level-options {
+    grid-template-columns: 1fr;
+  }
+  
+  .quiz-options-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .progress-wizard {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .wizard-line {
+    display: none;
+  }
+}
+
+/* ── Focus & Accessibility ── */
+.form-control:focus-visible,
+.btn:focus-visible {
+  outline: 2px solid #4c68d7;
+  outline-offset: 2px;
+}
+
+/* ── Animations ── */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.quiz-question-card,
+.video-row {
+  animation: slideIn 0.3s ease-out;
+}
+
+</style>
+{% endblock %}
+
 {% block content %}
 
-<div class="flex-between mb-24">
+<div class="form-header">
   <div>
-    <h1 class="page-title">Add Concept</h1>
-    <p class="text-muted">Course: <strong>{{ course.title }}</strong></p>
+    <h1>Add Concept</h1>
+    <p class="form-header-meta">📚 Course: <strong>{{ course.title }}</strong></p>
   </div>
-  <a href="{% url 'superadmin_course_detail' course.pk %}" class="btn btn-ghost">← Back to Course</a>
+  <a href="{% url 'superadmin_course_detail' course.pk %}{% if request.GET.wizard %}?wizard=1{% endif %}" class="btn btn-ghost">← Back to Course</a>
 </div>
 
-<form method="post" enctype="multipart/form-data">{% csrf_token %}
-<div style="display:flex;flex-direction:column;gap:20px;max-width:780px;">
+<div class="concept-form-wrapper">
 
-  <!-- ── Section 1: Basic Info ── -->
-  <div class="card">
+  <!-- ── PROGRESS BAR ── -->
+  {% if request.GET.wizard %}
+  <div class="progress-wizard">
+    <div class="wizard-step">
+      <div class="wizard-circle done">✓</div>
+      <span class="wizard-label">Course info</span>
+    </div>
+    <div class="wizard-line done"></div>
+    <div class="wizard-step">
+      <div class="wizard-circle done">✓</div>
+      <span class="wizard-label">Add concepts</span>
+    </div>
+    <div class="wizard-line done"></div>
+    <div class="wizard-step active">
+      <div class="wizard-circle active">3</div>
+      <span class="wizard-label active">Concept details</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data">{% csrf_token %}
     <h2 class="section-title mb-20">📘 Concept Info</h2>
 
     <div class="form-group">
