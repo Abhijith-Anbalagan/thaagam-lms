@@ -4,19 +4,16 @@
 {% block content %}
 <style>
   /* ── Layout & Background ── */
- body { 
-    overflow: hidden;
-    margin: 0;
-    padding: 0;
+  body { 
+    overflow: hidden; 
     background-color: var(--page-bg);
-}
+  }
 
- .login-page {
-    min-height: 100vh;
-    height: 100%;
+  .login-page {
+    height: calc(100vh - 56px);
     display: flex;
     overflow: hidden;
-}
+  }
 
   /* ── Left Panel (The Brand Experience) ── */
   .login-welcome {

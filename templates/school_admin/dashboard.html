@@ -88,7 +88,7 @@
           <div style="font-size:14px;font-weight:600;color:var(--brand-dark);">{{ m.get_full_name|default:m.username }}</div>
           <div style="font-size:12px;color:var(--text-muted);">{{ m.email }}</div>
         </div>
-        <button class="btn btn-sm btn-danger" onclick="deleteMember({{ m.id }})">🗑</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteMember({{m.id}})">🗑</button>
       </div>
       {% empty %}
       <p class="text-muted" id="no-management" style="text-align:center;padding:20px 0;font-size:13px;">

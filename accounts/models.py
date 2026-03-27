@@ -38,18 +38,19 @@ class User(AbstractUser):
     email_verification_token       = models.UUIDField(null=True, blank=True, unique=True)
     email_verification_expires_at  = models.DateTimeField(null=True, blank=True)
 
-    # ✅ Fix #9: dedicated password-reset fields — no longer reusing
-    # email_verification fields, which avoids clobbering a pending
-    # email verification when the same user requests a password reset.
     password_reset_token      = models.UUIDField(null=True, blank=True, unique=True)
     password_reset_expires_at = models.DateTimeField(null=True, blank=True)
 
-    # ✅ Fix #12: removed pointless `constraints = []` from Meta
     class Meta:
         pass
 
     def __str__(self):
         return f'{self.username} ({self.role})'
+
+    def save(self, *args, **kwargs):
+        if self.is_superuser:
+            self.role = 'super_admin'
+        super().save(*args, **kwargs)
 
     @property
     def role_color(self):
@@ -63,6 +64,8 @@ class User(AbstractUser):
         }.get(self.role, '#9e9c95')
 
     def get_dashboard_url(self):
+        if self.is_superuser:
+            return '/superadmin/dashboard/'
         return {
             'super_admin':  '/superadmin/dashboard/',
             'school_admin': '/school-admin/dashboard/',
@@ -80,7 +83,6 @@ class User(AbstractUser):
             timezone.now() < self.email_verification_expires_at
         )
 
-    # ✅ Fix #9: dedicated property for password reset validity check
     @property
     def is_password_reset_valid(self):
         return (
