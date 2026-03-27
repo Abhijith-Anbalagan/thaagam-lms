@@ -11,6 +11,5 @@ urlpatterns = [
     path('classroom/<int:class_id>/peoples/',       views.classroom_peoples,   name='student_classroom_peoples'),
     path('classroom/<int:class_id>/grades/',        views.classroom_grade,     name='student_classroom_grade'),
     path('classroom/<int:class_id>/chat/',          views.classroom_chat,      name='student_classroom_chat'),
-    path('analytics/',                              views.student_analytics,   name='student_analytics'),
     path('api/unread-count/',                       views.unread_count_api,    name='student_unread_count'),
 ]

@@ -43,6 +43,7 @@ def dashboard(request):
         'recent_announcements':  recent_announcements,
         'total_courses':         total_courses,
         'unread_count':          unread_count,
+        'active_tab':            'dashboard',
     })
 
 
@@ -60,7 +61,7 @@ def join_class(request):
             messages.success(request, f'Joined {classroom.name}!')
             return redirect('student_dashboard')
         except Classroom.DoesNotExist:
-            error = 'Class code not found. Try again.'
+            error = 'Class code not found or invalid. Please try again.'
     return render(request, 'student/join_class.html', {'error': error})
 
 
@@ -132,6 +133,7 @@ def classroom_peoples(request, class_id):
     classroom = _get_classroom(request, class_id)
     return render(request, 'student/classroom_peoples.html', {
         'classroom': classroom, 'students': classroom.students.all(), 'active_tab': 'peoples',
+        'student_data': [], # Placeholder, actual data would be fetched here if needed
     })
 
 
@@ -178,59 +180,10 @@ def classroom_chat(request, class_id):
     ).order_by('created_at')
     msgs.filter(receiver=request.user, is_read=False).update(is_read=True)
     return render(request, 'student/classroom_chat.html', {
-        'classroom':  classroom,
-        'teacher':    teacher,
-        'messages':   msgs,
-        'active_tab': 'chat',
-    })
-
-
-@role_required('student')
-def student_analytics(request):
-    """Student's personal performance analytics across all classrooms."""
-    classrooms  = request.user.joined_classrooms.select_related('teacher', 'school').all()
-    submissions = Submission.objects.filter(
-        student=request.user, score__isnull=False
-    ).select_related('assignment__classroom')
-
-    # Per-classroom breakdown
-    classroom_stats = []
-    for c in classrooms:
-        c_subs = submissions.filter(assignment__classroom=c)
-        total  = c.assignments.count()
-        graded = c_subs.count()
-        avg    = c_subs.aggregate(avg=Avg('score'))['avg']
-        classroom_stats.append({
-            'classroom':          c,
-            'total_assignments':  total,
-            'graded':             graded,
-            'submitted':          Submission.objects.filter(assignment__classroom=c, student=request.user).count(),
-            'avg_score':          round(avg, 1) if avg else None,
-        })
-
-    # Overall numbers
-    all_subs      = Submission.objects.filter(student=request.user)
-    total_score   = sum(s.score for s in submissions if s.score is not None)
-    total_max     = sum(s.assignment.max_score for s in submissions)
-    overall_pct   = round(total_score / total_max * 100, 1) if total_max else None
-
-    # Chart data — last 10 graded submissions ordered by date
-    recent_graded = submissions.order_by('assignment__due_date')[:10]
-    chart_labels  = [s.assignment.title for s in recent_graded]
-    chart_scores  = [s.score            for s in recent_graded]
-    chart_max     = [s.assignment.max_score for s in recent_graded]
-
-    return render(request, 'student/analytics.html', {
-        'classrooms':       classrooms,
-        'classroom_stats':  classroom_stats,
-        'total_submitted':  all_subs.count(),
-        'total_graded':     submissions.count(),
-        'overall_pct':      overall_pct,
-        'total_score':      total_score,
-        'total_max':        total_max,
-        'chart_labels':     chart_labels,
-        'chart_scores':     chart_scores,
-        'chart_max':        chart_max,
+        'classroom':    classroom,
+        'teacher':      teacher,
+        'chat_messages': msgs,
+        'active_tab':   'chat',
     })
 
 

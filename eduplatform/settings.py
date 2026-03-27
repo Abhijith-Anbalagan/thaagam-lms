@@ -20,6 +20,7 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
+    'daphne',                          # must be first — overrides runserver with ASGI
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
