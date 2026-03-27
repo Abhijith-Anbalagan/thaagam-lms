@@ -1,0 +1,1481 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LearnFlow — Elevate Your Skills</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --brand-dark:       #1a1f36;
+    --brand-blue:       #4c68d7;
+    --brand-blue-hover: #3a55c4;
+    --brand-blue-light: #e8eeff;
+    --page-bg:          #eef0f3fd;
+    --card-bg:          #ffffff;
+    --border:           #e8e6e0;
+    --text-body:        #3d3d3a;
+    --text-muted:       #9e9c95;
+    --success:          #1d9e75;
+    --success-bg:       #d4f5ea;
+    --danger:           #e24b4a;
+    --danger-bg:        #fde8e8;
+    --warning:          #ba7517;
+    --warning-bg:       #fdf3e0;
+    --radius-sm:        6px;
+    --radius-md:        10px;
+    --radius-lg:        14px;
+    --shadow-sm:        0 1px 4px rgba(0,0,0,.06);
+    --shadow-md:        0 4px 16px rgba(0,0,0,.08);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--page-bg);
+    color: var(--text-body);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── NAVBAR ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 6vw;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+  .nav-logo {
+    font-family:  sans-serif;
+    font-weight: 800; font-size: 1.4rem; letter-spacing: -0.5px;
+    color: var(--brand-dark); text-decoration: none;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .nav-logo .logo-accent { color: var(--brand-blue); }
+  .logo-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--success); display: inline-block;
+  }
+  .nav-links {
+    display: flex; align-items: center; gap: 2rem; list-style: none;
+  }
+  .nav-links a {
+    color: var(--text-muted); text-decoration: none; font-size: 0.9rem;
+    font-weight: 500; transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--brand-dark); }
+  .nav-cta { display: flex; gap: 0.75rem; align-items: center; }
+  .btn {
+    padding: 0.55rem 1.3rem; border-radius: 50px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+    font-weight: 500; cursor: pointer; text-decoration: none;
+    transition: all .2s; display: inline-block; border: none;
+  }
+  .btn-ghost {
+    background: transparent; color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { color: var(--brand-dark); border-color: #ccc; background: var(--page-bg); }
+  .btn-primary {
+    background: var(--brand-blue); color: #fff;
+    box-shadow: 0 4px 14px rgba(76,104,215,0.35);
+  }
+  .btn-primary:hover { background: var(--brand-blue-hover); box-shadow: 0 6px 20px rgba(76,104,215,0.45); }
+  .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; }
+  .hamburger span { width: 22px; height: 2px; background: var(--text-muted); border-radius: 2px; }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 130px 6vw 80px;
+    background: linear-gradient(160deg, #fff 0%, var(--page-bg) 60%, var(--brand-blue-light) 100%);
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .hero-shape {
+    position: absolute; border-radius: 50%; opacity: 0.5; pointer-events: none;
+  }
+  .shape-1 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(76,104,215,0.1), transparent 70%);
+    top: -100px; right: -100px;
+  }
+  .shape-2 {
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, rgba(29,158,117,0.08), transparent 70%);
+    bottom: 0; left: -80px;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--brand-blue-light); border: 1px solid rgba(76,104,215,0.25);
+    border-radius: 50px; padding: 0.35rem 1rem;
+    font-size: 0.8rem; color: var(--brand-blue); font-weight: 600;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.6s ease both;
+  }
+  .badge-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--success); animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .hero-content { max-width: 740px; position: relative; z-index: 1; }
+  h1 {
+    font-family:  sans-serif;
+    font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+    font-weight: 800; line-height: 1.1; letter-spacing: -1.5px;
+    color: var(--brand-dark); margin-bottom: 1.25rem;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+  h1 .blue { color: var(--brand-blue); }
+  .hero-sub {
+    font-size: 1.08rem; color: var(--text-muted); max-width: 500px;
+    margin: 0 auto 2.5rem; font-weight: 400; line-height: 1.8;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+  .hero-actions {
+    display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+  .btn-lg { padding: 0.85rem 2rem; font-size: 0.95rem; }
+  .hero-stats {
+    display: flex; gap: 3rem; justify-content: center; flex-wrap: wrap;
+    margin-top: 4rem; padding-top: 3rem;
+    border-top: 1px solid var(--border);
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+  .stat { text-align: center; }
+  .stat-num {
+    font-family:  sans-serif; font-size: 2rem; font-weight: 800;
+    color: var(--brand-dark);
+  }
+  .stat-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── SECTION COMMON ── */
+  section { padding: 5.5rem 6vw; }
+  .section-label {
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--brand-blue); margin-bottom: 0.6rem;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    font-weight: 700; line-height: 1.2; letter-spacing: -0.5px;
+    color: var(--brand-dark); margin-bottom: 0.75rem;
+  }
+  .section-sub { color: var(--text-muted); max-width: 500px; font-weight: 400; }
+  .section-header { margin-bottom: 3rem; }
+
+  /* ── COURSES ── */
+  #courses { background: var(--card-bg); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 1.5rem;
+  }
+  .course-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: transform .3s, box-shadow .3s;
+    cursor: pointer;
+  }
+  .course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+  }
+  .course-thumb {
+    height: 150px; display: flex; align-items: center;
+    justify-content: center; font-size: 2.8rem;
+  }
+  .thumb-web    { background: #eef2ff; }
+  .thumb-data   { background: #ecfdf5; }
+  .thumb-design { background: #faf5ff; }
+  .thumb-mobile { background: #fff7ed; }
+  .thumb-devops { background: #eff6ff; }
+  .thumb-ml     { background: #fdf4ff; }
+  .course-body { padding: 1.25rem; }
+  .course-tag {
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.8px;
+    text-transform: uppercase; padding: 3px 10px;
+    border-radius: 50px; display: inline-block; margin-bottom: 0.7rem;
+  }
+  .tag-blue   { background: var(--brand-blue-light); color: var(--brand-blue); }
+  .tag-green  { background: var(--success-bg);       color: var(--success); }
+  .tag-purple { background: #f3e8ff; color: #7c3aed; }
+  .tag-orange { background: var(--warning-bg);       color: var(--warning); }
+  .tag-red    { background: var(--danger-bg);        color: var(--danger); }
+  .tag-teal   { background: #e0f9f4; color: #0e7a63; }
+  .course-title {
+    font-family: 'Syne', sans-serif; font-weight: 600;
+    font-size: 1rem; margin-bottom: 0.4rem;
+    color: var(--brand-dark); line-height: 1.4;
+  }
+  .course-desc { font-size: 0.84rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.6; }
+  .course-meta {
+    display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid var(--border); padding-top: 1rem;
+  }
+  .course-info { display: flex; gap: 1rem; }
+  .course-info span { font-size: 0.78rem; color: var(--text-muted); }
+  .course-info span b { color: var(--text-body); font-weight: 600; }
+  .course-price { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--success); }
+  .course-price .old {
+    font-size: 0.78rem; color: var(--text-muted);
+    text-decoration: line-through; font-weight: 400; margin-right: 4px;
+  }
+
+  /* ── ABOUT ── */
+  #about { background: var(--page-bg); }
+  .about-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 5rem; align-items: center;
+  }
+  .about-visual { position: relative; height: 420px; }
+  .about-card-big {
+    position: absolute; top: 0; left: 0; right: 30px;
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 2rem;
+    height: 280px; box-shadow: var(--shadow-md);
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .about-card-small {
+    position: absolute; bottom: 0; right: 0; left: 50px;
+    background: var(--brand-blue-light); border: 1px solid rgba(76,104,215,0.2);
+    border-radius: var(--radius-lg); padding: 1.5rem;
+  }
+  .progress-item { margin-bottom: 1rem; }
+  .progress-item:last-child { margin-bottom: 0; }
+  .progress-label {
+    display: flex; justify-content: space-between;
+    font-size: 0.82rem; margin-bottom: 6px; color: var(--text-muted);
+  }
+  .progress-label span:last-child { color: var(--brand-blue); font-weight: 600; }
+  .progress-bar { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .progress-fill {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, var(--brand-blue), #7b93f0);
+  }
+  .feature-list { list-style: none; margin-top: 2rem; }
+  .feature-list li {
+    display: flex; align-items: flex-start; gap: 12px;
+    margin-bottom: 1.25rem; font-size: 0.95rem;
+  }
+  .feature-icon {
+    width: 34px; height: 34px; border-radius: var(--radius-sm); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem; margin-top: 2px;
+  }
+  .fi-blue   { background: var(--brand-blue-light); }
+  .fi-green  { background: var(--success-bg); }
+  .fi-purple { background: #f3e8ff; }
+  .fi-orange { background: var(--warning-bg); }
+  .feature-list li strong { color: var(--brand-dark); font-weight: 600; }
+  .feature-list li p { color: var(--text-muted); font-size: 0.84rem; margin-top: 2px; }
+
+  /* ── INSTRUCTORS ── */
+  #instructors { background: var(--card-bg); border-top: 1px solid var(--border); }
+  .instructors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.5rem;
+  }
+  .instructor-card {
+    background: var(--page-bg); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 1.75rem 1.5rem; text-align: center;
+    transition: transform .3s, box-shadow .3s;
+  }
+  .instructor-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+  .instructor-avatar {
+    width: 70px; height: 70px; border-radius: 50%; margin: 0 auto 1rem;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; color: #fff;
+  }
+  .av1 { background: linear-gradient(135deg, var(--brand-blue), #7b93f0); }
+  .av2 { background: linear-gradient(135deg, var(--success), #34c898); }
+  .av3 { background: linear-gradient(135deg, #9333ea, #c084fc); }
+  .av4 { background: linear-gradient(135deg, var(--warning), #f59e0b); }
+  .instructor-name { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--brand-dark); margin-bottom: 4px; }
+  .instructor-role { font-size: 0.82rem; color: var(--brand-blue); font-weight: 600; margin-bottom: 0.75rem; }
+  .instructor-bio { font-size: 0.83rem; color: var(--text-muted); line-height: 1.6; }
+  .stars { color: #f59e0b; font-size: 0.85rem; margin-top: 0.75rem; }
+
+  /* ── TESTIMONIALS ── */
+  #testimonials { background: var(--page-bg); }
+  .testimonials-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+  .testimonial-card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 1.75rem;
+    box-shadow: var(--shadow-sm);
+  }
+  .testimonial-text {
+    font-size: 0.92rem; color: var(--text-body); line-height: 1.8;
+    margin-bottom: 1.25rem; font-style: italic;
+  }
+  .testimonial-author { display: flex; align-items: center; gap: 10px; }
+  .author-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .author-name { font-size: 0.88rem; font-weight: 600; color: var(--brand-dark); }
+  .author-role { font-size: 0.78rem; color: var(--text-muted); }
+
+  /* ── CTA ── */
+  #cta {
+    background: var(--brand-dark);
+    text-align: center;
+  }
+  #cta .section-label { color: #7b93f0; }
+  #cta .section-title { color: #fff; max-width: 580px; margin: 0 auto 1rem; }
+  #cta .section-sub { color: rgba(255,255,255,0.5); margin: 0 auto 2.5rem; }
+  .btn-white {
+    background: #fff; color: var(--brand-blue);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  }
+  .btn-white:hover { background: var(--brand-blue-light); }
+  .btn-outline-white {
+    background: transparent; color: #fff;
+    border: 1px solid rgba(255,255,255,0.25);
+  }
+  .btn-outline-white:hover { background: rgba(255,255,255,0.08); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--card-bg);
+    border-top: 1px solid var(--border);
+    padding: 4rem 6vw 2rem;
+  }
+  .footer-grid {
+    display: grid; grid-template-columns: 1fr 1fr 2fr ;
+    gap: 3rem; margin-bottom: 3rem;
+  }
+  .footer-brand p {
+    color: var(--text-muted); font-size: 0.87rem;
+    margin-top: 0.75rem; line-height: 1.7; max-width: 260px;
+  }
+  .footer-col h4 {
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 0.88rem; color: var(--brand-dark); margin-bottom: 1.25rem;
+  }
+  .footer-col ul { list-style: none; }
+  .footer-col ul li { margin-bottom: 0.65rem; }
+  .footer-col ul a {
+    color: var(--text-muted); text-decoration: none;
+    font-size: 0.85rem; transition: color .2s;
+  }
+  .footer-col ul a:hover { color: var(--brand-blue); }
+  .footer-bottom {
+    display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid var(--border); padding-top: 2rem;
+    flex-wrap: wrap; gap: 1rem;
+  }
+  .footer-bottom p { font-size: 0.82rem; color: var(--text-muted); }
+  .social-links { display: flex; gap: 0.75rem; }
+  .social-link {
+    width: 34px; height: 34px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); text-decoration: none; font-size: 0.85rem;
+    transition: all .2s;
+  }
+  .social-link:hover { border-color: var(--brand-blue); color: var(--brand-blue); background: var(--brand-blue-light); }
+
+  /* ── MOBILE ── */
+  @media (max-width: 900px) {
+    .about-grid { grid-template-columns: 1fr; }
+    .about-visual { display: none; }
+    .footer-grid { grid-template-columns: 1fr 1fr ; }
+    .nav-links, .nav-cta { display: none; }
+    .hamburger { display: flex; }
+  }
+  @media (max-width: 600px) {
+    .footer-grid { grid-template-columns: 1fr; }
+    .hero-stats { gap: 2rem; }
+    .footer-bottom { flex-direction: column; align-items: flex-start; }
+  }
+
+  /* ── MOBILE MENU ── */
+  .mobile-menu {
+    display: none; position: fixed; inset: 0;
+    background: #fff; z-index: 200; flex-direction: column;
+    align-items: center; justify-content: center; gap: 2rem;
+  }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu a {
+    font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 700;
+    color: var(--brand-dark); text-decoration: none; transition: color .2s;
+  }
+  .mobile-menu a:hover { color: var(--brand-blue); }
+  .mobile-close {
+    position: absolute; top: 1.5rem; right: 1.5rem;
+    background: none; border: none; color: var(--text-muted);
+    font-size: 1.5rem; cursor: pointer;
+  }
+
+  .btn-enroll {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.5rem 1.25rem;
+  background: var(--brand-blue);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(76,104,215,0.3);
+  transition: all .2s;
+}
+.btn-enroll:hover {
+  background: var(--brand-blue-hover);
+  box-shadow: 0 6px 18px rgba(76,104,215,0.45);
+  transform: translateY(-1px);
+}
+.btn-enroll:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(76,104,215,0.3);
+}
+
+/* ── HIERARCHY ── */
+.hierarchy-flow {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.hierarchy-card {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform .2s, box-shadow .2s;
+  position: relative;
+}
+.hierarchy-card:hover {
+  transform: translateX(6px);
+  box-shadow: var(--shadow-md);
+}
+.hc-school    { border-left: 4px solid var(--brand-blue); }
+.hc-management{ border-left: 4px solid #9333ea; }
+.hc-teacher   { border-left: 4px solid var(--success); }
+.hc-student   { border-left: 4px solid var(--warning); }
+
+.hc-icon {
+  font-size: 2rem;
+  width: 52px; height: 52px;
+  border-radius: var(--radius-md);
+  background: var(--page-bg);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.hc-role {
+  font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 2px;
+}
+.hc-title {
+  font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: 1rem; color: var(--brand-dark); margin-bottom: 4px;
+}
+.hc-desc {
+  font-size: 0.84rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0.75rem;
+}
+.hc-tags {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.hc-tags span {
+  font-size: 0.72rem; font-weight: 600;
+  padding: 2px 10px; border-radius: 50px;
+  background: var(--page-bg); color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.hc-arrow {
+  font-size: 1.5rem; color: var(--border);
+  padding: 0.4rem 0; line-height: 1;
+  font-weight: 300;
+}
+
+/* Analytics ribbon */
+.hc-analytics {
+  width: 100%; margin-top: 0.5rem;
+  background: var(--brand-blue-light);
+  border: 1px solid rgba(76,104,215,0.2);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+}
+.hc-analytics-inner {
+  display: flex; align-items: center; gap: 1rem;
+}
+/* ── HIERARCHY FLOW ── */
+.hflow {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+}
+.hflow-step {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 1.5rem;
+  flex: 1; min-width: 190px; max-width: 240px;
+  display: flex; flex-direction: column;
+  transition: background .25s, transform .25s;
+}
+.hflow-step:hover {
+  background: rgba(255,255,255,0.07);
+  transform: translateY(-6px);
+}
+.hflow-step-highlight {
+  border-color: rgba(251,191,36,0.2);
+}
+.hflow-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.72rem; font-weight: 800;
+  letter-spacing: 1px;
+  border: 1px solid;
+  border-radius: 50px;
+  padding: 2px 10px;
+  display: inline-block;
+  margin-bottom: 1rem; align-self: flex-start;
+}
+.hflow-icon {
+  font-size: 2rem; margin-bottom: 0.75rem; line-height: 1;
+}
+.hflow-role {
+  font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.hflow-title {
+  font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: 0.95rem; color: #fff; margin-bottom: 6px; line-height: 1.3;
+}
+.hflow-desc {
+  font-size: 0.82rem; color: rgba(255,255,255,0.4);
+  line-height: 1.6; margin-bottom: 1rem; flex: 1;
+}
+.hflow-pills {
+  display: flex; gap: 5px; flex-wrap: wrap;
+}
+.hflow-pills span {
+  font-size: 0.7rem; font-weight: 600;
+  padding: 2px 8px; border-radius: 50px;
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.35);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.hflow-connector {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 0 0.5rem; gap: 4px;
+}
+.hflow-line {
+  width: 1px; flex: 1;
+  background: rgba(255,255,255,0.08);
+}
+.hflow-arrow-icon {
+  font-size: 1rem; color: rgba(255,255,255,0.2);
+}
+
+/* Analytics banner */
+.hflow-banner {
+  display: flex; align-items: center;
+  justify-content: space-between; flex-wrap: wrap; gap: 2rem;
+  background: rgba(76,104,215,0.1);
+  border: 1px solid rgba(76,104,215,0.2);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 2rem;
+  margin-bottom: 3rem;
+}
+.hflow-banner-left {
+  display: flex; align-items: flex-start; gap: 1rem; flex: 1;
+}
+.hflow-banner-stats {
+  display: flex; gap: 2.5rem;
+}
+.hflow-stat { text-align: center; }
+
+/* Features grid */
+.hflow-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+.hflow-feat {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  transition: background .2s, transform .2s;
+}
+.hflow-feat:hover {
+  background: rgba(255,255,255,0.07);
+  transform: translateY(-3px);
+}
+.hflow-feat-icon {
+  width: 40px; height: 40px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; margin-bottom: 1rem;
+}
+.hflow-feat strong {
+  display: block; font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 0.92rem;
+  color: #fff; margin-bottom: 6px;
+}
+.hflow-feat p {
+  font-size: 0.82rem; color: rgba(255,255,255,0.4); line-height: 1.6;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .hflow { flex-direction: column; align-items: stretch; }
+  .hflow-step { max-width: 100%; }
+  .hflow-connector { flex-direction: row; padding: 0.5rem 0; }
+  .hflow-line { flex: 1; height: 1px; width: auto; }
+  .hflow-arrow-icon { transform: rotate(90deg); }
+  .hflow-banner { flex-direction: column; }
+  .hflow-banner-stats { justify-content: space-around; width: 100%; }
+}
+
+
+
+
+
+
+</style>
+</head>
+<body>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-close" onclick="closeMobile()">✕</button>
+  <a href="#courses"     onclick="closeMobile()">Courses</a>
+  <a href="#about"       onclick="closeMobile()">About</a>
+  <a href="#instructors" onclick="closeMobile()">Instructors</a>
+  <a href="{% url 'login' %}"  onclick="closeMobile()">Login</a>
+  <a href="{% url 'signup' %}" class="btn btn-primary btn-lg" onclick="closeMobile()">Get Started</a>
+</div>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+  <a href="#" class="nav-logo">
+    <span ></span>EDU<span class="logo-accent">PLATFORM</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#courses">Courses</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#instructors">Instructors</a></li>
+    <li><a href="#Workflow">Workflow</a></li>
+  
+  </ul>
+  <div class="nav-cta">
+    <a href="{% url 'login' %}"  class="btn btn-ghost">Login</a>
+    <a href="{% url 'signup' %}" class="btn btn-primary">Get Started</a>
+  </div>
+  <div class="hamburger" onclick="openMobile()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-shape shape-1"></div>
+  <div class="hero-shape shape-2"></div>
+  <div class="hero-content">
+    
+    <h1>Eduplatform<br><span class="blue">Think Smarter</span></h1>
+    <p class="hero-sub">
+      World-class courses in tech, design and business — crafted by industry experts and built for the way you actually learn.
+    </p>
+    <div class="hero-actions">
+      <a href="#courses"          class="btn btn-primary btn-lg">Explore Courses</a>
+      <a href="{% url 'signup' %}" class="btn btn-ghost   btn-lg">Start for Free →</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num">50K+</div><div class="stat-label">Active Students</div></div>
+      <div class="stat"><div class="stat-num">200+</div><div class="stat-label">Expert Courses</div></div>
+      <div class="stat"><div class="stat-num">98%</div><div class="stat-label">Satisfaction Rate</div></div>
+  
+    </div>
+  </div>
+</section>
+<!-- COURSES -->
+<section id="courses">
+  <div class="section-header">
+    <div class="section-label">What we offer</div>
+    <h2 class="section-title">Explore Popular Courses</h2>
+    <p class="section-sub">From beginner to advanced — find the course that moves your career forward.</p>
+  </div>
+  <div class="courses-grid">
+
+    <div class="course-card">
+      <div class="course-thumb thumb-web">
+        <img src="https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=344&h=194&fit=crop" alt="AI Course" />
+      </div>
+      <div class="course-body">
+        <span class="course-tag tag-blue">AI</span>
+        <div class="course-title">AI for every thing</div>
+        <p class="course-desc">Learn the fundamentals of artificial intelligence and how to apply them in real-world scenarios.</p>
+        <div class="course-meta">
+          <a href="{% url 'signup' %}" class="btn-enroll btn-enroll-full">Enroll Now →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="course-card">
+      <div class="course-thumb thumb-data">
+        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=344&h=194&fit=crop" alt="Data Science Course" />
+      </div>
+      <div class="course-body">
+        <span class="course-tag tag-green">Data Science</span>
+        <div class="course-title">Python for Data Science & Analytics</div>
+        <p class="course-desc">Pandas, NumPy, Matplotlib and machine learning fundamentals with hands-on datasets.</p>
+        <div class="course-meta">
+          <div class="course-info">
+            <a href="{% url 'signup' %}" class="btn-enroll btn-enroll-full">Enroll Now →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="course-card">
+      <div class="course-thumb thumb-design">
+        <img src="https://images.unsplash.com/photo-1561070791-2526d30994b5?w=344&h=194&fit=crop" alt="UI/UX Design Course" />
+      </div>
+      <div class="course-body">
+        <span class="course-tag tag-purple">UI/UX Design</span>
+        <div class="course-title">UI/UX Design Mastery with Figma</div>
+        <p class="course-desc">Design stunning interfaces, master design systems, and build a portfolio recruiters love.</p>
+        <div class="course-meta">
+          <div class="course-info">
+            <a href="{% url 'signup' %}" class="btn-enroll btn-enroll-full">Enroll Now →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+  </div>
+</section>
+
+
+  </div>
+</section>
+
+
+
+
+<!-- ABOUT -->
+<section id="about" style="background:var(--page-bg);padding:5rem 6vw;">
+
+  <!-- Header — centered, tight -->
+  <div style="text-align:left;max-width:850px;margin:0 auto 4rem;">
+    <h2 class="section-title" style="font-size:2.2rem;margin-top:0.5rem;line-height:1.2;">
+      One platform for every role in your school.
+    </h2>
+<p style="color:var(--text-body);font-size:0.95rem;line-height:2;margin-top:0.75rem;max-width:860px;">
+      
+      EduPlatform is a unified school management system built to connect every role in an educational institution — from super admins overseeing multiple schools, to school admins managing their campus, to management teams, teachers, and students. We replaced the mess of disconnected tools with one intelligent platform where everyone sees exactly what they need. Admins get full control. Teachers get clarity. Students get focus. Built with role-based access, real-time data, and seamless communication at its core, EduPlatform is not just software — it is the operating system for modern schools. One platform. Every role. Zero confusion.
+
+    </p>
+  </div>
+
+  <!-- 3 Role Cards -->
+  <div class="ab-role-grid">
+
+    <div class="ab-role-card">
+      <div class="ab-role-icon" style="background:var(--brand-blue-light);">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="var(--brand-blue)" stroke-width="2">
+          <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2M5 21H3M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>
+      </div>
+      <h4 class="ab-role-title">School Administration</h4>
+      <p class="ab-role-desc">Super admins manage schools end-to-end — onboard school admins, assign courses, track performance, and get platform-wide analytics at a glance.</p>
+      <div class="ab-role-bar" style="background:var(--brand-blue);"></div>
+    </div>
+
+    <div class="ab-role-card">
+      <div class="ab-role-icon" style="background:#f3e8ff;">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#9333ea" stroke-width="2">
+          <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+      <h4 class="ab-role-title">Management & Teachers</h4>
+      <p class="ab-role-desc">Management teams oversee classrooms and teachers. Teachers run their classes, post assignments, and track every student's progress — all in one place.</p>
+      <div class="ab-role-bar" style="background:#9333ea;"></div>
+    </div>
+
+    <div class="ab-role-card">
+      <div class="ab-role-icon" style="background:var(--success-bg);">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="var(--success)" stroke-width="2">
+          <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+        </svg>
+      </div>
+      <h4 class="ab-role-title">Student Learning</h4>
+      <p class="ab-role-desc">Students join classrooms with a simple code, access course content, submit assignments, and see their own progress — with no confusion about where to go.</p>
+      <div class="ab-role-bar" style="background:var(--success);"></div>
+    </div>
+
+  </div>
+
+  <!-- Bottom: Our Aim — full width dark card -->
+  <div class="ab-aim-banner">
+    <div class="ab-aim-left">
+      <span class="ab-aim-tag">Our Aim</span>
+      <h3>Replace the chaos of multiple tools<br>with one clear, role-based system.</h3>
+      <p>Most schools use one app for attendance, another for assignments, another for communication — and nothing talks to each other. EduPlatform replaces all of that with a single platform where every user sees exactly what they need, nothing more.</p>
+      <p style="margin-top:0.75rem;">Our goal is simple — give every student a guided, connected learning experience by making sure the people around them are always in sync.</p>
+    </div>
+    <div class="ab-aim-right">
+      <div class="ab-points">
+        <div class="ab-point"><div class="ab-point-dot" style="background:var(--brand-blue);"></div><span>Role-based dashboards for every user</span></div>
+        <div class="ab-point"><div class="ab-point-dot" style="background:#9333ea;"></div><span>Real-time classroom & assignment management</span></div>
+        <div class="ab-point"><div class="ab-point-dot" style="background:var(--success);"></div><span>School-wide analytics for admins</span></div>
+        <div class="ab-point"><div class="ab-point-dot" style="background:var(--warning);"></div><span>Secure invite-based onboarding for all roles</span></div>
+      </div>
+      <a href="{% url 'signup' %}" class="btn btn-primary" style="margin-top:2rem;display:inline-block;">Join EduPlatform →</a>
+    </div>
+  </div>
+
+</section>
+
+<style>
+/* ── Role Cards Grid ── */
+.ab-role-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.ab-role-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  transition: transform .2s, box-shadow .2s;
+}
+
+.ab-role-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.ab-role-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.1rem;
+}
+
+.ab-role-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--brand-dark);
+  margin-bottom: 0.6rem;
+}
+
+.ab-role-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.8;
+}
+
+.ab-role-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 0;
+  transition: width .4s ease;
+}
+
+.ab-role-card:hover .ab-role-bar { width: 100%; }
+
+/* ── Aim Banner ── */
+.ab-aim-banner {
+  background: var(--brand-dark);
+  border-radius: var(--radius-lg);
+  padding: 3rem;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 3rem;
+  align-items: center;
+  margin-top: 1.5rem;
+}
+
+.ab-aim-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--brand-blue);
+  background: rgba(76,104,215,0.15);
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 1rem;
+}
+
+.ab-aim-left h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.35;
+  margin-bottom: 1rem;
+}
+
+.ab-aim-left p {
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.85;
+}
+
+.ab-points {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ab-point {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.85);
+}
+
+.ab-point-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+/* Stay in Contact form */
+.footer-contact-form .contact-desc {
+  font-size: 0.82rem;
+  opacity: 0.6;
+  margin-bottom: 0.9rem;
+  line-height: 1.5;
+}
+
+.contact-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.contact-input {
+  width: 100%;
+  background: rgba(78, 74, 74, 0);
+  border: 2px solid rgba(27, 1, 1, 0.13);
+  border-radius: 7px;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.84rem;
+  color: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+  font-family: inherit;
+  resize: none;
+}
+
+.contact-input::placeholder {
+  opacity: 0.4;
+}
+
+.contact-input:focus {
+  border-color: var(--accent, #6c63ff);
+}
+
+.contact-textarea {
+  min-height: 90px;
+  line-height: 1.5;
+}
+
+.contact-send-btn {
+  background: var(--accent, #6c63ff);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 0.65rem 1.1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  text-align: center;
+}
+
+.contact-send-btn:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+.contact-send-btn:active {
+  transform: translateY(0);
+}
+.contact-success,
+.contact-error {
+  font-size: 0.82rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  margin-top: 0.25rem;
+}
+
+.contact-success {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.contact-error {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .ab-role-grid   { grid-template-columns: 1fr; }
+  .ab-aim-banner  { grid-template-columns: 1fr; gap: 2rem; padding: 2rem; }
+}
+
+@media (max-width: 600px) {
+  .ab-aim-banner { padding: 1.5rem; }
+  .ab-aim-left h3 { font-size: 1.2rem; }
+}
+</style>
+
+
+
+<!-- Workflow -->
+<section id="Workflow" style="background:var(--brand-dark);padding:6rem 6vw;">
+
+  <div style="text-align:center;max-width:580px;margin:0 auto 5rem;">
+    <h2 class="section-title" style="color:#fff;">One platform.<br><span style="color:#7b93f0;">Every role. Every insight.</span></h2>
+    <p class="section-sub" style="color:rgba(255,255,255,0.45);margin:0 auto;">From school leadership to the student desk — everyone is connected, guided, and growing together.</p>
+  </div>
+
+  <!-- STEP FLOW -->
+  <div class="hflow">
+
+    <div class="hflow-step">
+      <div class="hflow-num" style="background:rgba(76,104,215,0.15);color:#7b93f0;border-color:rgba(76,104,215,0.3);">01</div>
+      <div class="hflow-icon">🏫</div>
+      <div class="hflow-role" style="color:#7b93f0;">School</div>
+      <div class="hflow-title">Institution Leadership</div>
+      <p class="hflow-desc">Sets vision, manages staff and monitors institution-wide performance.</p>
+      <div class="hflow-pills">
+        <span>Lead</span><span>Analytics</span><span>progress</span>
+      </div>
+    </div>
+
+    <div class="hflow-connector">
+      <div class="hflow-line"></div>
+      <div class="hflow-arrow-icon">→</div>
+      <div class="hflow-line"></div>
+    </div>
+
+    <div class="hflow-step">
+      <div class="hflow-num" style="background:rgba(147,51,234,0.15);color:#c084fc;border-color:rgba(147,51,234,0.3);">02</div>
+      <div class="hflow-icon">🗂️</div>
+      <div class="hflow-role" style="color:#c084fc;">Management</div>
+      <div class="hflow-title">Academic Coordinators</div>
+      <p class="hflow-desc">Organises classrooms, assigns teachers and bridges school to educators.</p>
+      <div class="hflow-pills">
+        <span>Manage</span><span>Reports</span>
+      </div>
+    </div>
+
+    <div class="hflow-connector">
+      <div class="hflow-line"></div>
+      <div class="hflow-arrow-icon">→</div>
+      <div class="hflow-line"></div>
+    </div>
+
+    <div class="hflow-step">
+      <div class="hflow-num" style="background:rgba(29,158,117,0.15);color:#34d399;border-color:rgba(29,158,117,0.3);">03</div>
+      <div class="hflow-icon">👨‍🏫</div>
+      <div class="hflow-role" style="color:#34d399;">Teachers</div>
+      <div class="hflow-title">Subject Educators</div>
+      <p class="hflow-desc">Deliver lessons, create assignments and provide targeted student guidance.</p>
+      <div class="hflow-pills">
+        <span>Teaching</span><span>Tracking</span>
+      </div>
+    </div>
+
+    <div class="hflow-connector">
+      <div class="hflow-line"></div>
+      <div class="hflow-arrow-icon">→</div>
+      <div class="hflow-line"></div>
+    </div>
+
+    <div class="hflow-step hflow-step-highlight">
+      <div class="hflow-num" style="background:rgba(186,117,23,0.15);color:#fbbf24;border-color:rgba(186,117,23,0.3);">04</div>
+      <div class="hflow-icon">🎓</div>
+      <div class="hflow-role" style="color:#fbbf24;">Students</div>
+      <div class="hflow-title">The Learners</div>
+      <p class="hflow-desc">Access courses, track personal growth and receive guided feedback every step.</p>
+      <div class="hflow-pills">
+        <span>Learning</span><span>Progress</span><span>Goals</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ANALYTICS BANNER -->
+  <div class="hflow-banner">
+    <div class="hflow-banner-left">
+      <div style="font-size:1.8rem;line-height:1">📊</div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;color:#fff;margin-bottom:4px;">Unified Analytics Across Every Level</div>
+        <div style="font-size:0.85rem;color:rgba(255,255,255,0.45);line-height:1.6;">School sees the big picture. Teachers see individual students. Students see their own journey — all in real time.</div>
+      </div>
+    </div>
+    <div class="hflow-banner-stats">
+      <div class="hflow-stat">
+        <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:#7b93f0;">360°</div>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);">Full Visibility</div>
+      </div>
+      <div class="hflow-stat">
+        <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:#34d399;">Live</div>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);">Real-time Data</div>
+      </div>
+      <div class="hflow-stat">
+        <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:#fbbf24;">4</div>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);">Role Levels</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES GRID -->
+  <div class="hflow-features">
+    <div class="hflow-feat">
+      <div class="hflow-feat-icon" style="background:rgba(76,104,215,0.12);">🎯</div>
+      <strong>Personalised Paths</strong>
+      <p>AI adapts learning to each student's pace and skill level automatically.</p>
+    </div>
+    <div class="hflow-feat">
+      <div class="hflow-feat-icon" style="background:rgba(29,158,117,0.12);">✅</div>
+      <strong>Verified Certificates</strong>
+      <p>Industry-recognised credentials accepted by 200+ hiring partners.</p>
+    </div>
+    <div class="hflow-feat">
+      <div class="hflow-feat-icon" style="background:rgba(147,51,234,0.12);">💬</div>
+      <strong>Live Doubt Sessions</strong>
+      <p>Weekly Q&A with teachers — every question gets answered.</p>
+    </div>
+    <div class="hflow-feat">
+      <div class="hflow-feat-icon" style="background:rgba(186,117,23,0.12);">🚀</div>
+      <strong>Portable-Learning</strong>
+      <p>Learn anytime, anywhere — on any device.</p>
+    </div>
+  </div>
+  
+
+</section>
+
+
+
+
+
+
+<!-- INSTRUCTORS -->
+<section id="instructors">
+  <div class="section-header">
+    <div class="section-label">Meet the team</div>
+    <h2 class="section-title">Learn from the Best</h2>
+    <p class="section-sub">Our instructors are working professionals with real industry experience.</p>
+  </div>
+  <div class="instructors-grid">
+    <div class="instructor-card">
+      <div class="instructor-avatar av1">AK</div>
+      <div class="instructor-name">Arjun Kumar</div>
+      <div class="instructor-role">Full-Stack Engineer</div>
+      <div class="instructor-bio">8 years at top product companies. Built platforms used by millions.</div>
+      <div class="stars">★★★★★ <span style="color:var(--text-muted);font-size:0.78rem">4.9 (2.1k reviews)</span></div>
+    </div>
+    <div class="instructor-card">
+      <div class="instructor-avatar av2">PS</div>
+      <div class="instructor-name">Priya Sharma</div>
+      <div class="instructor-role">Data Scientist</div>
+      <div class="instructor-bio">Ex-Google. Specialises in ML pipelines and real-world data problems.</div>
+      <div class="stars">★★★★★ <span style="color:var(--text-muted);font-size:0.78rem">4.8 (1.8k reviews)</span></div>
+    </div>
+    <div class="instructor-card">
+      <div class="instructor-avatar av3">RN</div>
+      <div class="instructor-name">Rahul Nair</div>
+      <div class="instructor-role">UI/UX Lead Designer</div>
+      <div class="instructor-bio">Designed products for 30+ startups. Figma power user and design systems expert.</div>
+      <div class="stars">★★★★★ <span style="color:var(--text-muted);font-size:0.78rem">4.9 (3.2k reviews)</span></div>
+    </div>
+    <div class="instructor-card">
+      <div class="instructor-avatar av4">SM</div>
+      <div class="instructor-name">Sneha Mehta</div>
+      <div class="instructor-role">DevOps Architect</div>
+      <div class="instructor-bio">AWS certified. Helped 50+ teams migrate to cloud-native infrastructure.</div>
+      <div class="stars">★★★★★ <span style="color:var(--text-muted);font-size:0.78rem">4.7 (1.4k reviews)</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials">
+  <div class="section-header">
+    <div class="section-label">Student stories</div>
+    <h2 class="section-title">What our learners say</h2>
+    <p class="section-sub">Real outcomes from real people — not just numbers on a page.</p>
+  </div>
+  <div class="testimonials-grid">
+    <div class="testimonial-card">
+      <div class="stars" style="margin-bottom:1rem">★★★★★</div>
+      <p class="testimonial-text">"I landed my first dev job 3 months after completing the Full-Stack bootcamp. The project-based approach made all the difference."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar" style="background:var(--brand-blue)">VR</div>
+        <div>
+          <div class="author-name">Vikram Reddy</div>
+          <div class="author-role">Junior Developer at Infosys</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="stars" style="margin-bottom:1rem">★★★★★</div>
+      <p class="testimonial-text">"The live doubt sessions are a game-changer. No more being stuck for days — instructors actually respond and explain clearly."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar" style="background:var(--success)">DP</div>
+        <div>
+          <div class="author-name">Divya Pillai</div>
+          <div class="author-role">Data Analyst at Razorpay</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="stars" style="margin-bottom:1rem">★★★★★</div>
+      <p class="testimonial-text">"From zero design knowledge to a Figma-fluent UX designer in 6 weeks. The curriculum is well-paced and the feedback is genuinely helpful."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar" style="background:#9333ea">KT</div>
+        <div>
+          <div class="author-name">Karthik Tiwari</div>
+          <div class="author-role">UX Designer at Swiggy</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="section-label">Ready to start?</div>
+  <h2 class="section-title">Your next career move starts here</h2>
+  <p class="section-sub">Join 50,000+ learners already building the skills that matter. First 7 days are completely free.</p>
+  <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+    <a href="{% url 'signup' %}" class="btn btn-white btn-lg">Create Free Account</a>
+    <a href="#courses" class="btn btn-outline-white btn-lg">Browse Courses →</a>
+  </div>
+</section>
+
+<!-- FOOTER --><!-- FOOTER --><footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="#" class="nav-logo" style="font-size:1.2rem">
+        <span class="logo"></span>EDU<span class="logo-accent">PATFORM</span>
+      </a>
+      <p>Empowering the next generation of developers, designers and data scientists across India and beyond.</p>
+    </div>
+
+    <div class="footer-col">
+      <h4>Courses</h4>
+      <ul>
+        <li><a href="#courses">Web Development</a></li>
+        <li><a href="#courses">Data Science</a></li>
+        <li><a href="#courses">UI/UX Design</a></li>
+        <li><a href="#courses">Mobile Dev</a></li>
+        <li><a href="#courses">DevOps & Cloud</a></li>
+      </ul>
+    </div>
+
+    <!-- ✦ Stay in Contact column -->
+    <div class="footer-col footer-contact-form">
+      <h4>Stay in Contact</h4>
+      <p class="contact-desc">Have a question? Drop us a message and we'll get back to you.</p>
+
+      <div class="contact-fields">
+        <input
+          type="email"
+          id="contactEmail"
+          class="contact-input"
+          placeholder="Your email address"
+          aria-label="Email address"
+        />
+        <textarea
+          id="contactMessage"
+          class="contact-input contact-textarea"
+          placeholder="Your message..."
+          rows="4"
+          aria-label="Message"
+        ></textarea>
+        <button class="contact-send-btn" type="button" onclick="sendMessage()">Send Message →</button>
+        <p id="contactSuccess" class="contact-success" style="display:none;">
+          ✅ Message sent! We'll get back to you soon.
+        </p>
+        <p id="contactError" class="contact-error" style="display:none;">
+          ⚠️ Please fill in both fields before sending.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer-bottom">
+    <p>© 2025 EDU PLATFORM. All rights reserved.</p>
+    <div class="social-links">
+      <a href="#" class="social-link">in</a>
+      <a href="#" class="social-link">tw</a>
+      <a href="#" class="social-link">yt</a>
+      <a href="#" class="social-link">gh</a>
+    </div>
+  </div>
+</footer>
+<script>
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+function sendMessage() {
+  const emailInput   = document.getElementById('contactEmail');
+  const messageInput = document.getElementById('contactMessage');
+  const successMsg   = document.getElementById('contactSuccess');
+  const errorMsg     = document.getElementById('contactError');
+  const btn          = document.querySelector('.contact-send-btn');
+
+  const email   = emailInput.value.trim();
+  const message = messageInput.value.trim();
+
+  successMsg.style.display = 'none';
+  errorMsg.style.display   = 'none';
+
+  if (!email || !message) {
+    errorMsg.textContent   = '⚠️ Please fill in both fields.';
+    errorMsg.style.display = 'block';
+    return;
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    errorMsg.textContent   = '⚠️ Please enter a valid email address.';
+    errorMsg.style.display = 'block';
+    return;
+  }
+
+  // Loading state
+  btn.textContent = 'Sending...';
+  btn.disabled    = true;
+
+  fetch('/contact/', {
+    method : 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken' : getCookie('csrftoken'),   // ← reuses Django's existing CSRF cookie
+    },
+    body: JSON.stringify({ email, message })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === 'ok') {
+      // Clear fields
+      emailInput.value   = '';
+      messageInput.value = '';
+
+      // Show success
+      successMsg.textContent   = '✅ Message sent! We\'ll get back to you soon.';
+      successMsg.style.display = 'block';
+      successMsg.style.opacity = '1';
+
+      setTimeout(() => {
+        successMsg.style.transition = 'opacity 0.8s ease';
+        successMsg.style.opacity    = '0';
+        setTimeout(() => { successMsg.style.display = 'none'; }, 800);
+      }, 4000);
+
+    } else {
+      errorMsg.textContent   = `⚠️ ${data.msg || 'Something went wrong.'}`;
+      errorMsg.style.display = 'block';
+    }
+  })
+  .catch(() => {
+    errorMsg.textContent   = '⚠️ Network error. Please try again.';
+    errorMsg.style.display = 'block';
+  })
+  .finally(() => {
+    btn.textContent = 'Send Message →';
+    btn.disabled    = false;
+  });
+}
+  function openMobile()  { document.getElementById('mobileMenu').classList.add('open'); }
+  function closeMobile() { document.getElementById('mobileMenu').classList.remove('open'); }
+
+  // Smooth navbar shadow on scroll
+  window.addEventListener('scroll', () => {
+    const nav = document.getElementById('navbar');
+    nav.style.boxShadow = window.scrollY > 10
+      ? '0 4px 24px rgba(0,0,0,0.08)'
+      : '0 1px 4px rgba(0,0,0,0.06)';
+  });
+
+  // Fade-in on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.course-card, .instructor-card, .testimonial-card').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>

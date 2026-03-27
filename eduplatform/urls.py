@@ -2,24 +2,22 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from django.views.generic import RedirectView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # Root → login
-    path('', RedirectView.as_view(url='/login/', permanent=False)),
+    # ❌ REMOVE THIS LINE — it was hijacking the root URL
+    # path('', RedirectView.as_view(url='/login/', permanent=False)),
 
     # Auth & shared account views
-    path('', include('accounts.urls')),
-    path('password-reset/', include('accounts.urls')),
+    path('', include('accounts.urls')),  # landing_view now handles /
 
     # Role-based dashboards
     path('superadmin/', include('superadmin.urls')),
     path('school-admin/', include('school_admin.urls')),
     path('management/', include('management_app.urls')),
 
-    # Teacher & classroom (teacher perspective)
+    # Teacher & classroom
     path('teacher/', include('classrooms.urls')),
 
     # Student
@@ -36,17 +34,7 @@ urlpatterns = [
 
     # Analytics
     path('analytics/', include('analytics.urls')),
-    
-    # Django built-in password reset
-    path('password-reset/', include('django.contrib.auth.urls'))
+
     
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-# Serve media files in both DEBUG and non-DEBUG (dev only)
-if not settings.DEBUG:
-    from django.views.static import serve
-    from django.urls import re_path
-    urlpatterns += [
-        re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
-    ]
