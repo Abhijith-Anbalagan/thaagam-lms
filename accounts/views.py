@@ -20,8 +20,42 @@ from .forms import (
     ForgotPasswordForm, ResetPasswordForm,
 )
 
+from django.core.mail import send_mail
+from django.http import JsonResponse
+import json
+
+def contact_us(request):
+    if request.method == 'POST':
+        try:
+            data    = json.loads(request.body)
+            email   = data.get('email', '').strip()
+            message = data.get('message', '').strip()
+
+            if not email or not message:
+                return JsonResponse({'status': 'error', 'msg': 'All fields required.'}, status=400)
+
+            send_mail(
+                subject        = f'New Message from {email}',
+                message        = f'From: {email}\n\n{message}',
+                from_email     = 'noreply@eduplatform.com',
+                recipient_list = ['johnweslee07@gmail.com'],  # ← your johnGmail inbox
+                fail_silently  = False,
+            )
+            return JsonResponse({'status': 'ok'})
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'msg': str(e)}, status=500)
+
+    return JsonResponse({'status': 'method not allowed'}, status=405)
+
 
 # ─── Email Helpers ────────────────────────────────────────────────────────────
+def landing_view(request):
+    if request.user.is_authenticated:
+        return redirect('public_dashboard')
+    return render(request, 'accounts/landing.html')  # ← update path
+
+
 
 def send_verification_email(user, verification_url):
     send_mail(
@@ -194,7 +228,7 @@ def verify_email_view(request, token):
 
     login(request, user, backend='django.contrib.auth.backends.ModelBackend')
     messages.success(request, 'Email verified! Welcome to EduPlatform.')
-    return redirect('/public-dashboard/')
+    return redirect(user.get_dashboard_url())
 
 
 # ─── Resend Verification ──────────────────────────────────────────────────────
