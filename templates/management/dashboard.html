@@ -2,426 +2,426 @@
 {% block title %}Management Dashboard{% endblock %}
 {% block extra_css %}
 <style>
-  .tab-pane { display:none; }
-  .tab-pane.active { display:block; }
+:root {
+  --brand:       #4c68d7;
+  --brand-dark:  #3a54c0;
+  --brand-soft:  #eef1fb;
+  --page-bg:     #f4f5f9;
+  --card-bg:     #ffffff;
+  --border:      #e8e8ec;
+  --text-1:      #1a1f36;
+  --text-2:      #5a5f7a;
+  --text-3:      #9496a8;
+  --teacher:     #0f6e56;
+  --teacher-bg:  #e1f5ee;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --shadow-sm:   0 1px 4px rgba(26,31,54,.06);
+  --shadow-md:   0 4px 20px rgba(26,31,54,.10);
+  --font:        'Inter', sans-serif;
+  --mono:        'JetBrains Mono', monospace;
+}
+.mgmt-page { padding: 28px 32px; display: flex; flex-direction: column; gap: 22px; }
 
-  /* ── Stat row ── */
-  .stat-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin-bottom:20px; }
-  .s-card { background:#fff; border:1px solid var(--border); border-radius:12px; padding:16px 18px; }
-  .s-icon { font-size:20px; margin-bottom:6px; }
-  .s-val  { font-size:22px; font-weight:700; color:var(--brand-dark); font-family:'JetBrains Mono',monospace; }
-  .s-lbl  { font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-top:2px; }
+.wb {
+  background: linear-gradient(135deg, #0c2a5e 0%, #1a3fa6 55%, #2d52c4 100%);
+  border-radius: var(--radius-xl); padding: 30px 36px;
+  display: flex; align-items: center; gap: 32px;
+  position: relative; overflow: hidden;
+  box-shadow: 0 8px 32px rgba(26,63,166,.22);
+}
+.wb-orb { position: absolute; border-radius: 50%; pointer-events: none; }
+.wb h2  { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 5px; letter-spacing: -.3px; }
+.wb p   { font-size: 13.5px; color: rgba(255,255,255,.62); }
+.wb-actions { display: flex; gap: 10px; margin-top: 20px; }
+.wb-stats { display: flex; gap: 0; flex-shrink: 0; z-index: 1; }
+.bstat { text-align: center; padding: 0 28px; }
+.bstat + .bstat { border-left: 1px solid rgba(255,255,255,.12); }
+.bstat-val { font-family: var(--mono); font-size: 28px; font-weight: 700; color: #fff; line-height: 1; }
+.bstat-lbl { font-size: 11px; color: rgba(255,255,255,.45); margin-top: 4px; }
 
-  /* ── Panel ── */
-  .panel { background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px 22px; margin-bottom:18px; }
-  .panel-hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
-  .panel-hd h2 { font-size:15px; font-weight:600; color:var(--brand-dark); margin:0; }
-  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
-  @media(max-width:800px){ .two-col{ grid-template-columns:1fr; } }
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 18px; border-radius: 40px;
+  font-family: var(--font); font-size: 13px; font-weight: 600;
+  cursor: pointer; border: none; transition: all .15s; text-decoration: none;
+}
+.btn-glass   { background: rgba(255,255,255,.13); color: #fff; border: 1.5px solid rgba(255,255,255,.2); }
+.btn-glass:hover { background: rgba(255,255,255,.22); }
+.btn-primary { background: var(--brand); color: #fff; box-shadow: 0 4px 12px rgba(76,104,215,.3); }
+.btn-primary:hover { background: var(--brand-dark); }
+.btn-ghost   { background: transparent; color: var(--text-2); border: 1.5px solid var(--border); }
+.btn-ghost:hover { border-color: var(--brand); color: var(--brand); }
+.btn-sm { padding: 6px 14px; font-size: 12px; }
 
-  /* ── Teacher row ── */
-  .t-avatar { width:32px; height:32px; border-radius:50%; background:var(--brand-blue-light); color:var(--brand-blue); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }
-  .t-cell { display:flex; align-items:center; gap:10px; }
+.card { background: var(--card-bg); border: 1.5px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+.card-head { padding: 17px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.card-title { font-size: 14px; font-weight: 700; }
 
-  /* ── Classroom card ── */
-  .cls-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
-  .cls-card { background:#fafaf8; border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
-  .cls-name { font-size:14px; font-weight:600; color:var(--brand-dark); margin-bottom:10px; }
-  .cls-row  { display:flex; justify-content:space-between; font-size:13px; color:var(--text-muted); padding:3px 0; }
-  .cls-row span:last-child { font-weight:600; color:var(--brand-dark); }
+.tab-bar { display: flex; gap: 6px; flex-wrap: wrap; }
+.tab-chip {
+  font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 30px;
+  border: 1.5px solid var(--border); background: var(--card-bg); color: var(--text-2);
+  cursor: pointer; text-decoration: none; transition: all .15s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.tab-chip:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
+.tab-chip.active { background: var(--brand); color: #fff; border-color: var(--brand); box-shadow: 0 4px 12px rgba(76,104,215,.3); }
 
-  /* ── Progress bar ── */
-  .bar-wrap { background:var(--border); border-radius:99px; height:5px; overflow:hidden; margin-top:3px; }
-  .bar-fill { height:100%; border-radius:99px; }
+.tab-pane { display: none; }
+.tab-pane.active { display: flex; flex-direction: column; gap: 18px; }
 
-  /* ── Analytics stat table ── */
-  .ana-table { width:100%; border-collapse:collapse; }
-  .ana-table th { font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); padding:8px 12px; border-bottom:1.5px solid var(--border); text-align:left; }
-  .ana-table td { padding:11px 12px; border-bottom:1px solid var(--border); font-size:13px; vertical-align:middle; }
-  .ana-table tr:last-child td { border-bottom:none; }
-  .ana-table tr:hover td { background:#fafaf8; }
-  .ana-big { font-size:20px; font-weight:700; color:var(--brand-dark); font-family:'JetBrains Mono',monospace; }
-  .ana-sub { font-size:11px; color:var(--text-muted); margin-top:1px; }
-  .trend-up   { color:#1d9e75; font-size:12px; font-weight:600; }
-  .trend-down { color:#e24b4a; font-size:12px; font-weight:600; }
+.stat-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+.s-card { background: var(--card-bg); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 18px 20px; box-shadow: var(--shadow-sm); transition: box-shadow .15s, transform .15s; }
+.s-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.s-icon { font-size: 22px; margin-bottom: 8px; }
+.s-val  { font-size: 24px; font-weight: 700; color: var(--brand); font-family: var(--mono); line-height: 1; }
+.s-lbl  { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--text-3); margin-top: 4px; }
 
-  /* ── Announcement ── */
-  .ann-form { background:#fafaf8; border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:16px; }
-  .ann-item { padding:11px 0; border-bottom:1px solid var(--border); }
-  .ann-item:last-child { border-bottom:none; }
-  .ann-title { font-size:14px; font-weight:600; color:var(--brand-dark); }
-  .ann-meta  { font-size:12px; color:var(--text-muted); margin-top:3px; display:flex; gap:8px; flex-wrap:wrap; }
-  .tbadge { font-size:11px; padding:2px 8px; border-radius:20px; font-weight:500; }
-  .tbadge-all      { background:#e8eeff; color:#2a3f99; }
-  .tbadge-teachers { background:#f0faf6; color:#0a5e43; }
-  .tbadge-students { background:#fff8e6; color:#7a4f10; }
-  .tbadge-important{ background:#fde8e8; color:#8b1a1a; }
+.dt { width: 100%; border-collapse: collapse; }
+.dt th { font-size: 11px; font-weight: 700; color: var(--text-3); text-align: left; padding: 10px 18px; border-bottom: 1px solid var(--border); letter-spacing: .5px; text-transform: uppercase; background: var(--page-bg); }
+.dt td { padding: 13px 18px; font-size: 13.5px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.dt tr:last-child td { border-bottom: none; }
+.dt tr:hover td { background: #fafaf9; }
+
+.t-av { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--brand), #7b93f0); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.t-cell { display: flex; align-items: center; gap: 10px; }
+
+.badge { font-size: 11.5px; font-weight: 600; padding: 3px 10px; border-radius: 20px; display: inline-block; }
+.badge-blue  { background: var(--brand-soft); color: var(--brand); }
+.badge-green { background: #dcfce7; color: #15803d; }
+.badge-amber { background: #fef3c7; color: #92400e; }
+.badge-red   { background: #fee2e2; color: #b91c1c; }
+.badge-gray  { background: #f1f1f4; color: #5a5f7a; }
+
+.bar-wrap { background: var(--border); border-radius: 99px; height: 5px; overflow: hidden; margin-top: 3px; }
+.bar-fill { height: 100%; border-radius: 99px; }
+
+.cls-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; padding: 18px; }
+.cls-card { background: var(--page-bg); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px; transition: box-shadow .15s, transform .15s; }
+.cls-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.cls-name { font-size: 14px; font-weight: 700; color: var(--text-1); margin-bottom: 12px; }
+.cls-row { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text-2); padding: 4px 0; border-bottom: 1px solid var(--border); }
+.cls-row:last-child { border-bottom: none; }
+.cls-row span:last-child { font-weight: 700; color: var(--text-1); }
+
+.ann-form .form-control { width: 100%; padding: 9px 13px; font-family: var(--font); font-size: 13px; border: 1.5px solid var(--border); border-radius: var(--radius-md); background: var(--card-bg); color: var(--text-1); outline: none; transition: border-color .15s; }
+.ann-form .form-control:focus { border-color: var(--brand); }
+.ann-item { padding: 14px 0; border-bottom: 1px solid var(--border); }
+.ann-item:last-child { border-bottom: none; }
+.ann-title { font-size: 13.5px; font-weight: 600; }
+.ann-meta  { font-size: 12px; color: var(--text-3); margin-top: 3px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ann-body  { font-size: 13px; color: var(--text-2); margin-top: 6px; line-height: 1.6; }
+.tbadge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+.tbadge-all      { background: var(--brand-soft); color: var(--brand); }
+.tbadge-teachers { background: var(--teacher-bg); color: var(--teacher); }
+.tbadge-students { background: #fef3c7; color: #92400e; }
+.tbadge-important{ background: #fee2e2; color: #b91c1c; }
+.pin { font-size: 10px; background: #fef3c7; color: #92400e; padding: 2px 7px; border-radius: 4px; margin-left: 6px; font-weight: 600; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.empty-state { padding: 40px; text-align: center; color: var(--text-3); font-size: 13px; }
+.mono { font-family: var(--mono); font-size: 13px; }
+@media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .mgmt-page { padding: 16px; } .wb-stats { display: none; } }
 </style>
 {% endblock %}
 
 {% block content %}
+<div class="mgmt-page">
 
-<!-- Header -->
-<div class="flex-between mb-20">
-  <div>
-    <h1 class="page-title">Management Dashboard</h1>
-    <p class="text-muted" style="margin-top:4px;font-size:13px;">{{ request.user.school.name }}</p>
-  </div>
-  <a href="{% url 'management_invite_teacher' %}" class="btn btn-primary">+ Invite Teacher</a>
-</div>
-
-<!-- ══ TAB 1 — TEACHERS ══ -->
-<div class="tab-pane active" id="tab-teachers">
-  <div class="stat-row">
-    <div class="s-card"><div class="s-icon">👩🏫</div><div class="s-val">{{ total_teachers }}</div><div class="s-lbl">Teachers</div></div>
-    <div class="s-card"><div class="s-icon">🏛</div><div class="s-val">{{ total_classrooms }}</div><div class="s-lbl">Active Classes</div></div>
-    <div class="s-card"><div class="s-icon">📝</div><div class="s-val">{{ total_assignments }}</div><div class="s-lbl">Assignments Given</div></div>
-    <div class="s-card"><div class="s-icon">🎬</div><div class="s-val">{{ total_videos }}</div><div class="s-lbl">Videos Uploaded</div></div>
-  </div>
-  <div class="panel">
-    <div class="panel-hd">
-      <h2>Teachers I Manage</h2>
-      <a href="{% url 'management_invite_teacher' %}" class="btn btn-primary btn-sm">+ Invite</a>
+  <!-- Banner -->
+  <div class="wb">
+    <div class="wb-orb" style="right:-30px;top:-70px;width:240px;height:240px;background:rgba(255,255,255,.05)"></div>
+    <div class="wb-orb" style="right:120px;bottom:-90px;width:160px;height:160px;background:rgba(255,255,255,.04)"></div>
+    <div style="flex:1;z-index:1">
+      <h2>Management Dashboard 📋</h2>
+      <p>{{ request.user.school.name }} &nbsp;·&nbsp; Overseeing {{ total_teachers }} teacher{{ total_teachers|pluralize }} &amp; {{ total_students }} student{{ total_students|pluralize }}</p>
+      <div class="wb-actions">
+        <a href="{% url 'management_invite_teacher' %}" class="btn btn-glass">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2.5" stroke-linecap="round"/></svg>
+          Invite Teacher
+        </a>
+      </div>
     </div>
-    {% if teacher_data %}
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>Teacher</th><th>Active Classes</th><th>Assignments Given</th><th>Videos Uploaded</th></tr>
-        </thead>
-        <tbody>
+    <div class="wb-stats">
+      <div class="bstat"><div class="bstat-val">{{ total_teachers }}</div><div class="bstat-lbl">Teachers</div></div>
+      <div class="bstat"><div class="bstat-val">{{ total_students }}</div><div class="bstat-lbl">Students</div></div>
+      <div class="bstat"><div class="bstat-val">{{ total_classrooms }}</div><div class="bstat-lbl">Classrooms</div></div>
+      <div class="bstat"><div class="bstat-val">{{ avg_grade }}</div><div class="bstat-lbl">Avg Grade</div></div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-bar">
+    <a class="tab-chip active" href="#teachers"      onclick="switchMgmtTab('teachers');return false;">👩‍🏫 Teachers</a>
+    <a class="tab-chip"        href="#classrooms"    onclick="switchMgmtTab('classrooms');return false;">🏛 Classrooms</a>
+    <a class="tab-chip"        href="#students"      onclick="switchMgmtTab('students');return false;">🎓 Students</a>
+    <a class="tab-chip"        href="#analytics"     onclick="switchMgmtTab('analytics');return false;">📊 Analytics</a>
+    <a class="tab-chip"        href="#announcements" onclick="switchMgmtTab('announcements');return false;">📢 Announcements</a>
+  </div>
+
+  <!-- TAB: TEACHERS -->
+  <div class="tab-pane active" id="tab-teachers">
+    <div class="stat-row">
+      <div class="s-card"><div class="s-icon">👩‍🏫</div><div class="s-val">{{ total_teachers }}</div><div class="s-lbl">Teachers</div></div>
+      <div class="s-card"><div class="s-icon">🏛</div><div class="s-val">{{ total_classrooms }}</div><div class="s-lbl">Active Classes</div></div>
+      <div class="s-card"><div class="s-icon">📝</div><div class="s-val">{{ total_assignments }}</div><div class="s-lbl">Assignments</div></div>
+      <div class="s-card"><div class="s-icon">🎬</div><div class="s-val">{{ total_videos }}</div><div class="s-lbl">Videos</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">Teachers I Manage</span>
+        <a href="{% url 'management_invite_teacher' %}" class="btn btn-primary btn-sm">+ Invite</a>
+      </div>
+      {% if teacher_data %}
+      <div style="overflow-x:auto">
+        <table class="dt">
+          <thead><tr><th>Teacher</th><th>Active Classes</th><th>Assignments</th><th>Videos</th><th>Students</th></tr></thead>
+          <tbody>
           {% for t in teacher_data %}
           <tr>
             <td>
               <div class="t-cell">
-                <div class="t-avatar">{{ t.name|first|upper }}</div>
+                <div class="t-av">{{ t.name|first|upper }}</div>
                 <div>
-                  <div style="font-weight:600;color:var(--brand-dark);">{{ t.name }}</div>
-                  <div style="font-size:12px;color:var(--text-muted);">{{ t.students }} students</div>
+                  <div style="font-weight:600;">{{ t.name }}</div>
+                  <div style="font-size:11.5px;color:var(--text-3);">{{ t.students }} students</div>
                 </div>
               </div>
             </td>
             <td><span class="badge badge-blue">{{ t.classes }}</span></td>
-            <td>{{ t.assignments }}</td>
-            <td>{{ t.videos }}</td>
+            <td class="mono">{{ t.assignments }}</td>
+            <td class="mono">{{ t.videos }}</td>
+            <td class="mono">{{ t.students }}</td>
           </tr>
           {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% else %}
-    <div class="empty-state">
-      <p>No teachers yet.</p>
-      <a href="{% url 'management_invite_teacher' %}" class="btn btn-primary">Invite First Teacher</a>
-    </div>
-    {% endif %}
-  </div>
-</div>
-
-<!-- ══ TAB 2 — CLASSROOMS ══ -->
-<div class="tab-pane" id="tab-classrooms">
-  <div class="stat-row">
-    <div class="s-card"><div class="s-icon">🏛</div><div class="s-val">{{ total_classrooms }}</div><div class="s-lbl">Classrooms</div></div>
-    <div class="s-card"><div class="s-icon">📢</div><div class="s-val">{{ total_announcements }}</div><div class="s-lbl">Announcements</div></div>
-    <div class="s-card"><div class="s-icon">📚</div><div class="s-val">{{ total_course_content }}</div><div class="s-lbl">Course Content</div></div>
-    <div class="s-card"><div class="s-icon">📝</div><div class="s-val">{{ total_assignments }}</div><div class="s-lbl">Classwork Posted</div></div>
-  </div>
-  {% if class_perf %}
-  <div class="cls-grid">
-    {% for c in class_perf %}
-    <div class="cls-card">
-      <div class="cls-name">{{ c.name }}</div>
-      <div class="cls-row"><span>👩🏫 Teacher</span><span>{{ c.teacher }}</span></div>
-      <div class="cls-row"><span>👥 Students</span><span>{{ c.students }}</span></div>
-      <div class="cls-row"><span>📢 Announcements</span><span>{{ c.announcements }}</span></div>
-      <div class="cls-row"><span>📚 Content</span><span>{{ c.content }}</span></div>
-      <div class="cls-row"><span>📝 Classwork</span><span>{{ c.assignments }}</span></div>
-    </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <div class="panel"><p class="text-muted" style="text-align:center;padding:32px 0;">No classrooms yet.</p></div>
-  {% endif %}
-</div>
-
-<!-- ══ TAB 3 — STUDENTS ══ -->
-<div class="tab-pane" id="tab-students">
-  <div class="stat-row">
-    <div class="s-card"><div class="s-icon">🎓</div><div class="s-val">{{ total_students }}</div><div class="s-lbl">Total Students</div></div>
-    <div class="s-card"><div class="s-icon">📝</div><div class="s-val">{{ avg_submission_rate }}%</div><div class="s-lbl">Avg Submission Rate</div></div>
-    <div class="s-card"><div class="s-icon">🏆</div><div class="s-val">{{ avg_grade }}</div><div class="s-lbl">Avg Grade</div></div>
-    <div class="s-card"><div class="s-icon">✅</div><div class="s-val">{{ attendance_rate }}%</div><div class="s-lbl">Attendance</div></div>
-  </div>
-  {% if class_perf %}
-  <div class="panel">
-    <div class="panel-hd"><h2>Per Classroom — Student Performance</h2></div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
-      {% for c in class_perf %}
-      <div style="background:#fafaf8;border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
-        <div style="font-size:14px;font-weight:600;color:var(--brand-dark);margin-bottom:10px;">{{ c.name }}</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:2px;">Submission Rate <span style="float:right;font-weight:600;color:var(--brand-dark);">{{ c.submission_rate }}%</span></div>
-        <div class="bar-wrap"><div class="bar-fill" style="width:{{ c.submission_rate }}%;background:var(--brand-blue);"></div></div>
-        <div style="font-size:12px;color:var(--text-muted);margin:8px 0 2px;">Avg Grade <span style="float:right;font-weight:600;color:var(--brand-dark);">{{ c.avg_grade }}</span></div>
-        <div class="bar-wrap"><div class="bar-fill" style="width:{{ c.avg_grade }}%;background:#1d9e75;"></div></div>
-        <div style="font-size:12px;color:var(--text-muted);margin:8px 0 2px;">Attendance <span style="float:right;font-weight:600;color:var(--brand-dark);">{{ c.attendance }}%</span></div>
-        <div class="bar-wrap"><div class="bar-fill" style="width:{{ c.attendance }}%;background:#ba7517;"></div></div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:10px;">👥 {{ c.students }} student{{ c.students|pluralize }}</div>
+          </tbody>
+        </table>
       </div>
-      {% endfor %}
+      {% else %}
+      <div class="empty-state">
+        <div style="font-size:40px;margin-bottom:12px">👩‍🏫</div>
+        <p style="font-size:15px;font-weight:600;margin-bottom:6px;color:var(--text-2)">No teachers yet</p>
+        <p style="margin-bottom:18px">Invite your first teacher to get started.</p>
+        <a href="{% url 'management_invite_teacher' %}" class="btn btn-primary" style="display:inline-flex">+ Invite Teacher</a>
+      </div>
+      {% endif %}
     </div>
   </div>
-  {% endif %}
-</div>
 
-<!-- ══ TAB 4 — ANALYTICS (no charts) ══ -->
-<div class="tab-pane" id="tab-analytics">
-
-  <!-- Platform overview numbers -->
-  <div class="stat-row" style="margin-bottom:20px;">
-    <div class="s-card"><div class="s-icon">👩🏫</div><div class="s-val">{{ total_teachers }}</div><div class="s-lbl">Teachers</div></div>
-    <div class="s-card"><div class="s-icon">🎓</div><div class="s-val">{{ total_students }}</div><div class="s-lbl">Students</div></div>
-    <div class="s-card"><div class="s-icon">🏛</div><div class="s-val">{{ total_classrooms }}</div><div class="s-lbl">Classrooms</div></div>
-    <div class="s-card"><div class="s-icon">📝</div><div class="s-val">{{ total_assignments }}</div><div class="s-lbl">Assignments</div></div>
-    <div class="s-card"><div class="s-icon">🎬</div><div class="s-val">{{ total_videos }}</div><div class="s-lbl">Videos</div></div>
-    <div class="s-card"><div class="s-icon">📊</div><div class="s-val">{{ avg_submission_rate }}%</div><div class="s-lbl">Submission Rate</div></div>
-    <div class="s-card"><div class="s-icon">🏆</div><div class="s-val">{{ avg_grade }}</div><div class="s-lbl">Avg Grade</div></div>
-    <div class="s-card"><div class="s-icon">✅</div><div class="s-val">{{ attendance_rate }}%</div><div class="s-lbl">Attendance</div></div>
-  </div>
-
-  <!-- Teacher Activity table -->
-  <div class="panel">
-    <div class="panel-hd"><h2>👩🏫 Teacher Activity</h2></div>
-    {% if teacher_data %}
-    <table class="ana-table">
-      <thead>
-        <tr><th>Teacher</th><th>Active Classes</th><th>Assignments Given</th><th>Videos Uploaded</th><th>Students</th></tr>
-      </thead>
-      <tbody>
-        {% for t in teacher_data %}
-        <tr>
-          <td>
-            <div class="t-cell">
-              <div class="t-avatar">{{ t.name|first|upper }}</div>
-              <span style="font-weight:600;">{{ t.name }}</span>
-            </div>
-          </td>
-          <td><span class="badge badge-blue">{{ t.classes }}</span></td>
-          <td>{{ t.assignments }}</td>
-          <td>{{ t.videos }}</td>
-          <td>{{ t.students }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-    <p class="text-muted" style="text-align:center;padding:24px 0;">No teacher data yet.</p>
-    {% endif %}
-  </div>
-
-  <!-- Class Performance table -->
-  <div class="panel">
-    <div class="panel-hd"><h2>🏛 Class Performance</h2></div>
-    {% if class_perf %}
-    <table class="ana-table">
-      <thead>
-        <tr><th>Classroom</th><th>Teacher</th><th>Students</th><th>Submission Rate</th><th>Avg Grade</th><th>Attendance</th></tr>
-      </thead>
-      <tbody>
+  <!-- TAB: CLASSROOMS -->
+  <div class="tab-pane" id="tab-classrooms">
+    <div class="stat-row">
+      <div class="s-card"><div class="s-icon">🏛</div><div class="s-val">{{ total_classrooms }}</div><div class="s-lbl">Classrooms</div></div>
+      <div class="s-card"><div class="s-icon">📢</div><div class="s-val">{{ total_announcements }}</div><div class="s-lbl">Announcements</div></div>
+      <div class="s-card"><div class="s-icon">📚</div><div class="s-val">{{ total_course_content }}</div><div class="s-lbl">Course Content</div></div>
+      <div class="s-card"><div class="s-icon">📝</div><div class="s-val">{{ total_assignments }}</div><div class="s-lbl">Classwork</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">All Classrooms</span></div>
+      {% if class_perf %}
+      <div class="cls-grid">
         {% for c in class_perf %}
-        <tr>
-          <td style="font-weight:600;color:var(--brand-dark);">{{ c.name }}</td>
-          <td>{{ c.teacher }}</td>
-          <td>{{ c.students }}</td>
-          <td>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div style="flex:1;background:var(--border);border-radius:99px;height:5px;overflow:hidden;min-width:60px;">
-                <div style="height:100%;border-radius:99px;background:var(--brand-blue);width:{{ c.submission_rate }}%;"></div>
-              </div>
-              <span style="font-size:12px;font-weight:600;color:var(--brand-dark);white-space:nowrap;">{{ c.submission_rate }}%</span>
-            </div>
-          </td>
-          <td>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div style="flex:1;background:var(--border);border-radius:99px;height:5px;overflow:hidden;min-width:60px;">
-                <div style="height:100%;border-radius:99px;background:#1d9e75;width:{{ c.avg_grade }}%;"></div>
-              </div>
-              <span style="font-size:12px;font-weight:600;color:var(--brand-dark);white-space:nowrap;">{{ c.avg_grade }}</span>
-            </div>
-          </td>
-          <td>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div style="flex:1;background:var(--border);border-radius:99px;height:5px;overflow:hidden;min-width:60px;">
-                <div style="height:100%;border-radius:99px;background:#ba7517;width:{{ c.attendance }}%;"></div>
-              </div>
-              <span style="font-size:12px;font-weight:600;color:var(--brand-dark);white-space:nowrap;">{{ c.attendance }}%</span>
-            </div>
-          </td>
-        </tr>
+        <div class="cls-card">
+          <div class="cls-name">{{ c.name }}</div>
+          <div class="cls-row"><span>👩‍🏫 Teacher</span><span>{{ c.teacher }}</span></div>
+          <div class="cls-row"><span>👥 Students</span><span>{{ c.students }}</span></div>
+          <div class="cls-row"><span>📢 Announcements</span><span>{{ c.announcements }}</span></div>
+          <div class="cls-row"><span>📚 Content</span><span>{{ c.content }}</span></div>
+          <div class="cls-row"><span>📝 Classwork</span><span>{{ c.assignments }}</span></div>
+        </div>
         {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-    <p class="text-muted" style="text-align:center;padding:24px 0;">No classroom data yet.</p>
+      </div>
+      {% else %}
+      <div class="empty-state">No classrooms yet.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- TAB: STUDENTS -->
+  <div class="tab-pane" id="tab-students">
+    <div class="stat-row">
+      <div class="s-card"><div class="s-icon">🎓</div><div class="s-val">{{ total_students }}</div><div class="s-lbl">Total Students</div></div>
+      <div class="s-card"><div class="s-icon">📝</div><div class="s-val">{{ avg_submission_rate }}%</div><div class="s-lbl">Avg Submission</div></div>
+      <div class="s-card"><div class="s-icon">🏆</div><div class="s-val">{{ avg_grade }}</div><div class="s-lbl">Avg Grade</div></div>
+      <div class="s-card"><div class="s-icon">✅</div><div class="s-val">{{ attendance_rate }}%</div><div class="s-lbl">Attendance</div></div>
+    </div>
+    {% if class_perf %}
+    <div class="card">
+      <div class="card-head"><span class="card-title">Per Classroom — Student Performance</span></div>
+      <div class="cls-grid">
+        {% for c in class_perf %}
+        <div class="cls-card">
+          <div class="cls-name">{{ c.name }}</div>
+          <div style="font-size:12px;color:var(--text-2);margin-bottom:2px;">Submission Rate <span style="float:right;font-weight:700;color:var(--text-1);">{{ c.submission_rate }}%</span></div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:{{ c.submission_rate }}%;background:var(--brand);"></div></div>
+          <div style="font-size:12px;color:var(--text-2);margin:8px 0 2px;">Avg Grade <span style="float:right;font-weight:700;color:var(--text-1);">{{ c.avg_grade }}</span></div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:{{ c.avg_grade }}%;background:#1d9e75;"></div></div>
+          <div style="font-size:12px;color:var(--text-2);margin:8px 0 2px;">Attendance <span style="float:right;font-weight:700;color:var(--text-1);">{{ c.attendance }}%</span></div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:{{ c.attendance }}%;background:#d97706;"></div></div>
+          <div style="font-size:12px;color:var(--text-3);margin-top:10px;">👥 {{ c.students }} student{{ c.students|pluralize }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
     {% endif %}
   </div>
 
-  <!-- Student Progress table (weekly) -->
-  <div class="panel">
-    <div class="panel-hd"><h2>🎓 Student Progress — Weekly Trend</h2></div>
-    <table class="ana-table">
-      <thead>
-        <tr><th>Week</th><th>Avg Score</th><th>Change</th><th>Status</th></tr>
-      </thead>
-      <tbody>
-        {% for label in weekly_labels %}
-        {% with score=weekly_scores|slice:forloop.counter0 %}
-        <tr>
-          <td style="font-weight:500;">{{ label }}</td>
-          <td>
-            <span class="ana-big">{{ weekly_scores|slice:forloop.counter0|first }}</span>
-          </td>
-          <td>
-            {% if forloop.counter0 > 0 %}
-              {% with prev=weekly_scores|slice:forloop.counter0|first curr=weekly_scores|slice:forloop.counter|first %}
-              <span class="trend-up">↑</span>
-              {% endwith %}
-            {% else %}
-              <span style="color:var(--text-muted);font-size:12px;">—</span>
-            {% endif %}
-          </td>
-          <td>
-            {% with s=weekly_scores|slice:forloop.counter0|first %}
-            {% if s >= 70 %}<span class="badge badge-success">Good</span>
-            {% elif s >= 55 %}<span class="badge badge-warning">Average</span>
-            {% else %}<span class="badge badge-danger">Needs Attention</span>{% endif %}
-            {% endwith %}
-          </td>
-        </tr>
-        {% endwith %}
-        {% endfor %}
-      </tbody>
-    </table>
+  <!-- TAB: ANALYTICS -->
+  <div class="tab-pane" id="tab-analytics">
+    <div class="stat-row">
+      <div class="s-card"><div class="s-icon">👩‍🏫</div><div class="s-val">{{ total_teachers }}</div><div class="s-lbl">Teachers</div></div>
+      <div class="s-card"><div class="s-icon">🎓</div><div class="s-val">{{ total_students }}</div><div class="s-lbl">Students</div></div>
+      <div class="s-card"><div class="s-icon">🏛</div><div class="s-val">{{ total_classrooms }}</div><div class="s-lbl">Classrooms</div></div>
+      <div class="s-card"><div class="s-icon">📝</div><div class="s-val">{{ total_assignments }}</div><div class="s-lbl">Assignments</div></div>
+      <div class="s-card"><div class="s-icon">🎬</div><div class="s-val">{{ total_videos }}</div><div class="s-lbl">Videos</div></div>
+      <div class="s-card"><div class="s-icon">📊</div><div class="s-val">{{ avg_submission_rate }}%</div><div class="s-lbl">Submission Rate</div></div>
+      <div class="s-card"><div class="s-icon">🏆</div><div class="s-val">{{ avg_grade }}</div><div class="s-lbl">Avg Grade</div></div>
+      <div class="s-card"><div class="s-icon">✅</div><div class="s-val">{{ attendance_rate }}%</div><div class="s-lbl">Attendance</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">👩‍🏫 Teacher Activity</span></div>
+      {% if teacher_data %}
+      <div style="overflow-x:auto">
+        <table class="dt">
+          <thead><tr><th>Teacher</th><th>Active Classes</th><th>Assignments</th><th>Videos</th><th>Students</th></tr></thead>
+          <tbody>
+          {% for t in teacher_data %}
+          <tr>
+            <td><div class="t-cell"><div class="t-av">{{ t.name|first|upper }}</div><span style="font-weight:600;">{{ t.name }}</span></div></td>
+            <td><span class="badge badge-blue">{{ t.classes }}</span></td>
+            <td class="mono">{{ t.assignments }}</td>
+            <td class="mono">{{ t.videos }}</td>
+            <td class="mono">{{ t.students }}</td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}<div class="empty-state">No teacher data yet.</div>{% endif %}
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">🏛 Class Performance</span></div>
+      {% if class_perf %}
+      <div style="overflow-x:auto">
+        <table class="dt">
+          <thead><tr><th>Classroom</th><th>Teacher</th><th>Students</th><th>Submission Rate</th><th>Avg Grade</th><th>Attendance</th></tr></thead>
+          <tbody>
+          {% for c in class_perf %}
+          <tr>
+            <td style="font-weight:700;">{{ c.name }}</td>
+            <td>{{ c.teacher }}</td>
+            <td class="mono">{{ c.students }}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="flex:1;background:var(--border);border-radius:99px;height:5px;overflow:hidden;min-width:60px;"><div style="height:100%;border-radius:99px;background:var(--brand);width:{{ c.submission_rate }}%;"></div></div>
+                <span class="mono" style="white-space:nowrap;">{{ c.submission_rate }}%</span>
+              </div>
+            </td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="flex:1;background:var(--border);border-radius:99px;height:5px;overflow:hidden;min-width:60px;"><div style="height:100%;border-radius:99px;background:#1d9e75;width:{{ c.avg_grade }}%;"></div></div>
+                <span class="mono" style="white-space:nowrap;">{{ c.avg_grade }}</span>
+              </div>
+            </td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="flex:1;background:var(--border);border-radius:99px;height:5px;overflow:hidden;min-width:60px;"><div style="height:100%;border-radius:99px;background:#d97706;width:{{ c.attendance }}%;"></div></div>
+                <span class="mono" style="white-space:nowrap;">{{ c.attendance }}%</span>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}<div class="empty-state">No classroom data yet.</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- TAB: ANNOUNCEMENTS -->
+  <div class="tab-pane" id="tab-announcements">
+    <div class="card">
+      <div class="card-head"><span class="card-title">Post Announcement</span></div>
+      <div style="padding:20px">
+        <form method="post" class="ann-form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="announce">
+          <div style="margin-bottom:10px;"><input type="text" name="title" class="form-control" placeholder="Announcement title…" required></div>
+          <div style="margin-bottom:10px;"><textarea name="body" class="form-control" rows="3" placeholder="Write your message…" required></textarea></div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;">
+            <select name="target" class="form-control" style="width:auto;flex:1;min-width:160px;">
+              <option value="all">📢 To Everyone</option>
+              <option value="teachers">👩‍🏫 To All Teachers</option>
+              <option value="students">🎓 To All Students</option>
+            </select>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;white-space:nowrap;">
+              <input type="checkbox" name="is_pinned" value="1" style="accent-color:var(--brand);width:15px;height:15px;">
+              📌 Mark as Important
+            </label>
+            <button type="submit" class="btn btn-primary">Post</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><span class="card-title">👩‍🏫 To Teachers</span><span class="badge badge-green">{{ ann_teachers|length }}</span></div>
+        <div style="padding:0 22px">
+          {% for a in ann_teachers %}
+          <div class="ann-item">
+            <div class="ann-title">{% if a.is_pinned %}<span class="pin">📌 Pinned</span> {% endif %}{{ a.title }}</div>
+            <div class="ann-meta"><span>{{ a.created_at|date:"M d, Y" }}</span><span class="tbadge tbadge-teachers">Teachers</span></div>
+            <div class="ann-body">{{ a.body|truncatechars:120 }}</div>
+          </div>
+          {% empty %}<div class="empty-state">No teacher announcements yet.</div>{% endfor %}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">🎓 To Students</span><span class="badge badge-amber">{{ ann_students|length }}</span></div>
+        <div style="padding:0 22px">
+          {% for a in ann_students %}
+          <div class="ann-item">
+            <div class="ann-title">{% if a.is_pinned %}<span class="pin">📌 Pinned</span> {% endif %}{{ a.title }}</div>
+            <div class="ann-meta"><span>{{ a.created_at|date:"M d, Y" }}</span><span class="tbadge tbadge-students">Students</span></div>
+            <div class="ann-body">{{ a.body|truncatechars:120 }}</div>
+          </div>
+          {% empty %}<div class="empty-state">No student announcements yet.</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">📌 Important Notices</span><span class="badge badge-red">{{ ann_pinned|length }}</span></div>
+      <div style="padding:0 22px">
+        {% for a in ann_pinned %}
+        <div class="ann-item">
+          <div class="ann-title" style="color:#b91c1c;">📌 {{ a.title }}</div>
+          <div class="ann-meta"><span>{{ a.created_at|date:"M d, Y" }}</span><span class="tbadge tbadge-important">Important</span><span class="tbadge tbadge-{{ a.target }}">{{ a.get_target_display }}</span></div>
+          <div class="ann-body">{{ a.body|truncatechars:160 }}</div>
+        </div>
+        {% empty %}<div class="empty-state">No important notices yet.</div>{% endfor %}
+      </div>
+    </div>
   </div>
 
 </div>
 
-<!-- ══ TAB 5 — ANNOUNCEMENTS ══ -->
-<div class="tab-pane" id="tab-announcements">
-
-  <div class="panel">
-    <div class="panel-hd"><h2>Post Announcement</h2></div>
-    <form method="post" class="ann-form">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="announce">
-      <div class="form-group" style="margin-bottom:10px;">
-        <input type="text" name="title" class="form-control" placeholder="Announcement title…" required>
-      </div>
-      <div class="form-group" style="margin-bottom:10px;">
-        <textarea name="body" class="form-control" rows="3" placeholder="Write your message…" required></textarea>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-        <select name="target" class="form-control" style="width:auto;flex:1;min-width:160px;">
-          <option value="all">📢 To Everyone</option>
-          <option value="teachers">👩🏫 To All Teachers</option>
-          <option value="students">🎓 To All Students</option>
-        </select>
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;white-space:nowrap;">
-          <input type="checkbox" name="is_pinned" value="1" style="accent-color:var(--brand-blue);width:15px;height:15px;">
-          📌 Mark as Important
-        </label>
-        <button type="submit" class="btn btn-primary">Post</button>
-      </div>
-    </form>
-  </div>
-
-  <div class="two-col">
-    <!-- To Teachers -->
-    <div class="panel">
-      <div class="panel-hd">
-        <h2>👩🏫 To All Teachers</h2>
-        <span class="badge badge-success">{{ ann_teachers|length }}</span>
-      </div>
-      {% for a in ann_teachers %}
-      <div class="ann-item">
-        <div class="ann-title">{% if a.is_pinned %}📌 {% endif %}{{ a.title }}</div>
-        <div class="ann-meta">
-          <span>{{ a.created_at|date:"M d, Y" }}</span>
-          <span class="tbadge tbadge-teachers">Teachers</span>
-        </div>
-        <p style="font-size:13px;color:var(--text-body);margin:5px 0 0;line-height:1.5;">{{ a.body|truncatechars:120 }}</p>
-      </div>
-      {% empty %}
-      <p class="text-muted" style="text-align:center;padding:20px 0;font-size:13px;">No teacher announcements yet.</p>
-      {% endfor %}
-    </div>
-
-    <!-- To Students -->
-    <div class="panel">
-      <div class="panel-hd">
-        <h2>🎓 To All Students</h2>
-        <span class="badge badge-warning">{{ ann_students|length }}</span>
-      </div>
-      {% for a in ann_students %}
-      <div class="ann-item">
-        <div class="ann-title">{% if a.is_pinned %}📌 {% endif %}{{ a.title }}</div>
-        <div class="ann-meta">
-          <span>{{ a.created_at|date:"M d, Y" }}</span>
-          <span class="tbadge tbadge-students">Students</span>
-        </div>
-        <p style="font-size:13px;color:var(--text-body);margin:5px 0 0;line-height:1.5;">{{ a.body|truncatechars:120 }}</p>
-      </div>
-      {% empty %}
-      <p class="text-muted" style="text-align:center;padding:20px 0;font-size:13px;">No student announcements yet.</p>
-      {% endfor %}
-    </div>
-  </div>
-
-  <!-- Important Notices -->
-  <div class="panel">
-    <div class="panel-hd">
-      <h2>📌 Important Notices</h2>
-      <span class="badge badge-danger">{{ ann_pinned|length }}</span>
-    </div>
-    {% for a in ann_pinned %}
-    <div class="ann-item">
-      <div class="ann-title" style="color:#8b1a1a;">📌 {{ a.title }}</div>
-      <div class="ann-meta">
-        <span>{{ a.created_at|date:"M d, Y" }}</span>
-        <span class="tbadge tbadge-important">Important</span>
-        <span class="tbadge tbadge-{{ a.target }}">{{ a.get_target_display }}</span>
-      </div>
-      <p style="font-size:13px;color:var(--text-body);margin:5px 0 0;line-height:1.5;">{{ a.body|truncatechars:160 }}</p>
-    </div>
-    {% empty %}
-    <p class="text-muted" style="text-align:center;padding:20px 0;font-size:13px;">No important notices yet.</p>
-    {% endfor %}
-  </div>
-
-</div>
-
-{% endblock %}
-
-{% block extra_js %}
 <script>
-const TABS = ['teachers','classrooms','students','analytics','announcements'];
+// Initialize tab navigation on dashboard load
+// The switchMgmtTab function is loaded from management.js
 
-function switchMgmtTab(name) {
-  if (!TABS.includes(name)) name = 'teachers';
-  // swap panes
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  // swap sidebar active state
-  document.querySelectorAll('.mgmt-tab-link').forEach(l => {
-    l.classList.toggle('active', l.getAttribute('href') === '#' + name);
-  });
-  // update URL hash without reload
-  history.replaceState(null, '', '#' + name);
-}
-
-// On load: pick tab from URL hash, default to teachers
-(function(){
-  const hash = location.hash.replace('#', '');
-  switchMgmtTab(TABS.includes(hash) ? hash : 'teachers');
-})();
+document.addEventListener('DOMContentLoaded', function() {
+  // Get hash from URL
+  const hash = window.location.hash.replace('#', '');
+  
+  // If there's a valid tab hash, switch to it
+  if (hash && ['teachers', 'classrooms', 'students', 'analytics', 'announcements'].includes(hash)) {
+    switchMgmtTab(hash);
+  } else {
+    // Default to teachers tab
+    switchMgmtTab('teachers');
+  }
+});
 </script>
 {% endblock %}

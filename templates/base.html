@@ -54,11 +54,11 @@
   <a href="{% url 'school_admin_reports' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_reports' %}active{% endif %}"><span class="sl-icon">📊</span> Reports</a>
 
   {% elif user.role == 'management' %}
-  <a href="#teachers" class="sidebar-link" onclick="switchMgmtTab('teachers');return false;"><span class="sl-icon">👩🏫</span> Teachers</a>
-  <a href="#classrooms" class="sidebar-link" onclick="switchMgmtTab('classrooms');return false;"><span class="sl-icon">🏛</span> Classrooms</a>
-  <a href="#students" class="sidebar-link" onclick="switchMgmtTab('students');return false;"><span class="sl-icon">🎓</span> Students</a>
-  <a href="#analytics" class="sidebar-link" onclick="switchMgmtTab('analytics');return false;"><span class="sl-icon">📊</span> Analytics</a>
-  <a href="#announcements" class="sidebar-link" onclick="switchMgmtTab('announcements');return false;"><span class="sl-icon">📢</span> Announcements</a>
+  <a href="{% url 'management_dashboard' %}#teachers" class="sidebar-link mgmt-nav-link" data-tab="teachers" onclick="switchMgmtTab('teachers');return false;"><span class="sl-icon">👩🏫</span> Teachers</a>
+  <a href="{% url 'management_dashboard' %}#classrooms" class="sidebar-link mgmt-nav-link" data-tab="classrooms" onclick="switchMgmtTab('classrooms');return false;"><span class="sl-icon">🏛</span> Classrooms</a>
+  <a href="{% url 'management_dashboard' %}#students" class="sidebar-link mgmt-nav-link" data-tab="students" onclick="switchMgmtTab('students');return false;"><span class="sl-icon">🎓</span> Students</a>
+  <a href="{% url 'management_dashboard' %}#analytics" class="sidebar-link mgmt-nav-link" data-tab="analytics" onclick="switchMgmtTab('analytics');return false;"><span class="sl-icon">📊</span> Analytics</a>
+  <a href="{% url 'management_dashboard' %}#announcements" class="sidebar-link mgmt-nav-link" data-tab="announcements" onclick="switchMgmtTab('announcements');return false;"><span class="sl-icon">📢</span> Announcements</a>
   <div class="sidebar-divider"></div>
   <a href="{% url 'management_invite_teacher' %}" class="sidebar-link"><span class="sl-icon">➕</span> Invite Teacher</a>
 
@@ -67,11 +67,12 @@
 
   {% elif user.role == 'student' %}
   <a href="{% url 'student_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'student_dashboard' %}active{% endif %}"><span class="sl-icon">🏠</span> Dashboard</a>
-
+  
   {% endif %}
 </nav>
       <div class="sidebar-divider"></div>
       <div class="sidebar-bottom">
+        
         <a href="{% url 'profile' %}" class="sidebar-link"><span class="sl-icon">⚙️</span> Profile</a>
         <a href="{% url 'logout' %}" class="sidebar-link sidebar-link-danger"><span class="sl-icon">🚪</span> Sign Out</a>
       </div>
@@ -102,6 +103,8 @@
 
 {% block extra_js %}{% endblock %}
 
+<script src="{% static 'js/toasts.js' %}"></script>
+
 <script>
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
@@ -111,5 +114,9 @@ function toggleSidebar() {
   document.body.classList.toggle('sidebar-open');
 }
 </script>
+
+{% if user.is_authenticated and user.role == 'management' %}
+<script src="{% static 'js/management.js' %}"></script>
+{% endif %}
 </body>
 </html>

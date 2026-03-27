@@ -32,7 +32,7 @@
   --font:        'Inter', sans-serif;
   --mono:        'JetBrains Mono', monospace;
   --nav-w:       252px;
-  --topbar-h:36.64px;
+  --topbar-h:    36.64px;
 }
 html, body { height: 100%; }
 body { font-family: var(--font); background: var(--page-bg); color: var(--text-1); font-size: 14px; line-height: 1.6; display: flex; }
@@ -46,7 +46,7 @@ body { font-family: var(--font); background: var(--page-bg); color: var(--text-1
 }
 .sidebar-logo {
   padding: 22px 20px 18px; display: flex; align-items: center; gap: 12px;
-  border-bottom: 1px solid rgba(255,255,255,.07);
+  border-bottom: 1px solid rgba(255,255,255,.07); text-decoration: none;
 }
 .logo-mark {
   width: 36px; height: 36px;
@@ -209,7 +209,13 @@ body { font-family: var(--font); background: var(--page-bg); color: var(--text-1
   transition: box-shadow .2s, transform .15s;
 }
 .class-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
-.cc-head { padding: 18px 18px 14px; }
+
+/* cc-head link — makes the coloured header clickable */
+.cc-head-link { display: block; text-decoration: none; }
+.cc-head-link:hover .cc-name { color: var(--brand); text-decoration: underline; }
+
+.cc-head { padding: 18px 18px 14px; transition: opacity .15s; }
+.cc-head-link:hover .cc-head { opacity: .92; }
 .cc-blue   .cc-head { background: linear-gradient(135deg, #eef1fb, #dde3f8); }
 .cc-green  .cc-head { background: linear-gradient(135deg, #e1f5ee, #c6edd9); }
 .cc-amber  .cc-head { background: linear-gradient(135deg, #fdf0e0, #f9ddb5); }
@@ -223,7 +229,7 @@ body { font-family: var(--font); background: var(--page-bg); color: var(--text-1
 .cc-green  .cc-badge { background: var(--teacher); color: #fff; }
 .cc-amber  .cc-badge { background: #9a5a00; color: #fff; }
 .cc-purple .cc-badge { background: #534ab7; color: #fff; }
-.cc-name { font-size: 15px; font-weight: 700; color: var(--text-1); }
+.cc-name { font-size: 15px; font-weight: 700; color: var(--text-1); transition: color .15s; }
 .cc-body  { padding: 14px 18px 16px; }
 .cc-meta  { display: flex; gap: 14px; font-size: 12px; color: var(--text-2); margin-bottom: 14px; }
 .cc-meta-item { display: flex; align-items: center; gap: 5px; }
@@ -273,6 +279,20 @@ body { font-family: var(--font); background: var(--page-bg); color: var(--text-1
 .ann-meta  { font-size: 12px; color: var(--text-3); margin-top: 2px; }
 .pin { font-size: 10px; background: #fef3c7; color: #92400e; padding: 2px 7px; border-radius: 4px; margin-left: 6px; font-weight: 600; }
 
+/* QUICK ACCESS */
+.quick-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:28px; }
+.quick-btn { display:flex; align-items:center; gap:14px; padding:18px 20px; background:#fff; border:1px solid var(--border); border-radius:14px; text-decoration:none; color:var(--brand-dark); transition:box-shadow .15s,transform .15s; cursor:pointer; }
+.quick-btn:hover { box-shadow:0 4px 20px rgba(26,31,54,.10); transform:translateY(-2px); text-decoration:none; color:var(--brand-dark); }
+.quick-btn-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+.quick-btn-icon.announce { background:#eef1fb; }
+.quick-btn-icon.chat     { background:#e1f5ee; }
+.quick-btn-icon.classwork{ background:#fdf0e0; }
+.quick-btn-icon.grades   { background:#eeedfe; }
+.quick-btn-label { font-size:15px; font-weight:700; }
+.quick-btn-sub   { font-size:12px; color:var(--text-3); margin-top:2px; }
+.section-hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.section-hd h2 { font-size:16px; font-weight:600; color:var(--brand-dark); margin:0; }
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
   :root { --nav-w: 0px; }
@@ -286,7 +306,7 @@ body { font-family: var(--font); background: var(--page-bg); color: var(--text-1
 
 <!-- SIDEBAR -->
 <aside class="sidebar">
-  <a class="sidebar-logo" href="{% url 'teacher_dashboard' %}" style="text-decoration:none">
+  <a class="sidebar-logo" href="{% url 'teacher_dashboard' %}">
     <div class="logo-mark">EP</div>
     <div>
       <div class="logo-text">EduPlatform</div>
@@ -308,7 +328,7 @@ body { font-family: var(--font); background: var(--page-bg); color: var(--text-1
       <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       My Learning
     </a>
-    <a class="nav-item" href="#">
+    <a class="nav-item" href="{% url 'teacher_messages' %}">
       <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Messages
     </a>
@@ -320,7 +340,7 @@ body { font-family: var(--font); background: var(--page-bg); color: var(--text-1
       <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Grade Analytics
     </a>
-    <a class="nav-item" href="#">
+    <a class="nav-item" href="{% url 'teacher_announcements' %}">
       <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Announcements
     </a>
@@ -397,6 +417,58 @@ body { font-family: var(--font); background: var(--page-bg); color: var(--text-1
       </div>
     </div>
 
+    <!-- Quick Access -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="section-hd">
+        <h2>Quick Access</h2>
+        <span style="font-size:12px;color:var(--text-3);">Manage your teaching activities</span>
+      </div>
+      <div class="quick-grid">
+        <a href="{% url 'teacher_create_classroom' %}" class="quick-btn">
+          <div class="quick-btn-icon announce">🏫</div>
+          <div>
+            <div class="quick-btn-label">New Classroom</div>
+            <div class="quick-btn-sub">Create a new class</div>
+          </div>
+        </a>
+        <a href="{% url 'teacher_my_classrooms' %}" class="quick-btn">
+          <div class="quick-btn-icon chat">📚</div>
+          <div>
+            <div class="quick-btn-label">My Classrooms</div>
+            <div class="quick-btn-sub">{{ classrooms|length }} active class{{ classrooms|length|pluralize }}</div>
+          </div>
+        </a>
+        <a href="{% url 'teacher_post_announcement' %}" class="quick-btn">
+          <div class="quick-btn-icon grades">📢</div>
+          <div>
+            <div class="quick-btn-label">Announcements</div>
+            <div class="quick-btn-sub">Post updates to students</div>
+          </div>
+        </a>
+        <a href="{% url 'teacher_analytics' %}" class="quick-btn">
+          <div class="quick-btn-icon classwork">📊</div>
+          <div>
+            <div class="quick-btn-label">Analytics</div>
+            <div class="quick-btn-sub">Teaching insights & reports</div>
+          </div>
+        </a>
+        <a href="{% url 'teacher_my_learning' %}" class="quick-btn">
+          <div class="quick-btn-icon announce">🎓</div>
+          <div>
+            <div class="quick-btn-label">My Learning</div>
+            <div class="quick-btn-sub">Continue your courses</div>
+          </div>
+        </a>
+        <a href="{% url 'profile' %}" class="quick-btn">
+          <div class="quick-btn-icon chat">⚙️</div>
+          <div>
+            <div class="quick-btn-label">Settings</div>
+            <div class="quick-btn-sub">Manage your profile</div>
+          </div>
+        </a>
+      </div>
+    </div>
+
     <!-- Classrooms -->
     <div class="two-col">
       <div class="card">
@@ -407,10 +479,16 @@ body { font-family: var(--font); background: var(--page-bg); color: var(--text-1
         <div class="cc-grid">
           {% for classroom in classrooms %}
           <div class="class-card {% cycle 'cc-blue' 'cc-green' 'cc-amber' 'cc-purple' %}">
-            <div class="cc-head">
-              <div class="cc-badge">{{ classroom.code }}</div>
-              <div class="cc-name">{{ classroom.name }}</div>
-            </div>
+
+            {# ── Clickable header → classroom detail ── #}
+            <a href="{% url 'teacher_classroom_detail' classroom.id %}" class="cc-head-link">
+              <div class="cc-head">
+                <div class="cc-badge">{{ classroom.code }}</div>
+                <div class="cc-name">{{ classroom.name }}</div>
+              </div>
+            </a>
+
+            {# ── Body: meta + quick-access tab chips ── #}
             <div class="cc-body">
               <div class="cc-meta">
                 <div class="cc-meta-item">
@@ -433,6 +511,7 @@ body { font-family: var(--font); background: var(--page-bg); color: var(--text-1
                 <a href="{% url 'teacher_classroom_chat' classroom.id %}" class="tc">💬 Chat</a>
               </div>
             </div>
+
           </div>
           {% empty %}
           <div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--text-3)">
@@ -444,16 +523,13 @@ body { font-family: var(--font); background: var(--page-bg); color: var(--text-1
           {% endfor %}
         </div>
       </div>
-
     </div>
-
-
 
     <!-- Announcements -->
     <div class="card">
       <div class="card-head">
         <div class="card-title">Pinned Announcements</div>
-        <a href="#" class="btn btn-primary" style="font-size:12px;padding:7px 16px;border-radius:30px">+ New Announcement</a>
+        <a href="{% url 'teacher_post_announcement' %}" class="btn btn-primary" style="font-size:12px;padding:7px 16px;border-radius:30px">+ New Announcement</a>
       </div>
       {% for announcement in announcements %}
       <div class="ann-item">
@@ -477,6 +553,7 @@ body { font-family: var(--font); background: var(--page-bg); color: var(--text-1
 
   </div><!-- /page -->
 </div><!-- /main -->
+
 <script>
   // Search data from Django context
   const students = [
@@ -486,7 +563,7 @@ body { font-family: var(--font); background: var(--page-bg); color: var(--text-1
   ];
   const classroomData = [
     {% for classroom in classrooms %}
-    { name: "{{ classroom.name }}", sub: "{{ classroom.code }} · {{ classroom.students.count }} students", color: "green", url: "{% url 'teacher_classroom_announce' classroom.id %}" },
+    { name: "{{ classroom.name }}", sub: "{{ classroom.code }} · {{ classroom.students.count }} students", color: "green", url: "{% url 'teacher_classroom_detail' classroom.id %}" },
     {% endfor %}
   ];
   const courses = [
@@ -495,7 +572,7 @@ body { font-family: var(--font); background: var(--page-bg); color: var(--text-1
     {% endfor %}{% endfor %}
   ];
 
-  const input = document.getElementById('globalSearch');
+  const input   = document.getElementById('globalSearch');
   const results = document.getElementById('searchResults');
 
   function highlight(text, q) {
@@ -509,8 +586,7 @@ body { font-family: var(--font); background: var(--page-bg); color: var(--text-1
     if (!filtered.length) return '';
     let html = `<div class="sr-section">${label}</div>`;
     filtered.forEach(i => {
-      const url = i.url || '#';
-      html += `<a class="sr-item" href="${url}"><span class="sr-dot ${i.color}"></span><span>${highlight(i.name, q)} <span style="color:var(--text-3);font-size:12px">· ${i.sub}</span></span></a>`;
+      html += `<a class="sr-item" href="${i.url || '#'}"><span class="sr-dot ${i.color}"></span><span>${highlight(i.name, q)} <span style="color:var(--text-3);font-size:12px">· ${i.sub}</span></span></a>`;
     });
     return html;
   }
@@ -534,7 +610,7 @@ body { font-family: var(--font); background: var(--page-bg); color: var(--text-1
   });
 
   // Profile dropdown
-  const btn = document.getElementById('profileBtn');
+  const btn      = document.getElementById('profileBtn');
   const dropdown = document.getElementById('profileDropdown');
   btn.addEventListener('click', function(e) {
     e.stopPropagation();

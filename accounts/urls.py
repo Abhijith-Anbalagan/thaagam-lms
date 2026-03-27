@@ -15,6 +15,8 @@ urlpatterns = [
 
     # ✅ Add these missing ones
     path('verify-email/<uuid:token>/', views.verify_email_view,     name='verify_email'),
+    
     path('resend-verification/',       views.resend_verification_view, name='resend_verification'),
+
     path('reset-password/<uuid:token>/', views.reset_password_view,  name='reset_password'),
 ]

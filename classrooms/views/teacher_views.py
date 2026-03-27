@@ -34,8 +34,6 @@ def _grade_letter(pct):
 
 @role_required('teacher')
 def teacher_dashboard(request):
-    # Use timezone-aware now for comparisons with DateTimeField,
-    # and localdate() for display / date-only logic
     now   = timezone.now()
     today = timezone.localdate()
 
@@ -60,7 +58,6 @@ def teacher_dashboard(request):
             a.submission_count > 0
             and not Submission.objects.filter(assignment=a, score__isnull=True).exists()
         )
-        # Attach a plain date so the template can compare safely
         a.due_date_only = a.due_date.date() if a.due_date else None
 
     total_students    = sum(c.students.count() for c in classrooms)
@@ -68,10 +65,7 @@ def teacher_dashboard(request):
     total_submissions = Submission.objects.filter(
         assignment__classroom__in=classrooms
     ).count()
-    # Compare DateTimeField with timezone-aware datetime
-    due_today = all_assignments.filter(
-        due_date__date=today
-    ).count()
+    due_today = all_assignments.filter(due_date__date=today).count()
     pending_grading = Submission.objects.filter(
         assignment__classroom__in=classrooms, score__isnull=True
     ).count()
@@ -125,8 +119,114 @@ def teacher_dashboard(request):
         'grade_b_pct':        _pct(75, 89),
         'grade_c_pct':        _pct(60, 74),
         'grade_d_pct':        _pct(40, 59),
-        'today':              today,   # plain date — safe for {{ today|date:"..." }}
+        'today':              today,
     })
+
+
+# ── Classroom Detail ──────────────────────────────────────────────────────────
+
+@role_required('teacher')
+def classroom_detail(request, classroom_id):
+    """
+    Overview page for a single classroom.
+    Shows: class name, student list with stats, and assign-course panel.
+    """
+    classroom = _get_classroom(request, classroom_id)
+    students  = classroom.students.all()
+
+    # ---- student stats ----
+    total_assignments = Assignment.objects.filter(classroom=classroom).count()
+    student_data = []
+    for student in students:
+        submitted   = Submission.objects.filter(
+            assignment__classroom=classroom, student=student
+        ).count()
+        graded_subs = Submission.objects.filter(
+            assignment__classroom=classroom, student=student, score__isnull=False
+        )
+        graded_count = graded_subs.count()
+        total_score  = sum(s.score for s in graded_subs)
+        avg = round((total_score / (graded_count * 20)) * 100) if graded_count else 0
+        student_data.append({
+            'user':              student,
+            'submitted':         submitted,
+            'total_assignments': total_assignments,
+            'avg_pct':           avg,
+            'grade_letter':      _grade_letter(avg),
+        })
+
+    # ---- avg score for hero stats ----
+    graded = Submission.objects.filter(
+        assignment__classroom=classroom, score__isnull=False
+    )
+    avg_score = 0
+    if graded.exists():
+        agg = graded.aggregate(avg=Avg('score'))
+        avg_score = round((agg['avg'] / 20) * 100) if agg['avg'] else 0
+
+    # ---- courses ----
+    try:
+        from superadmin.models import GlobalCourse, ClassroomCourseAssignment
+        # All published courses available for the school
+        all_courses = GlobalCourse.objects.filter(
+            schools=request.user.school,
+            status='published'
+        ).prefetch_related('concepts')
+        # IDs already assigned to THIS classroom
+        assigned_course_ids = set(
+            ClassroomCourseAssignment.objects.filter(
+                classroom=classroom
+            ).values_list('course_id', flat=True)
+        )
+    except Exception:
+        all_courses         = []
+        assigned_course_ids = set()
+
+    assigned_course_count = len(assigned_course_ids)
+    assignment_count      = Assignment.objects.filter(classroom=classroom).count()
+
+    return render(request, 'teacher/classroom_detail.html', {
+        'classroom':            classroom,
+        'student_data':         student_data,
+        'avg_score':            avg_score,
+        'all_courses':          all_courses,
+        'assigned_course_ids':  assigned_course_ids,
+        'assigned_course_count': assigned_course_count,
+        'assignment_count':     assignment_count,
+    })
+
+
+# ── Assign / Unassign Course to Classroom (AJAX) ─────────────────────────────
+
+@role_required('teacher')
+def assign_course_to_classroom(request, classroom_id, course_id):
+    """
+    POST  → toggle a GlobalCourse assignment on a classroom.
+    Returns JSON: { assigned: true/false }
+    """
+    from django.http import JsonResponse
+    from superadmin.models import GlobalCourse, ClassroomCourseAssignment
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    classroom = _get_classroom(request, classroom_id)
+    course    = get_object_or_404(
+        GlobalCourse,
+        pk=course_id,
+        schools=request.user.school,
+        status='published'
+    )
+
+    obj, created = ClassroomCourseAssignment.objects.get_or_create(
+        classroom=classroom,
+        course=course,
+    )
+    if not created:
+        obj.delete()
+        return JsonResponse({'assigned': False})
+
+    return JsonResponse({'assigned': True})
 
 
 # ── Create Classroom ──────────────────────────────────────────────────────────
@@ -238,22 +338,79 @@ def classroom_announce(request, classroom_id):
 
 
 # ── Courses ───────────────────────────────────────────────────────────────────
+# Replace the existing classroom_courses view in classrooms/views/teacher_views.py
 
 @role_required('teacher')
 def classroom_courses(request, classroom_id):
-    classroom   = _get_classroom(request, classroom_id)
-    all_content = CourseContent.objects.filter(classroom=classroom)
-    units = {}
-    for item in all_content:
-        key = item.unit.strip() or 'General'
-        units.setdefault(key, []).append(item)
+    classroom = _get_classroom(request, classroom_id)
+
+    try:
+        from superadmin.models import GlobalCourse, ClassroomCourseAssignment
+
+        # All published courses for the school
+        all_courses = GlobalCourse.objects.filter(
+            schools=request.user.school,
+            status='published'
+        ).prefetch_related('concepts')
+
+        # IDs already assigned to THIS classroom
+        assigned_course_ids = set(
+            ClassroomCourseAssignment.objects.filter(
+                classroom=classroom
+            ).values_list('course_id', flat=True)
+        )
+
+        # Courses actually assigned to this classroom
+        assigned_courses = [c for c in all_courses if c.pk in assigned_course_ids]
+
+    except Exception:
+        all_courses         = []
+        assigned_course_ids = set()
+        assigned_courses    = []
 
     return render(request, 'teacher/classroom_courses.html', {
-        'classroom':  classroom,
-        'units':      units,
-        'active_tab': 'courses',
-    })
+        'classroom':            classroom,
+        'all_courses':          all_courses,
+        'assigned_courses':     assigned_courses,
+        'assigned_course_ids':  assigned_course_ids,
+        'active_tab':           'courses',
+    })# ── Courses ───────────────────────────────────────────────────────────────────
 
+@role_required('teacher')
+def classroom_courses(request, classroom_id):
+    classroom = _get_classroom(request, classroom_id)
+
+    try:
+        from superadmin.models import GlobalCourse, ClassroomCourseAssignment
+
+        # All published courses for the school
+        all_courses = GlobalCourse.objects.filter(
+            schools=request.user.school,
+            status='published'
+        ).prefetch_related('concepts')
+
+        # IDs already assigned to THIS classroom
+        assigned_course_ids = set(
+            ClassroomCourseAssignment.objects.filter(
+                classroom=classroom
+            ).values_list('course_id', flat=True)
+        )
+
+        # Courses actually assigned to this classroom
+        assigned_courses = [c for c in all_courses if c.pk in assigned_course_ids]
+
+    except Exception:
+        all_courses         = []
+        assigned_course_ids = set()
+        assigned_courses    = []
+
+    return render(request, 'teacher/classroom_courses.html', {
+        'classroom':            classroom,
+        'all_courses':          all_courses,
+        'assigned_courses':     assigned_courses,
+        'assigned_course_ids':  assigned_course_ids,
+        'active_tab':           'courses',
+    })
 
 # ── Classwork ─────────────────────────────────────────────────────────────────
 
@@ -367,7 +524,6 @@ def classroom_grade(request, classroom_id):
             score_val = sub.score if sub and sub.score is not None else None
             max_score = assignment.max_score
             pct       = round((score_val / max_score) * 100) if score_val is not None else None
-            # Compare dates safely
             late = bool(
                 sub and assignment.due_date
                 and sub.submitted_at.date() > assignment.due_date.date()
@@ -426,11 +582,89 @@ def my_classrooms(request):
 
 @role_required('teacher')
 def my_learning(request):
-    from superadmin.models import GlobalCourse
-    courses = GlobalCourse.objects.filter(
-        school=request.user.school, status='published'
+    from superadmin.models import GlobalCourse, CourseEnrollment
+
+    available_courses = GlobalCourse.objects.filter(
+        schools=request.user.school,
+        status='published'
+    ).prefetch_related('concepts', 'enrollments')
+
+    enrolled_ids = set(
+        CourseEnrollment.objects.filter(user=request.user).values_list('course_id', flat=True)
     )
-    return render(request, 'teacher/my_learning.html', {'courses': courses})
+
+    enrolled_courses   = [c for c in available_courses if c.pk in enrolled_ids]
+    unenrolled_courses = [c for c in available_courses if c.pk not in enrolled_ids]
+
+    return render(request, 'teacher/my_learning.html', {
+        'enrolled_courses':   enrolled_courses,
+        'unenrolled_courses': unenrolled_courses,
+        'enrolled_ids':       enrolled_ids,
+    })
+
+
+@role_required('teacher')
+def course_enroll(request, course_id):
+    from superadmin.models import GlobalCourse, CourseEnrollment
+    from django.http import JsonResponse
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    course = get_object_or_404(
+        GlobalCourse,
+        pk=course_id,
+        schools=request.user.school,
+        status='published'
+    )
+
+    enrollment, created = CourseEnrollment.objects.get_or_create(
+        user=request.user, course=course
+    )
+    if not created:
+        enrollment.delete()
+        return JsonResponse({'enrolled': False})
+
+    return JsonResponse({'enrolled': True})
+
+
+# ── Messages ─────────────────────────────────────────────────────────────────
+
+@role_required('teacher')
+def teacher_messages(request):
+    classrooms = Classroom.objects.filter(
+        teacher=request.user,
+        school=request.user.school
+    ).prefetch_related('students')
+
+    try:
+        from chat.models import Message
+        classroom_chats = []
+        for classroom in classrooms:
+            latest_msg = Message.objects.filter(
+                classroom=classroom
+            ).select_related('sender').order_by('-created_at').first()
+
+            unread_count = Message.objects.filter(
+                classroom=classroom,
+                is_read=False
+            ).exclude(sender=request.user).count()
+
+            classroom_chats.append({
+                'classroom':    classroom,
+                'latest_msg':   latest_msg,
+                'unread_count': unread_count,
+            })
+        classroom_chats.sort(
+            key=lambda x: x['latest_msg'].created_at if x['latest_msg'] else timezone.datetime.min.replace(tzinfo=timezone.utc),
+            reverse=True
+        )
+    except Exception:
+        classroom_chats = [{'classroom': c, 'latest_msg': None, 'unread_count': 0} for c in classrooms]
+
+    return render(request, 'teacher/messages.html', {
+        'classroom_chats': classroom_chats,
+    })
 
 
 # ── Chat ──────────────────────────────────────────────────────────────────────
@@ -438,16 +672,26 @@ def my_learning(request):
 @role_required('teacher')
 def classroom_chat(request, classroom_id):
     classroom = _get_classroom(request, classroom_id)
-    try:
-        from chat.models import Message
+    from chat.models import Message
+
+    student_id       = request.GET.get('student')
+    selected_student = None
+    chat_messages    = []
+
+    if student_id:
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        selected_student = get_object_or_404(User, pk=student_id)
         chat_messages = Message.objects.filter(
-            classroom=classroom
+            classroom=classroom,
+            sender__in=[request.user, selected_student],
+            receiver__in=[request.user, selected_student],
         ).select_related('sender').order_by('created_at')
-    except Exception:
-        chat_messages = []
+        chat_messages.filter(receiver=request.user, is_read=False).update(is_read=True)
 
     return render(request, 'teacher/classroom_chat.html', {
-        'classroom':     classroom,
-        'chat_messages': chat_messages,
-        'active_tab':    'chat',
+        'classroom':        classroom,
+        'selected_student': selected_student,
+        'chat_messages':    chat_messages,
+        'active_tab':       'chat',
     })
