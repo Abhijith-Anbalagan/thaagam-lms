@@ -1,75 +1,65 @@
-{% extends 'base.html' %}
-{% block title %}People — {{ classroom.name }}{% endblock %}
-{% block extra_css %}
-<style>
-  :root{--page-bg:#f4f5f9;--card-bg:#fff;--border:#e8e8ec;--text-1:#1a1f36;--text-2:#5a5f7a;--text-3:#9496a8;--brand:#4c68d7;--brand-soft:#eef1fb;--radius-lg:14px;--shadow-sm:0 1px 4px rgba(26,31,54,.06);--shadow-md:0 4px 20px rgba(26,31,54,.10)}
-  .people-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-  .card{background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden}
-  .card-head{padding:17px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-  .card-title{font-size:14px;font-weight:700;color:var(--text-1)}
-  .card-body{padding:22px}
-  .teacher-av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#0f6e56,#1a9e7a);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:700;flex-shrink:0}
-  .student-row{display:flex;align-items:center;gap:12px;padding:11px 22px;border-bottom:1px solid var(--border);transition:background .1s}
-  .student-row:hover{background:var(--page-bg)}
-  .student-row:last-child{border-bottom:none}
-  .student-av{width:34px;height:34px;border-radius:50%;background:var(--brand-soft);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;color:var(--brand)}
-  .badge{font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:20px;display:inline-block}
-  .badge-blue{background:var(--brand-soft);color:var(--brand)}
-  .badge-green{background:#dcfce7;color:#15803d}
-  @media(max-width:768px){.people-grid{grid-template-columns:1fr}}
-</style>
-{% endblock %}
+{% extends 'student/base_student.html' %}
+
+{% block title %}People - {{ classroom.name }}{% endblock %}
+{% block topbar_context %}{{ classroom.name }}{% endblock %}
+{% block topbar_title %}People in this classroom{% endblock %}
 
 {% block content %}
-{% include 'shared/classroom_tabs.html' with role='student' classroom=classroom active_tab='peoples' %}
+<section class="mb-8 rounded-[2rem] bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-500 p-8 text-white shadow-2xl shadow-blue-500/20">
+    <p class="text-sm font-semibold uppercase tracking-[0.28em] text-sky-100">Class community</p>
+    <h1 class="mt-3 text-3xl font-bold">{{ classroom.name }}</h1>
+    <p class="mt-2 text-sm text-sky-50">{{ students.count }} student{{ students.count|pluralize }} and 1 teacher in this space.</p>
+</section>
 
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
-  <div>
-    <h1 style="font-size:20px;font-weight:700;color:var(--text-1,#1a1f36);">People</h1>
-    <p style="font-size:13px;color:var(--text-3,#9496a8);margin-top:2px;">{{ students.count }} student{{ students.count|pluralize }} + 1 teacher</p>
-  </div>
-</div>
+<nav class="mb-8 flex flex-wrap gap-3">
+    <a href="{% url 'student_classroom_announce' classroom.id %}" class="student-tab rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200">Announcements</a>
+    <a href="{% url 'student_classroom_courses' classroom.id %}" class="student-tab rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200">Courses</a>
+    <a href="{% url 'student_classroom_classwork' classroom.id %}" class="student-tab rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200">Classwork</a>
+    <a href="{% url 'student_classroom_peoples' classroom.id %}" class="student-tab active rounded-2xl px-4 py-2.5 text-sm font-semibold">People</a>
+    <a href="{% url 'student_classroom_grade' classroom.id %}" class="student-tab rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200">Grades</a>
+    <a href="{% url 'student_classroom_chat' classroom.id %}" class="student-tab rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200">Chat</a>
+</nav>
 
-<div class="people-grid">
-
-  <!-- Teacher -->
-  <div class="card">
-    <div class="card-head"><div class="card-title">Teacher</div><span class="badge badge-green">1</span></div>
-    <div class="card-body">
-      <div style="display:flex;align-items:center;gap:14px;">
-        {% if classroom.teacher.avatar %}
-        <img src="{{ classroom.teacher.avatar.url }}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;">
-        {% else %}
-        <div class="teacher-av">{{ classroom.teacher.first_name|first|default:classroom.teacher.username|first|upper }}</div>
-        {% endif %}
-        <div>
-          <div style="font-size:14px;font-weight:700;color:var(--text-1);">{{ classroom.teacher.get_full_name|default:classroom.teacher.username }}</div>
-          <div style="font-size:12px;color:var(--text-3);margin-top:2px;">{{ classroom.teacher.email }}</div>
-          <span style="display:inline-block;margin-top:6px;font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;background:#e1f5ee;color:#0f6e56;text-transform:uppercase;letter-spacing:.04em;">Teacher</span>
+<section class="grid gap-6 xl:grid-cols-2">
+    <article class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel">
+        <div class="mb-5 flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-slate-900">Teacher</h2>
+            <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">1</span>
         </div>
-      </div>
-    </div>
-  </div>
+        <div class="flex items-center gap-4 rounded-[1.5rem] bg-slate-50 p-5">
+            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-lg font-bold text-white">
+                {{ classroom.teacher.first_name|first|default:classroom.teacher.username|first|upper }}
+            </div>
+            <div>
+                <p class="text-lg font-semibold text-slate-900">{{ classroom.teacher.get_full_name|default:classroom.teacher.username }}</p>
+                <p class="mt-1 text-sm text-slate-500">{{ classroom.teacher.email }}</p>
+            </div>
+        </div>
+    </article>
 
-  <!-- Classmates -->
-  <div class="card">
-    <div class="card-head">
-      <div class="card-title">Classmates</div>
-      <span class="badge badge-blue">{{ students.count }}</span>
-    </div>
-    {% for s in students %}
-    <div class="student-row">
-      <div class="student-av">{{ s.first_name|first|default:s.username|first|upper }}</div>
-      <div style="flex:1;">
-        <div style="font-size:13.5px;font-weight:600;color:var(--text-1);">{{ s.get_full_name|default:s.username }}</div>
-        <div style="font-size:12px;color:var(--text-3);">{{ s.email }}</div>
-      </div>
-      {% if s == request.user %}<span class="badge badge-blue">You</span>{% endif %}
-    </div>
-    {% empty %}
-    <div style="padding:28px;text-align:center;color:var(--text-3);font-size:13px;">No other students yet.</div>
-    {% endfor %}
-  </div>
-
-</div>
+    <article class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel">
+        <div class="mb-5 flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-slate-900">Classmates</h2>
+            <span class="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">{{ students.count }}</span>
+        </div>
+        <div class="space-y-3">
+            {% for s in students %}
+            <div class="flex items-center gap-4 rounded-[1.25rem] bg-slate-50 p-4">
+                <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-100 text-sm font-bold text-blue-700">
+                    {{ s.first_name|first|default:s.username|first|upper }}
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="truncate font-semibold text-slate-900">{{ s.get_full_name|default:s.username }}</p>
+                    <p class="truncate text-sm text-slate-500">{{ s.email }}</p>
+                </div>
+                {% if s == request.user %}
+                <span class="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white">You</span>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">No classmates yet.</div>
+            {% endfor %}
+        </div>
+    </article>
+</section>
 {% endblock %}
