@@ -1,129 +1,96 @@
-{% extends 'base.html' %}
-{% block title %}Grades — {{ classroom.name }}{% endblock %}
-{% block extra_css %}
-<style>
-  :root{--page-bg:#f4f5f9;--card-bg:#fff;--border:#e8e8ec;--text-1:#1a1f36;--text-2:#5a5f7a;--text-3:#9496a8;--brand:#4c68d7;--brand-soft:#eef1fb;--radius-lg:14px;--shadow-sm:0 1px 4px rgba(26,31,54,.06);--shadow-md:0 4px 20px rgba(26,31,54,.10)}
-  .stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:24px}
-  .stat-card{background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow-sm)}
-  .stat-icon{font-size:20px;margin-bottom:6px}
-  .stat-val{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:var(--text-1)}
-  .stat-lbl{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-top:3px}
-  .grade-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-  .card{background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden}
-  .card-head{padding:17px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-  .card-title{font-size:14px;font-weight:700;color:var(--text-1)}
-  .card-body{padding:18px 22px}
-  .grade-row{display:flex;align-items:center;justify-content:space-between;padding:12px 22px;border-bottom:1px solid var(--border);gap:12px}
-  .grade-row:last-child{border-bottom:none}
-  .badge{font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:20px;display:inline-block}
-  .badge-blue{background:var(--brand-soft);color:var(--brand)}
-  .badge-amber{background:#fef3c7;color:#92400e}
-  .badge-red{background:#fce8e8;color:#b03030}
-  .progress-wrap{background:var(--border);border-radius:99px;height:5px;overflow:hidden;margin-top:6px}
-  .progress-bar{height:100%;border-radius:99px;background:var(--brand);transition:width .3s}
-  .progress-bar.success{background:#15803d}
-  .progress-bar.danger{background:#b03030}
-  .empty-state{text-align:center;padding:40px 20px;color:var(--text-3);font-size:13px}
-  @media(max-width:768px){.grade-grid{grid-template-columns:1fr}}
-</style>
-{% endblock %}
+{% extends 'student/base_student.html' %}
+{% load static %}
+
+{% block title %}Grades - {{ classroom.name }}{% endblock %}
+{% block topbar_context %}{{ classroom.name }}{% endblock %}
+{% block topbar_title %}Grades and progress{% endblock %}
 
 {% block content %}
-{% load static %}
-{% include 'shared/classroom_tabs.html' with role='student' classroom=classroom active_tab='grades' %}
+<section class="mb-8 rounded-[2rem] bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 p-8 text-white shadow-2xl shadow-emerald-500/20">
+    <p class="text-sm font-semibold uppercase tracking-[0.28em] text-emerald-100">Performance report</p>
+    <h1 class="mt-3 text-3xl font-bold">{{ classroom.name }}</h1>
+    <p class="mt-2 text-sm text-emerald-50">Track your total points, grading trends, and assignment-by-assignment scores.</p>
+</section>
 
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
-  <div>
-    <h1 style="font-size:20px;font-weight:700;color:var(--text-1,#1a1f36);">My Grades</h1>
-    <p style="font-size:13px;color:var(--text-3,#9496a8);margin-top:2px;">{{ classroom.name }}</p>
-  </div>
-</div>
+<nav class="mb-8 flex flex-wrap gap-3">
+    <a href="{% url 'student_classroom_announce' classroom.id %}" class="student-tab rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200">Announcements</a>
+    <a href="{% url 'student_classroom_courses' classroom.id %}" class="student-tab rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200">Courses</a>
+    <a href="{% url 'student_classroom_classwork' classroom.id %}" class="student-tab rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200">Classwork</a>
+    <a href="{% url 'student_classroom_peoples' classroom.id %}" class="student-tab rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200">People</a>
+    <a href="{% url 'student_classroom_grade' classroom.id %}" class="student-tab active rounded-2xl px-4 py-2.5 text-sm font-semibold">Grades</a>
+    <a href="{% url 'student_classroom_chat' classroom.id %}" class="student-tab rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200">Chat</a>
+</nav>
 
-<!-- Stats -->
-<div class="stat-grid">
-  <div class="stat-card">
-    <div class="stat-icon">📊</div>
-    <div class="stat-val">{{ total_score }}/{{ total_max }}</div>
-    <div class="stat-lbl">Total Score</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-icon">📈</div>
-    <div class="stat-val">{% if overall_pct is not None %}{{ overall_pct }}%{% else %}—{% endif %}</div>
-    <div class="stat-lbl">Overall %</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-icon">🏅</div>
-    <div class="stat-val">
-      {% if overall_pct is not None %}
-        {% if overall_pct >= 90 %}A{% elif overall_pct >= 80 %}B{% elif overall_pct >= 70 %}C{% elif overall_pct >= 60 %}D{% else %}F{% endif %}
-      {% else %}—{% endif %}
-    </div>
-    <div class="stat-lbl">Letter Grade</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-icon">📝</div>
-    <div class="stat-val">{{ grade_data|length }}</div>
-    <div class="stat-lbl">Assignments</div>
-  </div>
-</div>
+<section class="mb-8 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+    <div class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel"><p class="text-sm text-slate-500">Total score</p><p class="mt-2 text-3xl font-bold text-slate-900">{{ total_score }}/{{ total_max }}</p></div>
+    <div class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel"><p class="text-sm text-slate-500">Overall percentage</p><p class="mt-2 text-3xl font-bold text-slate-900">{% if overall_pct is not None %}{{ overall_pct }}%{% else %}-{% endif %}</p></div>
+    <div class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel"><p class="text-sm text-slate-500">Letter grade</p><p class="mt-2 text-3xl font-bold text-slate-900">{% if overall_pct is not None %}{% if overall_pct >= 90 %}A{% elif overall_pct >= 80 %}B{% elif overall_pct >= 70 %}C{% elif overall_pct >= 60 %}D{% else %}F{% endif %}{% else %}-{% endif %}</p></div>
+    <div class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel"><p class="text-sm text-slate-500">Assignments</p><p class="mt-2 text-3xl font-bold text-slate-900">{{ grade_data|length }}</p></div>
+</section>
 
-<!-- Grade table + Chart -->
-<div class="grade-grid">
-
-  <div class="card">
-    <div class="card-head"><div class="card-title">Assignment Scores</div></div>
-    {% for item in grade_data %}{% with a=item.assignment sub=item.submission %}
-    <div class="grade-row">
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:13.5px;font-weight:600;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ a.title }}</div>
-        {% if sub and sub.score is not None %}
-        <div class="progress-wrap">
-          <div class="progress-bar {% if sub.percentage >= 70 %}success{% elif sub.percentage < 50 %}danger{% endif %}" style="width:{{ sub.percentage }}%"></div>
+<section class="grid grid-cols-1 gap-6 xl:grid-cols-[1.05fr_.95fr]">
+    <div class="rounded-[1.75rem] border border-white/70 bg-white shadow-panel">
+        <div class="border-b border-slate-200 px-6 py-5">
+            <h2 class="text-xl font-semibold text-slate-900">Assignment scores</h2>
         </div>
-        <div style="font-size:12px;color:var(--text-3);margin-top:4px;">
-          {{ sub.percentage }}% · {{ sub.letter_grade }}
-          {% if sub.is_late %} · <span style="color:#b03030;">Late</span>{% endif %}
+        <div class="divide-y divide-slate-100">
+            {% for item in grade_data %}
+            {% with assignment=item.assignment submission=item.submission %}
+            <div class="px-6 py-5">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="min-w-0 flex-1">
+                        <h3 class="truncate text-lg font-semibold text-slate-900">{{ assignment.title }}</h3>
+                        {% if submission and submission.score is not None %}
+                        <div class="mt-3">
+                            <div class="mb-2 flex items-center justify-between text-sm text-slate-500">
+                                <span>{{ submission.percentage }}% · {{ submission.letter_grade }}</span>
+                                {% if submission.is_late %}<span class="text-rose-600">Late</span>{% endif %}
+                            </div>
+                            <div class="h-2.5 rounded-full bg-slate-100">
+                                <div class="h-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500" style="width: {{ submission.percentage }}%;"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="shrink-0">
+                        {% if submission and submission.score is not None %}
+                        <span class="rounded-2xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-900">{{ submission.score }}/{{ assignment.max_score }}</span>
+                        {% elif submission %}
+                        <span class="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">Submitted</span>
+                        {% elif assignment.is_overdue %}
+                        <span class="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-800">Missing</span>
+                        {% else %}
+                        <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">Pending</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+            {% empty %}
+            <div class="px-6 py-12 text-center text-slate-500">No assignments yet.</div>
+            {% endfor %}
         </div>
-        {% endif %}
-      </div>
-      <div style="font-family:'JetBrains Mono',monospace;font-weight:700;margin-left:12px;white-space:nowrap;">
-        {% if sub and sub.score is not None %}
-          {{ sub.score }}/{{ a.max_score }}
-        {% elif sub %}
-          <span class="badge badge-blue">Submitted</span>
-        {% elif a.is_overdue %}
-          <span class="badge badge-red">Missing</span>
-        {% else %}
-          <span class="badge badge-amber">Pending</span>
-        {% endif %}
-      </div>
     </div>
-    {% endwith %}{% empty %}
-    <div class="card-body"><p style="color:var(--text-3);text-align:center;">No assignments yet.</p></div>
-    {% endfor %}
-  </div>
 
-  <div class="card">
-    <div class="card-head"><div class="card-title">Score Chart</div></div>
-    <div class="card-body">
-      {% if chart_labels %}
-      <canvas id="gradeChart" height="260"></canvas>
-      {% else %}
-      <div class="empty-state">
-        <div style="font-size:36px;margin-bottom:10px;">📊</div>
-        <p>No graded assignments yet.</p>
-      </div>
-      {% endif %}
+    <div class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel">
+        <h2 class="text-xl font-semibold text-slate-900">Score chart</h2>
+        <div class="mt-6">
+            {% if chart_labels %}
+            <canvas id="gradeChart" height="260"></canvas>
+            {% else %}
+            <div class="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500">No graded assignments yet.</div>
+            {% endif %}
+        </div>
     </div>
-  </div>
+</section>
+{% endblock %}
 
-</div>
-
+{% block extra_js %}
 {% if chart_labels %}
 <script>
-  window.GRADE_LABELS = {{ chart_labels|safe }};
-  window.GRADE_SCORES = {{ chart_scores|safe }};
-  window.GRADE_MAX    = {{ chart_max|safe }};
+    window.GRADE_LABELS = {{ chart_labels|safe }};
+    window.GRADE_SCORES = {{ chart_scores|safe }};
+    window.GRADE_MAX = {{ chart_max|safe }};
 </script>
 <script src="{% static 'js/grade_chart.js' %}"></script>
 {% endif %}

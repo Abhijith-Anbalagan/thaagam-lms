@@ -1,18 +1,149 @@
 {% extends 'base.html' %}
-{% block title %}Analytics{% endblock %}
+{% block title %}Management Analytics{% endblock %}
 {% block content %}
-<h1 class="page-title mb-24">Classroom Analytics</h1>
-<div class="card"><div class="table-wrap"><table>
-  <thead><tr><th>Classroom</th><th>Students</th><th>Assignments</th><th>Avg Score</th></tr></thead>
-  <tbody>
-  {% for row in data %}
-  <tr>
-    <td><strong>{{ row.classroom.name }}</strong></td>
-    <td>{{ row.total_students }}</td>
-    <td>{{ row.total_assignments }}</td>
-    <td class="mono">{% if row.avg_score %}{{ row.avg_score|floatformat:1 }}%{% else %}—{% endif %}</td>
-  </tr>
-  {% empty %}<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">No data yet.</td></tr>{% endfor %}
-  </tbody>
-</table></div></div>
+<h1 class="page-title mb-24">Management Analytics Dashboard</h1>
+
+<!-- Course Completion Rates -->
+<div class="card mb-32">
+  <h2 class="card-title">Course Completion Rates</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Classroom</th>
+          <th>Total Assignments</th>
+          <th>Completed Submissions</th>
+          <th>Total Expected</th>
+          <th>Completion Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for course in course_completion %}
+        <tr>
+          <td><strong>{{ course.name }}</strong></td>
+          <td>{{ course.total_assignments }}</td>
+          <td>{{ course.completed_submissions }}</td>
+          <td>{{ course.total_expected }}</td>
+          <td class="mono">{{ course.completion_rate }}%</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" style="text-align:center;color:var(--text-muted);">No course data available.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Assignment Submission Analytics -->
+<div class="card mb-32">
+  <h2 class="card-title">Assignment Submission Analytics</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Assignment</th>
+          <th>Due Date</th>
+          <th>Total Students</th>
+          <th>Submissions</th>
+          <th>Late Submissions</th>
+          <th>Submission Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for assignment in assignment_analytics %}
+        <tr>
+          <td><strong>{{ assignment.title }}</strong></td>
+          <td>{{ assignment.due_date|date:"M d, Y" }}</td>
+          <td>{{ assignment.total_students }}</td>
+          <td>{{ assignment.submissions_count }}</td>
+          <td>{{ assignment.late_submissions }}</td>
+          <td class="mono">{{ assignment.submission_rate }}%</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No assignment data available.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Engagement Metrics -->
+<div class="metrics-grid mb-32">
+  <div class="metric-card">
+    <div class="metric-value">{{ engagement_metrics.active_students }}</div>
+    <div class="metric-label">Active Students (30 days)</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value">{{ engagement_metrics.messages_sent }}</div>
+    <div class="metric-label">Messages Sent (30 days)</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value">{{ engagement_metrics.announcements_created }}</div>
+    <div class="metric-label">Announcements Created (30 days)</div>
+  </div>
+</div>
+
+<!-- Department Performance -->
+<div class="card">
+  <h2 class="card-title">Department Performance</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Classroom</th>
+          <th>Avg Score</th>
+          <th>Submission Rate</th>
+          <th>Student Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dept in department_performance %}
+        <tr>
+          <td><strong>{{ dept.name }}</strong></td>
+          <td class="mono">{% if dept.avg_score %}{{ dept.avg_score|floatformat:1 }}%{% else %}—{% endif %}</td>
+          <td class="mono">{{ dept.submission_rate|floatformat:1 }}%</td>
+          <td>{{ dept.student_count }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" style="text-align:center;color:var(--text-muted);">No department data available.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.metric-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.metric-label {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+</style>
 {% endblock %}

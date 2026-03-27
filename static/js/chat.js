@@ -79,8 +79,16 @@
     if (empty) empty.remove();
 
     const wrap = document.createElement('div');
-    const cls  = 'bubble ' + (isMine ? 'sent' : 'recv') + (optimistic ? ' optimistic' : '');
-    wrap.innerHTML = `<div class="${cls}">${escapeHtml(body)}<div class="bubble-time">${time}</div></div>`;
+    wrap.className = `mb-4 flex ${isMine ? 'justify-end' : 'justify-start'}`;
+
+    const bubbleClasses = [
+      'bubble',
+      isMine ? 'sent bg-blue-600 text-white' : 'recv border border-slate-200 bg-white text-slate-900',
+      'max-w-[75%] rounded-[1.35rem] px-4 py-3 text-sm leading-6 shadow-sm',
+      optimistic ? 'optimistic' : '',
+    ].join(' ').trim();
+
+    wrap.innerHTML = `<div class="${bubbleClasses}">${escapeHtml(body)}<div class="bubble-time mt-1 text-xs opacity-70">${time}</div></div>`;
     msgContainer.appendChild(wrap);
     msgContainer.scrollTop = msgContainer.scrollHeight;
   }
