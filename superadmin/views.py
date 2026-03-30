@@ -9,6 +9,8 @@ from .forms import SchoolForm, SchoolEditForm, AdminEditForm, GlobalCourseForm, 
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.paginator import Paginator
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 
 
 @role_required('super_admin')
@@ -226,24 +228,24 @@ def school_edit(request, school_id):
 
     return JsonResponse({'error': 'Invalid section.'}, status=400)
 
+
+
 @role_required('super_admin')
 def create_school(request):
     form = SchoolForm(request.POST or None)
     if request.method == 'POST':
         if not form.is_valid():
-            # Show form field errors (name missing etc.)
             for field, errs in form.errors.items():
                 for e in errs:
                     messages.error(request, f'{field}: {e}')
             return render(request, 'superadmin/create_school.html', {'form': form})
 
-        # Collect dynamic admin inputs — admins[1][name], admins[1][email], admins[1][password]
         admins_data = []
         for i in range(1, 4):
             name     = request.POST.get(f'admins[{i}][name]', '').strip()
             email    = request.POST.get(f'admins[{i}][email]', '').strip()
             password = request.POST.get(f'admins[{i}][password]', '').strip()
-            if email:  # only include if email is filled
+            if email:
                 admins_data.append({
                     'name':     name,
                     'email':    email,
@@ -251,12 +253,10 @@ def create_school(request):
                     'index':    i,
                 })
 
-        # Must have at least 1 admin
         if not admins_data:
             messages.error(request, 'Please add at least one admin account.')
             return render(request, 'superadmin/create_school.html', {'form': form})
 
-        # Validate each admin before saving anything
         errors = []
         for a in admins_data:
             if not a['name']:
@@ -277,9 +277,10 @@ def create_school(request):
         school = form.save()
 
         # 2. Create each admin user
-        from django.core.mail import send_mail
+        from django.core.mail import EmailMultiAlternatives   # ← changed
+        from django.template.loader import render_to_string   # ← added
+
         for a in admins_data:
-            # Generate unique username from email prefix
             base     = a['email'].split('@')[0]
             username = base
             counter  = 1
@@ -297,21 +298,33 @@ def create_school(request):
             user.set_password(a['password'])
             user.save()
 
-            send_mail(
-                'Your EduPlatform School Admin Account',
-                f"Login: {a['email']}\nPassword: {a['password']}\nURL: /login/",
-                'noreply@eduplatform.com',
-                [a['email']],
-                fail_silently=True,
+            # ── HTML email ──────────────────────────────────────
+            html_body = render_to_string('superadmin/school_invitation.html', {
+                'name'       : a['name'],
+                'email'      : a['email'],
+                'password'   : a['password'],
+                'school_name': school.name,
+                'login_url'  : 'http://127.0.0.1:8000/login/',  # ← change to live URL when deployed
+            })
+
+            msg = EmailMultiAlternatives(
+                subject    = f'🎓 Your EduPlatform Admin Account — {school.name}',
+                body       = f"Login: {a['email']}\nPassword: {a['password']}\nURL: /login/",  # plain text fallback
+                from_email = 'noreply@eduplatform.com',
+                to         = [a['email']],
             )
+            msg.attach_alternative(html_body, "text/html")
+            msg.send(fail_silently=False)
+            # ────────────────────────────────────────────────────
 
         messages.success(
             request,
             f'School "{school.name}" created with {len(admins_data)} admin account(s).'
         )
-        return redirect('superadmin_dashboard')   # ← redirects to dashboard
+        return redirect('superadmin_dashboard')
 
     return render(request, 'superadmin/create_school.html', {'form': form})
+
 
 @role_required('super_admin')
 def delete_school(request, school_id):

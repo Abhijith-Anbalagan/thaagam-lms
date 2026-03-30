@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="margin:0; padding:0; background-color:#f4f6fb; font-family:'Segoe UI', Arial, sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fb; padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="580" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); padding:40px; text-align:center;">
+              <h1 style="margin:0; color:#fff; font-size:30px; font-weight:800;">
+                EDU<span style="color:#f8f8f4;">PLATFORM</span>
+              </h1>
+              <p style="margin:8px 0 0; color:rgba(255,255,255,0.8); font-size:14px;">
+                Empowering Education Across India
+              </p>
+            </td>
+          </tr>
+
+          <!-- Badge -->
+          <tr>
+            <td align="center" style="padding:28px 40px 0;">
+              <span style="background:#f0ebff; color:#764ba2; font-size:12px; font-weight:700; padding:8px 20px; border-radius:50px; letter-spacing:1px; text-transform:uppercase;">
+                🎉 You're Invited as School Admin
+              </span>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:24px 40px 32px;">
+
+              <h2 style="margin:0 0 12px; color:#1a1a2e; font-size:22px;">
+                Hello, {{ name }}! 
+              </h2>
+              <p style="margin:0 0 24px; color:#555; font-size:15px; line-height:1.7;">
+                You have been appointed as the
+                <strong style="color:#667eea;">School Administrator</strong> for
+                <strong style="color:#1a1a2e;">{{ school_name }}</strong> on EduPlatform.
+                Here are your login credentials:
+              </p>
+
+              <!-- Credentials Card -->
+              <div style="background:linear-gradient(135deg,#f8f9ff,#f0ebff); border-left:4px solid #667eea; border-radius:10px; padding:24px; margin-bottom:28px;">
+                <p style="margin:0 0 16px; color:#888; font-size:11px; text-transform:uppercase; letter-spacing:1px; font-weight:700;">
+                  Your Login Credentials
+                </p>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding:10px 0; border-bottom:1px solid #e0d9f5;">
+                      <span style="color:#888; font-size:13px;"> School</span>
+                    </td>
+                    <td style="padding:10px 0; border-bottom:1px solid #e0d9f5; text-align:right;">
+                      <strong style="color:#1a1a2e; font-size:14px;">{{ school_name }}</strong>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:10px 0; border-bottom:1px solid #e0d9f5;">
+                      <span style="color:#888; font-size:13px;"> Name</span>
+                    </td>
+                    <td style="padding:10px 0; border-bottom:1px solid #e0d9f5; text-align:right;">
+                      <strong style="color:#1a1a2e; font-size:14px;">{{ name }}</strong>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:10px 0; border-bottom:1px solid #e0d9f5;">
+                      <span style="color:#888; font-size:13px;">Email</span>
+                    </td>
+                    <td style="padding:10px 0; border-bottom:1px solid #e0d9f5; text-align:right;">
+                      <strong style="color:#1a1a2e; font-size:14px;">{{ email }}</strong>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:10px 0;">
+                      <span style="color:#888; font-size:13px;"> Password</span>
+                    </td>
+                    <td style="padding:10px 0; text-align:right;">
+                      <strong style="color:#e53e3e; font-size:14px; font-family:monospace; background:#fff5f5; padding:3px 10px; border-radius:4px;">
+                        {{ password }}
+                      </strong>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- CTA Button -->
+              <div style="text-align:center; margin-bottom:28px;">
+                <a href="{{ login_url }}"
+                   style="display:inline-block; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; text-decoration:none; font-size:16px; font-weight:700; padding:14px 40px; border-radius:50px;">
+                  Login to Your Account →
+                </a>
+              </div>
+
+              <!-- Warning -->
+              <div style="background:#fffbeb; border:1px solid #f6d860; border-radius:8px; padding:14px 18px; margin-bottom:24px;">
+                <p style="margin:0; color:#92610a; font-size:13px; line-height:1.6;">
+                  ⚠️ <strong>Please change your password</strong> after your first login for security.
+                </p>
+              </div>
+
+              <!-- Footer note -->
+              <p style="margin:0; color:#aaa; font-size:12px; text-align:center; line-height:1.6;">
+                If you did not expect this email, please ignore it.<br>
+                © 2025 EduPlatform. All rights reserved.
+              </p>
+
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
