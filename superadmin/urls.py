@@ -25,4 +25,5 @@ urlpatterns = [
     path('videos/<int:video_id>/delete/',            views.video_delete,   name='superadmin_video_delete'),
     path('profile/', views.profile_settings, name='superadmin_profile'),
     path('api/profile/',                             views.api_profile_sync, name='api_profile_sync'),
+    path('api/schools/<int:school_id>/edit/',        views.api_school_edit, name='api_school_edit'),
 ]
