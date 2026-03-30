@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from accounts.decorators import role_required
 from .models import Assignment, Submission
+from chat.realtime import notify_students
 
 
 @role_required('teacher')
@@ -18,9 +19,20 @@ def assignment_detail(request, assignment_id):
         feedback = request.POST.get('feedback', '')
         if sub_id and score is not None:
             sub          = get_object_or_404(Submission, pk=sub_id, assignment=assignment)
+            was_ungraded = sub.score is None
             sub.score    = score
             sub.feedback = feedback
             sub.save()
+            if was_ungraded and sub.score is not None:
+                notify_students(
+                    [sub.student_id],
+                    {
+                        'type': 'grade',
+                        'classroom_id': classroom.id,
+                        'redirect_url': f'/student/classroom/{classroom.id}/grades/',
+                        'title': assignment.title,
+                    },
+                )
             messages.success(request, f'Grade saved for {sub.student.get_full_name()}.')
         return redirect('assignment_detail', assignment_id=assignment_id)
 

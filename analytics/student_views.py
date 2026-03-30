@@ -18,7 +18,7 @@ def student_analytics(request):
         'assignment_tracking': service.get_assignment_tracking(),
         'strengths_weaknesses': service.get_strengths_and_weaknesses(),
         'class_ranks': service.get_class_rank(),
-        **_student_layout_context(request.user, active_nav='analytics'),
+        **_student_layout_context(request, active_nav='analytics'),
     }
 
     return render(request, 'student/analytics.html', context)
