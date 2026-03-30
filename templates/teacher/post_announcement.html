@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--brand:#4c68d7;--brand-dark:#3a54c0;--brand-soft:#eef1fb;--dark:#1a1f36;--page-bg:#f4f5f9;--card-bg:#fff;--border:#e8e8ec;--text-1:#1a1f36;--text-2:#5a5f7a;--text-3:#9496a8;--teacher:#0f6e56;--teacher-bg:#e1f5ee;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--shadow-sm:0 1px 4px rgba(26,31,54,.06);--shadow-md:0 4px 20px rgba(26,31,54,.10);--font:'Inter',sans-serif;--nav-w:252px;--topbar-h:64px}
+:root{--brand:#4c68d7;--brand-dark:#3a54c0;--brand-soft:#eef1fb;--dark:#1a1f36;--page-bg:#f4f5f9;--card-bg:#fff;--border:#e8e8ec;--text-1:#1a1f36;--text-2:#5a5f7a;--text-3:#9496a8;--teacher:#0f6e56;--teacher-bg:#e1f5ee;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--shadow-sm:0 1px 4px rgba(26,31,54,.06);--shadow-md:0 4px 20px rgba(26,31,54,.10);--font:'Inter',sans-serif;--nav-w:252px;--topbar-h:52px}
 html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);color:var(--text-1);font-size:14px;line-height:1.6;display:flex}
 .sidebar{width:var(--nav-w);min-height:100vh;background:var(--dark);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:200;box-shadow:2px 0 16px rgba(0,0,0,.18)}
 .sidebar-logo{padding:22px 20px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.07);text-decoration:none}
@@ -83,12 +83,7 @@ html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);col
     <a class="nav-item active" href="{% url 'teacher_dashboard' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke-width="2"/></svg>Dashboard</a>
     <a class="nav-item" href="{% url 'teacher_my_classrooms' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>My Classrooms</a>
     <a class="nav-item" href="{% url 'teacher_my_learning' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>My Learning</a>
-    <a class="nav-item" href="#"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Messages</a>
-  </nav>
-  <nav class="nav-group">
-    <div class="nav-label">Tools</div>
-    <a class="nav-item" href="#"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Grade Analytics</a>
-    <a class="nav-item" href="#"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Announcements</a>
+    <a class="nav-item" href="{% url 'teacher_messages' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Announcements</a>
     <a class="nav-item" href="{% url 'profile' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke-width="2"/></svg>Settings</a>
   </nav>
   <div class="sidebar-spacer"></div>
@@ -102,15 +97,13 @@ html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);col
 
 <div class="main">
   <header class="topbar">
-    <div style="flex:1"></div>
-    <div class="search-wrap">
-      <div class="search-box">
-        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--text-3);flex-shrink:0"><circle cx="11" cy="11" r="8" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round"/></svg>
-        <input type="text" placeholder="Search students, classrooms, courses…" autocomplete="off"/>
-      </div>
+    <div class="breadcrumb" style="flex:1;display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text-3)">
+      <a href="{% url 'teacher_dashboard' %}" style="color:var(--text-3);text-decoration:none">Dashboard</a><span>›</span>
+      <a href="{% url 'teacher_announcements' %}" style="color:var(--text-3);text-decoration:none">Announcements</a><span>›</span>
+      <span style="color:var(--text-1);font-weight:600">Post Announcement</span>
     </div>
     <div class="topbar-profile">
-      <div class="topbar-av" id="profileBtn">{{ request.user.get_full_name|slice:":2"|upper }}</div>
+      <div class="topbar-av" id="profileBtn" style="{% if request.user.avatar %}padding:0;overflow:hidden;{% endif %}">{% if request.user.avatar %}<img src="{{ request.user.avatar.url }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">{% else %}{{ request.user.get_full_name|slice:":2"|upper }}{% endif %}</div>
       <div class="profile-dropdown" id="profileDropdown">
         <a href="{% url 'profile' %}" class="pd-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>View Profile</a>
         <div class="pd-divider"></div>
