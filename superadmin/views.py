@@ -4,10 +4,12 @@ from django.http import JsonResponse
 from django.db.models import Count, Q
 from accounts.decorators import role_required
 from accounts.models import User
-from .models import School, GlobalCourse, GlobalConcept, GlobalConceptVideo
+from .models import School, GlobalCourse, GlobalConcept, GlobalConceptVideo, CourseEnrollment
 from .forms import SchoolForm, SchoolEditForm, AdminEditForm, GlobalCourseForm, GlobalConceptForm
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
+from django.core.paginator import Paginator
+
 
 @role_required('super_admin')
 def profile_settings(request):
@@ -54,12 +56,13 @@ def dashboard(request):
     )
     courses = GlobalCourse.objects.prefetch_related('schools', 'concepts').order_by('-created_at')[:8]
     context = {
-        'schools':          schools,
-        'courses':          courses,
-        'total_schools':    School.objects.count(),
-        'total_students':   User.objects.filter(role='student').count(),
-        'total_teachers':   User.objects.filter(role='teacher').count(),
-        'total_classrooms': Classroom.objects.count(),
+        'schools':           schools,
+        'courses':           courses,
+        'total_schools':     School.objects.count(),
+        'total_students':    User.objects.filter(role='student').count(),
+        'total_teachers':    User.objects.filter(role='teacher').count(),
+        'total_management':  User.objects.filter(role='management').count(),
+        'total_classrooms':  Classroom.objects.count(),
     }
     return render(request, 'superadmin/dashboard.html', context)
 
@@ -72,17 +75,37 @@ def schools_list(request):
 
 @role_required('super_admin')
 def school_detail(request, school_id):
-    school     = get_object_or_404(School, pk=school_id)
-    admins     = User.objects.filter(school=school, role='school_admin').order_by('id')  # Get ALL admins
-    teachers   = User.objects.filter(school=school, role='teacher')
-    students   = User.objects.filter(school=school, role='student')
-    management = User.objects.filter(school=school, role='management')
+    school = get_object_or_404(School, pk=school_id)
+
+    # ── Admins (max 3, no pagination needed) ──
+    admins = User.objects.filter(school=school, role='school_admin').order_by('id')
+
+    # ── Paginated sections (5 per page) ──
+    def paginate(qs, param):
+        paginator = Paginator(qs, 5)
+        page = request.GET.get(param, 1)
+        return paginator.get_page(page)
+
+    teachers   = paginate(User.objects.filter(school=school, role='teacher'),     'teacher_page')
+    students   = paginate(User.objects.filter(school=school, role='student'),     'student_page')
+    management = paginate(User.objects.filter(school=school, role='management'), 'management_page')
+
     from classrooms.models import Classroom
-    classrooms = Classroom.objects.filter(school=school)
+    classrooms = paginate(Classroom.objects.filter(school=school), 'classroom_page')
+    teacher_enrollments = CourseEnrollment.objects.filter(
+        user__school=school,
+        user__role='teacher',
+    ).select_related('user', 'course').order_by('-enrolled_at')[:10]
+
     return render(request, 'superadmin/school_detail.html', {
-        'school': school, 'admins': admins,  # Changed from 'admin' to 'admins'
-        'teachers': teachers, 'students': students,
-        'management': management, 'classrooms': classrooms,
+        'school':      school,
+        'admins':      admins,
+        'admin_count': admins.count(),     # ← pass count for "Add Admin" button logic
+        'teachers':    teachers,
+        'students':    students,
+        'management':  management,
+        'classrooms':  classrooms,
+        'teacher_enrollments': teacher_enrollments,
     })
 
 
@@ -107,29 +130,99 @@ def school_edit(request, school_id):
         return JsonResponse({'error': list(form.errors.values())[0][0]}, status=400)
 
     elif section == 'admin':
-        # Get the admin ID from the request
         admin_id = request.POST.get('admin_id')
         if not admin_id:
             return JsonResponse({'error': 'Admin ID is required.'}, status=400)
-        
+
         admin = get_object_or_404(User, pk=admin_id, school=school, role='school_admin')
-        
-        # check email uniqueness if changed
+
         new_email = request.POST.get('email', '').strip()
         if new_email != admin.email and User.objects.filter(email=new_email).exclude(pk=admin.pk).exists():
             return JsonResponse({'error': 'This email is already in use.'}, status=400)
-        
-        form = AdminEditForm(request.POST, instance=admin)
-        if form.is_valid():
-            form.save()
-            return JsonResponse({
-                'success':    True,
-                'admin_id':   admin.pk,
-                'full_name':  admin.get_full_name() or admin.username,
-                'email':      admin.email,
-                'username':   admin.username,
-            })
-        return JsonResponse({'error': list(form.errors.values())[0][0]}, status=400)
+
+        # ── Split full_name → first_name + last_name ──
+        full_name  = request.POST.get('full_name', '').strip()
+        parts      = full_name.split(' ', 1)
+        admin.first_name = parts[0]
+        admin.last_name  = parts[1] if len(parts) > 1 else ''
+        admin.email      = new_email
+        admin.save()
+
+        return JsonResponse({
+            'success':   True,
+            'admin_id':  admin.pk,
+            'full_name': admin.get_full_name() or admin.username,
+            'email':     admin.email,
+        })
+
+    elif section == 'add_admin':
+        # ── Block if already 3 admins ──
+        existing_count = User.objects.filter(school=school, role='school_admin').count()
+        if existing_count >= 3:
+            return JsonResponse({'error': 'Maximum 3 admins allowed per school.'}, status=400)
+
+        name     = request.POST.get('name', '').strip()
+        email    = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '').strip()
+
+        if not name or not email or not password:
+            return JsonResponse({'error': 'Name, email and password are all required.'}, status=400)
+
+        if User.objects.filter(email=email).exists():
+            return JsonResponse({'error': f'Email "{email}" is already in use.'}, status=400)
+
+        # Generate unique username from email prefix
+        base = email.split('@')[0]
+        username = base
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f'{base}{counter}'
+            counter += 1
+
+        new_admin = User(
+            username=username,
+            email=email,
+            first_name=name,
+            role='school_admin',
+            school=school,
+        )
+        new_admin.set_password(password)
+        new_admin.save()
+
+        return JsonResponse({
+            'success':   True,
+            'admin_id':  new_admin.pk,
+            'full_name': new_admin.get_full_name() or new_admin.username,
+            'email':     new_admin.email,
+            'counter':   User.objects.filter(school=school, role='school_admin').count(),
+        })
+
+    elif section == 'edit_user':
+        user_id = request.POST.get('user_id')
+        user_role = request.POST.get('role')  # 'teacher', 'student', or 'management'
+
+        if not user_id or not user_role:
+            return JsonResponse({'error': 'User ID and role are required.'}, status=400)
+
+        user = get_object_or_404(User, pk=user_id, school=school, role=user_role)
+
+        new_email = request.POST.get('email', '').strip()
+        if new_email != user.email and User.objects.filter(email=new_email).exclude(pk=user.pk).exists():
+            return JsonResponse({'error': 'This email is already in use.'}, status=400)
+
+        full_name = request.POST.get('full_name', '').strip()
+        parts = full_name.split(' ', 1)
+        user.first_name = parts[0]
+        user.last_name = parts[1] if len(parts) > 1 else ''
+        user.email = new_email
+        user.save()
+
+        return JsonResponse({
+            'success': True,
+            'user_id': user.pk,
+            'full_name': user.get_full_name() or user.username,
+            'email': user.email,
+        })
 
     return JsonResponse({'error': 'Invalid section.'}, status=400)
 
@@ -415,6 +508,10 @@ def course_detail(request, course_id):
     # Placeholder progress — replace with real user progress later
     completed_count = 0
     progress_pct    = int((completed_count / total_concepts * 100)) if total_concepts else 0
+    teacher_enrollments = CourseEnrollment.objects.filter(
+        course=course,
+        user__role='teacher',
+    ).select_related('user', 'user__school').order_by('-enrolled_at')
 
     return render(request, 'superadmin/course_detail.html', {
         'course':                 course,
@@ -424,7 +521,8 @@ def course_detail(request, course_id):
         'advanced_concepts':      advanced_concepts,
         'total_concepts':         total_concepts,
         'progress_pct':           progress_pct,
-        'all_schools':            School.objects.filter(is_active=True),  
+        'all_schools':            School.objects.filter(is_active=True),
+        'teacher_enrollments':    teacher_enrollments,
     })
 
 
@@ -495,3 +593,19 @@ def concept_add(request, course_id):
         messages.success(request, f'Concept "{concept.header}" added.')
         return redirect('superadmin_course_detail', course_id=course.pk)
     return render(request, 'superadmin/concept_add.html', {'form': form, 'course': course})
+
+
+def api_profile_sync(request):
+    """API endpoint — returns current user's profile data for sync checking."""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    user = request.user
+    return JsonResponse({
+        'success': True,
+        'user_id': user.pk,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'email': user.email,
+        'full_name': user.get_full_name() or user.username,
+    })

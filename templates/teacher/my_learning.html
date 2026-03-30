@@ -214,6 +214,7 @@ body { font-family: var(--font); background: var(--page-bg); color: var(--text-1
   padding: 12px 16px; border-top: 1px solid var(--border);
 }
 .cc-concepts { font-family: var(--mono); font-size: 11.5px; color: var(--text-3); }
+.cc-deadline { margin-top: 10px; font-size: 12px; font-weight: 600; color: var(--teacher); }
 
 /* BUTTONS */
 .btn {
@@ -383,26 +384,32 @@ body { font-family: var(--font); background: var(--page-bg); color: var(--text-1
           <div class="course-grid" id="grid-enrolled">
             {% for course in enrolled_courses %}
             <div class="course-card" id="card-{{ course.pk }}">
-              <div class="cc-cover">
+              <a class="cc-cover" href="{% url 'teacher_course_detail' course.pk %}" style="text-decoration:none">
                 {% if course.cover_image %}<img src="{{ course.cover_image.url }}" alt="{{ course.title }}"/>{% else %}<span class="cc-cover-icon">📘</span>{% endif %}
                 <span class="cc-enrolled-badge">
                   <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   Enrolled
                 </span>
                 {% if course.is_free %}<span class="cc-free-badge">Free</span>{% endif %}
-              </div>
+              </a>
               <div class="cc-body">
-                <div class="cc-title">{{ course.title }}</div>
+                <a class="cc-title" href="{% url 'teacher_course_detail' course.pk %}" style="text-decoration:none;display:block">{{ course.title }}</a>
                 {% if course.description %}<div class="cc-desc">{{ course.description }}</div>{% endif %}
                 <div class="cc-chips">
                   {% if course.total_hours %}<span class="chip">⏱ {{ course.total_hours }}h</span>{% endif %}
                   <span class="chip">🌐 {{ course.get_language_display|default:course.language|capfirst }}</span>
                   {% if course.has_certificate %}<span class="chip">🏆 Certificate</span>{% endif %}
                 </div>
+                {% if course.enrollment and course.enrollment.deadline_at %}
+                <div class="cc-deadline">Complete by {{ course.enrollment.deadline_at|date:"M d, Y" }}</div>
+                {% endif %}
               </div>
               <div class="cc-footer">
                 <span class="cc-concepts">{{ course.concepts.count }} concept{{ course.concepts.count|pluralize }}</span>
-                <button class="btn btn-unenroll" data-course-id="{{ course.pk }}" data-enrolled="true" onclick="toggleEnroll(this)">Unenroll</button>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <a class="btn btn-enroll" href="{% url 'teacher_course_detail' course.pk %}">Open</a>
+                  <button class="btn btn-unenroll" data-course-id="{{ course.pk }}" data-enrolled="true" onclick="toggleEnroll(this)">Unenroll</button>
+                </div>
               </div>
             </div>
             {% endfor %}
@@ -532,6 +539,37 @@ function toggleEnroll(btn) {
       updateCounts(-1);
       showToast('Unenrolled.', 'success');
     }
+  })
+  .catch(() => {
+    btn.classList.remove('btn-loading');
+    btn.textContent = origText;
+    showToast('Something went wrong.', 'error');
+  });
+}
+
+function toggleEnroll(btn) {
+  const courseId = btn.dataset.courseId;
+  const origText = btn.textContent;
+  btn.classList.add('btn-loading');
+  btn.textContent = '...';
+
+  fetch(`/teacher/my-learning/${courseId}/enroll/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/json' },
+  })
+  .then(r => r.json())
+  .then(data => {
+    btn.classList.remove('btn-loading');
+    if (data.enrolled) {
+      showToast(`Enrolled successfully. Deadline: ${data.deadline}`, 'success');
+      setTimeout(() => {
+        window.location.href = data.course_url || `/teacher/my-learning/${courseId}/`;
+      }, 700);
+      return;
+    }
+
+    showToast('Unenrolled.', 'success');
+    setTimeout(() => window.location.reload(), 500);
   })
   .catch(() => {
     btn.classList.remove('btn-loading');

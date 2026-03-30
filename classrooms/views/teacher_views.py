@@ -8,6 +8,7 @@ from accounts.decorators import role_required
 from classrooms.models import Classroom, CourseContent
 from classrooms.forms import ClassroomForm
 from assignments.models import Assignment, Submission
+from chat.realtime import notify_students
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -281,7 +282,7 @@ def post_announcement(request):
         if title and body and classroom_ids:
             for cid in classroom_ids:
                 classroom = get_object_or_404(Classroom, pk=cid, teacher=request.user)
-                Announcement.objects.create(
+                announcement = Announcement.objects.create(
                     posted_by=request.user,
                     school=request.user.school,
                     classroom=classroom,
@@ -290,6 +291,15 @@ def post_announcement(request):
                     meet_link=meet_link,
                     is_pinned=is_pinned,
                     target='students',
+                )
+                notify_students(
+                    classroom.students.values_list('id', flat=True),
+                    {
+                        'type': 'announcement',
+                        'classroom_id': classroom.id,
+                        'redirect_url': f'/student/classroom/{classroom.id}/announce/',
+                        'title': announcement.title,
+                    },
                 )
             messages.success(request, 'Announcement posted successfully.')
             return redirect('teacher_dashboard')
@@ -311,7 +321,7 @@ def classroom_announce(request, classroom_id):
         meet_link = request.POST.get('meet_link', '').strip()
         is_pinned = bool(request.POST.get('is_pinned'))
         if title and body:
-            Announcement.objects.create(
+            announcement = Announcement.objects.create(
                 posted_by=request.user,
                 school=request.user.school,
                 classroom=classroom,
@@ -320,6 +330,15 @@ def classroom_announce(request, classroom_id):
                 meet_link=meet_link,
                 is_pinned=is_pinned,
                 target='students',
+            )
+            notify_students(
+                classroom.students.values_list('id', flat=True),
+                {
+                    'type': 'announcement',
+                    'classroom_id': classroom.id,
+                    'redirect_url': f'/student/classroom/{classroom.id}/announce/',
+                    'title': announcement.title,
+                },
             )
             messages.success(request, 'Announcement posted.')
         else:
@@ -432,6 +451,15 @@ def classroom_classwork(request, classroom_id):
         assignment           = form.save(commit=False)
         assignment.classroom = classroom
         assignment.save()
+        notify_students(
+            classroom.students.values_list('id', flat=True),
+            {
+                'type': 'assignment',
+                'classroom_id': classroom.id,
+                'redirect_url': f'/student/classroom/{classroom.id}/classwork/',
+                'title': assignment.title,
+            },
+        )
         messages.success(request, f'Assignment "{assignment.title}" created.')
         return redirect('teacher_classroom_classwork', classroom_id=classroom_id)
 
@@ -505,9 +533,20 @@ def classroom_grade(request, classroom_id):
             sub          = get_object_or_404(
                 Submission, id=sub_id, assignment__classroom=classroom
             )
+            was_ungraded = sub.score is None
             sub.score    = score
             sub.feedback = feedback
             sub.save()
+            if was_ungraded and sub.score is not None:
+                notify_students(
+                    [sub.student_id],
+                    {
+                        'type': 'grade',
+                        'classroom_id': classroom.id,
+                        'redirect_url': f'/student/classroom/{classroom.id}/grades/',
+                        'title': sub.assignment.title,
+                    },
+                )
             messages.success(request, 'Grade saved.')
             return redirect('teacher_classroom_grade', classroom_id=classroom_id)
 
@@ -589,17 +628,55 @@ def my_learning(request):
         status='published'
     ).prefetch_related('concepts', 'enrollments')
 
-    enrolled_ids = set(
-        CourseEnrollment.objects.filter(user=request.user).values_list('course_id', flat=True)
-    )
+    enrollments = {
+        enrollment.course_id: enrollment
+        for enrollment in CourseEnrollment.objects.filter(user=request.user).select_related('course')
+    }
+    enrolled_ids = set(enrollments.keys())
 
-    enrolled_courses   = [c for c in available_courses if c.pk in enrolled_ids]
-    unenrolled_courses = [c for c in available_courses if c.pk not in enrolled_ids]
+    enrolled_courses = []
+    unenrolled_courses = []
+    for course in available_courses:
+        course.enrollment = enrollments.get(course.pk)
+        if course.pk in enrolled_ids:
+            enrolled_courses.append(course)
+        else:
+            unenrolled_courses.append(course)
 
     return render(request, 'teacher/my_learning.html', {
         'enrolled_courses':   enrolled_courses,
         'unenrolled_courses': unenrolled_courses,
         'enrolled_ids':       enrolled_ids,
+        'enrollments':        enrollments,
+    })
+
+
+@role_required('teacher')
+def teacher_course_detail(request, course_id):
+    from superadmin.models import CourseEnrollment
+
+    enrollment = get_object_or_404(
+        CourseEnrollment.objects.select_related('course'),
+        user=request.user,
+        course_id=course_id,
+        course__schools=request.user.school,
+        course__status='published',
+    )
+    course = enrollment.course
+    concepts = course.concepts.prefetch_related('videos').all()
+
+    beginner_concepts = concepts.filter(level='beginner')
+    intermediate_concepts = concepts.filter(level='intermediate')
+    advanced_concepts = concepts.filter(level='advanced')
+
+    return render(request, 'teacher/course_detail.html', {
+        'course': course,
+        'concepts': concepts,
+        'beginner_concepts': beginner_concepts,
+        'intermediate_concepts': intermediate_concepts,
+        'advanced_concepts': advanced_concepts,
+        'enrollment': enrollment,
+        'total_concepts': concepts.count(),
     })
 
 
@@ -625,7 +702,11 @@ def course_enroll(request, course_id):
         enrollment.delete()
         return JsonResponse({'enrolled': False})
 
-    return JsonResponse({'enrolled': True})
+    return JsonResponse({
+        'enrolled': True,
+        'deadline': timezone.localtime(enrollment.deadline_at).strftime('%b %d, %Y'),
+        'course_url': f'/teacher/my-learning/{course.pk}/',
+    })
 
 
 # ── Messages ─────────────────────────────────────────────────────────────────
@@ -674,14 +755,17 @@ def classroom_chat(request, classroom_id):
     classroom = _get_classroom(request, classroom_id)
     from chat.models import Message
 
-    student_id       = request.GET.get('student')
+    students = classroom.students.all().order_by('first_name', 'username', 'email')
+    student_id = request.GET.get('student')
     selected_student = None
-    chat_messages    = []
+    chat_messages = []
 
     if student_id:
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        selected_student = get_object_or_404(User, pk=student_id)
+        selected_student = get_object_or_404(students, pk=student_id)
+    elif students.exists():
+        selected_student = students.first()
+
+    if selected_student:
         chat_messages = Message.objects.filter(
             classroom=classroom,
             sender__in=[request.user, selected_student],
@@ -691,6 +775,7 @@ def classroom_chat(request, classroom_id):
 
     return render(request, 'teacher/classroom_chat.html', {
         'classroom':        classroom,
+        'students':         students,
         'selected_student': selected_student,
         'chat_messages':    chat_messages,
         'active_tab':       'chat',
