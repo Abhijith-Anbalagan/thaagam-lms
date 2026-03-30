@@ -16,6 +16,7 @@ urlpatterns = [
 
     # Student Analytics
     path('student/', views.student_analytics, name='student_analytics'),
+    path('student/assignment-tracking/', views.student_assignment_tracking, name='student_assignment_tracking'),
 
     # Legacy URLs for backward compatibility
     path('school/', views.school_admin_analytics, name='school_analytics'),

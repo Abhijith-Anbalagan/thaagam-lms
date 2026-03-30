@@ -80,6 +80,10 @@
                     <i data-lucide="book-open" class="h-5 w-5"></i>
                     <span class="font-medium">My Courses</span>
                 </a>
+                <a href="{% url 'student_my_learning' %}" class="student-nav-link {% if active_nav == 'my_learning' %}active{% endif %} flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
+                    <i data-lucide="graduation-cap" class="h-5 w-5"></i>
+                    <span class="font-medium">My Learning</span>
+                </a>
                 <a href="{% url 'student_classroom_classwork' nav_classroom.id %}" class="student-nav-link {% if active_nav == 'classwork' %}active{% endif %} flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
                     <i data-lucide="clipboard-list" class="h-5 w-5"></i>
                     <span class="font-medium">Assignments</span>
@@ -348,15 +352,27 @@
                         }
                         counts.unread += 1;
                         updateItem('messageNotificationItem', 'messageNotificationText', counts.unread, 'unread message', data.redirect_url);
+                        const unreadElement = document.getElementById('unread-count');
+                        if (unreadElement) {
+                            unreadElement.textContent = counts.unread;
+                        }
                     } else if (data.type === 'announcement') {
                         counts.announcements += 1;
                         updateItem('announcementNotificationItem', 'announcementNotificationText', counts.announcements, 'new announcement', data.redirect_url);
                     } else if (data.type === 'assignment') {
                         counts.assignments += 1;
                         updateItem('assignmentNotificationItem', 'assignmentNotificationText', counts.assignments, 'new assignment', data.redirect_url);
+                        const pendingElement = document.getElementById('pending-count');
+                        if (pendingElement) {
+                            pendingElement.textContent = counts.assignments;
+                        }
                     } else if (data.type === 'grade') {
                         counts.grades += 1;
                         updateItem('gradeNotificationItem', 'gradeNotificationText', counts.grades, 'graded assignment', data.redirect_url);
+                        const gradedElement = document.getElementById('graded-count');
+                        if (gradedElement) {
+                            gradedElement.textContent = counts.grades;
+                        }
                     }
                     updateBellTitle();
                     lucide.createIcons();
@@ -372,8 +388,79 @@
             updateItem('gradeNotificationItem', 'gradeNotificationText', counts.grades, 'graded assignment');
             updateBellTitle();
             connectNotifications();
+            connectPresence();
+            refreshDashboardCounts();
+            setInterval(refreshDashboardCounts, 10000);
+
+            function refreshDashboardCounts() {
+                fetch('{% url "student_unread_count" %}')
+                    .then(r => r.json())
+                    .then(data => {
+                        const unreadElement = document.getElementById('unread-count');
+                        if (unreadElement && data.unread !== undefined) unreadElement.textContent = data.unread;
+                    });
+                fetch('{% url "student_pending_count" %}')
+                    .then(r => r.json())
+                    .then(data => {
+                        const pendingElement = document.getElementById('pending-count');
+                        if (pendingElement && data.pending !== undefined) pendingElement.textContent = data.pending;
+                    });
+                fetch('{% url "student_graded_count" %}')
+                    .then(r => r.json())
+                    .then(data => {
+                        const gradedElement = document.getElementById('graded-count');
+                        if (gradedElement && data.graded !== undefined) gradedElement.textContent = data.graded;
+                    });
+                fetch('{% url "student_course_count" %}')
+                    .then(r => r.json())
+                    .then(data => {
+                        const courseElement = document.getElementById('course-count');
+                        if (courseElement && data.courses !== undefined) courseElement.textContent = data.courses;
+                    });
+            }
         })();
+
+        function connectPresence() {
+            const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+            const presenceSocket = new WebSocket(`${proto}://${window.location.host}/ws/presence/`);
+
+            presenceSocket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'presence.update' && data.user_role === 'teacher') {
+                    const statusText = document.getElementById('status-text');
+                    const statusDot = document.getElementById('status-dot');
+                    if (statusText && statusDot) {
+                        // check only current teacher in classroom chat page
+                        if (window.CHAT_RECEIVER_ID && Number(window.CHAT_RECEIVER_ID) === Number(data.user_id)) {
+                            if (data.status === 'online') {
+                                statusText.textContent = 'Online';
+                                statusDot.style.backgroundColor = '#22c55e';
+                            } else {
+                                statusText.textContent = 'Offline';
+                                statusDot.style.backgroundColor = '#ef4444';
+                            }
+                        }
+                    }
+                }
+                if (data.type === 'presence.snapshot' && data.online_teachers) {
+                    const teacherId = window.CHAT_RECEIVER_ID ? Number(window.CHAT_RECEIVER_ID) : null;
+                    if (teacherId != null && data.online_teachers.includes(teacherId)) {
+                        const statusText = document.getElementById('status-text');
+                        const statusDot = document.getElementById('status-dot');
+                        if (statusText && statusDot) {
+                            statusText.textContent = 'Online';
+                            statusDot.style.backgroundColor = '#22c55e';
+                        }
+                    }
+                }
+            };
+
+            presenceSocket.onclose = () => {
+                setTimeout(connectPresence, 3000);
+            };
+        }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

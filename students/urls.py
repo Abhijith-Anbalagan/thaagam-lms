@@ -12,4 +12,10 @@ urlpatterns = [
     path('classroom/<int:class_id>/grades/',        views.classroom_grade,     name='student_classroom_grade'),
     path('classroom/<int:class_id>/chat/',          views.classroom_chat,      name='student_classroom_chat'),
     path('api/unread-count/',                       views.unread_count_api,    name='student_unread_count'),
+    path('api/pending-count/',                      views.pending_count_api,   name='student_pending_count'),
+    path('api/graded-count/',                       views.graded_count_api,    name='student_graded_count'),
+    path('api/course-count/',                       views.course_count_api,    name='student_course_count'),
+    path('api/course-enroll/<int:course_id>/',      views.course_enroll,       name='student_course_enroll'),
+    path('my-learning/',                            views.my_learning,         name='student_my_learning'),
+    path('my-learning/<int:course_id>/',            views.course_detail,       name='student_course_detail'),
 ]
