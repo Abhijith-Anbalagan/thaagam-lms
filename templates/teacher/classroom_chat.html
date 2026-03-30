@@ -1,4 +1,5 @@
 {% load static %}
+{% load tz %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -49,7 +50,7 @@ html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);col
 .chat-student-item.active{background:var(--brand-soft);color:var(--brand);font-weight:600}
 .chat-main{display:flex;flex-direction:column}
 .chat-header{padding:14px 20px;font-size:14px;font-weight:600;border-bottom:1px solid var(--border);background:var(--page-bg)}
-.chat-messages{flex:1;padding:20px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;min-height:360px}
+.chat-messages{flex:1;padding:20px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;height:26rem;max-height:26rem}
 .bubble{max-width:70%;padding:10px 14px;border-radius:var(--radius-lg);font-size:13.5px;line-height:1.5;position:relative}
 .bubble.sent{background:var(--brand);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
 .bubble.recv{background:var(--page-bg);color:var(--text-1);align-self:flex-start;border-bottom-left-radius:4px;border:1px solid var(--border)}
@@ -116,9 +117,9 @@ html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);col
       <!-- Student list -->
       <div class="chat-sidebar">
         <div class="chat-sidebar-head">Students</div>
-        {% for student in classroom.students.all %}
+        {% for student in students %}
         <a href="?student={{ student.pk }}" class="chat-student-item {% if selected_student.pk == student.pk %}active{% endif %}">
-          {{ student.get_full_name }}
+          {{ student.get_full_name|default:student.username }}
         </a>
         {% empty %}
         <div style="padding:16px;font-size:13px;color:var(--text-3)">No students yet.</div>
@@ -127,7 +128,7 @@ html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);col
       <!-- Chat window -->
       <div class="chat-main">
         {% if selected_student %}
-        <div class="chat-header">💬 Chat with {{ selected_student.get_full_name }}
+        <div class="chat-header">💬 Chat with {{ selected_student.get_full_name|default:selected_student.username }}
           <span style="float:right;display:flex;align-items:center;gap:6px;font-weight:400;">
             <span id="chat-status-dot" style="width:9px;height:9px;border-radius:50%;background:#ef4444;display:inline-block;"></span>
             <span id="chat-status-text" style="font-size:12px;color:var(--text-3);">Reconnecting…</span>
@@ -137,7 +138,7 @@ html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);col
           {% for msg in chat_messages %}
           <div class="bubble {% if msg.sender == request.user %}sent{% else %}recv{% endif %}">
             {{ msg.body }}
-            <div class="bubble-time">{{ msg.created_at|date:"H:i" }}</div>
+            <div class="bubble-time">{{ msg.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
           </div>
           {% empty %}
           <div class="empty-state"><div class="icon">💬</div><p>No messages yet.</p></div>
