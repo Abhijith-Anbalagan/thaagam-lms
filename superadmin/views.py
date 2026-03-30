@@ -9,8 +9,6 @@ from .forms import SchoolForm, SchoolEditForm, AdminEditForm, GlobalCourseForm, 
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.paginator import Paginator
-from django.core.mail import EmailMultiAlternatives
-from django.template.loader import render_to_string
 
 
 @role_required('super_admin')
@@ -228,24 +226,24 @@ def school_edit(request, school_id):
 
     return JsonResponse({'error': 'Invalid section.'}, status=400)
 
-
-
 @role_required('super_admin')
 def create_school(request):
     form = SchoolForm(request.POST or None)
     if request.method == 'POST':
         if not form.is_valid():
+            # Show form field errors (name missing etc.)
             for field, errs in form.errors.items():
                 for e in errs:
                     messages.error(request, f'{field}: {e}')
             return render(request, 'superadmin/create_school.html', {'form': form})
 
+        # Collect dynamic admin inputs — admins[1][name], admins[1][email], admins[1][password]
         admins_data = []
         for i in range(1, 4):
             name     = request.POST.get(f'admins[{i}][name]', '').strip()
             email    = request.POST.get(f'admins[{i}][email]', '').strip()
             password = request.POST.get(f'admins[{i}][password]', '').strip()
-            if email:
+            if email:  # only include if email is filled
                 admins_data.append({
                     'name':     name,
                     'email':    email,
@@ -253,10 +251,12 @@ def create_school(request):
                     'index':    i,
                 })
 
+        # Must have at least 1 admin
         if not admins_data:
             messages.error(request, 'Please add at least one admin account.')
             return render(request, 'superadmin/create_school.html', {'form': form})
 
+        # Validate each admin before saving anything
         errors = []
         for a in admins_data:
             if not a['name']:
@@ -277,10 +277,9 @@ def create_school(request):
         school = form.save()
 
         # 2. Create each admin user
-        from django.core.mail import EmailMultiAlternatives   # ← changed
-        from django.template.loader import render_to_string   # ← added
-
+        from django.core.mail import send_mail
         for a in admins_data:
+            # Generate unique username from email prefix
             base     = a['email'].split('@')[0]
             username = base
             counter  = 1
@@ -298,33 +297,21 @@ def create_school(request):
             user.set_password(a['password'])
             user.save()
 
-            # ── HTML email ──────────────────────────────────────
-            html_body = render_to_string('superadmin/school_invitation.html', {
-                'name'       : a['name'],
-                'email'      : a['email'],
-                'password'   : a['password'],
-                'school_name': school.name,
-                'login_url'  : 'http://127.0.0.1:8000/login/',  # ← change to live URL when deployed
-            })
-
-            msg = EmailMultiAlternatives(
-                subject    = f'🎓 Your EduPlatform Admin Account — {school.name}',
-                body       = f"Login: {a['email']}\nPassword: {a['password']}\nURL: /login/",  # plain text fallback
-                from_email = 'noreply@eduplatform.com',
-                to         = [a['email']],
+            send_mail(
+                'Your EduPlatform School Admin Account',
+                f"Login: {a['email']}\nPassword: {a['password']}\nURL: /login/",
+                'noreply@eduplatform.com',
+                [a['email']],
+                fail_silently=True,
             )
-            msg.attach_alternative(html_body, "text/html")
-            msg.send(fail_silently=False)
-            # ────────────────────────────────────────────────────
 
         messages.success(
             request,
             f'School "{school.name}" created with {len(admins_data)} admin account(s).'
         )
-        return redirect('superadmin_dashboard')
+        return redirect('superadmin_dashboard')   # ← redirects to dashboard
 
     return render(request, 'superadmin/create_school.html', {'form': form})
-
 
 @role_required('super_admin')
 def delete_school(request, school_id):
@@ -606,6 +593,168 @@ def concept_add(request, course_id):
         messages.success(request, f'Concept "{concept.header}" added.')
         return redirect('superadmin_course_detail', course_id=course.pk)
     return render(request, 'superadmin/concept_add.html', {'form': form, 'course': course})
+
+
+@role_required('super_admin')
+def api_school_edit(request, school_id):
+    """API endpoint for AJAX school/admin/user edits on school detail page."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST required'}, status=400)
+    
+    school = get_object_or_404(School, pk=school_id)
+    section = request.POST.get('section', '').strip()
+    
+    # ── EDIT SCHOOL ──
+    if section == 'school':
+        name = request.POST.get('name', '').strip()
+        address = request.POST.get('address', '').strip()
+        if not name:
+            return JsonResponse({'success': False, 'error': 'School name required'})
+        school.name = name
+        school.address = address
+        school.save()
+        return JsonResponse({'success': True, 'name': school.name, 'address': school.address})
+    
+    # ── EDIT ADMIN ──
+    elif section == 'admin':
+        admin_id = request.POST.get('admin_id')
+        full_name = request.POST.get('full_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        if not admin_id or not full_name or not email:
+            return JsonResponse({'success': False, 'error': 'Missing required fields'})
+        
+        admin = get_object_or_404(User, pk=admin_id, role='school_admin', school=school)
+        first, last = (full_name.split(' ', 1) if ' ' in full_name else (full_name, ''))
+        admin.first_name = first
+        admin.last_name = last
+        admin.email = email
+        admin.save()
+        return JsonResponse({
+            'success': True,
+            'admin_id': admin.pk,
+            'full_name': admin.get_full_name(),
+            'email': admin.email
+        })
+    
+    # ── ADD ADMIN ──
+    elif section == 'add_admin':
+        name = request.POST.get('name', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        
+        if not name or not email or not password:
+            return JsonResponse({'success': False, 'error': 'Missing required fields'})
+        
+        if User.objects.filter(email=email).exists():
+            return JsonResponse({'success': False, 'error': 'Email already in use'})
+        
+        admin_count = User.objects.filter(school=school, role='school_admin').count()
+        if admin_count >= 3:
+            return JsonResponse({'success': False, 'error': 'Maximum 3 admins allowed'})
+        
+        first, last = (name.split(' ', 1) if ' ' in name else (name, ''))
+        admin = User.objects.create_user(
+            username=email,
+            email=email,
+            first_name=first,
+            last_name=last,
+            password=password,
+            role='school_admin',
+            school=school
+        )
+        
+        admin_count = User.objects.filter(school=school, role='school_admin').count()
+        return JsonResponse({
+            'success': True,
+            'admin_id': admin.pk,
+            'full_name': admin.get_full_name(),
+            'email': admin.email,
+            'counter': admin_count
+        })
+    
+    # ── DELETE ADMIN ──
+    elif section == 'delete_admin':
+        admin_id = request.POST.get('admin_id')
+        if not admin_id:
+            return JsonResponse({'success': False, 'error': 'Admin ID required'})
+        
+        admin = get_object_or_404(User, pk=admin_id, role='school_admin', school=school)
+        admin.delete()
+        admin_count = User.objects.filter(school=school, role='school_admin').count()
+        return JsonResponse({'success': True, 'counter': admin_count})
+    
+    # ── EDIT USER (Teacher/Student/Management) ──
+    elif section == 'edit_user':
+        user_id = request.POST.get('user_id')
+        role = request.POST.get('role', '').strip()
+        full_name = request.POST.get('full_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        
+        if not user_id or not role or not full_name or not email:
+            return JsonResponse({'success': False, 'error': 'Missing required fields'})
+        
+        user = get_object_or_404(User, pk=user_id, role=role, school=school)
+        first, last = (full_name.split(' ', 1) if ' ' in full_name else (full_name, ''))
+        user.first_name = first
+        user.last_name = last
+        user.email = email
+        user.save()
+        
+        return JsonResponse({
+            'success': True,
+            'user_id': user.pk,
+            'full_name': user.get_full_name(),
+            'email': user.email
+        })
+    
+    # ── DELETE USER ──
+    elif section == 'delete_user':
+        user_id = request.POST.get('user_id')
+        role = request.POST.get('role', '').strip()
+        
+        if not user_id or not role:
+            return JsonResponse({'success': False, 'error': 'Missing required fields'})
+        
+        user = get_object_or_404(User, pk=user_id, role=role, school=school)
+        user.delete()
+        return JsonResponse({'success': True})
+    
+    # ── ADD USER (Teacher/Student/Management) ──
+    elif section == 'add_user':
+        role = request.POST.get('role', '').strip()
+        name = request.POST.get('name', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        
+        if not role or not name or not email or not password:
+            return JsonResponse({'success': False, 'error': 'Missing required fields'})
+        
+        if role not in ['teacher', 'student', 'management']:
+            return JsonResponse({'success': False, 'error': 'Invalid role'})
+        
+        if User.objects.filter(email=email).exists():
+            return JsonResponse({'success': False, 'error': 'Email already in use'})
+        
+        first, last = (name.split(' ', 1) if ' ' in name else (name, ''))
+        user = User.objects.create_user(
+            username=email,
+            email=email,
+            first_name=first,
+            last_name=last,
+            password=password,
+            role=role,
+            school=school
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'user_id': user.pk,
+            'full_name': user.get_full_name(),
+            'email': user.email,
+            'role': role
+        })
+    
+    return JsonResponse({'success': False, 'error': 'Invalid section'})
 
 
 def api_profile_sync(request):

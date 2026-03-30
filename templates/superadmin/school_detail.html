@@ -2,177 +2,327 @@
 {% block title %}{{ school.name }} — EduPlatform{% endblock %}
 
 {% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
-  *, *::before, *::after { box-sizing: border-box; }
-
-  /* ── Layout ── */
-  .sd-header {
-    display: flex; align-items: flex-start; justify-content: space-between;
-    margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --brand:       #7c3aed;
+    --brand-dark:  #6d28d9;
+    --brand-soft:  #f3e8ff;
+    --dark:        #1a1f36;
+    --page-bg:     #f4f5f9;
+    --card-bg:     #ffffff;
+    --border:      #e8e8ec;
+    --text-1:      #1a1f36;
+    --text-2:      #5a5f7a;
+    --text-3:      #9496a8;
+    --admin:       #7c3aed;
+    --admin-bg:    #f3e8ff;
+    --success:     #0f6e56;
+    --success-bg:  #e1f5ee;
+    --danger:      #b03030;
+    --danger-bg:   #fce8e8;
+    --radius-sm:   6px;
+    --radius-md:   10px;
+    --radius-lg:   14px;
+    --radius-xl:   20px;
+    --shadow-sm:   0 1px 4px rgba(26,31,54,.06);
+    --shadow-md:   0 4px 20px rgba(26,31,54,.10);
+    --shadow-lg:   0 12px 40px rgba(26,31,54,.15);
+    --font:        'Inter', sans-serif;
   }
-  .sd-header-left .page-title { font-size: 22px; font-weight: 600; color: var(--brand-dark); margin: 0; }
-  .sd-header-left .header-meta { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
-  .sd-header-left .created-at { font-size: 12px; color: var(--text-muted); }
-  .sd-header-right { display: flex; gap: 8px; flex-shrink: 0; }
 
-  .sd-grid { display: grid; grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr); gap: 16px; }
+  body { 
+    font-family: var(--font); background: var(--page-bg); color: var(--text-1); 
+    font-size: 13.5px; line-height: 1.6; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ── Page Header ── */
+  .sd-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px; flex-wrap: wrap; gap: 16px; padding-bottom: 20px; border-bottom: 1.5px solid var(--border);
+  }
+  .sd-header-left { flex: 1; min-width: 200px; }
+  .sd-header-left .page-title { 
+    font-size: 28px; font-weight: 700; color: var(--text-1); margin: 0; letter-spacing: -0.6px;
+  }
+  .sd-header-left .header-meta { 
+    display: flex; align-items: center; gap: 14px; margin-top: 10px; flex-wrap: wrap; 
+  }
+  .sd-header-left .created-at { 
+    font-size: 13px; color: var(--text-3); font-weight: 500;
+  }
+  .sd-header-right { display: flex; gap: 10px; flex-shrink: 0; }
+
+  .sd-grid { display: grid; grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr); gap: 20px; }
 
   /* ── Card ── */
-  .sd-card { background: #fff; border: 0.5px solid rgba(0,0,0,.12); border-radius: 14px; overflow: hidden; margin-bottom: 16px; }
+  .sd-card { 
+    background: #fff; border: 1.5px solid var(--border); border-radius: var(--radius-lg); 
+    overflow: hidden; margin-bottom: 20px; box-shadow: var(--shadow-sm);
+    transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .sd-card:hover { box-shadow: var(--shadow-md); border-color: var(--brand-soft); }
 
   /* ── Card headers ── */
-  .sd-card-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 0.5px solid rgba(0,0,0,.08); gap: 8px; flex-wrap: wrap; }
-  .ch-gray   { background: #F1EFE8; }
-  .ch-purple { background: #EEEDFE; }
-  .ch-blue   { background: #E6F1FB; }
-  .ch-teal   { background: #E1F5EE; }
-  .ch-amber  { background: #FAEEDA; }
-  .ch-coral  { background: #FAECE7; }
+  .sd-card-header { 
+    display: flex; align-items: center; justify-content: space-between; 
+    padding: 16px 20px; border-bottom: 1.5px solid var(--border); gap: 12px; flex-wrap: wrap;
+    background: linear-gradient(135deg, #fafbfc 0%, #ffffff 100%);
+  }
+  .ch-gray   { background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); }
+  .ch-purple { background: linear-gradient(135deg, #f3e8ff 0%, #ffffff 100%); }
+  .ch-blue   { background: linear-gradient(135deg, #e6f1fb 0%, #ffffff 100%); }
+  .ch-teal   { background: linear-gradient(135deg, #e1f5ee 0%, #ffffff 100%); }
+  .ch-amber  { background: linear-gradient(135deg, #faeeda 0%, #ffffff 100%); }
+  .ch-coral  { background: linear-gradient(135deg, #faece7 0%, #ffffff 100%); }
 
-  .ch-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; flex-wrap: wrap; }
+  .ch-title { 
+    display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700;
+    flex-wrap: wrap; letter-spacing: -0.3px;
+  }
   .ch-title.gray   { color: #444441; }
-  .ch-title.purple { color: #3C3489; }
-  .ch-title.blue   { color: #0C447C; }
+  .ch-title.purple { color: #6d28d9; }
+  .ch-title.blue   { color: #0c447c; }
   .ch-title.teal   { color: #085041; }
   .ch-title.amber  { color: #633806; }
-  .ch-title.coral  { color: #712B13; }
+  .ch-title.coral  { color: #712b13; }
 
   /* ── Count pills ── */
-  .cpill { font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; white-space: nowrap; }
-  .cpill-purple { background: #CECBF6; color: #26215C; }
-  .cpill-blue   { background: #B5D4F4; color: #042C53; }
-  .cpill-teal   { background: #9FE1CB; color: #04342C; }
-  .cpill-amber  { background: #FAC775; color: #412402; }
-  .cpill-coral  { background: #F5C4B3; color: #4A1B0C; }
-  .cpill-gray   { background: #D3D1C7; color: #2C2C2A; }
+  .cpill { 
+    font-size: 11.5px; font-weight: 700; padding: 4px 12px; border-radius: 20px; 
+    white-space: nowrap; backdrop-filter: blur(10px); letter-spacing: -0.2px;
+  }
+  .cpill-purple { background: rgba(206, 203, 246, 0.6); color: #26215c; }
+  .cpill-blue   { background: rgba(181, 212, 244, 0.6); color: #042c53; }
+  .cpill-teal   { background: rgba(159, 225, 203, 0.6); color: #04342c; }
+  .cpill-amber  { background: rgba(250, 199, 117, 0.6); color: #412402; }
+  .cpill-coral  { background: rgba(245, 196, 179, 0.6); color: #4a1b0c; }
+  .cpill-gray   { background: rgba(211, 209, 199, 0.6); color: #2c2c2a; }
 
   /* ── Admin limit badge ── */
-  .limit-badge { font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; white-space: nowrap; }
-  .limit-ok   { background: #EAF3DE; color: #3B6D11; }
-  .limit-full { background: #FCEBEB; color: #A32D2D; }
+  .limit-badge { 
+    font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; 
+    white-space: nowrap; letter-spacing: -0.2px;
+  }
+  .limit-ok   { background: linear-gradient(135deg, #EAF3DE 0%, #f5f9f0 100%); color: #3b6d11; }
+  .limit-full { background: linear-gradient(135deg, #FCEBEB 0%, #fdf2f2 100%); color: #a32d2d; }
 
   /* ── Card body ── */
-  .sd-card-body { padding: 16px 18px; }
+  .sd-card-body { padding: 20px; }
 
   /* ── Buttons ── */
   .btn-sd-ghost {
-    background: transparent; border: 0.5px solid rgba(0,0,0,.25); border-radius: 8px;
-    padding: 6px 14px; font-size: 13px; cursor: pointer; color: var(--brand-dark, #1a1a2e);
-    transition: background .15s; white-space: nowrap;
+    background: var(--card-bg); border: 1.5px solid var(--border); border-radius: var(--radius-md);
+    padding: 8px 16px; font-size: 13.5px; cursor: pointer; color: var(--text-2); font-weight: 600;
+    transition: all 0.2s ease; white-space: nowrap; font-family: var(--font);
   }
-  .btn-sd-ghost:hover { background: rgba(0,0,0,.05); }
+  .btn-sd-ghost:hover { 
+    background: var(--page-bg); border-color: var(--text-2); color: var(--text-1); 
+    transform: translateY(-2px); box-shadow: var(--shadow-sm);
+  }
+  .btn-sd-ghost:active { transform: translateY(0); }
 
   .btn-sd-primary {
-    background: #185FA5; border: none; border-radius: 8px;
-    padding: 6px 14px; font-size: 13px; cursor: pointer; color: #fff; font-weight: 600;
-    transition: background .15s; white-space: nowrap;
+    background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%);
+    border: 1.5px solid var(--brand-dark); border-radius: var(--radius-md);
+    padding: 8px 16px; font-size: 13.5px; cursor: pointer; color: #fff; font-weight: 600;
+    transition: all 0.2s ease; white-space: nowrap; font-family: var(--font);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
   }
-  .btn-sd-primary:hover { background: #0C447C; }
-  .btn-sd-primary:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-sd-primary:hover { 
+    transform: translateY(-2px); box-shadow: 0 6px 20px rgba(124, 58, 237, 0.3);
+  }
+  .btn-sd-primary:active { transform: translateY(0); }
+  .btn-sd-primary:disabled { opacity: 0.5; pointer-events: none; cursor: not-allowed; transform: none; }
 
   .btn-sd-edit {
-    background: transparent; border: 0.5px solid rgba(0,0,0,.22); border-radius: 6px;
-    padding: 4px 10px; font-size: 11px; cursor: pointer; color: var(--text-muted, #666);
-    transition: all .15s; white-space: nowrap; flex-shrink: 0;
+    background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 6px 10px; font-size: 12px; cursor: pointer; color: var(--text-2);
+    transition: all 0.15s; white-space: nowrap; flex-shrink: 0; font-family: var(--font);
   }
-  .btn-sd-edit:hover { background: rgba(0,0,0,.05); color: var(--brand-dark, #1a1a2e); }
+  .btn-sd-edit:hover { 
+    background: var(--brand-soft); color: var(--brand-dark); border-color: var(--brand); 
+  }
+  .btn-sd-edit:active { background: var(--brand-soft); }
 
   /* ── School info table ── */
   .info-tbl { width: 100%; border-collapse: collapse; }
-  .info-tbl td { padding: 10px 0; border-bottom: 0.5px solid rgba(0,0,0,.08); font-size: 13px; vertical-align: middle; }
+  .info-tbl td { padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; vertical-align: middle; }
   .info-tbl tr:last-child td { border-bottom: none; }
-  .info-tbl .lbl { color: var(--text-muted, #888); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; width: 32%; }
-  .info-tbl .val { color: var(--brand-dark, #1a1a2e); font-weight: 500; }
+  .info-tbl .lbl { color: var(--text-3); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; width: 32%; }
+  .info-tbl .val { color: var(--text-1); font-weight: 600; font-size: 14px; }
 
   /* ── Avatar ── */
-  .av { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
-  .av-purple { background: #EEEDFE; color: #3C3489; }
-  .av-blue   { background: #E6F1FB; color: #0C447C; }
-  .av-teal   { background: #E1F5EE; color: #085041; }
-  .av-amber  { background: #FAEEDA; color: #633806; }
-  .av-coral  { background: #FAECE7; color: #712B13; }
-  .av-pink   { background: #FBEAF0; color: #72243E; }
-  .av-green  { background: #EAF3DE; color: #27500A; }
+  .av { 
+    width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+    font-size: 13px; font-weight: 700; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  }
+  .av-purple { background: linear-gradient(135deg, #EEEDFE 0%, #f5f1ff 100%); color: #6d28d9; }
+  .av-blue   { background: linear-gradient(135deg, #E6F1FB 0%, #f0f8ff 100%); color: #0c447c; }
+  .av-teal   { background: linear-gradient(135deg, #E1F5EE 0%, #e8f7f3 100%); color: #085041; }
+  .av-amber  { background: linear-gradient(135deg, #FAEEDA 0%, #fdf5f0 100%); color: #633806; }
+  .av-coral  { background: linear-gradient(135deg, #FAECE7 0%, #fdf6f2 100%); color: #712b13; }
+  .av-pink   { background: linear-gradient(135deg, #FBEAF0 0%, #fdf2f8 100%); color: #72243e; }
+  .av-green  { background: linear-gradient(135deg, #EAF3DE 0%, #f5f9f0 100%); color: #27500a; }
 
   /* ── Admin cards ── */
-  .admin-row { display: flex; align-items: center; gap: 11px; padding: 11px 14px; border: 0.5px solid rgba(0,0,0,.1); border-radius: 10px; margin-bottom: 8px; background: #fff; transition: box-shadow .15s; }
+  .admin-row { 
+    display: flex; align-items: center; gap: 12px; padding: 14px 16px; 
+    border: 1.5px solid var(--border); border-radius: var(--radius-md); margin-bottom: 10px; 
+    background: #fff; transition: all 0.2s ease;
+  }
   .admin-row:last-child { margin-bottom: 0; }
-  .admin-row:hover { box-shadow: 0 2px 8px rgba(0,0,0,.07); }
-  .av-num { width: 22px; height: 22px; border-radius: 50%; background: #CECBF6; color: #26215C; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+  .admin-row:hover { box-shadow: var(--shadow-sm); border-color: var(--brand-soft); }
+  .av-num { 
+    width: 24px; height: 24px; border-radius: 50%; background: #CECBF6; 
+    color: #26215c; display: flex; align-items: center; justify-content: center; 
+    font-size: 11px; font-weight: 800; flex-shrink: 0;
+  }
   .admin-info { flex: 1; min-width: 0; }
-  .admin-name { font-size: 13px; font-weight: 600; color: var(--brand-dark, #1a1a2e); }
-  .admin-email { font-size: 11px; color: var(--text-muted, #888); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .admin-name { font-size: 13.5px; font-weight: 700; color: var(--text-1); letter-spacing: -0.2px; }
+  .admin-email { font-size: 12px; color: var(--text-3); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* ── User table (teachers / students) ── */
-  .user-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .user-tbl thead tr { border-bottom: 0.5px solid rgba(0,0,0,.1); }
-  .user-tbl th { font-size: 11px; font-weight: 600; color: var(--text-muted, #888); text-transform: uppercase; letter-spacing: .04em; padding: 8px 10px; text-align: left; }
+  .user-tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .user-tbl thead tr { border-bottom: 1.5px solid var(--border); }
+  .user-tbl th { 
+    font-size: 11.5px; font-weight: 800; color: var(--text-3); text-transform: uppercase; 
+    letter-spacing: 0.5px; padding: 12px 12px; text-align: left; background: #fafbfc;
+  }
   .user-tbl th:first-child { padding-left: 18px; }
-  .user-tbl td { padding: 10px 10px; border-bottom: 0.5px solid rgba(0,0,0,.06); vertical-align: middle; }
+  .user-tbl td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
   .user-tbl td:first-child { padding-left: 18px; }
   .user-tbl tr:last-child td { border-bottom: none; }
-  .user-tbl tr:hover td { background: rgba(0,0,0,.02); }
+  .user-tbl tbody tr { transition: background-color 0.2s ease; }
+  .user-tbl tbody tr:hover td { background: linear-gradient(90deg, #fafbfc 0%, transparent 100%); }
   .u-cell { display: flex; align-items: center; gap: 10px; }
-  .u-name { font-size: 13px; font-weight: 500; color: var(--brand-dark, #1a1a2e); }
-  .u-sub { font-size: 11px; color: var(--text-muted, #888); margin-top: 1px; }
-  .u-email-cell { font-size: 12px; color: var(--text-muted, #888); }
+  .u-name { font-size: 13.5px; font-weight: 700; color: var(--text-1); letter-spacing: -0.2px; }
+  .u-sub  { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+  .u-email-cell { font-size: 12.5px; color: var(--text-2); }
 
   /* ── Grade / class pills ── */
-  .grade-pill { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; }
+  .grade-pill { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: -0.2px; }
 
   /* ── Classroom tiles ── */
-  .cls-tile { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 0.5px solid rgba(0,0,0,.1); border-radius: 8px; margin-bottom: 7px; transition: background .15s; gap: 8px; }
+  .cls-tile { 
+    display: flex; align-items: center; justify-content: space-between; 
+    padding: 12px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-md); 
+    margin-bottom: 9px; transition: all 0.2s; gap: 10px; background: #fff;
+  }
   .cls-tile:last-child { margin-bottom: 0; }
-  .cls-tile:hover { background: rgba(250,238,218,.35); }
-  .cls-tile-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .cls-icon { width: 32px; height: 32px; border-radius: 8px; background: #FAEEDA; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
-  .cls-name { font-size: 13px; font-weight: 500; color: var(--brand-dark, #1a1a2e); }
-  .cls-meta { font-size: 11px; color: var(--text-muted, #888); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cls-count { font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; background: #FAEEDA; color: #633806; white-space: nowrap; flex-shrink: 0; }
+  .cls-tile:hover { background: linear-gradient(135deg, #faeeda10 0%, #faeeda05 100%); border-color: #FAC775; box-shadow: var(--shadow-sm); }
+  .cls-tile-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .cls-icon { 
+    width: 36px; height: 36px; border-radius: var(--radius-md); 
+    background: linear-gradient(135deg, #FAEEDA 0%, #fdf5f0 100%); display: flex; align-items: center; 
+    justify-content: center; font-size: 16px; flex-shrink: 0;
+  }
+  .cls-name { font-size: 13.5px; font-weight: 700; color: var(--text-1); letter-spacing: -0.2px; }
+  .cls-meta { font-size: 11.5px; color: var(--text-3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cls-count { 
+    font-size: 11.5px; font-weight: 800; padding: 3px 12px; border-radius: 20px; 
+    background: linear-gradient(135deg, #FAEEDA 0%, #fdf5f0 100%); color: #633806; 
+    white-space: nowrap; flex-shrink: 0; letter-spacing: -0.2px;
+  }
 
   /* ── Management tiles ── */
-  .mgmt-tile { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 0.5px solid rgba(0,0,0,.1); border-radius: 8px; margin-bottom: 7px; transition: background .15s; }
+  .mgmt-tile { 
+    display: flex; align-items: center; gap: 12px; padding: 12px 14px; 
+    border: 1.5px solid var(--border); border-radius: var(--radius-md); margin-bottom: 9px; 
+    transition: all 0.2s; background: #fff;
+  }
   .mgmt-tile:last-child { margin-bottom: 0; }
-  .mgmt-tile:hover { background: rgba(250,236,231,.3); }
-  .mgmt-name { font-size: 13px; font-weight: 500; color: var(--brand-dark, #1a1a2e); }
-  .mgmt-role { font-size: 11px; color: var(--text-muted, #888); margin-top: 1px; }
+  .mgmt-tile:hover { background: linear-gradient(135deg, #faece710 0%, #faece705 100%); border-color: #F5C4B3; box-shadow: var(--shadow-sm); }
+  .mgmt-name { font-size: 13.5px; font-weight: 700; color: var(--text-1); letter-spacing: -0.2px; }
+  .mgmt-role { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
 
   /* ── Quick stats ── */
-  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-  .stat-card { background: #F8F7F4; border-radius: 10px; padding: 14px 16px; }
-  .stat-label { font-size: 11px; color: var(--text-muted, #888); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; margin-bottom: 6px; }
-  .stat-value { font-size: 24px; font-weight: 700; color: var(--brand-dark, #1a1a2e); }
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .stat-card { 
+    background: linear-gradient(135deg, #f8f9fb 0%, #ffffff 100%); border-radius: var(--radius-md); 
+    padding: 18px; border: 1.5px solid var(--border); transition: all 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--brand-soft); }
+  .stat-label { font-size: 11.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 800; margin-bottom: 8px; }
+  .stat-value { font-size: 26px; font-weight: 800; color: var(--text-1); letter-spacing: -0.5px; }
 
   /* ── Pagination ── */
-  .pag { display: flex; align-items: center; justify-content: space-between; padding: 10px 18px 14px; border-top: 0.5px solid rgba(0,0,0,.08); gap: 8px; }
-  .pag-info { font-size: 11px; color: var(--text-muted, #888); white-space: nowrap; }
-  .pag-btns { display: flex; gap: 6px; flex-shrink: 0; }
-  .pag-btn { font-size: 11px; padding: 4px 12px; border-radius: 6px; border: 0.5px solid rgba(0,0,0,.22); background: transparent; cursor: pointer; color: var(--brand-dark, #1a1a2e); text-decoration: none; display: inline-block; transition: background .15s; white-space: nowrap; }
-  .pag-btn:hover { background: rgba(0,0,0,.05); }
-  .pag-btn.off { opacity: .35; pointer-events: none; cursor: default; }
+  .pag { 
+    display: flex; align-items: center; justify-content: space-between; 
+    padding: 14px 18px; border-top: 1.5px solid var(--border); gap: 10px;
+  }
+  .pag-info { font-size: 12px; color: var(--text-3); white-space: nowrap; font-weight: 600; }
+  .pag-btns { display: flex; gap: 8px; flex-shrink: 0; }
+  .pag-btn { 
+    font-size: 12px; padding: 6px 14px; border-radius: var(--radius-md); 
+    border: 1px solid var(--border); background: var(--card-bg); cursor: pointer; 
+    color: var(--text-2); text-decoration: none; display: inline-block; 
+    transition: all 0.15s; white-space: nowrap; font-weight: 600;
+  }
+  .pag-btn:hover { background: var(--page-bg); border-color: var(--text-2); color: var(--text-1); }
+  .pag-btn.off { opacity: 0.4; pointer-events: none; cursor: default; }
 
   /* ── Badges ── */
-  .badge-success { background: #EAF3DE; color: #3B6D11; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; }
-  .badge-danger  { background: #FCEBEB; color: #A32D2D; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; }
+  .badge-success { 
+    background: linear-gradient(135deg, #EAF3DE 0%, #f5f9f0 100%); color: #3b6d11; 
+    font-size: 11.5px; font-weight: 800; padding: 4px 12px; border-radius: 20px; 
+    display: inline-flex; align-items: center; gap: 4px; letter-spacing: -0.2px;
+  }
+  .badge-danger  { 
+    background: linear-gradient(135deg, #FCEBEB 0%, #fdf2f2 100%); color: #a32d2d; 
+    font-size: 11.5px; font-weight: 800; padding: 4px 12px; border-radius: 20px; 
+    display: inline-flex; align-items: center; gap: 4px; letter-spacing: -0.2px;
+  }
 
   /* ── Modal ── */
-  .sd-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1000; overflow-y: auto; padding: 60px 16px; }
-  .sd-modal-content { background: #fff; border-radius: 16px; max-width: 480px; margin: 0 auto; padding: 28px; box-shadow: 0 20px 60px rgba(0,0,0,.18); }
-  .sd-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-  .sd-modal-title { font-size: 17px; font-weight: 700; color: var(--brand-dark, #1a1a2e); margin: 0; }
-  .sd-modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted, #888); line-height: 1; padding: 2px; }
-  .sd-modal-close:hover { color: var(--brand-dark, #1a1a2e); }
-  .sd-form-group { margin-bottom: 16px; }
-  .sd-form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted, #888); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px; }
-  .sd-form-control { width: 100%; padding: 9px 12px; border: 0.5px solid rgba(0,0,0,.22); border-radius: 8px; font-size: 14px; color: var(--brand-dark, #1a1a2e); background: #fff; outline: none; transition: border-color .15s; }
-  .sd-form-control:focus { border-color: #185FA5; box-shadow: 0 0 0 3px rgba(24,95,165,.1); }
-  textarea.sd-form-control { resize: vertical; }
-  .sd-modal-actions { display: flex; gap: 10px; margin-top: 22px; }
-  .sd-error-box { background: #FCEBEB; color: #A32D2D; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 14px; display: none; }
-  .sd-required { color: #A32D2D; margin-left: 2px; }
+  .sd-modal { 
+    display: none; position: fixed; inset: 0; background: rgba(26, 31, 54, 0.5); 
+    z-index: 1000; overflow-y: auto; padding: 60px 16px; backdrop-filter: blur(2px);
+  }
+  .sd-modal-content { 
+    background: #fff; border-radius: var(--radius-xl); max-width: 500px; 
+    margin: 0 auto; padding: 28px; box-shadow: var(--shadow-lg);
+    animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .sd-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+  .sd-modal-title { font-size: 17px; font-weight: 800; color: var(--text-1); margin: 0; letter-spacing: -0.3px; }
+  .sd-modal-close { 
+    background: var(--page-bg); border: 1.5px solid var(--border); font-size: 24px; 
+    cursor: pointer; color: var(--text-3); line-height: 1; padding: 4px; border-radius: var(--radius-sm);
+    transition: all 0.15s; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+  }
+  .sd-modal-close:hover { color: var(--text-1); background: var(--brand-soft); border-color: var(--brand); }
+  
+  .sd-form-group { margin-bottom: 18px; }
+  .sd-form-label { 
+    display: block; font-size: 12.5px; font-weight: 800; color: var(--text-1); 
+    text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 7px;
+  }
+  .sd-form-control { 
+    width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-md); 
+    font-size: 14px; color: var(--text-1); background: #fff; outline: none; 
+    transition: all 0.2s; font-family: var(--font); font-weight: 500;
+  }
+  .sd-form-control:focus { 
+    border-color: var(--brand); box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1); 
+    background: linear-gradient(135deg, #ffffff 0%, #f9f8ff 100%);
+  }
+  textarea.sd-form-control { resize: vertical; min-height: 90px; }
+  
+  .sd-modal-actions { display: flex; gap: 12px; margin-top: 26px; flex-wrap: wrap; }
+  .sd-modal-actions .btn-sd-primary, .sd-modal-actions .btn-sd-ghost { flex: 1; text-align: center; }
+  
+  .sd-error-box { 
+    background: linear-gradient(135deg, #FCEBEB 0%, #fdf2f2 100%); color: #a32d2d; 
+    border: 1.5px solid #f4b8b8; border-radius: var(--radius-md); padding: 12px 14px; 
+    font-size: 13px; margin-bottom: 16px; display: none; font-weight: 600;
+  }
+  .sd-required { color: #a32d2d; margin-left: 3px; font-weight: 900; }
 
   /* ── Empty state ── */
-  .empty-state { text-align: center; padding: 24px 0; color: var(--text-muted, #888); font-size: 13px; }
+  .empty-state { text-align: center; padding: 32px 0; color: var(--text-3); font-size: 13.5px; font-weight: 600; }
 
   /* ══════════════════════════════
      MOBILE RESPONSIVE OVERRIDES
@@ -412,6 +562,7 @@
           &#128105;&#8205;&#127979; Teachers
           <span class="cpill cpill-blue">{{ teachers.paginator.count }} total</span>
         </span>
+        <button class="btn-sd-primary" onclick="openAddUserModal('teacher')" style="font-size:12px;padding:6px 10px;">+ Add teacher</button>
       </div>
       {% if teachers %}
         <table class="user-tbl">
@@ -420,7 +571,7 @@
               <th>Name</th>
               <th>Email</th>
               <th>Status</th>
-              <th style="width:60px;"></th>
+              <th style="width:80px;text-align:center;">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -447,6 +598,7 @@
               </td>
               <td style="text-align:center;">
                 <button class="btn-sd-edit" onclick="openEditModal('teacher', {{ teacher.pk }}, '{{ teacher.get_full_name|escapejs|default:teacher.username|escapejs }}', '{{ teacher.email|escapejs }}')" title="Edit">✏️</button>
+                <button class="btn-sd-edit" onclick="deleteUser('teacher', {{ teacher.pk }}, '{{ teacher.get_full_name|escapejs|default:teacher.username|escapejs }}')" title="Delete" style="color:#A32D2D;">🗑</button>
               </td>
             </tr>
             {% endfor %}
@@ -481,6 +633,7 @@
           &#127891; Students
           <span class="cpill cpill-teal">{{ students.paginator.count }} total</span>
         </span>
+        <button class="btn-sd-primary" onclick="openAddUserModal('student')" style="font-size:12px;padding:6px 10px;">+ Add student</button>
       </div>
       {% if students %}
         <table class="user-tbl">
@@ -489,7 +642,7 @@
               <th>Name</th>
               <th>Email</th>
               <th>Status</th>
-              <th style="width:60px;"></th>
+              <th style="width:80px;text-align:center;">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -516,6 +669,7 @@
               </td>
               <td style="text-align:center;">
                 <button class="btn-sd-edit" onclick="openEditModal('student', {{ student.pk }}, '{{ student.get_full_name|escapejs|default:student.username|escapejs }}', '{{ student.email|escapejs }}')" title="Edit">✏️</button>
+                <button class="btn-sd-edit" onclick="deleteUser('student', {{ student.pk }}, '{{ student.get_full_name|escapejs|default:student.username|escapejs }}')" title="Delete" style="color:#A32D2D;">🗑</button>
               </td>
             </tr>
             {% endfor %}
@@ -622,6 +776,7 @@
           &#9881; Management
           <span class="cpill cpill-coral">{{ management.paginator.count }} total</span>
         </span>
+        <button class="btn-sd-primary" onclick="openAddUserModal('management')" style="font-size:12px;padding:6px 10px;">+ Add user</button>
       </div>
       {% if management %}
         <div class="sd-card-body">
@@ -634,7 +789,10 @@
               <div class="mgmt-name" id="mgmt-name-{{ mgmt.pk }}">{{ mgmt.get_full_name|default:mgmt.username }}</div>
               <div class="mgmt-role" id="mgmt-email-{{ mgmt.pk }}">{{ mgmt.email }}</div>
             </div>
-            <button class="btn-sd-edit" onclick="openEditModal('management', {{ mgmt.pk }}, '{{ mgmt.get_full_name|escapejs|default:mgmt.username|escapejs }}', '{{ mgmt.email|escapejs }}')" title="Edit">✏️</button>
+            <div style="display:flex;gap:6px;">
+              <button class="btn-sd-edit" onclick="openEditModal('management', {{ mgmt.pk }}, '{{ mgmt.get_full_name|escapejs|default:mgmt.username|escapejs }}', '{{ mgmt.email|escapejs }}')" title="Edit">✏️</button>
+              <button class="btn-sd-edit" onclick="deleteUser('management', {{ mgmt.pk }}, '{{ mgmt.get_full_name|escapejs|default:mgmt.username|escapejs }}')" title="Delete" style="color:#A32D2D;">🗑</button>
+            </div>
           </div>
           {% endfor %}
         </div>
@@ -778,6 +936,36 @@
   </div>
 </div>
 
+<!-- Add User Modal (Teacher/Student/Management) -->
+<div class="sd-modal" id="add-user-modal">
+  <div class="sd-modal-content">
+    <div class="sd-modal-header">
+      <h3 class="sd-modal-title">➕ Add <span id="add-user-type-label">user</span></h3>
+      <button class="sd-modal-close" onclick="closeModal('add-user-modal')" aria-label="Close">×</button>
+    </div>
+    <form id="add-user-form">
+      <input type="hidden" id="add-user-type">
+      <div class="sd-form-group">
+        <label class="sd-form-label">Full name<span class="sd-required">*</span></label>
+        <input type="text" id="add-user-name" class="sd-form-control" placeholder="e.g. John Doe" required>
+      </div>
+      <div class="sd-form-group">
+        <label class="sd-form-label">Email<span class="sd-required">*</span></label>
+        <input type="email" id="add-user-email" class="sd-form-control" placeholder="user@school.com" required>
+      </div>
+      <div class="sd-form-group">
+        <label class="sd-form-label">Password<span class="sd-required">*</span></label>
+        <input type="password" id="add-user-password" class="sd-form-control" placeholder="Min 8 characters" required minlength="8">
+      </div>
+      <div id="add-user-error" class="sd-error-box"></div>
+      <div class="sd-modal-actions">
+        <button type="submit" class="btn-sd-primary" id="add-user-submit">Create user</button>
+        <button type="button" class="btn-sd-ghost" onclick="closeModal('add-user-modal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 {% endblock %}
 
 
@@ -832,7 +1020,7 @@ document.getElementById('edit-school-form').addEventListener('submit', function(
   e.preventDefault();
   const name    = document.getElementById('edit-school-name').value.trim();
   const address = document.getElementById('edit-school-address').value.trim();
-  fetch(`/superadmin/schools/${SCHOOL_ID}/edit/`, {
+  fetch(`/superadmin/api/schools/${SCHOOL_ID}/edit/`, {
     method: 'POST',
     headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `section=school&name=${encodeURIComponent(name)}&address=${encodeURIComponent(address)}`,
@@ -872,7 +1060,7 @@ document.getElementById('edit-admin-form').addEventListener('submit', function(e
   const errBox   = document.getElementById('edit-admin-error');
   const fullName = document.getElementById('edit-admin-full-name').value.trim();
   const email    = document.getElementById('edit-admin-email').value.trim();
-  fetch(`/superadmin/schools/${SCHOOL_ID}/edit/`, {
+  fetch(`/superadmin/api/schools/${SCHOOL_ID}/edit/`, {
     method: 'POST',
     headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `section=admin&admin_id=${currentAdminId}&full_name=${encodeURIComponent(fullName)}&email=${encodeURIComponent(email)}`,
@@ -919,7 +1107,7 @@ document.getElementById('add-admin-form').addEventListener('submit', function(e)
   const submitBtn = document.getElementById('add-admin-submit');
   submitBtn.disabled    = true;
   submitBtn.textContent = 'Creating…';
-  fetch(`/superadmin/schools/${SCHOOL_ID}/edit/`, {
+  fetch(`/superadmin/api/schools/${SCHOOL_ID}/edit/`, {
     method: 'POST',
     headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `section=add_admin&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
@@ -995,7 +1183,7 @@ document.getElementById('edit-user-form').addEventListener('submit', function(e)
   if (!userType || !userId) {
     errBox.textContent = 'Missing user information.'; errBox.style.display = 'block'; return;
   }
-  fetch(`/superadmin/schools/${SCHOOL_ID}/edit/`, {
+  fetch(`/superadmin/api/schools/${SCHOOL_ID}/edit/`, {
     method: 'POST',
     headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `section=edit_user&user_id=${userId}&role=${userType}&full_name=${encodeURIComponent(fullName)}&email=${encodeURIComponent(email)}`,
@@ -1015,5 +1203,88 @@ document.getElementById('edit-user-form').addEventListener('submit', function(e)
   })
   .catch(() => { errBox.textContent = 'Network error. Please try again.'; errBox.style.display = 'block'; });
 });
+
+/* ══════════════════════════
+   ADD USER (Teacher/Student/Management)
+══════════════════════════ */
+function openAddUserModal(userType) {
+  const typeLabels = { 'teacher': 'teacher', 'student': 'student', 'management': 'management user' };
+  document.getElementById('add-user-type-label').textContent = typeLabels[userType] || 'user';
+  document.getElementById('add-user-type').value = userType;
+  document.getElementById('add-user-form').reset();
+  const errBox = document.getElementById('add-user-error');
+  if (errBox) { errBox.textContent = ''; errBox.style.display = 'none'; }
+  openModal('add-user-modal');
+}
+
+document.getElementById('add-user-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const errBox    = document.getElementById('add-user-error');
+  errBox.style.display = 'none';
+  const userType  = document.getElementById('add-user-type').value;
+  const name      = document.getElementById('add-user-name').value.trim();
+  const email     = document.getElementById('add-user-email').value.trim();
+  const password  = document.getElementById('add-user-password').value;
+  const submitBtn = document.getElementById('add-user-submit');
+  
+  if (!userType | !name || !email || !password) {
+    errBox.textContent = 'Missing required fields';
+    errBox.style.display = 'block';
+    return;
+  }
+  
+  submitBtn.disabled    = true;
+  submitBtn.textContent = 'Creating…';
+  
+  fetch(`/superadmin/api/schools/${SCHOOL_ID}/edit/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `section=add_user&role=${userType}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
+  })
+  .then(r => r.json())
+  .then(d => {
+    submitBtn.disabled    = false;
+    submitBtn.textContent = 'Create user';
+    if (d.success) {
+      closeModal('add-user-modal');
+      setTimeout(() => location.reload(), 800);
+    } else {
+      errBox.textContent   = d.error || 'Failed to create user.';
+      errBox.style.display = 'block';
+    }
+  })
+  .catch(err => {
+    submitBtn.disabled    = false;
+    submitBtn.textContent = 'Create user';
+    errBox.textContent   = 'Network error: ' + err.message;
+    errBox.style.display = 'block';
+  });
+});
+
+/* ══════════════════════════
+   DELETE USER (Teacher/Student/Management)
+══════════════════════════ */
+function deleteUser(userType, userId, userName) {
+  if (!confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
+    return;
+  }
+  
+  fetch(`/superadmin/api/schools/${SCHOOL_ID}/edit/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `section=delete_user&user_id=${userId}&role=${userType}`,
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) {
+      const row = document.getElementById(`${userType}-row-${userId}`);
+      if (row) row.remove();
+      setTimeout(() => location.reload(), 500);
+    } else {
+      alert(d.error || 'Failed to delete user.');
+    }
+  })
+  .catch(() => alert('Network error. Please try again.'));
+}
 </script>
 {% endblock %}
