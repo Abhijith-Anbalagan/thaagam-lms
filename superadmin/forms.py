@@ -3,27 +3,11 @@ from accounts.models import User
 from .models import School, GlobalCourse, GlobalConcept, GlobalConceptVideo
 
 
-# superadmin/forms.py
-
 class SchoolForm(forms.ModelForm):
-    # Admin 1 — REQUIRED
-    # admin_name     = forms.CharField(max_length=150, label='Admin 1 Name')
-    # admin_email    = forms.EmailField(label='Admin 1 Email')
-    # admin_password = forms.CharField(widget=forms.PasswordInput, label='Admin 1 Password')
-
-    # # Admin 2 — OPTIONAL
-    # admin2_name     = forms.CharField(max_length=150, label='Admin 2 Name', required=False)
-    # admin2_email    = forms.EmailField(label='Admin 2 Email', required=False)
-    # admin2_password = forms.CharField(widget=forms.PasswordInput, label='Admin 2 Password', required=False)
-
-    # # Admin 3 — OPTIONAL
-    # admin3_name     = forms.CharField(max_length=150, label='Admin 3 Name', required=False)
-    # admin3_email    = forms.EmailField(label='Admin 3 Email', required=False)
-    # admin3_password = forms.CharField(widget=forms.PasswordInput, label='Admin 3 Password', required=False)
-
     class Meta:
         model  = School
         fields = ['name', 'address']
+
 
 class SchoolEditForm(forms.ModelForm):
     class Meta:
@@ -55,10 +39,40 @@ class GlobalCourseForm(forms.ModelForm):
 
 
 class GlobalConceptForm(forms.ModelForm):
+    """
+    Form for the 5-step wizard concept creation.
+    Step 1: header, h3_course
+    Step 2: level (handled in template), videos (handled separately)
+    Step 3: pdf
+    Step 4: quiz
+    Step 5: assignment
+    """
     class Meta:
         model  = GlobalConcept
-        fields = ['header', 'h3_course', 'level', 'pdf', 'quiz', 'assignment']  # added level
+        fields = ['header', 'h3_course', 'level', 'pdf', 'quiz', 'assignment']
         widgets = {
-            'quiz':       forms.Textarea(attrs={'rows': 4}),
-            'assignment': forms.Textarea(attrs={'rows': 4}),
+            'header': forms.TextInput(attrs={
+                'class': 'fc',
+                'placeholder': 'e.g., Introduction to Variables'
+            }),
+            'h3_course': forms.TextInput(attrs={
+                'class': 'fc',
+                'placeholder': 'e.g., Programming Fundamentals'
+            }),
+            'quiz': forms.Textarea(attrs={
+                'rows': 4,
+                'style': 'display:none'  # Hidden - managed by JavaScript
+            }),
+            'assignment': forms.Textarea(attrs={
+                'rows': 4,
+                'style': 'display:none'  # Hidden - managed by JavaScript
+            }),
         }
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make level not required in form since it's handled by template
+        self.fields['level'].required = False
+        self.fields['pdf'].required = False
+        self.fields['quiz'].required = False
+        self.fields['assignment'].required = False

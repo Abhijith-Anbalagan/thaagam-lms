@@ -305,6 +305,7 @@
 {% block content %}
 
 <!-- ═══ PAGE HEADER ═══ -->
+{% csrf_token %}
 <div class="sd-header">
   <div class="sd-header-left">
     <h1 class="page-title">{{ school.name }}</h1>
@@ -783,19 +784,25 @@
 
 {% block extra_js %}
 <script>
-const CSRF      = '{{ csrf_token }}';
+// Get CSRF token from the hidden input created by {% csrf_token %}
+const CSRF      = document.querySelector('[name="csrfmiddlewaretoken"]')?.value || '{{ csrf_token }}';
 const SCHOOL_ID = {{ school.pk }};
 let adminCount  = {{ admin_count }};
+
+console.log('CSRF Token:', CSRF ? '✓ Available' : '✗ Missing');
+console.log('School ID:', SCHOOL_ID);
 
 const AV_CLASSES = ['av-purple','av-blue','av-teal','av-amber','av-coral','av-pink','av-green'];
 function avClass(idx) { return AV_CLASSES[idx % AV_CLASSES.length]; }
 
 /* ── Modal helpers ── */
 function openModal(id) {
+  console.log('Opening modal:', id);
   document.getElementById(id).style.display = 'block';
   document.body.style.overflow = 'hidden';
 }
 function closeModal(id) {
+  console.log('Closing modal:', id);
   document.getElementById(id).style.display = 'none';
   document.body.style.overflow = '';
 }
@@ -830,15 +837,23 @@ function updateAdminUI(count) {
 ══════════════════════════ */
 document.getElementById('edit-school-form').addEventListener('submit', function(e) {
   e.preventDefault();
+  console.log('Edit school form submitted');
   const name    = document.getElementById('edit-school-name').value.trim();
   const address = document.getElementById('edit-school-address').value.trim();
-  fetch(`/superadmin/schools/${SCHOOL_ID}/edit/`, {
+  console.log('Sending data:', { name, address, SCHOOL_ID, CSRF: CSRF ? '✓' : '✗' });
+  
+  fetch(`/superadmin/api/schools/${SCHOOL_ID}/edit/`, {
     method: 'POST',
     headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `section=school&name=${encodeURIComponent(name)}&address=${encodeURIComponent(address)}`,
   })
-  .then(r => r.json())
+  .then(r => {
+    console.log('Response status:', r.status);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+  })
   .then(d => {
+    console.log('Response data:', d);
     if (d.success) {
       document.getElementById('school-name').textContent    = d.name;
       document.getElementById('school-address').textContent = d.address || '—';
@@ -848,7 +863,10 @@ document.getElementById('edit-school-form').addEventListener('submit', function(
       alert(d.error || 'Failed to update school.');
     }
   })
-  .catch(() => alert('Network error. Please try again.'));
+  .catch(err => {
+    console.error('Fetch error:', err);
+    alert('Network error: ' + err.message + '. Please try again.');
+  });
 });
 
 /* ══════════════════════════
@@ -857,6 +875,7 @@ document.getElementById('edit-school-form').addEventListener('submit', function(
 let currentAdminId = null;
 
 function openEditAdmin(adminId, fullName, email) {
+  console.log('openEditAdmin called:', { adminId, fullName, email });
   currentAdminId = adminId;
   document.getElementById('edit-admin-id').value        = adminId;
   document.getElementById('edit-admin-full-name').value = fullName || '';
@@ -868,17 +887,29 @@ function openEditAdmin(adminId, fullName, email) {
 
 document.getElementById('edit-admin-form').addEventListener('submit', function(e) {
   e.preventDefault();
-  if (!currentAdminId) return;
+  console.log('Edit admin form submitted');
+  if (!currentAdminId) {
+    console.error('No admin ID set');
+    return;
+  }
   const errBox   = document.getElementById('edit-admin-error');
   const fullName = document.getElementById('edit-admin-full-name').value.trim();
   const email    = document.getElementById('edit-admin-email').value.trim();
-  fetch(`/superadmin/schools/${SCHOOL_ID}/edit/`, {
+  
+  console.log('Sending admin edit:', { currentAdminId, fullName, email });
+  
+  fetch(`/superadmin/api/schools/${SCHOOL_ID}/edit/`, {
     method: 'POST',
     headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `section=admin&admin_id=${currentAdminId}&full_name=${encodeURIComponent(fullName)}&email=${encodeURIComponent(email)}`,
   })
-  .then(r => r.json())
+  .then(r => {
+    console.log('Edit admin response status:', r.status);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+  })
   .then(d => {
+    console.log('Edit admin response:', d);
     if (d.success) {
       const nameEl  = document.getElementById(`admin-name-${d.admin_id}`);
       const emailEl = document.getElementById(`admin-email-${d.admin_id}`);
@@ -892,13 +923,18 @@ document.getElementById('edit-admin-form').addEventListener('submit', function(e
       errBox.style.display = 'block';
     }
   })
-  .catch(() => { errBox.textContent = 'Network error.'; errBox.style.display = 'block'; });
+  .catch(err => {
+    console.error('Edit admin fetch error:', err);
+    errBox.textContent = 'Network error: ' + err.message;
+    errBox.style.display = 'block';
+  });
 });
 
 /* ══════════════════════════
    ADD ADMIN
 ══════════════════════════ */
 function openAddAdmin() {
+  console.log('openAddAdmin called, adminCount:', adminCount);
   if (adminCount >= 3) {
     alert('This school already has 3 admins — the maximum allowed.');
     return;
@@ -911,21 +947,31 @@ function openAddAdmin() {
 
 document.getElementById('add-admin-form').addEventListener('submit', function(e) {
   e.preventDefault();
+  console.log('Add admin form submitted');
   const errBox    = document.getElementById('add-admin-error');
   errBox.style.display = 'none';
   const name      = document.getElementById('add-admin-name').value.trim();
   const email     = document.getElementById('add-admin-email').value.trim();
   const password  = document.getElementById('add-admin-password').value;
   const submitBtn = document.getElementById('add-admin-submit');
+  
+  console.log('Form data:', { name, email, password: '***', SCHOOL_ID });
+  
   submitBtn.disabled    = true;
   submitBtn.textContent = 'Creating…';
-  fetch(`/superadmin/schools/${SCHOOL_ID}/edit/`, {
+  
+  fetch(`/superadmin/api/schools/${SCHOOL_ID}/edit/`, {
     method: 'POST',
     headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `section=add_admin&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
   })
-  .then(r => r.json())
+  .then(r => {
+    console.log('Add admin response status:', r.status);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+  })
   .then(d => {
+    console.log('Add admin response:', d);
     submitBtn.disabled    = false;
     submitBtn.textContent = 'Create admin';
     if (d.success) {
@@ -956,10 +1002,11 @@ document.getElementById('add-admin-form').addEventListener('submit', function(e)
       errBox.style.display = 'block';
     }
   })
-  .catch(() => {
+  .catch(err => {
+    console.error('Add admin fetch error:', err);
     submitBtn.disabled    = false;
     submitBtn.textContent = 'Create admin';
-    errBox.textContent   = 'Network error. Please try again.';
+    errBox.textContent   = 'Network error: ' + err.message;
     errBox.style.display = 'block';
   });
 });
@@ -995,7 +1042,7 @@ document.getElementById('edit-user-form').addEventListener('submit', function(e)
   if (!userType || !userId) {
     errBox.textContent = 'Missing user information.'; errBox.style.display = 'block'; return;
   }
-  fetch(`/superadmin/schools/${SCHOOL_ID}/edit/`, {
+  fetch(`/superadmin/api/schools/${SCHOOL_ID}/edit/`, {
     method: 'POST',
     headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `section=edit_user&user_id=${userId}&role=${userType}&full_name=${encodeURIComponent(fullName)}&email=${encodeURIComponent(email)}`,

@@ -122,12 +122,6 @@ class CourseEnrollment(models.Model):
             self.deadline_at = timezone.now() + timedelta(days=30)
         super().save(*args, **kwargs)
 
-class ClassroomCourseAssignment(models.Model):
-    classroom = models.ForeignKey('classrooms.Classroom', on_delete=models.CASCADE, related_name='course_assignments')
-    course = models.ForeignKey('superadmin.GlobalCourse', on_delete=models.CASCADE, related_name='classroom_assignments')
-    assigned_at = models.DateTimeField(auto_now_add=True)
-    class Meta:
-        unique_together = ('classroom', 'course')
 
 class ClassroomCourseAssignment(models.Model):
     """Tracks which GlobalCourses are assigned to which Classroom."""
