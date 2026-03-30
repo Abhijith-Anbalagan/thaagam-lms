@@ -41,8 +41,8 @@
             <div>
                 <p class="font-semibold text-slate-900">{{ teacher.get_full_name|default:teacher.username }}</p>
                 <div class="mt-1 flex items-center gap-2 text-xs text-slate-500">
-                    <span id="chat-status-dot" class="inline-block h-2.5 w-2.5 rounded-full bg-rose-500"></span>
-                    <span id="chat-status-text">Connecting...</span>
+                    <span id="status-dot" class="inline-block h-2.5 w-2.5 rounded-full bg-amber-500"></span>
+                    <span id="status-text">Checking status...</span>
                 </div>
             </div>
         </div>
@@ -82,4 +82,77 @@
     window.CHAT_RECEIVER_ID = {{ teacher.pk }};
 </script>
 <script src="{% static 'js/chat.js' %}"></script>
+<script>
+    // Real-time teacher status via global presence only (logged in state).
+    (function () {
+        const teacherId = Number(window.CHAT_RECEIVER_ID);
+        const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        let presenceSocket;
+        let hasSnapshot = false;
+
+        function setStatusOnline() {
+            const dotEl = document.getElementById('status-dot');
+            const textEl = document.getElementById('status-text');
+            if (!dotEl || !textEl) return;
+            dotEl.style.backgroundColor = '#22c55e';
+            textEl.textContent = 'Online';
+        }
+
+        function setStatusOffline() {
+            const dotEl = document.getElementById('status-dot');
+            const textEl = document.getElementById('status-text');
+            if (!dotEl || !textEl) return;
+            dotEl.style.backgroundColor = '#ef4444';
+            textEl.textContent = 'Offline';
+        }
+
+        function setStatusChecking() {
+            const dotEl = document.getElementById('status-dot');
+            const textEl = document.getElementById('status-text');
+            if (!dotEl || !textEl) return;
+            dotEl.style.backgroundColor = '#facc15';
+            textEl.textContent = 'Checking status…';
+        }
+
+        function connectPresenceSocket() {
+            presenceSocket = new WebSocket(`${proto}://${window.location.host}/ws/presence/`);
+
+            presenceSocket.onopen = () => {
+                if (!hasSnapshot) {
+                    setStatusChecking();
+                }
+            };
+
+            presenceSocket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+
+                if (data.type === 'presence.snapshot') {
+                    hasSnapshot = true;
+                    const online = Array.isArray(data.online_teachers) && data.online_teachers.includes(teacherId);
+                    (online ? setStatusOnline : setStatusOffline)();
+                }
+
+                if (data.type === 'presence.update' && Number(data.user_id) === teacherId && data.user_role === 'teacher') {
+                    hasSnapshot = true;
+                    (data.status === 'online' ? setStatusOnline : setStatusOffline)();
+                }
+            };
+
+            presenceSocket.onclose = () => {
+                // keep last known status for continuity;
+                // attempt reconnect in background
+                setTimeout(connectPresenceSocket, 5000);
+            };
+
+            presenceSocket.onerror = () => {
+                // do not force offline, keep last known to avoid flicker.
+                if (!hasSnapshot) {
+                    setStatusOffline();
+                }
+            };
+        }
+
+        connectPresenceSocket();
+    })();
+</script>
 {% endblock %}

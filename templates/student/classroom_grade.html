@@ -22,9 +22,9 @@
 </nav>
 
 <section class="mb-8 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-    <div class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel"><p class="text-sm text-slate-500">Total score</p><p class="mt-2 text-3xl font-bold text-slate-900">{{ total_score }}/{{ total_max }}</p></div>
-    <div class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel"><p class="text-sm text-slate-500">Overall percentage</p><p class="mt-2 text-3xl font-bold text-slate-900">{% if overall_pct is not None %}{{ overall_pct }}%{% else %}-{% endif %}</p></div>
-    <div class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel"><p class="text-sm text-slate-500">Letter grade</p><p class="mt-2 text-3xl font-bold text-slate-900">{% if overall_pct is not None %}{% if overall_pct >= 90 %}A{% elif overall_pct >= 80 %}B{% elif overall_pct >= 70 %}C{% elif overall_pct >= 60 %}D{% else %}F{% endif %}{% else %}-{% endif %}</p></div>
+    <div class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel"><p class="text-sm text-slate-500">Score</p><p class="mt-2 text-3xl font-bold text-slate-900" id="selected-score">-</p></div>
+    <div class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel"><p class="text-sm text-slate-500">Percentage</p><p class="mt-2 text-3xl font-bold text-slate-900" id="selected-percentage">-</p></div>
+    <div class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel"><p class="text-sm text-slate-500">Grade letter</p><p class="mt-2 text-3xl font-bold text-slate-900" id="selected-letter-grade">-</p></div>
     <div class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel"><p class="text-sm text-slate-500">Assignments</p><p class="mt-2 text-3xl font-bold text-slate-900">{{ grade_data|length }}</p></div>
 </section>
 
@@ -33,10 +33,10 @@
         <div class="border-b border-slate-200 px-6 py-5">
             <h2 class="text-xl font-semibold text-slate-900">Assignment scores</h2>
         </div>
-        <div class="divide-y divide-slate-100">
+        <div class="max-h-96 overflow-y-auto divide-y divide-slate-100">
             {% for item in grade_data %}
             {% with assignment=item.assignment submission=item.submission %}
-            <div class="px-6 py-5">
+            <div class="assignment-item cursor-pointer px-6 py-5 transition hover:bg-blue-50" data-assignment-id="{{ assignment.id }}" data-assignment-title="{{ assignment.title }}" data-assignment-max="{{ assignment.max_score }}" {% if submission and submission.score is not None %}data-score="{{ submission.score }}" data-percentage="{{ submission.percentage }}" data-letter-grade="{{ submission.letter_grade }}"{% endif %}>
                 <div class="flex items-start justify-between gap-4">
                     <div class="min-w-0 flex-1">
                         <h3 class="truncate text-lg font-semibold text-slate-900">{{ assignment.title }}</h3>
@@ -91,6 +91,105 @@
     window.GRADE_LABELS = {{ chart_labels|safe }};
     window.GRADE_SCORES = {{ chart_scores|safe }};
     window.GRADE_MAX = {{ chart_max|safe }};
+</script>
+<script>
+    // Grade selection and chart dynamic update
+    (function() {
+        const assignmentItems = document.querySelectorAll('.assignment-item');
+        let currentChart = null;
+        let selectedAssignmentId = null;
+
+        // Set first graded assignment as selected by default
+        const firstGraded = Array.from(assignmentItems).find(item => item.dataset.score);
+        if (firstGraded) {
+            selectAssignment(firstGraded);
+        }
+
+        assignmentItems.forEach(item => {
+            item.addEventListener('click', function() {
+                selectAssignment(this);
+            });
+        });
+
+        function selectAssignment(item) {
+            // Remove active state from all items
+            assignmentItems.forEach(el => el.style.backgroundColor = '');
+            assignmentItems.forEach(el => el.classList.remove('bg-blue-50'));
+
+            // Set active state
+            item.style.backgroundColor = '#f0f9ff';
+            item.classList.add('bg-blue-50');
+
+            selectedAssignmentId = parseInt(item.dataset.assignmentId);
+            const title = item.dataset.assignmentTitle;
+            const score = item.dataset.score || '-';
+            const percentage = item.dataset.percentage || '-';
+            const letterGrade = item.dataset.letterGrade || '-';
+            const maxScore = item.dataset.assignmentMax || '-';
+
+            // Update the top cards
+            document.getElementById('selected-score').textContent = score + '/' + maxScore;
+            document.getElementById('selected-percentage').textContent = (percentage !== '-' ? percentage + '%' : '-');
+            document.getElementById('selected-letter-grade').textContent = letterGrade;
+
+            // Update chart if data exists
+            if (score !== '-' && percentage !== '-') {
+                updateChart(title, parseFloat(score), parseFloat(maxScore), parseFloat(percentage));
+            } else {
+                // Clear chart for ungraded assignments
+                if (currentChart) {
+                    currentChart.destroy();
+                    currentChart = null;
+                }
+                const canvas = document.getElementById('gradeChart');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+        }
+
+        function updateChart(title, score, maxScore, percentage) {
+            const canvas = document.getElementById('gradeChart');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+
+            if (currentChart) {
+                currentChart.destroy();
+            }
+
+            currentChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Score', 'Remaining'],
+                    datasets: [{
+                        data: [score, maxScore - score],
+                        backgroundColor: ['#22c55e', '#e2e8f0'],
+                        borderColor: ['#16a34a', '#cbd5e1'],
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { padding: 20, font: { size: 12 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed + '/' + maxScore;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    })();
 </script>
 <script src="{% static 'js/grade_chart.js' %}"></script>
 {% endif %}

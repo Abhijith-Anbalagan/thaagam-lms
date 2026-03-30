@@ -1,66 +1,89 @@
-{% extends 'base.html' %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accept Invitation — EduPlatform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body>
 
-{% block title %}Accept Invitation{% endblock %}
+<main id="main-content" style="padding:0;">
 
-{% block content %}
-
-<div class="auth-page">
-  <div class="auth-card">
-
-    <div class="auth-logo">EduPlatform</div>
-
-    <p class="auth-subtitle">
-      Joining <strong>{{ invitation.school.name }}</strong>
-      as <strong>{{ invitation.role|title }}</strong>
-    </p>
-
-    <form method="post">
-      {% csrf_token %}
-
-      {% if form.errors %}
-  <div class="toast toast-error mb-12">
-    Please enter a strong password
+  {% if messages %}
+  <div class="toast-container">
+    {% for message in messages %}
+    <div class="toast toast-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
   </div>
-{% endif %}
+  {% endif %}
 
-      <!-- Username -->
-      <div class="form-group">
-        <label class="form-label">Username</label>
-        <input type="text" name="username" class="form-control"
-               value="{{ form.username.value|default:'' }}" required>
-      </div>
+  <div class="auth-page">
+    <div class="auth-card">
 
-      <!-- Email (readonly) -->
-      <div class="form-group">
-        <label class="form-label">Email</label>
-        <input type="email" value="{{ invitation.email }}"
-               class="form-control" disabled>
-        <small class="form-hint">This email was used to invite you</small>
-      </div>
+      <div class="auth-logo">EduPlatform</div>
 
-      <!-- Password -->
-      <div class="form-group">
-        <label class="form-label">Password</label>
-        <input type="password" name="password1" class="form-control" required>
-      </div>
+      <p class="auth-subtitle">
+        Joining <strong>{{ invitation.school.name }}</strong>
+        as <strong>{{ invitation.role|title }}</strong>
+      </p>
 
-      <!-- Confirm Password -->
-      <div class="form-group">
-        <label class="form-label">Confirm Password</label>
-        <input type="password" name="password2" class="form-control" required>
-      </div>
+      <form method="post">
+        {% csrf_token %}
 
-      <button type="submit" class="btn btn-primary btn-block">
-        Create Account
-      </button>
+        {% if form.errors %}
+        <div class="toast toast-error mb-12">
+          Please enter a strong password
+        </div>
+        {% endif %}
 
-    </form>
+        <!-- Username -->
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" name="username" class="form-control"
+                 value="{{ form.username.value|default:'' }}" required>
+        </div>
 
-    <p class="auth-footer">
-      Already have an account? <a href="/login/">Login</a>
-    </p>
+        <!-- Email (readonly) -->
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" value="{{ invitation.email }}"
+                 class="form-control" disabled>
+          <small class="form-hint">This email was used to invite you</small>
+        </div>
 
+        <!-- Password -->
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" name="password1" class="form-control" required>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="form-group">
+          <label class="form-label">Confirm Password</label>
+          <input type="password" name="password2" class="form-control" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">
+          Create Account
+        </button>
+
+      </form>
+
+      <p class="auth-footer">
+        Already have an account? <a href="/login/">Login</a>
+      </p>
+
+    </div>
   </div>
-</div>
 
-{% endblock %}
+</main>
+
+<script src="{% static 'js/toasts.js' %}"></script>
+</body>
+</html>

@@ -1,33 +1,460 @@
 {% extends 'base.html' %}
 {% block title %}Post Announcement{% endblock %}
 {% block content %}
-<div style="display:flex; justify-content:center; padding:40px 16px;">
-  <div style="width:100%; max-width:780px;">
-    <div class="flex-between mb-24">
-      <h1 class="page-title">Post Announcement</h1>
-      <a href="{% url 'school_admin_dashboard' %}" class="btn btn-ghost">Cancel</a>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+
+  :root {
+    --ink: #0f0e0d;
+    --paper: #faf8f5;
+    --cream: #f2ede6;
+    --accent: #0c0050;
+    --accent-light: #f5e8e3;
+    --muted: #7a7470;
+    --border: #e0d9d0;
+    --shadow: rgba(15,14,13,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .ann-page {
+    min-height: 100vh;
+    background: var(--paper);
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 48px 20px 80px;
+  }
+
+  .ann-shell {
+    width: 100%;
+    max-width: 720px;
+    animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Header bar ── */
+  .ann-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 36px;
+  }
+
+  .ann-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .ann-icon {
+    width: 40px; height: 40px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: grid; place-items: center;
+  }
+
+  .ann-icon svg { color: #fff; }
+
+  .ann-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .ann-title-text {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.95rem;
+    font-weight: 900;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+
+  .btn-ghost-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+
+  .btn-ghost-back:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+    background: var(--cream);
+  }
+
+  /* ── Card ── */
+  .ann-card {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 2px 24px var(--shadow), 0 0 0 1px rgba(255,255,255,0.6) inset;
+  }
+
+  /* decorative top stripe */
+  .ann-stripe {
+    height: 5px;
+    background: linear-gradient(90deg, var(--accent) 0%, #e8642e 60%, #f5a623 100%);
+  }
+
+  .ann-form-body {
+    padding: 40px 44px 44px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  /* ── Fields ── */
+  .field-block { display: flex; flex-direction: column; gap: 8px; }
+
+  .field-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .field-label span {
+    color: var(--accent);
+    margin-left: 2px;
+  }
+
+  .field-hint {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-weight: 300;
+    margin-top: -4px;
+  }
+
+  .ann-input,
+  .ann-textarea {
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    -webkit-appearance: none;
+  }
+
+  .ann-input::placeholder,
+  .ann-textarea::placeholder {
+    color: #bbb5ae;
+    font-weight: 300;
+  }
+
+  .ann-input:focus,
+  .ann-textarea:focus {
+    border-color: var(--accent);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(200, 64, 26, 0.1);
+  }
+
+  .ann-textarea {
+    resize: vertical;
+    min-height: 200px;
+    line-height: 1.65;
+  }
+
+  /* ── Character counter ── */
+  .field-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: -4px;
+  }
+
+  .char-count {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 300;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .char-count.warn { color: #d97706; }
+  .char-count.over { color: var(--accent); }
+
+  /* ── Divider ── */
+  .ann-divider {
+    border: none;
+    border-top: 1.5px solid var(--border);
+    margin: 0 -44px;
+  }
+
+  /* ── Pin toggle ── */
+  .pin-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    position: relative;
+  }
+
+  .pin-row:has(#pin:checked) {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .pin-checkbox-wrap {
+    flex-shrink: 0;
+    width: 22px; height: 22px;
+    margin-top: 1px;
+    position: relative;
+  }
+
+  #pin {
+    position: absolute;
+    opacity: 0;
+    width: 0; height: 0;
+  }
+
+  .pin-box {
+    width: 22px; height: 22px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    display: grid; place-items: center;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  #pin:checked ~ .pin-box {
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+
+  .pin-check-svg {
+    display: none;
+    color: #fff;
+  }
+
+  #pin:checked ~ .pin-box .pin-check-svg { display: block; }
+
+  .pin-text-col { flex: 1; }
+
+  .pin-title {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+
+  .pin-desc {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-weight: 300;
+    line-height: 1.5;
+  }
+
+  /* ── Submit row ── */
+  .submit-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .submit-meta {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-weight: 300;
+    line-height: 1.5;
+  }
+
+  .btn-post {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 32px;
+    background: var(--accent);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 14px rgba(200,64,26,0.3);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .btn-post:hover {
+    background: #b03516;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(200,64,26,0.38);
+  }
+
+  .btn-post:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(200,64,26,0.25);
+  }
+
+  @media (max-width: 560px) {
+    .ann-form-body { padding: 28px 22px 32px; }
+    .ann-divider { margin: 0 -22px; }
+    .ann-title-text { font-size: 1.55rem; }
+    .submit-row { flex-direction: column; align-items: stretch; }
+    .btn-post { justify-content: center; }
+  }
+</style>
+
+<div class="ann-page">
+  <div class="ann-shell">
+
+    <!-- Header -->
+    <div class="ann-header">
+      <div class="ann-eyebrow">
+        <div class="ann-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 11l19-9-9 19-2-8-8-2z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="ann-label">School Admin</div>
+          <div class="ann-title-text">Post Announcement</div>
+        </div>
+      </div>
+      <a href="{% url 'school_admin_dashboard' %}" class="btn-ghost-back">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+        Cancel
+      </a>
     </div>
-    <div class="card">
-      <form method="post">
-        {% csrf_token %}
-        <div class="form-group">
-          <label class="form-label" style="font-size:1.1rem;">Title</label>
-          <input type="text" name="title" class="form-control" placeholder="Announcement title" required
-                 style="padding:14px 16px; font-size:1.1rem;">
-        </div>
-        <div class="form-group">
-          <label class="form-label" style="font-size:1.1rem;">Message</label>
-          <textarea name="body" class="form-control" rows="10"
-                    placeholder="Write your school-wide announcement here…" required
-                    style="padding:14px 16px; font-size:1.1rem; resize:vertical;"></textarea>
-        </div>
-        <div class="form-group" style="display:flex; align-items:center; gap:8px;">
-          <input type="checkbox" name="is_pinned" id="pin" style="width:18px; height:18px;">
-          <label for="pin" class="form-label" style="margin:0; cursor:pointer; font-size:1.1rem;">Pin this announcement</label>
-        </div>
-        <button type="submit" class="btn btn-primary" style="padding:12px 36px; font-size:1.1rem;">Post Announcement</button>
-      </form>
-    </div>
+
+    <!-- Card -->
+    <div class="ann-card">
+      <div class="ann-stripe"></div>
+      <div class="ann-form-body">
+
+        <form method="post" id="ann-form">
+          {% csrf_token %}
+
+          <!-- Title -->
+          <div class="field-block">
+            <label class="field-label" for="ann-title">Title <span>*</span></label>
+            <p class="field-hint">Keep it clear and direct — this is the first thing people see.</p>
+            <input
+              id="ann-title"
+              type="text"
+              name="title"
+              class="ann-input"
+              placeholder="e.g. School Sports Day — Updated Schedule"
+              required
+              maxlength="120"
+              autocomplete="off"
+            >
+            <div class="field-footer">
+              <span class="char-count" id="title-counter">0 / 120</span>
+            </div>
+          </div>
+
+          <hr class="ann-divider">
+
+          <!-- Message -->
+          <div class="field-block">
+            <label class="field-label" for="ann-body">Message <span>*</span></label>
+            <p class="field-hint">Write clearly for parents, students, and staff. All school members will receive this.</p>
+            <textarea
+              id="ann-body"
+              name="body"
+              class="ann-textarea"
+              placeholder="Dear school community,&#10;&#10;We would like to inform you that…"
+              required
+              maxlength="5000"
+            ></textarea>
+            <div class="field-footer">
+              <span class="char-count" id="body-counter">0 / 5000</span>
+            </div>
+          </div>
+
+          <hr class="ann-divider">
+
+          <!-- Pin toggle -->
+          <label class="pin-row" for="pin">
+            <div class="pin-checkbox-wrap">
+              <input type="checkbox" name="is_pinned" id="pin">
+              <div class="pin-box">
+                <svg class="pin-check-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+            </div>
+            <div class="pin-text-col">
+              <div class="pin-title">📌 Pin this announcement</div>
+              <div class="pin-desc">Pinned announcements stay at the top of the board and are highlighted for all members until unpinned.</div>
+            </div>
+          </label>
+
+          <!-- Submit -->
+          <div class="submit-row">
+            <p class="submit-meta">This announcement will be sent<br>to all students, staff and parents.</p>
+            <button type="submit" class="btn-post">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 11l19-9-9 19-2-8-8-2z"/>
+              </svg>
+              Post Announcement
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+    </div><!-- /card -->
+
   </div>
 </div>
+
+<script>
+  function trackChars(inputEl, countEl, max) {
+    function update() {
+      const n = inputEl.value.length;
+      countEl.textContent = n + ' / ' + max;
+      countEl.classList.toggle('warn', n > max * 0.85);
+      countEl.classList.toggle('over', n >= max);
+    }
+    inputEl.addEventListener('input', update);
+    update();
+  }
+
+  const titleInput   = document.getElementById('ann-title');
+  const titleCounter = document.getElementById('title-counter');
+  const bodyInput    = document.getElementById('ann-body');
+  const bodyCounter  = document.getElementById('body-counter');
+
+  trackChars(titleInput,   titleCounter,  120);
+  trackChars(bodyInput,    bodyCounter,  5000);
+</script>
+
 {% endblock %}

@@ -1,42 +1,434 @@
 {% extends 'base.html' %}
 {% block title %}Students — {{ request.user.school.name }}{% endblock %}
 {% block content %}
-<div class="flex-between mb-24">
-  <h1 class="page-title">Students</h1>
-  <a href="{% url 'school_admin_dashboard' %}" class="btn btn-ghost">← Dashboard</a>
-</div>
-<div class="card">
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Submissions</th>
-          <th>Avg Score</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for s in students %}
-        <tr>
-          <td><strong>{{ s.get_full_name|default:s.username }}</strong></td>
-          <td>{{ s.email }}</td>
-          <td>{{ s.submission_count }}</td>
-          <td>
-            {% if s.avg_score %}
-              {{ s.avg_score|floatformat:1 }}%
-            {% else %}
-              <span style="color:var(--text-muted);">—</span>
-            {% endif %}
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="4" style="text-align:center;color:var(--text-muted);">No students yet.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+
+  :root {
+    --ink: #0f0e0d;
+    --paper: #faf8f5;
+    --cream: #f2ede6;
+    --accent: #01075a;
+    --accent-light: #f5e8e3;
+    --muted: #7a7470;
+    --border: #e0d9d0;
+    --shadow: rgba(15,14,13,0.08);
+    --blue: #1d5fa8;
+    --blue-light: #e8f0fa;
+    --green: #2a9d5c;
+    --green-light: #e6f4ed;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .stu-page {
+    min-height: 100vh;
+    background: var(--paper);
+    font-family: 'DM Sans', sans-serif;
+    padding: 48px 20px 80px;
+  }
+
+  .stu-shell {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .stu-shell > * {
+    animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .stu-shell > *:nth-child(1) { animation-delay: 0s; }
+  .stu-shell > *:nth-child(2) { animation-delay: 0.08s; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Header ── */
+  .stu-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 36px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .stu-header-left { display: flex; align-items: center; gap: 14px; }
+
+  .stu-icon {
+    width: 44px; height: 44px;
+    background: var(--accent);
+    border-radius: 12px;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+
+  .stu-icon svg { color: #fff; }
+
+  .stu-eyebrow {
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+
+  .stu-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.95rem;
+    font-weight: 900;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+
+  .btn-ghost-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-ghost-back:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+    background: var(--cream);
+  }
+
+  /* ── Card ── */
+  .stu-card {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 2px 24px var(--shadow);
+  }
+
+  .stu-stripe {
+    height: 5px;
+    background: linear-gradient(90deg, var(--accent) 0%, #e8642e 60%, #f5a623 100%);
+  }
+
+  .stu-card-inner { padding: 32px 36px 36px; }
+
+  .stu-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .stu-section-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .stu-card-head-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .stu-count-badge {
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 4px 12px;
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    border-radius: 99px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* ── Search ── */
+  .stu-search-wrap {
+    position: relative;
+  }
+
+  .stu-search-wrap svg {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+  }
+
+  #stu-search {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 400;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 14px 7px 32px;
+    outline: none;
+    width: 190px;
+    transition: border-color 0.2s, box-shadow 0.2s, width 0.3s;
+  }
+
+  #stu-search::placeholder { color: #bbb5ae; font-weight: 300; }
+
+  #stu-search:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(200, 64, 26, 0.1);
+    width: 230px;
+  }
+
+  /* ── Table ── */
+  .stu-table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+  }
+
+  .stu-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+
+  .stu-table thead tr { background: var(--cream); }
+
+  .stu-table th {
+    padding: 12px 18px;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1.5px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .stu-table th:nth-child(3),
+  .stu-table th:nth-child(4) { text-align: right; }
+
+  .stu-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .stu-table tbody tr:last-child { border-bottom: none; }
+  .stu-table tbody tr:hover { background: var(--paper); }
+
+  .stu-table td {
+    padding: 14px 18px;
+    color: var(--ink);
+    vertical-align: middle;
+  }
+
+  .stu-table td:nth-child(3),
+  .stu-table td:nth-child(4) { text-align: right; }
+
+  /* avatar + name */
+  .stu-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+
+  .stu-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    border: 1.5px solid var(--border);
+    display: grid; place-items: center;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--accent);
+    flex-shrink: 0;
+    text-transform: uppercase;
+  }
+
+  .stu-fullname {
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  /* email */
+  .stu-email {
+    color: var(--muted);
+    font-weight: 300;
+    font-size: 0.88rem;
+  }
+
+  /* submissions */
+  .sub-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 12px;
+    background: var(--blue-light);
+    color: var(--blue);
+    border-radius: 99px;
+    font-size: 0.82rem;
+    font-weight: 500;
+  }
+
+  /* score */
+  .score-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 12px;
+    border-radius: 99px;
+    font-size: 0.82rem;
+    font-weight: 500;
+  }
+
+  .score-pill.high   { background: var(--green-light); color: var(--green); }
+  .score-pill.mid    { background: #fff8e6; color: #9a6b1a; }
+  .score-pill.low    { background: var(--accent-light); color: var(--accent); }
+  .score-pill.none   { color: var(--muted); font-weight: 300; font-style: italic; background: none; }
+
+  /* empty */
+  .empty-row td {
+    text-align: center;
+    color: var(--muted);
+    font-weight: 300;
+    padding: 48px 18px;
+    font-style: italic;
+  }
+
+  /* hidden by search */
+  tr.stu-hidden { display: none; }
+
+  @media (max-width: 640px) {
+    .stu-card-inner { padding: 22px 18px 28px; }
+    .stu-title { font-size: 1.55rem; }
+    #stu-search { width: 140px; }
+    #stu-search:focus { width: 160px; }
+  }
+</style>
+
+<div class="stu-page">
+  <div class="stu-shell">
+
+    <!-- Header -->
+    <div class="stu-header">
+      <div class="stu-header-left">
+        <div class="stu-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <div>
+          <div class="stu-eyebrow">School Admin</div>
+          <div class="stu-title">Students</div>
+        </div>
+      </div>
+      <a href="{% url 'school_admin_dashboard' %}" class="btn-ghost-back">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+        Dashboard
+      </a>
+    </div>
+
+    <!-- Card -->
+    <div class="stu-card">
+      <div class="stu-stripe"></div>
+      <div class="stu-card-inner">
+
+        <div class="stu-card-head">
+          <div class="stu-section-title">All Students</div>
+          <div class="stu-card-head-right">
+            <span class="stu-count-badge">{{ students|length }} enrolled</span>
+            <div class="stu-search-wrap">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input type="text" id="stu-search" placeholder="Search students…" autocomplete="off">
+            </div>
+          </div>
+        </div>
+
+        <div class="stu-table-wrap">
+          <table class="stu-table" id="stu-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Submissions</th>
+                <th>Avg Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in students %}
+              <tr data-name="{{ s.get_full_name|default:s.username|lower }}" data-email="{{ s.email|lower }}">
+                <td>
+                  <div class="stu-name-cell">
+                    <div class="stu-avatar">{{ s.get_full_name|default:s.username|slice:":1" }}</div>
+                    <span class="stu-fullname">{{ s.get_full_name|default:s.username }}</span>
+                  </div>
+                </td>
+                <td><span class="stu-email">{{ s.email }}</span></td>
+                <td>
+                  <span class="sub-pill">{{ s.submission_count }}</span>
+                </td>
+                <td>
+                  {% if s.avg_score %}
+                    {% if s.avg_score >= 75 %}
+                      <span class="score-pill high">{{ s.avg_score|floatformat:1 }}%</span>
+                    {% elif s.avg_score >= 50 %}
+                      <span class="score-pill mid">{{ s.avg_score|floatformat:1 }}%</span>
+                    {% else %}
+                      <span class="score-pill low">{{ s.avg_score|floatformat:1 }}%</span>
+                    {% endif %}
+                  {% else %}
+                    <span class="score-pill none">—</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr class="empty-row">
+                <td colspan="4">No students enrolled yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div><!-- /card -->
+
   </div>
 </div>
+
+<script>
+  const searchInput = document.getElementById('stu-search');
+  const rows = document.querySelectorAll('#stu-table tbody tr[data-name]');
+
+  searchInput.addEventListener('input', function () {
+    const q = this.value.toLowerCase().trim();
+    rows.forEach(row => {
+      const match = row.dataset.name.includes(q) || row.dataset.email.includes(q);
+      row.classList.toggle('stu-hidden', !match);
+    });
+  });
+</script>
+
 {% endblock %}

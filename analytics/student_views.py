@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from accounts.decorators import role_required
 
@@ -22,3 +23,25 @@ def student_analytics(request):
     }
 
     return render(request, 'student/analytics.html', context)
+
+
+@login_required
+@role_required('student')
+def student_assignment_tracking(request):
+    month = request.GET.get('month')
+    service = StudentAnalyticsService(request.user)
+    assignments = service.get_assignment_tracking(month=month)
+
+    serialized = []
+    for item in assignments:
+        serialized.append({
+            'id': item['id'],
+            'title': item['title'],
+            'due_date': item['due_date'].strftime('%Y-%m-%d') if item['due_date'] else '',
+            'status': 'Submitted' if item['submitted'] else 'Pending',
+            'score': f"{item['score']}/{item['max_score']}" if item['score'] is not None else '-',
+            'submitted_at': item['submitted_at'].strftime('%Y-%m-%d %H:%M') if item['submitted_at'] else '-',
+            'is_late': bool(item['is_late']),
+        })
+
+    return JsonResponse({'assignments': serialized})
