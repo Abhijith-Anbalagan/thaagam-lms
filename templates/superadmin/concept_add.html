@@ -3,1053 +3,1088 @@
 
 {% block extra_css %}
 <style>
-/* ═══════════════════════════════════════
-   CONCEPT ADD — 5-STEP WIZARD
-   Step 1: Concept Info
-   Step 2: Module Level and Videos
-   Step 3: Course PDF
-   Step 4: Quiz
-   Step 5: Assignment (with Submit)
-   ═══════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   CONCEPT ADD FORM — Wizard Style
+   ═══════════════════════════════════════════════════════ */
 
-*, *::before, *::after { box-sizing: border-box; }
+/* ── Layout & Container ── */
+.concept-form-wrapper { max-width: 800px; margin: 0 auto; padding: 24px 0; }
 
-:root {
-  --brand:      #4c68d7;
-  --brand-dark: #3a54c0;
-  --brand-soft: #eef1fb;
-  --green:      #1d9e75;
-  --green-soft: #e1f5ee;
-  --page:       #f4f5f9;
-  --card:       #ffffff;
-  --border:     #e8e8ec;
-  --t1:         #1a1f36;
-  --t2:         #5a5f7a;
-  --t3:         #9496a8;
-  --red:        #e24b4a;
-  --red-soft:   #fff5f5;
-  --r-md:       10px;
-  --r-lg:       14px;
-  --r-xl:       20px;
-  --font:       'Inter', system-ui, sans-serif;
-}
-
-/* ── Page Shell ── */
-.cw-shell {
-  min-height: 100vh;
-  background: var(--page);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 28px 16px 60px;
-  font-family: var(--font);
-}
-
-/* ── Top bar ── */
-.cw-topbar {
-  width: 100%;
-  max-width: 900px;
+/* ── Wizard Progress Bar ── */
+.progress-wizard {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 10px;
+  gap: 0;
+  margin-bottom: 36px;
+  max-width: 100%;
 }
-.cw-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--t2);
-  border: 1.5px solid var(--border);
-  border-radius: 40px;
-  padding: 8px 18px;
-  text-decoration: none;
-  background: var(--card);
-  transition: .15s;
-}
-.cw-back:hover { color: var(--brand); border-color: var(--brand); }
-.cw-course-tag {
-  font-size: 13px;
-  color: var(--t3);
-}
-.cw-course-tag strong { color: var(--t1); }
 
-/* ── Wrapper ── */
-.cw-wrap { width: 100%; max-width: 900px; }
-
-/* ── Stepper ── */
-.cw-stepper {
-  display: flex;
-  align-items: center;
-  margin-bottom: 24px;
-  overflow-x: auto;
-  padding-bottom: 10px;
-}
-.cw-step {
+.wizard-step {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
   flex: 1;
-  min-width: 100px;
 }
-.cw-circle {
+
+.wizard-circle {
   width: 42px;
   height: 42px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
-  border: 2px solid var(--border);
-  background: var(--card);
-  color: var(--t3);
-  transition: .2s;
-  cursor: pointer;
   flex-shrink: 0;
+  transition: all 0.35s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  cursor: default;
 }
-.cw-step.done .cw-circle  { background: var(--green); border-color: var(--green); color: #fff; }
-.cw-step.active .cw-circle {
-  background: var(--brand);
-  border-color: var(--brand);
+
+.wizard-circle.done {
+  background: linear-gradient(135deg, #0f6e56, #1d9e75);
   color: #fff;
-  box-shadow: 0 0 0 4px rgba(76,104,215,.15);
 }
-.cw-label {
+
+.wizard-circle.active {
+  background: linear-gradient(135deg, #4c68d7, #6b82f5);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(76,104,215,0.40);
+  transform: scale(1.12);
+}
+
+.wizard-circle.idle {
+  background: #e8e8ec;
+  color: #9496a8;
+}
+
+.wizard-label {
   font-size: 11px;
   font-weight: 600;
-  color: var(--t3);
+  color: var(--text-muted, #9496a8);
   text-transform: uppercase;
-  letter-spacing: .4px;
+  letter-spacing: 0.5px;
+  transition: color 0.3s ease;
   text-align: center;
-  line-height: 1.3;
   white-space: nowrap;
 }
-.cw-step.done .cw-label   { color: var(--green); }
-.cw-step.active .cw-label { color: var(--brand); }
-.cw-line {
+
+.wizard-step.active  .wizard-label { color: #4c68d7; }
+.wizard-step.done    .wizard-label { color: #0f6e56; }
+
+.wizard-line {
   flex: 1;
-  height: 2px;
-  background: var(--border);
-  margin: 0 8px;
-  margin-bottom: 26px;
-  transition: background .3s;
-  min-width: 30px;
+  height: 3px;
+  background: #e8e8ec;
+  margin: 0 4px;
+  margin-bottom: 18px;
+  transition: background 0.35s ease;
 }
-.cw-line.done { background: var(--green); }
 
-/* ── Progress bar ── */
-.cw-prog {
-  width: 100%;
-  height: 5px;
-  background: var(--border);
-  border-radius: 4px;
+.wizard-line.done { background: linear-gradient(90deg, #0f6e56, #1d9e75); }
+.wizard-line.active { background: linear-gradient(90deg, #4c68d7, #6b82f5); }
+
+/* ── Header Section ── */
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 28px;
-  overflow: hidden;
-}
-.cw-prog-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--brand) 0%, #6b8aef 100%);
-  border-radius: 4px;
-  transition: width .4s ease;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--border, #e2e8f0);
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
-/* ── Step panels ── */
-.cw-panel { display: none; }
-.cw-panel.active {
-  display: block;
-  animation: cwFade .3s ease;
-}
-@keyframes cwFade {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0);   }
+.form-header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--brand-dark, #1a202c);
 }
 
-/* ── Section cards ── */
-.cw-card {
-  background: var(--card);
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-xl);
-  overflow: hidden;
-  box-shadow: 0 2px 12px rgba(26,31,54,.05);
-  margin-bottom: 20px;
-}
-.cw-card-head {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 20px 26px 16px;
-  border-bottom: 1.5px solid var(--border);
-  background: #fafbff;
-}
-.cw-card-icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  flex-shrink: 0;
-}
-.icon-blue   { background: #e6f1fb; }
-.icon-purple { background: #eeedfe; }
-.icon-amber  { background: #faeeda; }
-.icon-red    { background: #fcebeb; }
-.icon-teal   { background: #e1f5ee; }
-.icon-green  { background: #eaf3de; }
-.icon-indigo { background: #e8eaff; }
+.form-header-meta { font-size: 13px; color: var(--text-muted, #718096); }
 
-.cw-card-head h3 {
+/* ── Wizard Step Panels ── */
+.wizard-panel {
+  display: none;
+  animation: fadeSlideIn 0.3s ease-out;
+}
+
+.wizard-panel.active { display: block; }
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Cards ── */
+.card {
+  background: #fff;
+  border: 1.5px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+  border-color: #4c68d7;
+  box-shadow: 0 4px 16px rgba(76,104,215,0.10);
+}
+
+/* ── Section Titles ── */
+.section-title {
   font-size: 17px;
   font-weight: 700;
-  color: var(--t1);
-  margin: 0 0 3px;
-}
-.cw-card-head p {
-  font-size: 13px;
-  color: var(--t2);
+  color: var(--brand-dark, #1a202c);
   margin: 0;
-  line-height: 1.5;
 }
-.cw-card-body { padding: 24px 26px; }
 
-/* ── Form elements ── */
-.fg { margin-bottom: 20px; }
-.fg:last-child { margin-bottom: 0; }
-.lbl {
+.mb-16 { margin-bottom: 16px; }
+.mb-20 { margin-bottom: 20px; }
+.mb-12 { margin-bottom: 12px; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+/* ── Form Groups ── */
+.form-group { margin-bottom: 18px; }
+.form-group:last-of-type { margin-bottom: 0; }
+
+.form-label {
   display: block;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--t1);
   margin-bottom: 8px;
-  letter-spacing: .3px;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-dark, #1a202c);
+  letter-spacing: 0.3px;
 }
-.req { color: var(--red); margin-left: 2px; }
-.opt { color: var(--t3); font-weight: 400; text-transform: none; letter-spacing: 0; }
-.fc {
+
+.form-control {
   width: 100%;
-  padding: 12px 15px;
-  font-family: var(--font);
-  font-size: 14px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-md);
-  background: #fafbff;
-  color: var(--t1);
-  outline: none;
-  transition: border-color .15s, box-shadow .15s;
+  padding: 10px 14px;
+  font-size: 13px;
+  border: 1.5px solid var(--border, #e2e8f0);
+  border-radius: 8px;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  background: #fff;
+  box-sizing: border-box;
 }
-.fc:focus {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(76,104,215,.1);
+
+.form-control:focus {
+  outline: none;
+  border-color: #4c68d7;
+  box-shadow: 0 0 0 3px rgba(76,104,215,0.10);
+  background: #fafbff;
+}
+
+.form-control::placeholder { color: #b0b5c4; }
+
+textarea.form-control {
+  resize: vertical;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height: 100px;
+}
+
+.form-hint {
+  margin: 6px 0 0 0;
+  font-size: 12px;
+  color: var(--text-muted, #718096);
+  font-style: italic;
+}
+
+.form-error {
+  margin: 6px 0 0 0;
+  font-size: 12px;
+  color: #e24b4a;
+  font-weight: 600;
+}
+
+/* ── Level Options ── */
+.level-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.level-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  border: 1.5px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 600;
   background: #fff;
 }
-.fc::placeholder { color: var(--t3); }
-textarea.fc { resize: vertical; min-height: 100px; }
-select.fc { cursor: pointer; }
-.hint { font-size: 12px; color: var(--t3); margin-top: 6px; line-height: 1.5; }
-.ferr { font-size: 12px; color: var(--red); margin-top: 6px; font-weight: 600; }
 
-/* ── Level pills ── */
-.level-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
-  margin-top: 8px;
-}
-.level-pill {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 14px 12px;
-  border: 2px solid var(--border);
-  border-radius: var(--r-md);
+.level-option:hover { border-color: #4c68d7; background: #f0f3ff; }
+
+.level-option input[type="radio"] {
+  margin-right: 8px;
+  accent-color: #4c68d7;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--t2);
-  background: var(--card);
-  transition: all .2s;
-  user-select: none;
+  width: 16px;
+  height: 16px;
 }
-.level-pill:hover {
-  border-color: var(--brand);
-  background: var(--brand-soft);
-}
-.level-pill.selected {
-  border-color: var(--brand);
-  background: var(--brand);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(76,104,215,.25);
-}
-.level-pill input[type="radio"] { display: none; }
 
-/* ── Video rows ── */
-#video-rows { margin-top: 12px; }
+/* ── Video Rows ── */
 .video-row {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: 10px;
+  grid-template-columns: 1fr 2fr auto;
+  gap: 12px;
   align-items: center;
-  margin-bottom: 12px;
   padding: 12px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-md);
-  background: #fafbff;
-}
-.video-row input[type="text"] { background: #fff; }
-.video-row input[type="file"] { 
-  background: #fff; 
-  padding: 10px 12px;
-  font-size: 13px;
-}
-.btn-rm {
-  width: 36px;
-  height: 36px;
+  background: #fff;
   border-radius: 8px;
-  border: none;
-  background: var(--red-soft);
-  color: var(--red);
-  font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: .15s;
-  flex-shrink: 0;
-}
-.btn-rm:hover { background: var(--red); color: #fff; }
-
-/* ── PDF upload ── */
-.pdf-pick {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 40px 20px;
-  border: 2px dashed var(--border);
-  border-radius: var(--r-lg);
-  cursor: pointer;
-  transition: all .2s;
-  background: #fafbff;
-  text-align: center;
-}
-.pdf-pick:hover {
-  border-color: var(--brand);
-  background: var(--brand-soft);
-}
-.pdf-pick input[type="file"] { display: none; }
-.pdf-pick svg { color: var(--t3); transition: .2s; }
-.pdf-pick:hover svg { color: var(--brand); }
-#pdf-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--t1);
-  margin: 6px 0 2px;
-}
-#pdf-sub {
-  font-size: 12px;
-  color: var(--t3);
+  margin-bottom: 10px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  animation: slideIn 0.3s ease-out;
 }
 
-/* ── Quiz cards ── */
-.quiz-empty {
-  padding: 40px 20px;
+.video-row:hover {
+  border-color: var(--border, #e2e8f0);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.video-row:last-child { margin-bottom: 0; }
+
+/* ── PDF Upload Box ── */
+.pdf-upload-box {
+  border: 2px dashed #4c68d7;
+  border-radius: 12px;
+  padding: 32px;
   text-align: center;
-  color: var(--t3);
-  font-size: 14px;
-  border: 2px dashed var(--border);
-  border-radius: var(--r-lg);
-  background: #fafbff;
-  margin-bottom: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #f8f9ff;
 }
-.quiz-card {
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-lg);
-  padding: 20px;
-  margin-bottom: 16px;
-  background: #fafbff;
+
+.pdf-upload-box:hover {
+  border-color: #6b82f5;
+  background: #f0f3ff;
+  box-shadow: 0 4px 12px rgba(76,104,215,0.15);
 }
-.quiz-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1.5px solid var(--border);
+
+.pdf-upload-box.dragover { border-color: #0f6e56; background: #f0faf6; }
+.pdf-icon { font-size: 32px; margin-bottom: 10px; }
+.pdf-text { font-size: 13px; font-weight: 600; color: var(--brand-dark,#1a202c); margin-bottom: 4px; }
+.pdf-subtext { font-size: 12px; color: var(--text-muted, #718096); }
+
+/* ── Quiz ── */
+.quiz-question-card {
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  padding: 16px;
+  background: #fafaf8;
+  transition: all 0.3s ease;
 }
-.q-badge {
+
+.quiz-question-card:hover {
+  border-color: #4c68d7;
+  box-shadow: 0 2px 8px rgba(76,104,215,0.10);
+}
+
+.quiz-number {
   font-size: 12px;
   font-weight: 700;
-  color: var(--brand);
-  background: var(--brand-soft);
-  padding: 6px 12px;
-  border-radius: 20px;
-  text-transform: uppercase;
-  letter-spacing: .4px;
+  color: #4c68d7;
+  background: #f0f3ff;
+  padding: 4px 10px;
+  border-radius: 6px;
 }
-.btn-sm {
-  font-size: 12px;
-  padding: 6px 12px;
-}
-.opts-grid {
+
+.quiz-options-grid {
   display: grid;
-  gap: 10px;
-  margin-top: 8px;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border, #e2e8f0);
 }
-.opt-row {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 10px;
-  align-items: center;
+
+.quiz-option-item { display: flex; align-items: center; gap: 8px; }
+.quiz-option-item input[type="radio"] {
+  accent-color: #0f6e56;
+  width: 16px; height: 16px;
+  cursor: pointer; flex-shrink: 0;
 }
-.opt-row input[type="radio"] {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  accent-color: var(--brand);
+
+.quiz-option-item input[type="text"] { flex: 1; }
+
+.quiz-empty-state {
+  text-align: center;
+  padding: 32px 20px;
+  border: 2px dashed var(--border, #e2e8f0);
+  border-radius: 12px;
+  color: var(--text-muted, #718096);
+  font-size: 13px;
+  background: #fafbff;
 }
+
+.quiz-empty-state div { font-size: 32px; margin-bottom: 12px; }
 
 /* ── Buttons ── */
 .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  font-size: 14px;
+  padding: 10px 18px;
+  font-size: 13px;
   font-weight: 600;
   border: none;
-  border-radius: var(--r-md);
+  border-radius: 8px;
   cursor: pointer;
-  transition: all .2s;
-  font-family: var(--font);
+  transition: all 0.3s ease;
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   text-decoration: none;
-  white-space: nowrap;
 }
+
 .btn-primary {
-  background: var(--brand);
+  background: linear-gradient(135deg, #4c68d7, #6b82f5);
   color: #fff;
+  box-shadow: 0 4px 12px rgba(76,104,215,0.30);
 }
+
 .btn-primary:hover {
-  background: var(--brand-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(76,104,215,.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(76,104,215,0.40);
 }
+
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .btn-success {
-  background: var(--green);
+  background: linear-gradient(135deg, #0f6e56, #1d9e75);
   color: #fff;
+  box-shadow: 0 4px 12px rgba(15,110,86,0.30);
 }
+
 .btn-success:hover {
-  background: #188a65;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(29,158,117,.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(15,110,86,0.40);
 }
+
 .btn-ghost {
   background: transparent;
-  color: var(--t2);
-  border: 1.5px solid var(--border);
+  color: var(--brand-blue, #4c68d7);
+  border: 1.5px solid var(--border, #e2e8f0);
 }
-.btn-ghost:hover {
-  border-color: var(--brand);
-  color: var(--brand);
-  background: var(--brand-soft);
+
+.btn-ghost:hover { background: #f0f3ff; border-color: #4c68d7; }
+
+.btn-danger {
+  background: #fff5f5;
+  color: #e24b4a;
+  border: 1px solid #f5d5d5;
 }
-.btn-dashed {
-  width: 100%;
-  padding: 14px;
+
+.btn-danger:hover { background: #ffe5e5; color: #c92a2a; }
+
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+.btn-add {
   background: transparent;
-  color: var(--t2);
-  border: 2px dashed var(--border);
-  border-radius: var(--r-md);
+  border: 1.5px dashed #4c68d7;
+  color: #4c68d7;
+  padding: 12px 16px;
+  width: 100%;
+  margin-top: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.btn-add:hover { background: #f0f3ff; border-color: #6b82f5; color: #6b82f5; }
+
+/* ── Wizard Navigation Bar ── */
+.wizard-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0 32px;
+  border-top: 2px solid var(--border, #e2e8f0);
+  margin-top: 8px;
+  gap: 12px;
+}
+
+.wizard-nav-left  { display: flex; gap: 10px; }
+.wizard-nav-right { display: flex; gap: 10px; }
+
+/* ── Step Counter Badge ── */
+.step-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted, #718096);
+  padding: 6px 14px;
+  background: #f4f5f8;
+  border-radius: 20px;
+  align-self: center;
+}
+
+/* ── Validation highlight ── */
+.form-control.invalid {
+  border-color: #e24b4a;
+  box-shadow: 0 0 0 3px rgba(226,75,74,0.10);
+}
+
+/* ── Summary Review Panel (step 5 pre-submit) ── */
+.review-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.review-item {
+  background: #fafbff;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  padding: 14px 18px;
+}
+
+.review-item-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted, #718096);
+  margin-bottom: 4px;
+}
+
+.review-item-value {
   font-size: 14px;
   font-weight: 600;
-  cursor: pointer;
-  transition: .2s;
-  font-family: var(--font);
-}
-.btn-dashed:hover {
-  border-color: var(--brand);
-  color: var(--brand);
-  background: var(--brand-soft);
+  color: var(--brand-dark, #1a202c);
 }
 
-/* ── Navigation ── */
-.cw-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 20px 0;
-  flex-wrap: wrap;
+.review-item-value.empty { color: #b0b5c4; font-style: italic; font-weight: 400; }
+
+/* ── Animations ── */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-.step-info {
-  font-size: 13px;
-  color: var(--t3);
-  flex: 1;
-  text-align: center;
-}
-.step-info strong { color: var(--t1); }
 
 /* ── Responsive ── */
-@media (max-width: 640px) {
-  .cw-stepper { font-size: 10px; }
-  .cw-circle { width: 36px; height: 36px; font-size: 13px; }
-  .cw-label { font-size: 10px; }
+@media (max-width: 768px) {
+  .card { padding: 18px; }
   .video-row { grid-template-columns: 1fr; }
-  .btn-rm { width: 100%; }
-  .level-grid { grid-template-columns: 1fr; }
+  .level-options { grid-template-columns: 1fr; }
+  .quiz-options-grid { grid-template-columns: 1fr; }
+  .review-grid { grid-template-columns: 1fr; }
+  .progress-wizard { gap: 4px; }
+  .wizard-label { display: none; }
+}
+
+@media (max-width: 480px) {
+  .wizard-line { display: none; }
+  .wizard-nav { flex-wrap: wrap; }
+}
+
+/* ── Focus & Accessibility ── */
+.form-control:focus-visible, .btn:focus-visible {
+  outline: 2px solid #4c68d7;
+  outline-offset: 2px;
 }
 </style>
 {% endblock %}
 
-
 {% block content %}
-<div class="cw-shell">
-  <!-- Top bar -->
-  <div class="cw-topbar">
-    <a href="{% url 'superadmin_course_detail' course.pk %}" class="cw-back">
-      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path d="M19 12H5M12 19l-7-7 7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      Back to Course
-    </a>
-    <span class="cw-course-tag">Adding concept to <strong>{{ course.title }}</strong></span>
+
+<!-- ── Page Header ── -->
+<div class="form-header">
+  <div>
+    <h1>Add Concept</h1>
+    <p class="form-header-meta">📚 Course: <strong>{{ course.title }}</strong></p>
+  </div>
+  <a href="{% url 'superadmin_course_detail' course.pk %}{% if request.GET.wizard %}?wizard=1{% endif %}" class="btn btn-ghost">← Back to Course</a>
+</div>
+
+<div class="concept-form-wrapper">
+
+  <!-- ── WIZARD PROGRESS BAR ── -->
+  <div class="progress-wizard" id="progressWizard">
+    <!-- Steps injected by JS to stay DRY -->
   </div>
 
-  <div class="cw-wrap">
-    <!-- Progress bar -->
-    <div class="cw-prog">
-      <div class="cw-prog-fill" id="cw-fill" style="width: 20%"></div>
-    </div>
+  <!-- ── THE FORM (single form, all fields present in DOM) ── -->
+  <form method="post" enctype="multipart/form-data" id="conceptForm" novalidate>
+    {% csrf_token %}
 
-    <!-- Stepper -->
-    <div class="cw-stepper">
-      <div class="cw-step active" data-s="1" onclick="cwGo(1)">
-        <div class="cw-circle" id="cc-1">1</div>
-        <span class="cw-label">Concept Info</span>
-      </div>
-      <div class="cw-line" id="cl-1"></div>
+    <!-- ════════════════════════════════════════════
+         STEP 1 — Concept Info
+    ═════════════════════════════════════════════ -->
+    <div class="wizard-panel active" id="step-1">
+      <div class="card">
+        <div class="flex-between mb-16">
+          <h2 class="section-title">📘 Concept Info</h2>
+        </div>
+        <p class="form-hint mb-16">Fill in the basic identity details for this concept.</p>
 
-      <div class="cw-step" data-s="2" onclick="cwGo(2)">
-        <div class="cw-circle" id="cc-2">2</div>
-        <span class="cw-label">Level & Videos</span>
-      </div>
-      <div class="cw-line" id="cl-2"></div>
+        <div class="form-group">
+          <label class="form-label">Concept  <span style="color:#e53e3e;">*</span></label>
+          <input type="text" name="header" id="field-header" class="form-control"
+                 placeholder="e.g. Chapter 1: Introduction to Algebra"
+                 value="{{ form.header.value|default:'' }}" required>
+          <p class="form-hint">This is the main title shown to students.</p>
+          {% if form.header.errors %}<div class="form-error">{{ form.header.errors.0 }}</div>{% endif %}
+        </div>
 
-      <div class="cw-step" data-s="3" onclick="cwGo(3)">
-        <div class="cw-circle" id="cc-3">3</div>
-        <span class="cw-label">Course PDF</span>
-      </div>
-      <div class="cw-line" id="cl-3"></div>
-
-      <div class="cw-step" data-s="4" onclick="cwGo(4)">
-        <div class="cw-circle" id="cc-4">4</div>
-        <span class="cw-label">Quiz</span>
-      </div>
-      <div class="cw-line" id="cl-4"></div>
-
-      <div class="cw-step" data-s="5" onclick="cwGo(5)">
-        <div class="cw-circle" id="cc-5">5</div>
-        <span class="cw-label">Assignment</span>
+        <div class="form-group">
+          <label class="form-label">Description <span style="color:var(--text-muted,#718096);font-weight:400;">(optional)</span></label>
+          <input type="text" name="h3_course" id="field-h3_course" class="form-control"
+                 placeholder="e.g. Variables and Expressions"
+                 value="{{ form.h3_course.value|default:'' }}">
+          <p class="form-hint">A shorter description shown below the header.</p>
+        </div>
       </div>
     </div>
 
-    <!-- ONE FORM wraps all steps -->
-    <form method="post" enctype="multipart/form-data" onsubmit="cwSerialize()">
-      {% csrf_token %}
+    <!-- ════════════════════════════════════════════
+         STEP 2 — Module Level & Videos
+    ═════════════════════════════════════════════ -->
+    <div class="wizard-panel" id="step-2">
+      <div class="card">
+        <h2 class="section-title mb-16">🎯 Module Level</h2>
+        <p class="form-hint mb-16">Choose the difficulty level for this concept.</p>
 
-      <!-- ═══════════════════════════════════════
-           STEP 1: CONCEPT INFO
-           ═══════════════════════════════════════ -->
-      <div class="cw-panel active" id="panel-1">
-        <div class="cw-card">
-          <div class="cw-card-head">
-            <div class="cw-card-icon icon-blue">📚</div>
-            <div>
-              <h3>Concept Information</h3>
-              <p>Enter the basic details for this concept</p>
-            </div>
-          </div>
-          <div class="cw-card-body">
-            <div class="fg">
-              <label class="lbl">Concept  <span class="req">*</span></label>
-              <input type="text" name="header" class="fc" required
-                     placeholder="e.g., Introduction to Variables"
-                     value="{{ form.header.value|default:'' }}">
-              {% if form.header.errors %}
-                <p class="ferr">{{ form.header.errors.0 }}</p>
-              {% endif %}
-            </div>
-
-            <div class="fg">
-              <label class="lbl"> Course Title <span class="opt">(optional)</span></label>
-              <input type="text" name="h3_course" class="fc"
-                     placeholder="e.g., Programming Fundamentals"
-                     value="{{ form.h3_course.value|default:'' }}">
-              <p class="hint">Subcategory or module name for this concept</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="cw-nav">
-          <div></div>
-          <span class="step-info">Step <strong>1</strong> of <strong>5</strong></span>
-          <button type="button" class="btn btn-primary" onclick="cwGo(2)">
-            Next: Level & Videos
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path d="M5 12h14M12 5l7 7-7 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
+        <div class="level-options">
+          <label class="level-option">
+            <input type="radio" name="level" value="beginner"
+                   {% if form.level.value == 'beginner' or not form.level.value %}checked{% endif %}>
+            🟢 Beginner
+          </label>
+          <label class="level-option">
+            <input type="radio" name="level" value="intermediate"
+                   {% if form.level.value == 'intermediate' %}checked{% endif %}>
+            🟡 Intermediate
+          </label>
+          <label class="level-option">
+            <input type="radio" name="level" value="advanced"
+                   {% if form.level.value == 'advanced' %}checked{% endif %}>
+            🔴 Advanced
+          </label>
         </div>
       </div>
 
-      <!-- ═══════════════════════════════════════
-           STEP 2: MODULE LEVEL & VIDEOS
-           ═══════════════════════════════════════ -->
-      <div class="cw-panel" id="panel-2">
-        <!-- 2A: Level -->
-        <div class="cw-card">
-          <div class="cw-card-head">
-            <div class="cw-card-icon icon-purple">⚡</div>
-            <div>
-              <h3>Module Level</h3>
-              <p>Select the difficulty level for this concept</p>
-            </div>
-          </div>
-          <div class="cw-card-body">
-            <label class="lbl">Difficulty Level</label>
-            <div class="level-grid">
-              <label class="level-pill" onclick="cwLevel(this)">
-                <input type="radio" name="level" value="beginner">
-                <span>🌱 Beginner</span>
-              </label>
-              <label class="level-pill" onclick="cwLevel(this)">
-                <input type="radio" name="level" value="intermediate">
-                <span>🚀 Intermediate</span>
-              </label>
-              <label class="level-pill" onclick="cwLevel(this)">
-                <input type="radio" name="level" value="advanced">
-                <span>🏆 Advanced</span>
-              </label>
-            </div>
-          </div>
+      <div class="card">
+        <div class="flex-between mb-16">
+          <h2 class="section-title">🎬 Videos</h2>
+          <button type="button" class="btn btn-sm btn-ghost" onclick="addVideoRow()">+ Add Video</button>
         </div>
+        <p style="font-size:13px;color:var(--text-muted,#718096);margin-bottom:16px;">
+          Upload one or more videos for this concept. Supported: mp4, mov, avi, mkv.
+        </p>
 
-        <!-- 2B: Videos -->
-        <div class="cw-card">
-          <div class="cw-card-head">
-            <div class="cw-card-icon icon-red">🎬</div>
-            <div>
-              <h3>Instructional Videos</h3>
-              <p>Upload video files to explain this concept</p>
-            </div>
+        <div id="video-rows">
+          <!-- First row always visible -->
+          <div class="video-row">
+            <input type="text"  name="video_titles" class="form-control" placeholder="Video title (optional)">
+            <input type="file"  name="video_files"  class="form-control" accept="video/*">
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)" style="visibility:hidden;">✕</button>
           </div>
-          <div class="cw-card-body">
-            <div id="video-rows">
-              <!-- Video rows will be added here -->
-            </div>
-            <button type="button" class="btn-dashed" onclick="cwAddVideo()">
-              + Add Video
-            </button>
-            <p class="hint" style="margin-top:12px">
-              Accepted formats: MP4, MOV, AVI • Max 100 MB per video
-            </p>
-          </div>
-        </div>
-
-        <div class="cw-nav">
-          <button type="button" class="btn btn-ghost" onclick="cwGo(1)">
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path d="M19 12H5M12 19l-7-7 7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Back
-          </button>
-          <span class="step-info">Step <strong>2</strong> of <strong>5</strong></span>
-          <button type="button" class="btn btn-primary" onclick="cwGo(3)">
-            Next: PDF Upload
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path d="M5 12h14M12 5l7 7-7 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
         </div>
       </div>
+    </div>
 
-      <!-- ═══════════════════════════════════════
-           STEP 3: COURSE PDF
-           ═══════════════════════════════════════ -->
-      <div class="cw-panel" id="panel-3">
-        <div class="cw-card">
-          <div class="cw-card-head">
-            <div class="cw-card-icon icon-amber">📄</div>
-            <div>
-              <h3>Course PDF</h3>
-              <p>Upload a PDF document with detailed notes for this concept</p>
-            </div>
-          </div>
-          <div class="cw-card-body">
-            <label for="id_pdf" class="pdf-pick" onclick="document.getElementById('id_pdf').click()">
-              <input type="file" name="pdf" id="id_pdf" accept=".pdf"
-                     onchange="cwPdfPick(this)">
-              <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z" stroke-width="1.5"/>
-                <polyline points="14 2 14 8 20 8" stroke-width="1.5" stroke-linecap="round"/>
-                <line x1="12" y1="12" x2="12" y2="18" stroke-width="1.5" stroke-linecap="round"/>
-                <line x1="9" y1="15" x2="15" y2="15" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-              <p id="pdf-name">Click to upload PDF</p>
-              <span id="pdf-sub">or drag and drop • Max 20 MB</span>
-            </label>
-            {% if form.pdf.errors %}
-              <p class="ferr" style="margin-top:10px">{{ form.pdf.errors.0 }}</p>
-            {% endif %}
-          </div>
+    <!-- ════════════════════════════════════════════
+         STEP 3 — Course PDF
+    ═════════════════════════════════════════════ -->
+    <div class="wizard-panel" id="step-3">
+      <div class="card">
+        <h2 class="section-title mb-16">📄 Course PDF</h2>
+        <p style="font-size:13px;color:var(--text-muted,#718096);margin-bottom:16px;">
+          Attach a PDF document (notes, slides, reading material) for this concept.
+        </p>
+
+        <div class="pdf-upload-box" id="pdfUploadBox"
+             onclick="document.getElementById('pdfFileInput').click()"
+             ondragover="handleDragOver(event)"
+             ondragleave="handleDragLeave(event)"
+             ondrop="handleDrop(event)">
+          <div class="pdf-icon">📄</div>
+          <p class="pdf-text" id="pdfFileName">Click to upload or drag & drop a PDF</p>
+          <p class="pdf-subtext">PDF files only — max 50 MB</p>
         </div>
 
-        <div class="cw-nav">
-          <button type="button" class="btn btn-ghost" onclick="cwGo(2)">
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path d="M19 12H5M12 19l-7-7 7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Back
-          </button>
-          <span class="step-info">Step <strong>3</strong> of <strong>5</strong></span>
-          <button type="button" class="btn btn-primary" onclick="cwGo(4)">
-            Next: Add Quiz
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path d="M5 12h14M12 5l7 7-7 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
+        <div class="form-group" style="margin-top:14px;">
+          <input type="file" name="pdf" id="pdfFileInput" class="form-control" accept=".pdf"
+                 onchange="updatePdfLabel(this)" style="display:none;">
+          {% if form.pdf.errors %}<div class="form-error">{{ form.pdf.errors.0 }}</div>{% endif %}
         </div>
       </div>
+    </div>
 
-      <!-- ═══════════════════════════════════════
-           STEP 4: QUIZ
-           ═══════════════════════════════════════ -->
-      <div class="cw-panel" id="panel-4">
-        <div class="cw-card">
-          <div class="cw-card-head">
-            <div class="cw-card-icon icon-teal">❓</div>
-            <div>
-              <h3>Quiz Questions</h3>
-              <p>Add multiple-choice questions. Each needs 4 options and one correct answer.</p>
-            </div>
-          </div>
-          <div class="cw-card-body">
-            <div id="quiz-list"></div>
-            <div id="quiz-empty" class="quiz-empty">
-              No questions yet — click "+ Add Question" to start.
-            </div>
-            <button type="button" class="btn-dashed" onclick="cwAddQ()">+ Add Question</button>
-            <!-- Hidden: stores quiz JSON on submit -->
-            <textarea name="quiz" id="quiz-data" style="display:none">{{ form.quiz.value|default:'' }}</textarea>
-          </div>
+    <!-- ════════════════════════════════════════════
+         STEP 4 — Quiz
+    ═════════════════════════════════════════════ -->
+    <div class="wizard-panel" id="step-4">
+      <div class="card">
+        <div class="flex-between mb-16">
+          <h2 class="section-title">❓ Quiz</h2>
+          <button type="button" class="btn btn-sm btn-ghost" onclick="addQuizQuestion()">+ Add Question</button>
         </div>
+        <p style="font-size:13px;color:var(--text-muted,#718096);margin-bottom:16px;">
+          Add multiple choice questions. Each question needs 4 options and one correct answer.
+        </p>
 
-        <div class="cw-nav">
-          <button type="button" class="btn btn-ghost" onclick="cwGo(3)">
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path d="M19 12H5M12 19l-7-7 7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Back
-          </button>
-          <span class="step-info">Step <strong>4</strong> of <strong>5</strong></span>
-          <button type="button" class="btn btn-primary" onclick="cwGo(5)">
-            Next: Assignment
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path d="M5 12h14M12 5l7 7-7 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
+        <div id="quiz-questions" style="display:flex;flex-direction:column;gap:16px;"></div>
+
+        <!-- Hidden textarea stores the JSON -->
+        <textarea name="quiz" id="quiz-data" style="display:none;">{{ form.quiz.value|default:'' }}</textarea>
+
+        <div id="quiz-empty" class="quiz-empty-state">
+          <div>❓</div>
+          No questions yet. Click "+ Add Question" to start building your quiz.
         </div>
       </div>
+    </div>
 
-      <!-- ═══════════════════════════════════════
-           STEP 5: ASSIGNMENT (FINAL STEP WITH SUBMIT)
-           ═══════════════════════════════════════ -->
-      <div class="cw-panel" id="panel-5">
-        <div class="cw-card">
-          <div class="cw-card-head">
-            <div class="cw-card-icon icon-green">📝</div>
-            <div>
-              <h3>Assignment</h3>
-              <p>Describe what students need to complete for this concept</p>
-            </div>
-          </div>
-          <div class="cw-card-body">
-            <div class="fg">
-              <label class="lbl">Assignment Title</label>
-              <input type="text" id="asgn-title" class="fc"
-                     placeholder="e.g., Solve 10 algebra problems">
-            </div>
-            <div class="fg">
-              <label class="lbl">Instructions</label>
-              <textarea id="asgn-instr" class="fc" rows="5"
-                        placeholder="Describe what students need to do, submission format, deadline notes..."></textarea>
-            </div>
-            <div class="fg">
-              <label class="lbl">Max Score</label>
-              <input type="number" id="asgn-score" class="fc"
-                     style="max-width:150px" placeholder="100" min="1">
-              <p class="hint">Total points available for this assignment</p>
-            </div>
-            <!-- Hidden: stores combined assignment text on submit -->
-            <textarea name="assignment" id="assignment-data" style="display:none">{{ form.assignment.value|default:'' }}</textarea>
-          </div>
+    <!-- ════════════════════════════════════════════
+         STEP 5 — Assignment + Review + Submit
+    ═════════════════════════════════════════════ -->
+    <div class="wizard-panel" id="step-5">
+      <div class="card">
+        <h2 class="section-title mb-16">📝 Assignment</h2>
+        <p style="font-size:13px;color:var(--text-muted,#718096);margin-bottom:16px;">
+          Describe what students need to submit or complete for this concept.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label">Assignment Title</label>
+          <input type="text" name="assignment_title" id="assignment-title" class="form-control"
+                 placeholder="e.g. Solve 10 algebra problems">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Instructions</label>
+          <textarea name="assignment_instructions" id="assignment-instructions"
+                    class="form-control" rows="4"
+                    placeholder="Describe what students need to do, submission format, deadline notes..."></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Max Score</label>
+          <input type="number" name="assignment_max_score" id="assignment-max-score"
+                 class="form-control" style="max-width:120px;" placeholder="20" min="1">
         </div>
 
-        <div class="cw-nav">
-          <button type="button" class="btn btn-ghost" onclick="cwGo(4)">
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path d="M19 12H5M12 19l-7-7 7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Back
-          </button>
-          <span class="step-info">Step <strong>5</strong> of <strong>5</strong> — Final Step</span>
-          <button type="submit" class="btn btn-success">
-            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path d="M20 6L9 17l-5-5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Submit & Save Concept
-          </button>
-        </div>
+        <!-- Hidden textarea stores combined assignment text -->
+        <textarea name="assignment" id="assignment-data" style="display:none;">{{ form.assignment.value|default:'' }}</textarea>
       </div>
 
-    </form>
-  </div><!-- .cw-wrap -->
-</div><!-- .cw-shell -->
+      <!-- ── Review Summary ── -->
+      <div class="card">
+        <h2 class="section-title mb-16">✅ Review Before Submit</h2>
+        <p style="font-size:13px;color:var(--text-muted,#718096);margin-bottom:16px;">
+          Please review the concept summary below before saving.
+        </p>
+
+        <div class="review-grid" id="reviewGrid">
+          <!-- Populated by JS when step 5 is shown -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+         WIZARD NAVIGATION
+    ═════════════════════════════════════════════ -->
+    <div class="wizard-nav">
+      <div class="wizard-nav-left">
+        <button type="button" class="btn btn-ghost" id="btnPrev" onclick="wizardPrev()" style="display:none;">
+          ← Previous
+        </button>
+        <a href="{% url 'superadmin_course_detail' course.pk %}" class="btn btn-ghost" id="btnCancel">
+          Cancel
+        </a>
+      </div>
+
+      <span class="step-badge" id="stepBadge">Step 1 of 5</span>
+
+      <div class="wizard-nav-right">
+        <button type="button" class="btn btn-primary" id="btnNext" onclick="wizardNext()">
+          Next →
+        </button>
+        <button type="submit" class="btn btn-success" id="btnSubmit"
+                onclick="serializeData()" style="display:none;">
+          💾 Save Concept
+        </button>
+      </div>
+    </div>
+
+  </form><!-- /form -->
+
+</div><!-- /concept-form-wrapper -->
+
 {% endblock %}
-
 
 {% block extra_js %}
 <script>
-/* ═══════════════════════════════════════════════════════
-   5-STEP WIZARD NAVIGATION
-   ═══════════════════════════════════════════════════════ */
-let cwCurrent = 1;
+/* ══════════════════════════════════════════
+   WIZARD CONFIG
+══════════════════════════════════════════ */
+const WIZARD_STEPS = [
+  { label: 'Concept Info',        icon: '📘' },
+  { label: 'Level & Videos',      icon: '🎬' },
+  { label: 'Course PDF',          icon: '📄' },
+  { label: 'Quiz',                icon: '❓' },
+  { label: 'Assignment',          icon: '📝' },
+];
+const TOTAL_STEPS = WIZARD_STEPS.length;
+let currentStep  = 1;
 
-function cwGo(n) {
-  // Validation for step 1 → 2
-  if (cwCurrent === 1 && n === 2) {
-    const hdr = document.querySelector('input[name="header"]');
-    if (!hdr.value.trim()) {
-      hdr.focus();
-      hdr.style.borderColor = 'var(--red)';
-      hdr.addEventListener('input', () => { hdr.style.borderColor = ''; }, { once: true });
-      return;
+/* ══════════════════════════════════════════
+   BUILD PROGRESS BAR
+══════════════════════════════════════════ */
+function buildProgressBar() {
+  const container = document.getElementById('progressWizard');
+  container.innerHTML = '';
+
+  WIZARD_STEPS.forEach((step, i) => {
+    const stepNum = i + 1;
+    let circleClass = 'idle';
+    if (stepNum < currentStep)  circleClass = 'done';
+    if (stepNum === currentStep) circleClass = 'active';
+
+    const stepEl = document.createElement('div');
+    stepEl.className = 'wizard-step' + (stepNum === currentStep ? ' active' : '') + (stepNum < currentStep ? ' done' : '');
+    stepEl.innerHTML = `
+      <div class="wizard-circle ${circleClass}">${circleClass === 'done' ? '✓' : stepNum}</div>
+      <span class="wizard-label">${step.icon} ${step.label}</span>
+    `;
+    container.appendChild(stepEl);
+
+    if (i < WIZARD_STEPS.length - 1) {
+      const line = document.createElement('div');
+      line.className = 'wizard-line' + (stepNum < currentStep ? ' done' : stepNum === currentStep ? ' active' : '');
+      container.appendChild(line);
     }
-  }
-
-  // Validation for step 2 → 3 (at least one level selected)
-  if (cwCurrent === 2 && n === 3) {
-    const levelChecked = document.querySelector('input[name="level"]:checked');
-    if (!levelChecked) {
-      alert('Please select a difficulty level before proceeding.');
-      return;
-    }
-  }
-
-  cwCurrent = n;
-
-  // Show correct panel
-  document.querySelectorAll('.cw-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('panel-' + n).classList.add('active');
-
-  // Update stepper
-  const steps = document.querySelectorAll('.cw-step');
-  steps.forEach(s => {
-    const sn = parseInt(s.dataset.s);
-    s.classList.remove('done', 'active');
-    if (sn < n) s.classList.add('done');
-    if (sn === n) s.classList.add('active');
   });
-
-  // Update stepper circles text
-  for (let i = 1; i <= 5; i++) {
-    const c = document.getElementById('cc-' + i);
-    c.textContent = i < n ? '✓' : i;
-  }
-
-  // Update lines
-  for (let i = 1; i <= 4; i++) {
-    const line = document.getElementById('cl-' + i);
-    line.classList.toggle('done', n > i);
-  }
-
-  // Update progress bar (20%, 40%, 60%, 80%, 100%)
-  const progress = (n / 5) * 100;
-  document.getElementById('cw-fill').style.width = progress + '%';
-
-  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/* ═══════════════════════════════════════════════════════
-   LEVEL PILLS
-   ═══════════════════════════════════════════════════════ */
-function cwLevel(lbl) {
-  document.querySelectorAll('.level-pill').forEach(l => l.classList.remove('selected'));
-  lbl.classList.add('selected');
-  lbl.querySelector('input').checked = true;
+/* ══════════════════════════════════════════
+   SHOW PANEL
+══════════════════════════════════════════ */
+function showStep(step) {
+  // Hide all panels
+  for (let i = 1; i <= TOTAL_STEPS; i++) {
+    const panel = document.getElementById('step-' + i);
+    if (panel) panel.classList.remove('active');
+  }
+  // Show target panel
+  const target = document.getElementById('step-' + step);
+  if (target) target.classList.add('active');
+
+  // Update buttons
+  const btnPrev   = document.getElementById('btnPrev');
+  const btnNext   = document.getElementById('btnNext');
+  const btnSubmit = document.getElementById('btnSubmit');
+  const btnCancel = document.getElementById('btnCancel');
+  const stepBadge = document.getElementById('stepBadge');
+
+  btnPrev.style.display   = step > 1 ? 'inline-flex' : 'none';
+  btnCancel.style.display = step === 1 ? 'inline-flex' : 'none';
+  btnNext.style.display   = step < TOTAL_STEPS ? 'inline-flex' : 'none';
+  btnSubmit.style.display = step === TOTAL_STEPS ? 'inline-flex' : 'none';
+
+  stepBadge.textContent = `Step ${step} of ${TOTAL_STEPS}`;
+
+  buildProgressBar();
+
+  // If last step, populate review summary
+  if (step === TOTAL_STEPS) populateReview();
 }
 
-// Auto-select beginner on load if nothing selected
-window.addEventListener('DOMContentLoaded', function() {
-  const levelChecked = document.querySelector('input[name="level"]:checked');
-  if (!levelChecked) {
-    const beginner = document.querySelector('input[name="level"][value="beginner"]');
-    if (beginner) {
-      beginner.checked = true;
-      beginner.closest('.level-pill').classList.add('selected');
+/* ══════════════════════════════════════════
+   VALIDATE CURRENT STEP
+══════════════════════════════════════════ */
+function validateStep(step) {
+  let valid = true;
+
+  if (step === 1) {
+    const header = document.getElementById('field-header');
+    if (!header.value.trim()) {
+      header.classList.add('invalid');
+      header.focus();
+      showToast('⚠️ Concept Header is required.', 'error');
+      valid = false;
+    } else {
+      header.classList.remove('invalid');
     }
-  } else {
-    levelChecked.closest('.level-pill').classList.add('selected');
   }
-});
 
-/* ═══════════════════════════════════════════════════════
-   VIDEO ROWS
-   ═══════════════════════════════════════════════════════ */
-function cwAddVideo() {
-  const wrap = document.getElementById('video-rows');
-  const row  = document.createElement('div');
+  return valid;
+}
+
+/* ══════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════ */
+function wizardNext() {
+  if (!validateStep(currentStep)) return;
+  if (currentStep < TOTAL_STEPS) {
+    currentStep++;
+    showStep(currentStep);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function wizardPrev() {
+  if (currentStep > 1) {
+    currentStep--;
+    showStep(currentStep);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+/* ══════════════════════════════════════════
+   REVIEW SUMMARY (Step 5)
+══════════════════════════════════════════ */
+function populateReview() {
+  const grid = document.getElementById('reviewGrid');
+  if (!grid) return;
+
+  const header    = (document.getElementById('field-header')?.value || '').trim();
+  const h3        = (document.querySelector('[name="h3_course"]')?.value || '').trim();
+  const level     = document.querySelector('[name="level"]:checked')?.value || '';
+  const pdfName   = document.getElementById('pdfFileInput')?.files?.[0]?.name || '';
+  const videoRows = document.querySelectorAll('#video-rows .video-row').length;
+  const quizCount = quizQuestions.length;
+  const assignT   = (document.getElementById('assignment-title')?.value || '').trim();
+
+  const items = [
+    { label: 'Concept Header',  value: header   || '—' },
+    { label: 'Sub-heading',     value: h3       || '(none)' },
+    { label: 'Level',           value: level    || '—' },
+    { label: 'PDF',             value: pdfName  || '(none)' },
+    { label: 'Video Rows',      value: videoRows + ' row(s)' },
+    { label: 'Quiz Questions',  value: quizCount + ' question(s)' },
+    { label: 'Assignment',      value: assignT  || '(none)' },
+  ];
+
+  grid.innerHTML = items.map(it => `
+    <div class="review-item">
+      <div class="review-item-label">${it.label}</div>
+      <div class="review-item-value ${it.value === '(none)' || it.value === '—' ? 'empty' : ''}">${escHtml(it.value)}</div>
+    </div>
+  `).join('');
+}
+
+/* ══════════════════════════════════════════
+   VIDEOS
+══════════════════════════════════════════ */
+function addVideoRow() {
+  const container = document.getElementById('video-rows');
+  const row = document.createElement('div');
   row.className = 'video-row';
   row.innerHTML = `
-    <input type="text"  name="video_titles" class="fc" placeholder="Video title (optional)">
-    <input type="file"  name="video_files"  class="fc" accept="video/*">
-    <button type="button" class="btn-rm" onclick="cwRmVideo(this)">✕</button>`;
-  wrap.appendChild(row);
+    <input type="text"  name="video_titles" class="form-control" placeholder="Video title (optional)">
+    <input type="file"  name="video_files"  class="form-control" accept="video/*">
+    <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">✕</button>
+  `;
+  container.appendChild(row);
+
+  // Show remove button on first row if there are now multiple
+  updateFirstRowRemoveBtn();
 }
 
-function cwRmVideo(btn) {
+function removeRow(btn) {
   btn.closest('.video-row').remove();
+  updateFirstRowRemoveBtn();
 }
 
-/* ═══════════════════════════════════════════════════════
-   PDF PICK
-   ═══════════════════════════════════════════════════════ */
-function cwPdfPick(inp) {
-  if (!inp.files.length) return;
-  document.getElementById('pdf-name').textContent = inp.files[0].name;
-  document.getElementById('pdf-sub').textContent  = 'File selected — click to change';
-}
-
-/* ═══════════════════════════════════════════════════════
-   QUIZ MANAGEMENT
-   ═══════════════════════════════════════════════════════ */
-let quizQs = [];
-
-(function initQuiz() {
-  try {
-    const raw = document.getElementById('quiz-data').value.trim();
-    if (raw) quizQs = JSON.parse(raw);
-  } catch(e) { quizQs = []; }
-  cwRenderQuiz();
-})();
-
-function cwAddQ() {
-  quizQs.push({ question: '', options: ['', '', '', ''], correct: null });
-  cwRenderQuiz();
-}
-
-function cwRemoveQ(i) {
-  quizQs.splice(i, 1);
-  cwRenderQuiz();
-}
-
-function escH(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
-function cwRenderQuiz() {
-  const list  = document.getElementById('quiz-list');
-  const empty = document.getElementById('quiz-empty');
-  list.innerHTML = '';
-  empty.style.display = quizQs.length ? 'none' : 'block';
-
-  quizQs.forEach((q, qi) => {
-    const card = document.createElement('div');
-    card.className = 'quiz-card';
-    card.innerHTML = `
-      <div class="quiz-card-head">
-        <span class="q-badge">Question ${qi + 1}</span>
-        <button type="button" class="btn-rm btn-sm" onclick="cwRemoveQ(${qi})">✕ Remove</button>
-      </div>
-      <div class="fg">
-        <label class="lbl">Question text</label>
-        <input type="text" class="fc" value="${escH(q.question)}"
-               oninput="quizQs[${qi}].question=this.value"
-               placeholder="Enter your question here...">
-      </div>
-      <label class="lbl" style="margin-top:14px;display:block">
-        Options <span class="opt" style="font-size:11px">— click the radio to mark correct answer</span>
-      </label>
-      <div class="opts-grid">
-        ${q.options.map((o, oi) => `
-          <div class="opt-row">
-            <input type="radio" name="cq${qi}" value="${oi}"
-                   ${q.correct === oi ? 'checked' : ''}
-                   onchange="quizQs[${qi}].correct=${oi}"
-                   title="Mark as correct">
-            <input type="text" class="fc" value="${escH(o)}"
-                   oninput="quizQs[${qi}].options[${oi}]=this.value"
-                   placeholder="Option ${oi + 1}">
-          </div>`).join('')}
-      </div>
-      <p style="font-size:12px;color:var(--t3);margin-top:12px">
-        ${q.correct !== null
-          ? `<span style="color:var(--green);font-weight:600">✓ Correct: Option ${q.correct + 1}</span>`
-          : '<span style="color:var(--red)">⚠ No correct answer selected yet</span>'}
-      </p>`;
-    list.appendChild(card);
+function updateFirstRowRemoveBtn() {
+  const rows = document.querySelectorAll('#video-rows .video-row');
+  rows.forEach((row, i) => {
+    const removeBtn = row.querySelector('button');
+    if (removeBtn) removeBtn.style.visibility = (rows.length > 1) ? 'visible' : 'hidden';
   });
 }
 
-/* ═══════════════════════════════════════════════════════
-   SERIALIZE DATA BEFORE SUBMIT
-   ═══════════════════════════════════════════════════════ */
-function cwSerialize() {
-  // Quiz → JSON
-  document.getElementById('quiz-data').value = JSON.stringify(quizQs);
+/* ══════════════════════════════════════════
+   PDF UPLOAD — DRAG & DROP
+══════════════════════════════════════════ */
+function updatePdfLabel(input) {
+  const label = document.getElementById('pdfFileName');
+  if (input.files && input.files[0]) {
+    label.textContent = '✅ ' + input.files[0].name;
+    label.style.color = '#0f6e56';
+  } else {
+    label.textContent = 'Click to upload or drag & drop a PDF';
+    label.style.color = '';
+  }
+}
 
-  // Assignment → combined plain text
-  const title  = (document.getElementById('asgn-title').value  || '').trim();
-  const instr  = (document.getElementById('asgn-instr').value  || '').trim();
-  const score  = (document.getElementById('asgn-score').value  || '').trim();
-  let combined = '';
-  if (title) combined += `Title: ${title}\n`;
-  if (score) combined += `Max Score: ${score}\n`;
-  if (instr) combined += `\nInstructions:\n${instr}`;
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('pdfUploadBox').classList.add('dragover');
+}
+
+function handleDragLeave(e) {
+  document.getElementById('pdfUploadBox').classList.remove('dragover');
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('pdfUploadBox').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') {
+    const input = document.getElementById('pdfFileInput');
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    updatePdfLabel(input);
+  } else {
+    showToast('⚠️ Please drop a PDF file only.', 'error');
+  }
+}
+
+/* ══════════════════════════════════════════
+   QUIZ
+══════════════════════════════════════════ */
+let quizQuestions = [];
+
+try {
+  const raw = document.getElementById('quiz-data').value.trim();
+  if (raw) quizQuestions = JSON.parse(raw);
+} catch(e) { quizQuestions = []; }
+
+function renderQuiz() {
+  const container = document.getElementById('quiz-questions');
+  const empty     = document.getElementById('quiz-empty');
+  container.innerHTML = '';
+
+  if (quizQuestions.length === 0) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  quizQuestions.forEach((q, qi) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-question-card';
+    div.innerHTML = `
+      <div class="flex-between mb-12" style="padding-bottom:10px;border-bottom:1.5px solid var(--border,#e2e8f0);">
+        <span class="quiz-number">Question ${qi + 1}</span>
+        <button type="button" class="btn btn-sm btn-danger" onclick="removeQuestion(${qi})">Remove</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Question</label>
+        <input type="text" class="form-control" value="${escHtml(q.question)}"
+               oninput="quizQuestions[${qi}].question=this.value"
+               placeholder="Enter your question...">
+      </div>
+      <div class="quiz-options-grid">
+        ${q.options.map((opt, oi) => `
+        <div class="quiz-option-item">
+          <input type="radio" name="correct_${qi}" value="${oi}"
+                 ${q.correct === oi ? 'checked' : ''}
+                 onchange="quizQuestions[${qi}].correct=${oi}"
+                 title="Mark as correct answer">
+          <input type="text" class="form-control" value="${escHtml(opt)}"
+                 oninput="quizQuestions[${qi}].options[${oi}]=this.value"
+                 placeholder="Option ${oi + 1}">
+        </div>`).join('')}
+      </div>
+      <p style="font-size:12px;color:var(--text-muted,#718096);margin-top:10px;">
+        ● Select the radio button next to the correct answer.
+        ${q.correct !== null
+          ? `<strong style="color:#0f6e56;">Correct: Option ${q.correct + 1}</strong>`
+          : '<span style="color:#e53e3e;">No correct answer selected yet</span>'}
+      </p>`;
+    container.appendChild(div);
+  });
+}
+
+function addQuizQuestion() {
+  quizQuestions.push({ question: '', options: ['', '', '', ''], correct: null });
+  renderQuiz();
+}
+
+function removeQuestion(index) {
+  quizQuestions.splice(index, 1);
+  renderQuiz();
+}
+
+/* ══════════════════════════════════════════
+   SERIALIZE BEFORE SUBMIT
+══════════════════════════════════════════ */
+function serializeData() {
+  // Quiz → JSON
+  document.getElementById('quiz-data').value = JSON.stringify(quizQuestions);
+
+  // Assignment → combined text
+  const title    = document.getElementById('assignment-title').value.trim();
+  const instruct = document.getElementById('assignment-instructions').value.trim();
+  const score    = document.getElementById('assignment-max-score').value.trim();
+  let combined   = '';
+  if (title)    combined += `Title: ${title}\n`;
+  if (score)    combined += `Max Score: ${score}\n`;
+  if (instruct) combined += `\nInstructions:\n${instruct}`;
   document.getElementById('assignment-data').value = combined.trim();
 }
 
-/* ═══════════════════════════════════════════════════════
-   PREVENT ACCIDENTAL NAVIGATION AWAY
-   ═══════════════════════════════════════════════════════ */
-let formChanged = false;
-document.addEventListener('DOMContentLoaded', function() {
-  const form = document.querySelector('form');
-  const inputs = form.querySelectorAll('input, textarea, select');
-  
-  inputs.forEach(input => {
-    input.addEventListener('change', () => { formChanged = true; });
-  });
+/* ══════════════════════════════════════════
+   TOAST NOTIFICATION (helper)
+══════════════════════════════════════════ */
+function showToast(msg, type='info') {
+  const existing = document.getElementById('wizardToast');
+  if (existing) existing.remove();
 
-  window.addEventListener('beforeunload', function(e) {
-    if (formChanged && cwCurrent < 5) {
-      e.preventDefault();
-      e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
-      return e.returnValue;
-    }
-  });
+  const toast = document.createElement('div');
+  toast.id = 'wizardToast';
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    background: ${type === 'error' ? '#e24b4a' : '#0f6e56'};
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.20);
+    z-index: 9999;
+    animation: slideIn 0.3s ease;
+    max-width: 320px;
+  `;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
 
-  form.addEventListener('submit', () => { formChanged = false; });
+/* ══════════════════════════════════════════
+   HELPER
+══════════════════════════════════════════ */
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+}
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', function () {
+  buildProgressBar();
+  showStep(1);
+  renderQuiz();
+
+  // Clear invalid style on input
+  document.getElementById('field-header').addEventListener('input', function() {
+    this.classList.remove('invalid');
+  });
 });
 </script>
 {% endblock %}

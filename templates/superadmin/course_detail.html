@@ -308,7 +308,6 @@
 
   <!-- RIGHT: Sidebar -->
   <div class="sidebar">
-
     <!-- Progress header -->
     <div class="sidebar-header">
       <h3>📊 Course Progress</h3>
@@ -615,6 +614,64 @@ function playVideo(url, title) {
   npTitle.textContent        = title;
 }
 
+// ── Restrict video seeking (no forward skip) ──
+let videoLastTime = 0;
+let videoDuration = 0;
+
+function playVideo(url, title) {
+  const player      = document.getElementById('main-video-player');
+  const src         = document.getElementById('main-video-src');
+  const placeholder = document.getElementById('video-placeholder');
+  const nowPlaying  = document.getElementById('now-playing');
+  const npTitle     = document.getElementById('now-playing-title');
+
+  src.src = url;
+  player.load();
+  player.play();
+  placeholder.style.display = 'none';
+  player.style.display      = 'block';
+  nowPlaying.style.display  = 'block';
+  npTitle.textContent        = title;
+  
+  // Reset tracking for new video
+  videoLastTime = 0;
+  videoDuration = 0;
+}
+
+// Add event listeners to prevent forward seeking
+document.addEventListener('DOMContentLoaded', function() {
+  const player = document.getElementById('main-video-player');
+  
+  // Track video progress
+  player.addEventListener('timeupdate', function() {
+    if (!player.seeking) {
+      videoLastTime = player.currentTime;
+    }
+  });
+  
+  // Get duration when metadata loads
+  player.addEventListener('loadedmetadata', function() {
+    videoDuration = player.duration;
+    videoLastTime = 0;
+  });
+  
+  // Prevent forward seeking
+  player.addEventListener('seeking', function() {
+    // If user tries to seek forward beyond what they've watched
+    if (player.currentTime > videoLastTime) {
+      player.currentTime = videoLastTime;
+    }
+  });
+  
+  // Prevent seeking via keyboard (arrow keys)
+  player.addEventListener('keydown', function(e) {
+    // Arrow right (39) and up (38) keys
+    if (e.keyCode === 39 || e.keyCode === 38) {
+      e.preventDefault();
+    }
+  });
+});
+
 // ── Select concept from TOC ──
 function selectConcept(cid) {
   // Highlight TOC
@@ -822,29 +879,18 @@ function addQuizQ(cid) {
   renderQuizEditor(cid);
 }
 function removeQuizQ(cid, qi) {
-  // Remove from data
   quizData[cid].splice(qi, 1);
-  
-  // Remove from DOM instantly
-  const qElement = document.getElementById(`quiz-q-${cid}-${qi}`);
-  if (qElement) qElement.remove();
-  
-  // Save to backend (no reload)
-  saveQuiz(cid, false);  // Pass false to skip reload
+  renderQuizEditor(cid);
 }
-
-function saveQuiz(cid, showReload = true) {
+function saveQuiz(cid) {
   const value = JSON.stringify(quizData[cid]);
   fetch(`/superadmin/concepts/${cid}/edit/`, {
     method:'POST', credentials:'same-origin',
     headers:{'X-CSRFToken':CSRF,'Content-Type':'application/x-www-form-urlencoded'},
     body: new URLSearchParams({field:'quiz', value}),
   }).then(r=>r.json()).then(d => {
-    if (d.success) { 
-      closeQuizModal(cid);
-      // ✅ Only reload if explicitly needed
-      if (showReload) location.reload();
-    }
+    if (d.success) { closeQuizModal(cid); location.reload(); }
+    else alert(d.error || 'Save failed');
   });
 }
 function esc(str) {
