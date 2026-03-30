@@ -125,77 +125,176 @@ def teacher_dashboard(request):
 
 
 # ── Classroom Detail ──────────────────────────────────────────────────────────
-
 @role_required('teacher')
 def classroom_detail(request, classroom_id):
     """
-    Overview page for a single classroom.
-    Shows: class name, student list with stats, and assign-course panel.
+    Unified classroom page — all tabs render inline on the same URL.
+    Handles POST for announce, classwork grading, people removal, and grade saving.
     """
-    classroom = _get_classroom(request, classroom_id)
-    students  = classroom.students.all()
+    from django.utils import timezone as tz
 
-    # ---- student stats ----
+    classroom = _get_classroom(request, classroom_id)
+
+    # ── Handle POSTs from inline forms ───────────────────────────────────────
+    if request.method == 'POST':
+        action = request.POST.get('_action', '')
+
+        # Announce post
+        if action == 'announce' or request.POST.get('title') and request.POST.get('body') and not request.POST.get('submission_id') and not request.POST.get('remove_student'):
+            from announcements.models import Announcement
+            title     = request.POST.get('title', '').strip()
+            body      = request.POST.get('body', '').strip()
+            meet_link = request.POST.get('meet_link', '').strip()
+            is_pinned = bool(request.POST.get('is_pinned'))
+            if title and body:
+                Announcement.objects.create(
+                    posted_by=request.user, school=request.user.school,
+                    classroom=classroom, title=title, body=body,
+                    meet_link=meet_link, is_pinned=is_pinned, target='students',
+                )
+                messages.success(request, 'Announcement posted.')
+
+        # Grade save
+        elif request.POST.get('submission_id') and request.POST.get('score'):
+            sub_id   = request.POST.get('submission_id')
+            score    = request.POST.get('score')
+            feedback = request.POST.get('feedback', '')
+            sub = get_object_or_404(Submission, id=sub_id, assignment__classroom=classroom)
+            sub.score = score; sub.feedback = feedback; sub.save()
+            messages.success(request, 'Grade saved.')
+
+        # Remove student
+        elif request.POST.get('remove_student'):
+            student_id = request.POST.get('remove_student')
+            classroom.students.remove(student_id)
+            messages.success(request, 'Student removed.')
+
+        # Create assignment
+        elif request.POST.get('title') and not request.POST.get('body'):
+            from assignments.forms import AssignmentForm
+            form = AssignmentForm(request.POST, request.FILES)
+            if form.is_valid():
+                a = form.save(commit=False); a.classroom = classroom; a.save()
+                messages.success(request, f'Assignment "{a.title}" created.')
+
+        tab = request.POST.get('_tab', '')
+        redirect_url = f"{request.path}?tab={tab}" if tab else request.path
+        return redirect(redirect_url)
+
+    today    = tz.localdate()
+    students = classroom.students.all()
+
+    # ── Student stats (shared by Home + People tabs) ───────────────────────
     total_assignments = Assignment.objects.filter(classroom=classroom).count()
     student_data = []
     for student in students:
-        submitted   = Submission.objects.filter(
-            assignment__classroom=classroom, student=student
-        ).count()
-        graded_subs = Submission.objects.filter(
-            assignment__classroom=classroom, student=student, score__isnull=False
-        )
+        submitted    = Submission.objects.filter(assignment__classroom=classroom, student=student).count()
+        graded_subs  = Submission.objects.filter(assignment__classroom=classroom, student=student, score__isnull=False)
         graded_count = graded_subs.count()
         total_score  = sum(s.score for s in graded_subs)
         avg = round((total_score / (graded_count * 20)) * 100) if graded_count else 0
         student_data.append({
-            'user':              student,
-            'submitted':         submitted,
+            'user': student, 'submitted': submitted,
             'total_assignments': total_assignments,
-            'avg_pct':           avg,
-            'grade_letter':      _grade_letter(avg),
+            'avg_pct': avg, 'grade_letter': _grade_letter(avg),
         })
 
-    # ---- avg score for hero stats ----
-    graded = Submission.objects.filter(
-        assignment__classroom=classroom, score__isnull=False
-    )
+    # ── Avg score for hero ─────────────────────────────────────────────────
+    graded    = Submission.objects.filter(assignment__classroom=classroom, score__isnull=False)
     avg_score = 0
     if graded.exists():
+        from django.db.models import Avg
         agg = graded.aggregate(avg=Avg('score'))
         avg_score = round((agg['avg'] / 20) * 100) if agg['avg'] else 0
 
-    # ---- courses ----
+    # ── Announcements ──────────────────────────────────────────────────────
+    try:
+        from announcements.models import Announcement
+        announcements = Announcement.objects.filter(
+            school=request.user.school, classroom=classroom
+        ).order_by('-is_pinned', '-created_at')
+    except Exception:
+        announcements = []
+
+    # ── Assignments (classwork tab) ────────────────────────────────────────
+    assignments = Assignment.objects.filter(classroom=classroom).order_by('-due_date')
+    for a in assignments:
+        a.submission_count = Submission.objects.filter(assignment=a).count()
+        a.ungraded_count   = Submission.objects.filter(assignment=a, score__isnull=True).count()
+        a.total_students   = classroom.students.count()
+        a.due_date_only    = a.due_date.date() if a.due_date else None
+
+    # ── Progress data ──────────────────────────────────────────────────────
+    ordered_assignments = Assignment.objects.filter(classroom=classroom).order_by('due_date')
+    student_progress = []
+    for student in students:
+        rows = []
+        total_earned = total_possible = 0
+        for assignment in ordered_assignments:
+            sub       = Submission.objects.filter(assignment=assignment, student=student).first()
+            score_val = sub.score if sub and sub.score is not None else None
+            max_score = assignment.max_score
+            pct       = round((score_val / max_score) * 100) if score_val is not None else None
+            late      = bool(sub and assignment.due_date and sub.submitted_at.date() > assignment.due_date.date())
+            if score_val is not None:
+                total_earned += score_val; total_possible += max_score
+            rows.append({
+                'assignment': assignment, 'submission': sub,
+                'score': score_val, 'max_score': max_score,
+                'pct': pct, 'grade_letter': _grade_letter(pct), 'is_late': late,
+            })
+        overall_pct = round((total_earned / total_possible) * 100) if total_possible else 0
+        student_progress.append({
+            'student': student, 'rows': rows,
+            'overall_pct': overall_pct, 'overall_grade': _grade_letter(overall_pct),
+            'total_earned': total_earned, 'total_possible': total_possible,
+        })
+
+    # ── Courses ────────────────────────────────────────────────────────────
     try:
         from superadmin.models import GlobalCourse, ClassroomCourseAssignment
-        # All published courses available for the school
         all_courses = GlobalCourse.objects.filter(
-            schools=request.user.school,
-            status='published'
+            schools=request.user.school, status='published'
         ).prefetch_related('concepts')
-        # IDs already assigned to THIS classroom
         assigned_course_ids = set(
-            ClassroomCourseAssignment.objects.filter(
-                classroom=classroom
-            ).values_list('course_id', flat=True)
+            ClassroomCourseAssignment.objects.filter(classroom=classroom).values_list('course_id', flat=True)
         )
     except Exception:
-        all_courses         = []
-        assigned_course_ids = set()
+        all_courses = []; assigned_course_ids = set()
+
+    # ── Chat ───────────────────────────────────────────────────────────────
+    selected_student = None
+    chat_messages    = []
+    student_pk = request.GET.get('student')
+    if student_pk:
+        try:
+            selected_student = classroom.students.get(pk=student_pk)
+            from chat.models import Message
+            chat_messages = Message.objects.filter(
+                classroom=classroom
+            ).select_related('sender').order_by('created_at')
+        except Exception:
+            pass
 
     assigned_course_count = len(assigned_course_ids)
     assignment_count      = Assignment.objects.filter(classroom=classroom).count()
 
     return render(request, 'teacher/classroom_detail.html', {
-        'classroom':            classroom,
-        'student_data':         student_data,
-        'avg_score':            avg_score,
-        'all_courses':          all_courses,
-        'assigned_course_ids':  assigned_course_ids,
+        'classroom':             classroom,
+        'student_data':          student_data,
+        'avg_score':             avg_score,
+        'announcements':         announcements,
+        'assignments':           assignments,
+        'student_progress':      student_progress,
+        'all_courses':           all_courses,
+        'assigned_course_ids':   assigned_course_ids,
         'assigned_course_count': assigned_course_count,
-        'assignment_count':     assignment_count,
+        'assignment_count':      assignment_count,
+        'chat_students':         students,
+        'selected_student':      selected_student,
+        'chat_messages':         chat_messages,
+        'today':                 today,
     })
-
 
 # ── Assign / Unassign Course to Classroom (AJAX) ─────────────────────────────
 

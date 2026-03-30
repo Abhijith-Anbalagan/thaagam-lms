@@ -30,7 +30,6 @@ urlpatterns = [
     path('announcements/',                                                  teacher_announcements,       name='teacher_announcements'),
     path('announce/',                                                       post_announcement,           name='teacher_post_announcement'),
 
-    # Classroom detail (overview) — must come BEFORE the sub-paths below
     path('classroom/<int:classroom_id>/',                                   classroom_detail,            name='teacher_classroom_detail'),
     path('classroom/<int:classroom_id>/assign-course/<int:course_id>/',     assign_course_to_classroom,  name='teacher_assign_course'),
 

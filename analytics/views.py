@@ -4,7 +4,7 @@ from .superadmin_views import superadmin_analytics
 from .school_admin_views import school_admin_analytics
 from .management_views import management_analytics
 from .teacher_views import teacher_analytics
-from .student_views import student_analytics
+from .student_views import student_analytics, student_assignment_tracking
 
 # Legacy function for backward compatibility
 from .teacher_views import teacher_analytics as teacher_analytics_legacy

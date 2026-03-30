@@ -1,13 +1,50 @@
 """
 Signals for the accounts app.
-Currently empty — add post_save signals here as needed.
-Example: auto-send welcome email after user creation.
+Tracks login/logout status for teacher presence real-time features.
 """
-from django.db.models.signals import post_save
+from django.conf import settings
+from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.core.cache import cache
 from django.dispatch import receiver
-# from .models import User
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
-# @receiver(post_save, sender=User)
-# def user_created(sender, instance, created, **kwargs):
-#     if created:
-#         pass  # send welcome email, etc.
+
+@receiver(user_logged_in)
+def user_logged_in_handler(sender, user, request, **kwargs):
+    cache.set(f'user_online_{user.pk}', True, timeout=None)
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        'presence',
+        {
+            'type': 'presence.update',
+            'user_id': user.pk,
+            'user_role': user.role,
+            'status': 'online',
+        }
+    )
+
+
+@receiver(user_logged_out)
+def user_logged_out_handler(sender, user, request, **kwargs):
+    cache.set(f'user_online_{user.pk}', False, timeout=None)
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        'presence',
+        {
+            'type': 'presence.update',
+            'user_id': user.pk,
+            'user_role': user.role,
+            'status': 'offline',
+        }
+    )
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        'presence',
+        {
+            'type': 'presence.update',
+            'user_id': user.pk,
+            'user_role': user.role,
+            'status': 'offline',
+        }
+    )

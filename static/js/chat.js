@@ -61,14 +61,25 @@
   }
 
   function setStatus(state) {
-    const dot  = document.getElementById('chat-status-dot');
-    const text = document.getElementById('chat-status-text');
+    const dotCandidates = [
+      document.getElementById('chat-status-dot'),
+      document.getElementById('status-dot'),
+    ];
+    const textCandidates = [
+      document.getElementById('chat-status-text'),
+      document.getElementById('status-text'),
+    ];
+    const dot = dotCandidates.find((el) => el);
+    const text = textCandidates.find((el) => el);
     if (!dot || !text) return;
     if (state === 'online') {
       dot.style.background = '#22c55e';
       text.textContent     = 'Connected';
-    } else {
+    } else if (state === 'offline') {
       dot.style.background = '#ef4444';
+      text.textContent     = 'Offline';
+    } else {
+      dot.style.background = '#facc15';
       text.textContent     = 'Reconnecting…';
     }
   }

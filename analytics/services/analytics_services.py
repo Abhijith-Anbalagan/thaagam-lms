@@ -396,7 +396,7 @@ class StudentAnalyticsService(BaseAnalyticsService):
                 classroom__students=self.user
             ).count(),
             'submitted_assignments': self.user.submissions.count(),
-            'completed_assignments': self.user.submissions.filter(
+            'graded_assignments': self.user.submissions.filter(
                 score__isnull=False
             ).count(),
             'avg_score': self.user.submissions.aggregate(
@@ -416,12 +416,20 @@ class StudentAnalyticsService(BaseAnalyticsService):
             count=Count('id')
         ).order_by('month')
 
-    def get_assignment_tracking(self):
-        """Get assignment completion status."""
-        # Get all assignments for student's classrooms
+    def get_assignment_tracking(self, month=None):
+        """Get assignment completion status, optionally filtered by month."""
         assignments = Assignment.objects.filter(
             classroom__students=self.user
-        ).annotate(
+        )
+
+        if month:
+            try:
+                year, month_value = map(int, month.split('-'))
+                assignments = assignments.filter(due_date__year=year, due_date__month=month_value)
+            except ValueError:
+                pass
+
+        assignments = assignments.annotate(
             submitted=Case(
                 When(submissions__student=self.user, then=True),
                 default=False,
@@ -447,9 +455,7 @@ class StudentAnalyticsService(BaseAnalyticsService):
         submissions = self.user.submissions.filter(score__isnull=False)
 
         return {
-            'score_distribution': submissions.values('score').annotate(
-                count=Count('id')
-            ).order_by('score'),
+            'graded_assignments': submissions.count(),
             'avg_score': submissions.aggregate(avg=Avg('score'))['avg'],
             'highest_score': submissions.aggregate(max=Max('score'))['max'],
             'lowest_score': submissions.aggregate(min=Min('score'))['min'],
