@@ -9,6 +9,7 @@ class School(models.Model):
     address    = models.TextField(blank=True)
     is_active  = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    deadline_at = models.TimeField(null=True,blank=True)
 
     def save(self, *args, **kwargs):
         if self.deadline_at is None:
