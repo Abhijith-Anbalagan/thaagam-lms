@@ -423,5 +423,57 @@ document.addEventListener('DOMContentLoaded', function() {
     switchMgmtTab('teachers');
   }
 });
+
+/* ═════════════════════════════════════════
+   PROFILE SYNC — Auto-update when profile changes
+   ═════════════════════════════════════════ */
+function initProfileSync() {
+  const currentProfile = {
+    id: {{ request.user.pk }},
+    firstName: '{{ request.user.first_name|escapejs }}',
+    lastName: '{{ request.user.last_name|escapejs }}',
+    email: '{{ request.user.email|escapejs }}',
+    fullName: '{{ request.user.get_full_name|escapejs|default:request.user.username|escapejs }}'
+  };
+
+  function checkProfileUpdates() {
+    fetch('/superadmin/api/profile/')
+      .then(r => r.json())
+      .then(data => {
+        if (!data.success) return;
+        
+        // Check if any profile field changed
+        const changed = (
+          data.first_name !== currentProfile.firstName ||
+          data.last_name !== currentProfile.lastName ||
+          data.email !== currentProfile.email
+        );
+
+        if (changed) {
+          // Update local reference
+          currentProfile.firstName = data.first_name;
+          currentProfile.lastName = data.last_name;
+          currentProfile.email = data.email;
+          currentProfile.fullName = data.full_name;
+
+          // Reload page to refresh full profile
+          setTimeout(() => location.reload(), 500);
+        }
+      })
+      .catch(() => {
+        // Network error — silently ignore
+      });
+  }
+
+  // Check profile every 15 seconds
+  setInterval(checkProfileUpdates, 15000);
+}
+
+// Start sync when page loads
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initProfileSync);
+} else {
+  initProfileSync();
+}
 </script>
 {% endblock %}
