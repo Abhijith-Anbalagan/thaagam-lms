@@ -1,22 +1,357 @@
 {% extends 'base.html' %}
 {% block title %}Invite Management{% endblock %}
 {% block content %}
-<div style="display:flex; justify-content:center; padding:40px 16px;">
-  <div style="width:100%; max-width:680px;">
-    <h1 class="page-title mb-24">Invite Management User</h1>
-    <div class="card">
-      <form method="post">{% csrf_token %}
-        <div class="form-group">
-          <label class="form-label" style="font-size:1.1rem;">Email Address</label>
-          <input type="email" name="email" class="form-control" placeholder="colleague@school.com" required style="padding:14px 16px; font-size:1.1rem;">
-          <p class="form-hint">An invite link (valid 48 h) will be sent to this address.</p>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+
+  :root {
+    --ink: #0f0e0d;
+    --paper: #faf8f5;
+    --cream: #f2ede6;
+    --accent: #16004b;
+    --accent-light: #f5e8e3;
+    --muted: #7a7470;
+    --border: #e0d9d0;
+    --shadow: rgba(15,14,13,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .inv-page {
+    min-height: 100vh;
+    background: var(--paper);
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 48px 20px 80px;
+  }
+
+  .inv-shell {
+    width: 100%;
+    max-width: 620px;
+    animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Header ── */
+  .inv-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 36px;
+  }
+
+  .inv-header-left { display: flex; align-items: center; gap: 14px; }
+
+  .inv-icon {
+    width: 44px; height: 44px;
+    background: var(--accent);
+    border-radius: 12px;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+
+  .inv-icon svg { color: #fff; }
+
+  .inv-eyebrow {
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+
+  .inv-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.95rem;
+    font-weight: 900;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+
+  .btn-ghost-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-ghost-back:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+    background: var(--cream);
+  }
+
+  /* ── Card ── */
+  .inv-card {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 2px 24px var(--shadow), 0 0 0 1px rgba(255,255,255,0.6) inset;
+  }
+
+  .inv-stripe {
+    height: 5px;
+    background: linear-gradient(90deg, var(--accent) 0%, #e8642e 60%, #f5a623 100%);
+  }
+
+  .inv-body { padding: 40px 44px 44px; }
+
+  /* ── Info banner ── */
+  .inv-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--accent-light);
+    border: 1.5px solid #e8c4b8;
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 32px;
+  }
+
+  .inv-info svg { color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+
+  .inv-info-text {
+    font-size: 0.88rem;
+    color: #7a3520;
+    font-weight: 400;
+    line-height: 1.55;
+  }
+
+  .inv-info-text strong { font-weight: 500; }
+
+  /* ── Field ── */
+  .field-block { display: flex; flex-direction: column; gap: 8px; margin-bottom: 32px; }
+
+  .field-label {
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .field-label span { color: var(--accent); margin-left: 2px; }
+
+  .email-input-wrap { position: relative; }
+
+  .email-input-wrap svg {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+    opacity: 0.6;
+  }
+
+  .inv-input {
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px 14px 46px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    -webkit-appearance: none;
+  }
+
+  .inv-input::placeholder { color: #bbb5ae; font-weight: 300; }
+
+  .inv-input:focus {
+    border-color: var(--accent);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(200, 64, 26, 0.1);
+  }
+
+  .field-hint {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-weight: 300;
+    line-height: 1.5;
+  }
+
+  /* ── Divider ── */
+  .inv-divider {
+    border: none;
+    border-top: 1.5px solid var(--border);
+    margin: 0 -44px 32px;
+  }
+
+  /* ── Actions ── */
+  .inv-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn-send {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 30px;
+    background: var(--accent);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 14px rgba(200,64,26,0.3);
+  }
+
+  .btn-send:hover {
+    background: #b03516;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(200,64,26,0.38);
+  }
+
+  .btn-send:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(200,64,26,0.25);
+  }
+
+  .btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 13px 22px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+
+  .btn-cancel:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+    background: var(--cream);
+  }
+
+  @media (max-width: 520px) {
+    .inv-body { padding: 28px 22px 32px; }
+    .inv-divider { margin: 0 -22px 28px; }
+    .inv-title { font-size: 1.55rem; }
+    .inv-actions { flex-direction: column; align-items: stretch; }
+    .btn-send, .btn-cancel { justify-content: center; }
+  }
+</style>
+
+<div class="inv-page">
+  <div class="inv-shell">
+
+    <!-- Header -->
+    <div class="inv-header">
+      <div class="inv-header-left">
+        <div class="inv-icon">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.73a16 16 0 0 0 5.38 5.38l1.62-1.84a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+            <path d="M15 2h6v6M21 2l-9 9"/>
+          </svg>
         </div>
-        <div class="flex gap-8">
-          <button type="submit" class="btn btn-primary" style="padding:12px 32px; font-size:1.1rem;">Send Invite</button>
-          <a href="{% url 'school_admin_dashboard' %}" class="btn btn-ghost" style="padding:12px 32px; font-size:1.1rem;">Cancel</a>
+        <div>
+          <div class="inv-eyebrow">School Admin</div>
+          <div class="inv-title">Invite User</div>
         </div>
-      </form>
+      </div>
+      <a href="{% url 'school_admin_dashboard' %}" class="btn-ghost-back">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+        Cancel
+      </a>
     </div>
+
+    <!-- Card -->
+    <div class="inv-card">
+      <div class="inv-stripe"></div>
+      <div class="inv-body">
+
+        <!-- Info banner -->
+        <div class="inv-info">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
+          </svg>
+          <p class="inv-info-text">
+            The recipient will receive a <strong>secure invite link valid for 48 hours.</strong>
+            They'll be prompted to set a password and join your school on first sign-in.
+          </p>
+        </div>
+
+        <form method="post">
+          {% csrf_token %}
+
+          <!-- Email field -->
+          <div class="field-block">
+            <label class="field-label" for="inv-email">Email Address <span>*</span></label>
+            <div class="email-input-wrap">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+              </svg>
+              <input
+                id="inv-email"
+                type="email"
+                name="email"
+                class="inv-input"
+                placeholder="colleague@school.com"
+                required
+                autocomplete="off"
+              >
+            </div>
+            <p class="field-hint">Enter the work email of the teacher or staff member you'd like to invite.</p>
+          </div>
+
+          <hr class="inv-divider">
+
+          <!-- Actions -->
+          <div class="inv-actions">
+            <button type="submit" class="btn-send">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.73a16 16 0 0 0 5.38 5.38l1.62-1.84a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+              Send Invite
+            </button>
+            <a href="{% url 'school_admin_dashboard' %}" class="btn-cancel">
+              Never mind
+            </a>
+          </div>
+
+        </form>
+
+      </div>
+    </div><!-- /card -->
+
   </div>
 </div>
+
 {% endblock %}

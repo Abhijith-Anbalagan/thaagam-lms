@@ -1,27 +1,432 @@
 {% extends 'base.html' %}
 {% block title %}School Reports{% endblock %}
 {% block content %}
-<h1 class="page-title mb-24">Reports — {{ school.name }}</h1>
-<div class="stat-grid">
-<div class="stat-card"><div class="stat-value">{{ total_students }}</div><div class="stat-label">Students</div></div>
-<div class="stat-card"><div class="stat-value">{{ total_teachers }}</div><div class="stat-label">Teachers</div></div>
-<div class="stat-card"><div class="stat-value">{{ classrooms.count }}</div><div class="stat-label">Classrooms</div></div>
-<div class="stat-card"><div class="stat-value mono">{% if avg_score %}{{ avg_score|floatformat:1 }}%{% else %}—{% endif %}</div><div class="stat-label">Avg Score</div></div>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+
+  :root {
+    --ink: #0f0e0d;
+    --paper: #faf8f5;
+    --cream: #f2ede6;
+    --accent: #1b0157;
+    --accent-light: #f5e8e3;
+    --muted: #7a7470;
+    --border: #e0d9d0;
+    --shadow: rgba(15,14,13,0.08);
+    --blue: #1d5fa8;
+    --blue-light: #e8f0fa;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .rpt-page {
+    min-height: 100vh;
+    background: var(--paper);
+    font-family: 'DM Sans', sans-serif;
+    padding: 48px 20px 80px;
+  }
+
+  .rpt-shell {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* ── Animations ── */
+  .rpt-shell > * {
+    animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .rpt-shell > *:nth-child(1) { animation-delay: 0s; }
+  .rpt-shell > *:nth-child(2) { animation-delay: 0.06s; }
+  .rpt-shell > *:nth-child(3) { animation-delay: 0.12s; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Page header ── */
+  .rpt-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 36px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .rpt-header-left { display: flex; align-items: center; gap: 14px; }
+
+  .rpt-icon {
+    width: 44px; height: 44px;
+    background: var(--accent);
+    border-radius: 12px;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+
+  .rpt-icon svg { color: #fff; }
+
+  .rpt-label {
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+
+  .rpt-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.95rem;
+    font-weight: 900;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+
+  .rpt-school-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    border-radius: 99px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  .rpt-school-badge svg { color: var(--accent); }
+
+  /* ── Stat grid ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 20px 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 12px var(--shadow);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px var(--shadow);
+  }
+
+  /* accent dot top-right */
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 14px; right: 14px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.4;
+  }
+
+  .stat-card:nth-child(2)::before { background: var(--blue); }
+  .stat-card:nth-child(3)::before { background: #2a9d5c; }
+  .stat-card:nth-child(4)::before { background: #9a6b1a; }
+
+  .stat-value {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2.4rem;
+    font-weight: 900;
+    color: var(--ink);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .stat-value.mono {
+    font-family: 'DM Sans', sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 2rem;
+    font-weight: 500;
+  }
+
+  .stat-lbl {
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ── Table card ── */
+  .rpt-card {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 2px 24px var(--shadow);
+  }
+
+  .rpt-stripe {
+    height: 5px;
+    background: linear-gradient(90deg, var(--accent) 0%, #e8642e 60%, #f5a623 100%);
+  }
+
+  .rpt-card-inner { padding: 32px 36px 36px; }
+
+  .rpt-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .rpt-section-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .rpt-count-badge {
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    padding: 4px 12px;
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    border-radius: 99px;
+    color: var(--muted);
+  }
+
+  /* ── Table ── */
+  .rpt-table-wrap {
+    overflow-x: auto;
+    margin: 0 -4px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+  }
+
+  .rpt-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+
+  .rpt-table thead tr {
+    background: var(--cream);
+  }
+
+  .rpt-table th {
+    padding: 12px 18px;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1.5px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .rpt-table th:last-child { text-align: right; }
+
+  .rpt-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .rpt-table tbody tr:last-child { border-bottom: none; }
+
+  .rpt-table tbody tr:hover { background: var(--paper); }
+
+  .rpt-table td {
+    padding: 14px 18px;
+    color: var(--ink);
+    font-weight: 400;
+    vertical-align: middle;
+  }
+
+  .rpt-table td:last-child { text-align: right; }
+
+  .classroom-name {
+    font-weight: 500;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .classroom-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+    opacity: 0.5;
+  }
+
+  .code-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    background: var(--blue-light);
+    color: var(--blue);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    font-family: 'DM Mono', monospace, sans-serif;
+  }
+
+  .teacher-name {
+    color: var(--muted);
+    font-weight: 300;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .teacher-name svg { flex-shrink: 0; color: var(--muted); opacity: 0.5; }
+
+  .student-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 5px;
+    font-weight: 500;
+  }
+
+  .student-pill {
+    padding: 3px 12px;
+    background: var(--accent-light);
+    color: var(--accent);
+    border-radius: 99px;
+    font-size: 0.82rem;
+    font-weight: 500;
+  }
+
+  .empty-row td {
+    text-align: center;
+    color: var(--muted);
+    font-weight: 300;
+    padding: 40px 18px;
+    font-style: italic;
+  }
+
+  @media (max-width: 640px) {
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .rpt-card-inner { padding: 22px 18px 28px; }
+    .rpt-title { font-size: 1.55rem; }
+  }
+
+  @media (max-width: 400px) {
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+
+<div class="rpt-page">
+  <div class="rpt-shell">
+
+    <!-- Header -->
+    <div class="rpt-header">
+      <div class="rpt-header-left">
+        <div class="rpt-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3h18v18H3z"/><path d="M3 9h18M3 15h18M9 3v18"/>
+          </svg>
+        </div>
+        <div>
+          <div class="rpt-label">School Admin</div>
+          <div class="rpt-title">Reports</div>
+        </div>
+      </div>
+      <div class="rpt-school-badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        {{ school.name }}
+      </div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-value">{{ total_students }}</div>
+        <div class="stat-lbl">Students</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ total_teachers }}</div>
+        <div class="stat-lbl">Teachers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ classrooms.count }}</div>
+        <div class="stat-lbl">Classrooms</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value mono">
+          {% if avg_score %}{{ avg_score|floatformat:1 }}%{% else %}—{% endif %}
+        </div>
+        <div class="stat-lbl">Avg Score</div>
+      </div>
+    </div>
+
+    <!-- Classrooms table card -->
+    <div class="rpt-card">
+      <div class="rpt-stripe"></div>
+      <div class="rpt-card-inner">
+
+        <div class="rpt-section-head">
+          <div class="rpt-section-title">Classrooms</div>
+          <span class="rpt-count-badge">{{ classrooms.count }} total</span>
+        </div>
+
+        <div class="rpt-table-wrap">
+          <table class="rpt-table">
+            <thead>
+              <tr>
+                <th>Classroom</th>
+                <th>Code</th>
+                <th>Teacher</th>
+                <th>Students</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in classrooms %}
+              <tr>
+                <td>
+                  <span class="classroom-name">
+                    <span class="classroom-dot"></span>
+                    {{ c.name }}
+                  </span>
+                </td>
+                <td><span class="code-badge">{{ c.code }}</span></td>
+                <td>
+                  <span class="teacher-name">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    {{ c.teacher.get_full_name|default:c.teacher.username }}
+                  </span>
+                </td>
+                <td><span class="student-pill">{{ c.student_count }}</span></td>
+              </tr>
+              {% empty %}
+              <tr class="empty-row">
+                <td colspan="4">No classrooms found for this school.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div><!-- /card -->
+
+  </div>
 </div>
-<div class="card">
-  <h2 class="section-title mb-16">Classrooms</h2>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Classroom</th><th>Code</th><th>Teacher</th><th>Students</th></tr></thead>
-    <tbody>
-    {% for c in classrooms %}
-    <tr>
-      <td><strong>{{ c.name }}</strong></td>
-      <td><span class="mono badge badge-blue">{{ c.code }}</span></td>
-      <td>{{ c.teacher.get_full_name|default:c.teacher.username }}</td>
-      <td>{{ c.student_count }}</td>
-    </tr>
-    {% empty %}<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">No classrooms.</td></tr>{% endfor %}
-    </tbody>
-  </table></div>
-</div>
+
 {% endblock %}

@@ -91,13 +91,32 @@ def dashboard(request):
     classrooms    = request.user.joined_classrooms.select_related('teacher', 'school').all()
     classroom     = classrooms.first()
     pending       = []
-    total_courses = 0
+    graded_count  = 0
 
     for c in classrooms:
-        total_courses += c.course_contents.count()
         for a in c.assignments.filter(due_date__gte=timezone.now()):
             if not Submission.objects.filter(assignment=a, student=request.user).exists():
                 pending.append(a)
+    
+    # Get graded assignments count
+    graded_count = Submission.objects.filter(
+        student=request.user,
+        score__isnull=False
+    ).count()
+
+    # Get total course contents count across all classrooms
+    total_courses = CourseContent.objects.filter(
+        classroom__in=classrooms
+    ).count()
+    
+    # Add enrolled GlobalCourses count (only for courses still assigned to student's classrooms)
+    from superadmin.models import CourseEnrollment, ClassroomCourseAssignment
+    enrolled_courses_count = CourseEnrollment.objects.filter(
+        user=request.user,
+        course__classroom_assignments__classroom__in=classrooms
+    ).distinct().count()
+    
+    total_courses += enrolled_courses_count
 
     recent_announcements = Announcement.objects.filter(
         classroom__in=classrooms
@@ -109,6 +128,7 @@ def dashboard(request):
         'nav_classroom':         classroom,
         'pending_assignments':   pending,
         'recent_announcements':  recent_announcements,
+        'graded_assignments':    graded_count,
         'total_courses':         total_courses,
         'active_tab':            'dashboard',
         **_student_layout_context(request, classroom=classroom, active_nav='dashboard'),
@@ -169,8 +189,23 @@ def classroom_courses(request, class_id):
     units = {}
     for c in contents:
         units.setdefault(c.unit or 'General', []).append(c)
+    
+    # Get assigned GlobalCourses for this classroom
+    from superadmin.models import ClassroomCourseAssignment, GlobalCourse, CourseEnrollment
+    assigned_courses = GlobalCourse.objects.filter(
+        classroom_assignments__classroom=classroom
+    ).select_related('created_by').prefetch_related('concepts')
+    
+    # Check which courses the student is already enrolled in
+    enrolled_course_ids = set(CourseEnrollment.objects.filter(
+        user=request.user,
+        course__in=assigned_courses
+    ).values_list('course_id', flat=True))
+    
     context = {
         'classroom': classroom, 'units': units, 'active_tab': 'courses',
+        'assigned_courses': assigned_courses,
+        'enrolled_course_ids': enrolled_course_ids,
         **_student_layout_context(request, classroom=classroom, active_nav='courses'),
     }
     return render(request, 'student/classroom_courses.html', context)
@@ -234,7 +269,8 @@ def classroom_grade(request, class_id):
     grade_data  = []
     total_score = total_max = 0
 
-    for a in classroom.assignments.all():
+    # Get assignments ordered by due_date descending (latest first)
+    for a in classroom.assignments.all().order_by('-due_date'):
         try:    sub = Submission.objects.get(assignment=a, student=request.user)
         except: sub = None
         grade_data.append({'assignment': a, 'submission': sub})
@@ -288,3 +324,136 @@ def unread_count_api(request):
     """JSON endpoint — returns unread message count for the logged-in student."""
     count = Message.objects.filter(receiver=request.user, is_read=False).count()
     return JsonResponse({'unread': count})
+
+
+@role_required('student')
+def pending_count_api(request):
+    """JSON endpoint — returns pending assignments count."""
+    classrooms = request.user.joined_classrooms.all()
+    count = 0
+    for classroom in classrooms:
+        for assignment in classroom.assignments.filter(due_date__gte=timezone.now()):
+            if not Submission.objects.filter(assignment=assignment, student=request.user).exists():
+                count += 1
+    return JsonResponse({'pending': count})
+
+
+@role_required('student')
+def graded_count_api(request):
+    """JSON endpoint — returns graded assignments count."""
+    count = Submission.objects.filter(
+        student=request.user,
+        score__isnull=False
+    ).count()
+    return JsonResponse({'graded': count})
+
+
+@role_required('student')
+def course_count_api(request):
+    """JSON endpoint — returns total course contents count."""
+    classrooms = request.user.joined_classrooms.all()
+    count = CourseContent.objects.filter(classroom__in=classrooms).count()
+    
+    # Add enrolled GlobalCourses count (only for courses still assigned to student's classrooms)
+    from superadmin.models import CourseEnrollment
+    enrolled_count = CourseEnrollment.objects.filter(
+        user=request.user,
+        course__classroom_assignments__classroom__in=classrooms
+    ).distinct().count()
+    count += enrolled_count
+    
+    return JsonResponse({'courses': count})
+
+
+@role_required('student')
+def course_enroll(request, course_id):
+    from superadmin.models import GlobalCourse, CourseEnrollment
+    from django.http import JsonResponse
+    from django.views.decorators.csrf import csrf_exempt
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    logger.info(f"Course enrollment attempt: user={request.user.id}, course_id={course_id}, method={request.method}")
+
+    if request.method != 'POST':
+        logger.warning(f"Invalid method: {request.method}")
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    # Check if the course is assigned to one of the student's classrooms
+    classrooms = request.user.joined_classrooms.all()
+    logger.info(f"User classrooms: {[c.id for c in classrooms]}")
+    
+    try:
+        course = GlobalCourse.objects.get(
+            pk=course_id,
+            classroom_assignments__classroom__in=classrooms
+        )
+        logger.info(f"Found course: {course.title}")
+    except GlobalCourse.DoesNotExist:
+        logger.error(f"Course {course_id} not found or not assigned to user's classrooms")
+        return JsonResponse({'error': 'Course not found or not assigned to your classroom'}, status=404)
+
+    enrollment, created = CourseEnrollment.objects.get_or_create(
+        user=request.user, course=course
+    )
+    
+    if created:
+        logger.info(f"Created new enrollment for course {course.title}")
+        return JsonResponse({
+            'enrolled': True,
+            'new_enrollment': True,
+            'message': f'Successfully enrolled in {course.title}',
+            'course_url': f'/student/my-learning/{course.pk}/',
+        })
+    else:
+        logger.info(f"User already enrolled in course {course.title}")
+        return JsonResponse({
+            'enrolled': True,
+            'new_enrollment': False,
+            'course_url': f'/student/my-learning/{course.pk}/',
+        })
+
+
+# Apply csrf_exempt decorator
+from django.views.decorators.csrf import csrf_exempt
+course_enroll = csrf_exempt(course_enroll)
+
+
+@role_required('student')
+def my_learning(request):
+    from superadmin.models import CourseEnrollment, GlobalCourse
+    
+    enrollments = CourseEnrollment.objects.filter(
+        user=request.user
+    ).select_related('course').prefetch_related('course__concepts')
+    
+    context = {
+        'enrollments': enrollments,
+        'active_tab': 'my_learning',
+        **_student_layout_context(request, active_nav='my_learning'),
+    }
+    return render(request, 'student/my_learning.html', context)
+
+
+@role_required('student')
+def course_detail(request, course_id):
+    from superadmin.models import GlobalCourse, CourseEnrollment
+    
+    # Check if student is enrolled in this course
+    enrollment = get_object_or_404(
+        CourseEnrollment,
+        user=request.user,
+        course_id=course_id
+    )
+    
+    course = enrollment.course
+    concepts = course.concepts.all().prefetch_related('videos')
+    
+    context = {
+        'course': course,
+        'concepts': concepts,
+        'enrollment': enrollment,
+        'active_tab': 'my_learning',
+        **_student_layout_context(request, active_nav='my_learning'),
+    }
+    return render(request, 'student/course_detail.html', context)
