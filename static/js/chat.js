@@ -100,7 +100,7 @@
 
     // Optimistic render — show immediately, replace on echo
     const now = new Date();
-    const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
     appendBubble(body, true, timeStr, true);
     pendingEcho = true;
 

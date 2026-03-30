@@ -1,8 +1,11 @@
 import json
+from zoneinfo import ZoneInfo
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from chat.models import Message
 from classrooms.models import Classroom
+
+CHAT_TIMEZONE = ZoneInfo('Asia/Kolkata')
 
 
 def _room(classroom_id, user_a, user_b):
@@ -46,8 +49,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'sender_id':   user.pk,
             'sender_name': user.get_full_name() or user.username,
             'body':        body,
-            'created_at':  message.created_at.strftime('%H:%M'),
+            'created_at':  message.created_at.astimezone(CHAT_TIMEZONE).strftime('%I:%M %p'),
         }
+
+        if message.receiver.role == 'student':
+            await self.channel_layer.group_send(
+                f'student_notifications_{message.receiver_id}',
+                {
+                    'type': 'student_notification',
+                    'payload': {
+                        'type': 'chat',
+                        'classroom_id': int(self.classroom_id),
+                        'redirect_url': f'/student/classroom/{self.classroom_id}/chat/',
+                        'sender_name': payload['sender_name'],
+                    },
+                },
+            )
+
         # Deliver to sender's personal room (echo back) and receiver's personal room
         for room in [f'user_{user.pk}', f'user_{receiver_id}']:
             await self.channel_layer.group_send(room, payload)
@@ -67,9 +85,30 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def save_message(self, sender_id, receiver_id, classroom_id, body):
-        return Message.objects.create(
+        message = Message.objects.create(
             sender_id=sender_id,
             receiver_id=receiver_id,
             classroom_id=classroom_id,
             body=body,
         )
+        return Message.objects.select_related('receiver').get(pk=message.pk)
+
+
+class StudentNotificationConsumer(AsyncWebsocketConsumer):
+
+    async def connect(self):
+        user = self.scope['user']
+        if not user.is_authenticated or user.role != 'student':
+            await self.close()
+            return
+
+        self.group_name = f'student_notifications_{user.pk}'
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, code):
+        if hasattr(self, 'group_name'):
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+    async def student_notification(self, event):
+        await self.send(text_data=json.dumps(event['payload']))

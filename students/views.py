@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse
+from django.urls import reverse
 from django.utils import timezone
 from django.db.models import Avg, Count, Sum
 from datetime import datetime
@@ -15,24 +16,72 @@ def _get_classroom(request, class_id):
     return get_object_or_404(Classroom, pk=class_id, students=request.user)
 
 
-def _student_layout_context(user, classroom=None, active_nav=None):
+def _student_layout_context(request, classroom=None, active_nav=None):
+    user = request.user
     classrooms = user.joined_classrooms.select_related('teacher', 'school').all()
     nav_classroom = classroom or classrooms.first()
-    since = user.last_login or timezone.make_aware(datetime.min)
-    has_updates = False
 
-    if nav_classroom:
-        has_updates = (
-            nav_classroom.announcements.filter(created_at__gt=since).exists()
-            or nav_classroom.assignments.filter(created_at__gt=since).exists()
-            or nav_classroom.course_contents.filter(created_at__gt=since).exists()
-        )
+    def parse_session_time(key, default_time):
+        raw = request.session.get(key)
+        if not raw:
+            return default_time
+        try:
+            dt = timezone.datetime.fromisoformat(raw)
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt)
+            return dt
+        except Exception:
+            return default_time
+
+    baseline = user.last_login or timezone.make_aware(datetime.min)
+    last_seen_announce = parse_session_time('student_last_seen_announcements', baseline)
+    last_seen_assignment = parse_session_time('student_last_seen_assignments', baseline)
+
+    # Track graded submissions per session, not by timestamp
+    # (since we can't know exactly when teacher applied the grade)
+    seen_graded_submission_ids = request.session.get('student_seen_graded_submission_ids', [])
+    graded_submissions = Submission.objects.filter(student=user, score__isnull=False)
+    new_graded_submissions = graded_submissions.exclude(id__in=seen_graded_submission_ids)
+
+    new_grades_count = new_graded_submissions.count()
+    new_grades_classroom = None
+    if new_graded_submissions.exists():
+        # Find the classroom of the first new graded submission
+        first_new_grade = new_graded_submissions.select_related('assignment__classroom').first()
+        new_grades_classroom = first_new_grade.assignment.classroom
+
+    unread_messages = Message.objects.filter(receiver=user, is_read=False).count()
+    new_announcements = Announcement.objects.filter(classroom__in=classrooms, created_at__gt=last_seen_announce).count()
+    new_assignments = Assignment.objects.filter(classroom__in=classrooms, created_at__gt=last_seen_assignment).count()
+
+    has_updates = unread_messages > 0 or new_announcements > 0 or new_assignments > 0 or new_grades_count > 0
+
+    bell_url = reverse('student_dashboard')
+    grades_url = None
+    if unread_messages > 0 and nav_classroom:
+        bell_url = reverse('student_classroom_chat', args=[nav_classroom.id])
+    elif new_announcements > 0 and nav_classroom:
+        bell_url = reverse('student_classroom_announce', args=[nav_classroom.id])
+    elif new_assignments > 0 and nav_classroom:
+        bell_url = reverse('student_classroom_classwork', args=[nav_classroom.id])
+    elif new_grades_classroom:
+        bell_url = reverse('student_classroom_grade', args=[new_grades_classroom.id])
+
+    if new_grades_classroom:
+        grades_url = reverse('student_classroom_grade', args=[new_grades_classroom.id])
+    elif nav_classroom:
+        grades_url = reverse('student_classroom_grade', args=[nav_classroom.id])
 
     return {
         'classrooms': classrooms,
         'nav_classroom': nav_classroom,
-        'unread_count': Message.objects.filter(receiver=user, is_read=False).count(),
+        'unread_count': unread_messages,
+        'new_announcements_count': new_announcements,
+        'new_assignments_count': new_assignments,
+        'new_grades_count': new_grades_count,
         'has_updates': has_updates,
+        'bell_redirect_url': bell_url,
+        'new_grades_redirect_url': grades_url,
         'active_nav': active_nav,
     }
 
@@ -61,9 +110,8 @@ def dashboard(request):
         'pending_assignments':   pending,
         'recent_announcements':  recent_announcements,
         'total_courses':         total_courses,
-        'unread_count':          Message.objects.filter(receiver=request.user, is_read=False).count(),
         'active_tab':            'dashboard',
-        'active_nav':            'dashboard',
+        **_student_layout_context(request, classroom=classroom, active_nav='dashboard'),
     }
     return render(request, 'student/dashboard.html', context)
 
@@ -90,7 +138,7 @@ def join_class(request):
                 return redirect('student_dashboard')
         except Classroom.DoesNotExist:
             error = 'Class code not found or invalid. Please try again.'
-    context = {'error': error, **_student_layout_context(request.user, active_nav='join_class')}
+    context = {'error': error, **_student_layout_context(request, active_nav='join_class')}
     return render(request, 'student/join_class.html', context)
 
 
@@ -106,9 +154,10 @@ def leave_classroom(request, class_id):
 def classroom_announce(request, class_id):
     classroom     = _get_classroom(request, class_id)
     announcements = Announcement.objects.filter(classroom=classroom)
+    request.session['student_last_seen_announcements'] = timezone.now().isoformat()
     context = {
         'classroom': classroom, 'announcements': announcements, 'active_tab': 'announcements',
-        **_student_layout_context(request.user, classroom=classroom, active_nav='announcements'),
+        **_student_layout_context(request, classroom=classroom, active_nav='announcements'),
     }
     return render(request, 'student/classroom_announce.html', context)
 
@@ -122,7 +171,7 @@ def classroom_courses(request, class_id):
         units.setdefault(c.unit or 'General', []).append(c)
     context = {
         'classroom': classroom, 'units': units, 'active_tab': 'courses',
-        **_student_layout_context(request.user, classroom=classroom, active_nav='courses'),
+        **_student_layout_context(request, classroom=classroom, active_nav='courses'),
     }
     return render(request, 'student/classroom_courses.html', context)
 
@@ -150,6 +199,7 @@ def classroom_classwork(request, class_id):
                 messages.success(request, 'Assignment submitted!')
         return redirect('student_classroom_classwork', class_id=class_id)
 
+    request.session['student_last_seen_assignments'] = timezone.now().isoformat()
     assignment_data = []
     for a in classroom.assignments.all():
         try:    sub = Submission.objects.get(assignment=a, student=request.user)
@@ -158,7 +208,7 @@ def classroom_classwork(request, class_id):
 
     context = {
         'classroom': classroom, 'assignment_data': assignment_data, 'active_tab': 'classwork',
-        **_student_layout_context(request.user, classroom=classroom, active_nav='classwork'),
+        **_student_layout_context(request, classroom=classroom, active_nav='classwork'),
     }
     return render(request, 'student/classroom_classwork.html', context)
 
@@ -169,7 +219,7 @@ def classroom_peoples(request, class_id):
     context = {
         'classroom': classroom, 'students': classroom.students.all(), 'active_tab': 'peoples',
         'student_data': [], # Placeholder, actual data would be fetched here if needed
-        **_student_layout_context(request.user, classroom=classroom, active_nav='peoples'),
+        **_student_layout_context(request, classroom=classroom, active_nav='peoples'),
     }
     return render(request, 'student/classroom_peoples.html', context)
 
@@ -177,6 +227,10 @@ def classroom_peoples(request, class_id):
 @role_required('student')
 def classroom_grade(request, class_id):
     classroom   = _get_classroom(request, class_id)
+    graded_submission_ids = list(
+        Submission.objects.filter(student=request.user, score__isnull=False).values_list('id', flat=True)
+    )
+    request.session['student_seen_graded_submission_ids'] = graded_submission_ids
     grade_data  = []
     total_score = total_max = 0
 
@@ -203,7 +257,7 @@ def classroom_grade(request, class_id):
         'chart_scores': chart_scores,
         'chart_max':    chart_max,
         'active_tab':  'grades',
-        **_student_layout_context(request.user, classroom=classroom, active_nav='grades'),
+        **_student_layout_context(request, classroom=classroom, active_nav='grades'),
     }
     return render(request, 'student/classroom_grade.html', context)
 
@@ -218,12 +272,13 @@ def classroom_chat(request, class_id):
         receiver__in=[request.user, teacher],
     ).order_by('created_at')
     msgs.filter(receiver=request.user, is_read=False).update(is_read=True)
+    request.session['student_last_seen_messages'] = timezone.now().isoformat()
     context = {
         'classroom':    classroom,
         'teacher':      teacher,
         'chat_messages': msgs,
         'active_tab':   'chat',
-        **_student_layout_context(request.user, classroom=classroom, active_nav='chat'),
+        **_student_layout_context(request, classroom=classroom, active_nav='chat'),
     }
     return render(request, 'student/classroom_chat.html', context)
 
