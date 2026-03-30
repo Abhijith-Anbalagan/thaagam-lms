@@ -1,4 +1,5 @@
 {% load static %}
+{% load tz %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,640 +10,757 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --brand:       #4c68d7;
-  --brand-dark:  #3a54c0;
-  --brand-soft:  #eef1fb;
-  --dark:        #1a1f36;
-  --page-bg:     #f4f5f9;
-  --card-bg:     #ffffff;
-  --border:      #e8e8ec;
-  --text-1:      #1a1f36;
-  --text-2:      #5a5f7a;
-  --text-3:      #9496a8;
-  --teacher:     #0f6e56;
-  --teacher-bg:  #e1f5ee;
-  --success:     #15803d;
-  --success-bg:  #dcfce7;
-  --warning:     #92400e;
-  --warning-bg:  #fef3c7;
-  --radius-sm:   6px;
-  --radius-md:   10px;
-  --radius-lg:   14px;
-  --radius-xl:   20px;
-  --shadow-sm:   0 1px 4px rgba(26,31,54,.06);
-  --shadow-md:   0 4px 20px rgba(26,31,54,.10);
-  --font:        'Inter', sans-serif;
-  --mono:        'JetBrains Mono', monospace;
-  --nav-w:       252px;
-  --topbar-h:    64px;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --brand:#4c68d7;--brand-dark:#3a54c0;--brand-soft:#eef1fb;
+  --dark:#1a1f36;--page-bg:#f4f5f9;--card-bg:#fff;--border:#e8e8ec;
+  --text-1:#1a1f36;--text-2:#5a5f7a;--text-3:#9496a8;
+  --teacher:#0f6e56;--teacher-bg:#e1f5ee;
+  --success:#15803d;--success-bg:#dcfce7;
+  --warn:#92400e;--warn-bg:#fef3c7;
+  --radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-xl:20px;
+  --shadow-sm:0 1px 4px rgba(26,31,54,.06);--shadow-md:0 4px 20px rgba(26,31,54,.10);
+  --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+  --nav-w:252px;--topbar-h:52px;--hero-h:auto;
 }
-html, body { height: 100%; }
-body { font-family: var(--font); background: var(--page-bg); color: var(--text-1); font-size: 14px; line-height: 1.6; display: flex; }
+html,body{height:100%}
+body{font-family:var(--font);background:var(--page-bg);color:var(--text-1);font-size:14px;line-height:1.6;display:flex}
 
-/* SIDEBAR */
-.sidebar { width: var(--nav-w); min-height: 100vh; background: var(--dark); display: flex; flex-direction: column; position: fixed; left: 0; top: 0; bottom: 0; z-index: 200; box-shadow: 2px 0 16px rgba(0,0,0,.18); }
-.sidebar-logo { padding: 22px 20px 18px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,.07); text-decoration: none; }
-.logo-mark { width: 36px; height: 36px; background: linear-gradient(135deg, var(--brand), #7b93f0); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: #fff; flex-shrink: 0; box-shadow: 0 4px 12px rgba(76,104,215,.4); }
-.logo-text { font-size: 15px; font-weight: 700; color: #fff; }
-.logo-sub  { font-size: 10px; color: rgba(255,255,255,.3); letter-spacing: .7px; text-transform: uppercase; margin-top: 1px; }
-.nav-group { padding: 10px 0 4px; }
-.nav-label { font-size: 10px; font-weight: 600; letter-spacing: .9px; text-transform: uppercase; color: rgba(255,255,255,.22); padding: 6px 20px 4px; }
-.nav-item { display: flex; align-items: center; gap: 11px; padding: 10px 20px; color: rgba(255,255,255,.5); text-decoration: none; font-size: 13.5px; font-weight: 500; transition: all .15s; position: relative; }
-.nav-item:hover  { color: rgba(255,255,255,.85); background: rgba(255,255,255,.05); }
-.nav-item.active { color: #fff; background: rgba(76,104,215,.18); }
-.nav-item.active::before { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px; background: var(--brand); border-radius: 0 3px 3px 0; }
-.nav-icon { width: 17px; height: 17px; flex-shrink: 0; }
-.sidebar-spacer { flex: 1; }
-.sidebar-bottom { padding: 14px 12px; border-top: 1px solid rgba(255,255,255,.07); }
-.user-card { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-md); }
-.av { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--teacher), #1a9e7a); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
-.user-name { font-size: 13px; font-weight: 600; color: #fff; }
-.user-role { font-size: 11px; color: rgba(255,255,255,.38); margin-top: 1px; }
+/* ── SIDEBAR ── */
+.sidebar{width:var(--nav-w);min-height:100vh;background:var(--dark);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:200;box-shadow:2px 0 16px rgba(0,0,0,.18)}
+.sidebar-logo{padding:22px 20px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.07);text-decoration:none}
+.logo-mark{width:36px;height:36px;background:linear-gradient(135deg,var(--brand),#7b93f0);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;flex-shrink:0;box-shadow:0 4px 12px rgba(76,104,215,.4)}
+.logo-text{font-size:15px;font-weight:700;color:#fff}
+.logo-sub{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.7px;text-transform:uppercase;margin-top:1px}
+.nav-group{padding:10px 0 4px}
+.nav-label{font-size:10px;font-weight:600;letter-spacing:.9px;text-transform:uppercase;color:rgba(255,255,255,.22);padding:6px 20px 4px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 20px;color:rgba(255,255,255,.5);text-decoration:none;font-size:13.5px;font-weight:500;cursor:pointer;transition:all .15s;position:relative}
+.nav-item:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.05)}
+.nav-item.active{color:#fff;background:rgba(76,104,215,.18)}
+.nav-item.active::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;background:var(--brand);border-radius:0 3px 3px 0}
+.nav-icon{width:17px;height:17px;flex-shrink:0}
+.sidebar-spacer{flex:1}
+.sidebar-bottom{padding:14px 12px;border-top:1px solid rgba(255,255,255,.07)}
+.user-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-md)}
+.av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teacher),#1a9e7a);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600;color:#fff}
+.user-role{font-size:11px;color:rgba(255,255,255,.38);margin-top:1px}
 
-/* MAIN */
-.main { margin-left: var(--nav-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+/* ── MAIN ── */
+.main{margin-left:var(--nav-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
 
-/* TOPBAR */
-.topbar { background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 0 32px; height: var(--topbar-h); display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm); }
-.breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-3); flex: 1; }
-.breadcrumb a { color: var(--text-3); text-decoration: none; transition: color .15s; }
-.breadcrumb a:hover { color: var(--brand); }
-.breadcrumb .sep { font-size: 11px; }
-.breadcrumb .cur { color: var(--text-1); font-weight: 600; }
-.topbar-profile { position: relative; }
-.topbar-av { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--teacher), #1a9e7a); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; border: 2px solid var(--teacher-bg); cursor: pointer; user-select: none; }
-.profile-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 8px); background: var(--card-bg); border: 1.5px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-md); min-width: 160px; overflow: hidden; z-index: 300; }
-.profile-dropdown.open { display: block; }
-.pd-item { display: flex; align-items: center; gap: 10px; padding: 11px 16px; font-size: 13px; font-weight: 500; color: var(--text-1); text-decoration: none; transition: background .12s; }
-.pd-item:hover { background: var(--page-bg); }
-.pd-item svg { width: 15px; height: 15px; color: var(--text-3); flex-shrink: 0; }
-.pd-item.danger { color: #b03030; }
-.pd-item.danger svg { color: #b03030; }
-.pd-divider { height: 1px; background: var(--border); margin: 2px 0; }
+/* ── TOPBAR ── */
+.topbar{background:var(--card-bg);border-bottom:1px solid var(--border);padding:0 28px;height:var(--topbar-h);display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-sm)}
+.breadcrumb{flex:1;display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text-3)}
+.breadcrumb a{color:var(--text-3);text-decoration:none;transition:color .15s}
+.breadcrumb a:hover{color:var(--brand)}
+.breadcrumb .cur{color:var(--text-1);font-weight:600}
+.topbar-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teacher),#1a9e7a);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;border:2px solid var(--teacher-bg);cursor:pointer;user-select:none}
+.topbar-profile{position:relative}
+.profile-dropdown{display:none;position:absolute;right:0;top:calc(100% + 8px);background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-md);min-width:160px;overflow:hidden;z-index:300}
+.profile-dropdown.open{display:block}
+.pd-item{display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:13px;font-weight:500;color:var(--text-1);text-decoration:none;transition:background .12s}
+.pd-item:hover{background:var(--page-bg)}
+.pd-item svg{width:15px;height:15px;color:var(--text-3);flex-shrink:0}
+.pd-item.danger{color:#b03030}
+.pd-item.danger svg{color:#b03030}
+.pd-divider{height:1px;background:var(--border);margin:2px 0}
 
-/* PAGE */
-.page { padding: 28px 32px; display: flex; flex-direction: column; gap: 24px; }
+/* ── HERO (sticky below topbar) ── */
+.hero-wrap{position:sticky;top:var(--topbar-h);z-index:90}
+.class-hero{background:linear-gradient(135deg,#0c3326 0%,#0f6e56 55%,#186b49 100%);padding:22px 28px;display:flex;align-items:center;gap:24px;position:relative;overflow:hidden;box-shadow:0 4px 20px rgba(15,110,86,.22)}
+.hero-orb{position:absolute;border-radius:50%;pointer-events:none}
+.hero-info{flex:1;z-index:1}
+.hero-badge-row{display:flex;align-items:center;gap:6px;margin-bottom:7px}
+.hero-badge{font-family:var(--mono);font-size:11px;font-weight:600;color:rgba(255,255,255,.6);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);padding:3px 10px;border-radius:30px;display:inline-block;letter-spacing:1px}
+.hero-icon-btn{width:26px;height:26px;border-radius:6px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.7);transition:all .15s;flex-shrink:0;padding:0}
+.hero-icon-btn:hover{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.4);color:#fff}
+.hero-icon-btn.done{background:rgba(15,110,86,.3);border-color:rgba(15,110,86,.5);color:#6ee7b7}
+.hero-name{font-size:20px;font-weight:700;color:#fff;letter-spacing:-.3px;margin-bottom:4px}
+.hero-meta{display:flex;gap:16px;flex-wrap:wrap}
+.hero-meta-item{display:flex;align-items:center;gap:5px;font-size:12.5px;color:rgba(255,255,255,.65)}
+.hero-meta-item svg{width:13px;height:13px}
+/* hero nav buttons */
+.hero-nav{display:flex;gap:6px;flex-wrap:wrap;z-index:1;flex-shrink:0}
+.hn-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:30px;font-family:var(--font);font-size:12.5px;font-weight:600;cursor:pointer;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;transition:all .15s;text-decoration:none;white-space:nowrap}
+.hn-btn:hover{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.35)}
+.hn-btn.active{background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.5);box-shadow:0 2px 8px rgba(0,0,0,.15)}
 
-/* HERO HEADER */
-.class-hero {
-  background: linear-gradient(135deg, #0c3326 0%, #0f6e56 55%, #186b49 100%);
-  border-radius: var(--radius-xl); padding: 30px 36px;
-  display: flex; align-items: center; gap: 32px;
-  position: relative; overflow: hidden;
-  box-shadow: 0 8px 32px rgba(15,110,86,.22);
-}
-.class-hero-orb { position: absolute; border-radius: 50%; pointer-events: none; }
-.class-hero-info { flex: 1; z-index: 1; }
-.class-hero-badge { font-family: var(--mono); font-size: 12px; font-weight: 600; color: rgba(255,255,255,.6); background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); padding: 4px 12px; border-radius: 30px; display: inline-block; margin-bottom: 10px; letter-spacing: 1px; }
-.class-hero h1 { font-size: 26px; font-weight: 700; color: #fff; letter-spacing: -.4px; margin-bottom: 6px; }
-.class-hero-meta { display: flex; gap: 20px; flex-wrap: wrap; }
-.class-hero-meta-item { display: flex; align-items: center; gap: 7px; font-size: 13px; color: rgba(255,255,255,.65); }
-.class-hero-meta-item svg { width: 14px; height: 14px; }
-.class-hero-actions { display: flex; gap: 10px; z-index: 1; flex-shrink: 0; }
-.class-stats { display: flex; gap: 0; z-index: 1; flex-shrink: 0; }
-.cstat { text-align: center; padding: 0 28px; }
-.cstat + .cstat { border-left: 1px solid rgba(255,255,255,.12); }
-.cstat-val { font-family: var(--mono); font-size: 28px; font-weight: 700; color: #fff; line-height: 1; }
-.cstat-lbl { font-size: 11px; color: rgba(255,255,255,.45); margin-top: 4px; }
+/* ── CONTENT AREA ── */
+.page{padding:22px 28px;display:flex;flex-direction:column;gap:20px}
+.tab-pane{display:none}
+.tab-pane.active{display:flex;flex-direction:column;gap:18px}
 
-/* TABS */
-.tabs-bar { display: flex; gap: 2px; background: var(--card-bg); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 4px; width: fit-content; box-shadow: var(--shadow-sm); }
-.tab-btn { padding: 8px 18px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; color: var(--text-2); cursor: pointer; border: none; background: none; transition: all .15s; display: flex; align-items: center; gap: 6px; font-family: var(--font); }
-.tab-btn:hover { color: var(--text-1); background: var(--page-bg); }
-.tab-btn.active { background: var(--brand); color: #fff; box-shadow: 0 2px 8px rgba(76,104,215,.3); }
-.tab-btn .tab-count { font-size: 11px; background: rgba(255,255,255,.25); padding: 1px 6px; border-radius: 10px; }
-.tab-btn:not(.active) .tab-count { background: var(--border); color: var(--text-3); }
+/* ── CARD ── */
+.card{background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden}
+.card-head{padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.card-title{font-size:14px;font-weight:700}
+.card-sub{font-size:12px;color:var(--text-3);margin-top:1px}
 
-/* TAB CONTENT */
-.tab-pane { display: none; }
-.tab-pane.active { display: block; }
+/* ── STUDENTS TABLE ── */
+.dt{width:100%;border-collapse:collapse}
+.dt th{font-size:11px;font-weight:700;color:var(--text-3);text-align:left;padding:9px 16px;border-bottom:1px solid var(--border);letter-spacing:.5px;text-transform:uppercase;background:var(--page-bg)}
+.dt td{padding:12px 16px;font-size:13.5px;border-bottom:1px solid var(--border);vertical-align:middle}
+.dt tr:last-child td{border-bottom:none}
+.dt tr:hover td{background:#fafaf9}
+.s-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--brand),#7b93f0);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.s-row{display:flex;align-items:center;gap:10px}
+.s-name{font-weight:600;font-size:13.5px}
+.s-email{font-size:11.5px;color:var(--text-3)}
 
-/* CARD */
-.card { background: var(--card-bg); border: 1.5px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
-.card-head { padding: 17px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.card-title { font-size: 14px; font-weight: 700; }
-.card-subtitle { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+/* ── PROGRESS BAR ── */
+.prog-wrap{display:flex;align-items:center;gap:8px}
+.prog-bar{flex:1;height:5px;background:var(--border);border-radius:10px;overflow:hidden;min-width:70px}
+.prog-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--brand),#7b93f0)}
+.prog-fill.good{background:linear-gradient(90deg,var(--teacher),#1a9e7a)}
+.prog-fill.warn{background:linear-gradient(90deg,#d97706,#f59e0b)}
+.prog-fill.bad{background:linear-gradient(90deg,#b03030,#e24b4a)}
+.prog-pct{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--text-2);min-width:32px;text-align:right}
 
-/* STUDENTS TABLE */
-.dt { width: 100%; border-collapse: collapse; }
-.dt th { font-size: 11px; font-weight: 700; color: var(--text-3); text-align: left; padding: 10px 18px; border-bottom: 1px solid var(--border); letter-spacing: .5px; text-transform: uppercase; background: var(--page-bg); }
-.dt td { padding: 13px 18px; font-size: 13.5px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-.dt tr:last-child td { border-bottom: none; }
-.dt tr:hover td { background: #fafaf9; }
-.student-av { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--brand), #7b93f0); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
-.student-info { display: flex; align-items: center; gap: 10px; }
-.student-name { font-weight: 600; font-size: 13.5px; }
-.student-email { font-size: 11.5px; color: var(--text-3); }
+/* ── BADGE ── */
+.badge{font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:20px;display:inline-block}
+.badge-green{background:var(--success-bg);color:var(--success)}
+.badge-amber{background:var(--warn-bg);color:var(--warn)}
+.badge-blue{background:var(--brand-soft);color:var(--brand)}
+.badge-gray{background:#f1f1f4;color:#5a5f7a}
+.badge-red{background:#fce8e8;color:#b03030}
 
-/* BADGE */
-.badge { font-size: 11.5px; font-weight: 600; padding: 3px 10px; border-radius: 20px; display: inline-block; }
-.badge-green  { background: var(--success-bg); color: var(--success); }
-.badge-amber  { background: var(--warning-bg); color: var(--warning); }
-.badge-blue   { background: var(--brand-soft); color: var(--brand); }
-.badge-gray   { background: #f1f1f4; color: #5a5f7a; }
-.badge-red    { background: #fce8e8; color: #b03030; }
+/* ── ANNOUNCE TAB ── */
+.two-col{display:grid;grid-template-columns:1fr 320px;gap:20px}
+.ann-card{background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:18px 22px;box-shadow:var(--shadow-sm);margin-bottom:12px}
+.ann-card.pinned{border-left:3px solid var(--brand)}
+.ann-title{font-size:14px;font-weight:700;margin-bottom:5px}
+.ann-body-text{font-size:13px;color:var(--text-2);line-height:1.6}
+.ann-meta{font-size:11.5px;color:var(--text-3);margin-top:9px}
+.meet-link{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:12.5px;font-weight:600;color:var(--brand);text-decoration:none}
+.meet-link:hover{text-decoration:underline}
+.form-card{background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow-sm);position:sticky;top:calc(var(--topbar-h) + 170px)}
+.form-card h3{font-size:13.5px;font-weight:700;margin-bottom:14px}
+.fg{margin-bottom:13px}
+.fl{display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:var(--text-2)}
+.fc,.fc-ta{width:100%;padding:8px 11px;font-family:var(--font);font-size:13px;border:1.5px solid var(--border);border-radius:var(--radius-md);background:var(--page-bg);color:var(--text-1);outline:none;transition:border-color .15s}
+.fc:focus,.fc-ta:focus{border-color:var(--brand);background:#fff}
+.fc::placeholder,.fc-ta::placeholder{color:var(--text-3)}
+.fc-ta{resize:vertical}
+.pin-row{display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer}
 
-/* PROGRESS BAR */
-.prog-wrap { display: flex; align-items: center; gap: 10px; }
-.prog-bar { flex: 1; height: 6px; background: var(--border); border-radius: 10px; overflow: hidden; min-width: 80px; }
-.prog-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--brand), #7b93f0); transition: width .4s ease; }
-.prog-fill.good { background: linear-gradient(90deg, var(--teacher), #1a9e7a); }
-.prog-fill.warn { background: linear-gradient(90deg, #d97706, #f59e0b); }
-.prog-fill.bad  { background: linear-gradient(90deg, #b03030, #e24b4a); }
-.prog-pct { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--text-2); min-width: 36px; text-align: right; }
+/* ── COURSES TAB ── */
+.course-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;padding:16px}
+.course-card{border:1.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;background:var(--card-bg);transition:box-shadow .2s,transform .15s;position:relative}
+.course-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.cc-head-area{padding:16px 16px 12px;background:linear-gradient(135deg,var(--brand-soft),#dde3f8)}
+.cc-head-area.assigned{background:linear-gradient(135deg,#e1f5ee,#c6edd9)}
+.cc-icon{width:36px;height:36px;border-radius:var(--radius-md);background:var(--brand);display:flex;align-items:center;justify-content:center;margin-bottom:10px;box-shadow:0 3px 10px rgba(76,104,215,.25)}
+.cc-icon.a-icon{background:var(--teacher);box-shadow:0 3px 10px rgba(15,110,86,.25)}
+.cc-icon svg{width:18px;height:18px;color:#fff}
+.cc-title-t{font-size:13.5px;font-weight:700;color:var(--text-1);line-height:1.3}
+.cc-body-area{padding:12px 16px 14px}
+.cc-meta-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.cc-meta-i{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-2)}
+.cc-meta-i svg{width:12px;height:12px;color:var(--text-3)}
+.cc-desc{font-size:12px;color:var(--text-2);line-height:1.5;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.assigned-ribbon{position:absolute;top:12px;right:12px;background:var(--teacher);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.3px}
+.filter-bar{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap}
+.fb{font-size:12px;font-weight:600;padding:5px 12px;border-radius:30px;border:1.5px solid var(--border);background:transparent;color:var(--text-2);cursor:pointer;transition:all .15s;font-family:var(--font)}
+.fb:hover{border-color:var(--brand);color:var(--brand)}
+.fb.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+.assign-btn{width:100%;padding:8px 0;border-radius:var(--radius-md);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px}
+.assign-btn.unassigned{background:var(--brand-soft);color:var(--brand);border-color:var(--brand)}
+.assign-btn.unassigned:hover{background:var(--brand);color:#fff}
+.assign-btn.assigned{background:var(--success-bg);color:var(--success);border-color:#86efac}
+.assign-btn.assigned:hover{background:#fce8e8;color:#b03030;border-color:#fca5a5}
+.assign-btn.loading{opacity:.6;pointer-events:none}
 
-/* COURSES SECTION */
-.course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; padding: 18px; }
-.course-card { border: 1.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: var(--card-bg); transition: box-shadow .2s, transform .15s; position: relative; }
-.course-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
-.course-card-head { padding: 20px 20px 14px; background: linear-gradient(135deg, var(--brand-soft), #dde3f8); }
-.course-card-head.assigned { background: linear-gradient(135deg, #e1f5ee, #c6edd9); }
-.course-icon { width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--brand); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(76,104,215,.25); }
-.course-icon.assigned-icon { background: var(--teacher); box-shadow: 0 4px 12px rgba(15,110,86,.25); }
-.course-icon svg { width: 20px; height: 20px; color: #fff; }
-.course-title { font-size: 14px; font-weight: 700; color: var(--text-1); line-height: 1.3; }
-.course-body { padding: 14px 20px 16px; }
-.course-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-.course-meta-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-2); }
-.course-meta-item svg { width: 13px; height: 13px; color: var(--text-3); }
-.course-desc { font-size: 12.5px; color: var(--text-2); line-height: 1.5; margin-bottom: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.assigned-ribbon { position: absolute; top: 14px; right: 14px; background: var(--teacher); color: #fff; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; letter-spacing: .4px; }
+/* ── CLASSWORK TAB ── */
+.cw-two{display:grid;grid-template-columns:1fr 340px;gap:20px}
+.a-card{background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:14px}
+.a-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.a-title{font-size:14px;font-weight:700}
+.a-meta-t{font-size:11.5px;color:var(--text-3);margin-top:2px}
+.grade-form{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.g-input{width:60px;padding:5px 7px;font-family:var(--mono);font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);outline:none;background:var(--page-bg)}
+.g-input:focus{border-color:var(--brand);background:#fff}
+.fb-input{flex:1;min-width:90px;padding:5px 9px;font-family:var(--font);font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);outline:none;background:var(--page-bg)}
+.fb-input:focus{border-color:var(--brand);background:#fff}
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius-md);padding:14px;text-align:center;cursor:pointer;transition:border-color .15s}
+.upload-zone:hover{border-color:var(--brand)}
+.two-inp{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-/* ASSIGN TOGGLE BUTTON */
-.assign-btn { width: 100%; padding: 9px 0; border-radius: var(--radius-md); font-family: var(--font); font-size: 12.5px; font-weight: 600; cursor: pointer; border: 1.5px solid; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
-.assign-btn.unassigned { background: var(--brand-soft); color: var(--brand); border-color: var(--brand); }
-.assign-btn.unassigned:hover { background: var(--brand); color: #fff; }
-.assign-btn.assigned { background: var(--success-bg); color: var(--success); border-color: #86efac; }
-.assign-btn.assigned:hover { background: #fce8e8; color: #b03030; border-color: #fca5a5; }
-.assign-btn.assigned:hover .btn-label::before { content: 'Remove Course'; }
-.assign-btn.assigned .btn-label { position: relative; }
-.assign-btn.assigned .btn-label::before { content: '✓ Assigned'; position: absolute; left: 0; right: 0; }
-.assign-btn.assigned:hover .btn-label::before { content: '✕ Remove'; }
-.assign-btn.loading { opacity: .6; cursor: not-allowed; pointer-events: none; }
+/* ── PEOPLE TAB ── */
+.code-chip{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:2.5px;color:var(--brand);background:var(--brand-soft);padding:2px 8px;border-radius:var(--radius-sm)}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stat-card{background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow-sm);text-align:center}
+.stat-val{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--text-1)}
+.stat-lbl{font-size:11.5px;color:var(--text-3);margin-top:3px}
 
-/* NO CONTENT */
-.empty-state { padding: 48px 24px; text-align: center; color: var(--text-3); }
-.empty-state .icon { font-size: 44px; margin-bottom: 14px; }
-.empty-state h3 { font-size: 15px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
-.empty-state p { font-size: 13px; }
+/* ── PROGRESS TAB ── */
+.student-card{background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:14px}
+.sc-head{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;background:var(--page-bg);border-bottom:1px solid var(--border)}
+.sc-av{width:38px;height:38px;border-radius:50%;background:var(--brand);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0}
+.sc-name{font-size:14px;font-weight:600}
+.sc-email{font-size:11.5px;color:var(--text-3);margin-top:1px}
+.score-pill{text-align:center;padding:0 14px}
+.score-pill .lbl{font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--text-3)}
+.score-pill .val{font-family:var(--mono);font-size:16px;font-weight:700}
+.bar-wrap{flex:1;height:5px;background:var(--border);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px}
+.bar-green{background:var(--teacher)}.bar-amber{background:#9a5a00}.bar-red{background:#b03030}
 
-/* BTN */
-.btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 40px; font-family: var(--font); font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; text-decoration: none; }
-.btn-primary { background: var(--brand); color: #fff; box-shadow: 0 4px 12px rgba(76,104,215,.3); }
-.btn-primary:hover { background: var(--brand-dark); }
-.btn-glass { background: rgba(255,255,255,.13); color: #fff; border: 1.5px solid rgba(255,255,255,.2); }
-.btn-glass:hover { background: rgba(255,255,255,.22); }
-.btn-ghost { background: transparent; color: var(--text-2); border: 1.5px solid var(--border); }
-.btn-ghost:hover { border-color: var(--brand); color: var(--brand); }
+/* ── CHAT TAB ── */
+.chat-wrap{background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column;min-height:520px;max-height:calc(100vh - 280px)}
+.chat-split{display:grid;grid-template-columns:220px 1fr;flex:1;overflow:hidden}
+.chat-sidebar{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.chat-sidebar-head{padding:12px 14px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border);background:var(--page-bg);flex-shrink:0}
+.chat-students{overflow-y:auto;flex:1}
+.chat-s-item{display:flex;align-items:center;gap:9px;padding:11px 14px;font-size:13px;font-weight:500;color:var(--text-2);text-decoration:none;border-bottom:1px solid var(--border);transition:background .1s;cursor:pointer}
+.chat-s-item:hover{background:var(--page-bg);color:var(--text-1)}
+.chat-s-item.active{background:var(--brand-soft);color:var(--brand);font-weight:600}
+.chat-s-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--brand),#7b93f0);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.chat-main{display:flex;flex-direction:column;overflow:hidden}
+.chat-header{padding:12px 18px;font-size:13.5px;font-weight:600;border-bottom:1px solid var(--border);background:var(--page-bg);flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+.chat-status{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text-3);font-weight:400}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0}
+.status-dot.connected{background:#22c55e}
+.chat-messages{flex:1;padding:16px 18px;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
+.bubble{max-width:68%;padding:9px 13px;border-radius:var(--radius-lg);font-size:13.5px;line-height:1.5}
+.bubble.sent{background:var(--brand);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.bubble.recv{background:var(--page-bg);color:var(--text-1);align-self:flex-start;border-bottom-left-radius:4px;border:1px solid var(--border)}
+.bubble-time{font-size:10px;opacity:.6;margin-top:3px;text-align:right}
+.chat-footer{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);background:var(--card-bg);flex-shrink:0}
+.chat-input{flex:1;padding:9px 13px;font-family:var(--font);font-size:13px;border:1.5px solid var(--border);border-radius:40px;outline:none;background:var(--page-bg);transition:border-color .15s}
+.chat-input:focus{border-color:var(--brand);background:#fff}
+.chat-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;color:var(--text-3);font-size:13px;padding:40px;text-align:center}
+.chat-empty .icon{font-size:36px;margin-bottom:10px}
 
-/* TOAST */
-.toast { position: fixed; bottom: 24px; right: 24px; background: var(--dark); color: #fff; padding: 12px 18px; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; box-shadow: var(--shadow-md); transform: translateY(80px); opacity: 0; transition: all .3s cubic-bezier(.34,1.56,.64,1); z-index: 999; display: flex; align-items: center; gap: 10px; }
-.toast.show { transform: translateY(0); opacity: 1; }
-.toast.success .toast-dot { background: #22c55e; }
-.toast.error .toast-dot { background: #e24b4a; }
-.toast-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+/* ── BTN ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:40px;font-family:var(--font);font-size:12.5px;font-weight:600;cursor:pointer;border:none;transition:all .15s;text-decoration:none}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 3px 10px rgba(76,104,215,.28)}
+.btn-primary:hover{background:var(--brand-dark)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-ghost{background:transparent;color:var(--text-2);border:1.5px solid var(--border)}
+.btn-ghost:hover{border-color:var(--brand);color:var(--brand)}
+.btn-danger{background:#fce8e8;color:#b03030}
+.btn-danger:hover{background:#f8d0d0}
 
-/* SECTION DIVIDER */
-.section-label { font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--text-3); padding: 0 18px 8px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--dark);color:#fff;padding:11px 17px;border-radius:var(--radius-md);font-size:13px;font-weight:500;box-shadow:var(--shadow-md);transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:999;display:flex;align-items:center;gap:9px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success .td{background:#22c55e}
+.toast.error .td{background:#e24b4a}
+.td{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 
-/* RESPONSIVE */
-@media (max-width: 768px) {
-  :root { --nav-w: 0px; }
-  .sidebar { display: none; }
-  .class-hero { flex-direction: column; align-items: flex-start; }
-  .class-stats { display: none; }
-  .page { padding: 16px; }
-}
+/* ── EMPTY ── */
+.empty-state{padding:44px 20px;text-align:center;color:var(--text-3)}
+.empty-state .ei{font-size:38px;margin-bottom:11px}
+.empty-state h3{font-size:14px;font-weight:600;color:var(--text-2);margin-bottom:5px}
+.empty-state p{font-size:13px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){.two-col,.cw-two{grid-template-columns:1fr}.chat-split{grid-template-columns:180px 1fr}}
+@media(max-width:768px){:root{--nav-w:0px}.sidebar{display:none}.page{padding:14px}.hero-nav{gap:4px}.hn-btn{padding:6px 10px;font-size:12px}.chat-split{grid-template-columns:1fr}}
+@media(max-width:600px){.chat-split{grid-template-columns:1fr}.chat-sidebar{display:none}}
 </style>
 </head>
 <body>
 
-<!-- SIDEBAR -->
+<!-- ── SIDEBAR ── -->
 <aside class="sidebar">
   <a class="sidebar-logo" href="{% url 'teacher_dashboard' %}">
     <div class="logo-mark">EP</div>
-    <div>
-      <div class="logo-text">EduPlatform</div>
-      <div class="logo-sub">Teacher Portal</div>
-    </div>
+    <div><div class="logo-text">EduPlatform</div><div class="logo-sub">Teacher Portal</div></div>
   </a>
   <nav class="nav-group">
     <div class="nav-label">Main</div>
-    <a class="nav-item" href="{% url 'teacher_dashboard' %}">
-      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke-width="2"/></svg>
-      Dashboard
-    </a>
-    <a class="nav-item active" href="{% url 'teacher_my_classrooms' %}">
-      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      My Classrooms
-    </a>
-    <a class="nav-item" href="{% url 'teacher_my_learning' %}">
-      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      My Learning
-    </a>
-    <a class="nav-item" href="{% url 'teacher_messages' %}">
-      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Messages
-    </a>
+    <a class="nav-item" href="{% url 'teacher_dashboard' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke-width="2"/></svg>Dashboard</a>
+    <a class="nav-item active" href="{% url 'teacher_my_classrooms' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>My Classrooms</a>
+    <a class="nav-item" href="{% url 'teacher_my_learning' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>My Learning</a>
+    <a class="nav-item" href="{% url 'teacher_messages' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Messages</a>
   </nav>
   <nav class="nav-group">
     <div class="nav-label">Tools</div>
-    <a class="nav-item" href="#">
-      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Grade Analytics
-    </a>
-    <a class="nav-item" href="{% url 'teacher_announcements' %}">
-      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Announcements
-    </a>
-    <a class="nav-item" href="{% url 'profile' %}">
-      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke-width="2"/></svg>
-      Settings
-    </a>
+    <a class="nav-item" href="{% url 'teacher_announcements' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Announcements</a>
+    <a class="nav-item" href="{% url 'profile' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke-width="2"/></svg>Settings</a>
   </nav>
   <div class="sidebar-spacer"></div>
   <div class="sidebar-bottom">
     <div class="user-card">
       <div class="av">{{ request.user.get_full_name|slice:":2"|upper }}</div>
-      <div>
-        <div class="user-name">{{ request.user.get_full_name }}</div>
-        <div class="user-role">Teacher</div>
-      </div>
+      <div><div class="user-name">{{ request.user.get_full_name }}</div><div class="user-role">Teacher</div></div>
     </div>
   </div>
 </aside>
 
-<!-- MAIN -->
+<!-- ── MAIN ── -->
 <div class="main">
+
+  <!-- TOPBAR -->
   <header class="topbar">
     <div class="breadcrumb">
       <a href="{% url 'teacher_dashboard' %}">Dashboard</a>
-      <span class="sep">›</span>
+      <span>›</span>
       <a href="{% url 'teacher_my_classrooms' %}">My Classrooms</a>
-      <span class="sep">›</span>
+      <span>›</span>
       <span class="cur">{{ classroom.name }}</span>
     </div>
     <div class="topbar-profile">
-      <div class="topbar-av" id="profileBtn">{{ request.user.get_full_name|slice:":2"|upper }}</div>
+      <div class="topbar-av" id="profileBtn" style="{% if request.user.avatar %}padding:0;overflow:hidden;{% endif %}">{% if request.user.avatar %}<img src="{{ request.user.avatar.url }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">{% else %}{{ request.user.get_full_name|slice:":2"|upper }}{% endif %}</div>
       <div class="profile-dropdown" id="profileDropdown">
-        <a href="{% url 'profile' %}" class="pd-item">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          View Profile
-        </a>
+        <a href="{% url 'profile' %}" class="pd-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>View Profile</a>
         <div class="pd-divider"></div>
-        <a href="{% url 'logout' %}" class="pd-item danger">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Log Out
-        </a>
+        <a href="{% url 'logout' %}" class="pd-item danger"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Log Out</a>
       </div>
     </div>
   </header>
 
+  <!-- STICKY HERO -->
+  <div class="hero-wrap">
+    <div class="class-hero">
+      <div class="hero-orb" style="right:-20px;top:-60px;width:200px;height:200px;background:rgba(255,255,255,.05)"></div>
+      <div class="hero-orb" style="right:110px;bottom:-80px;width:140px;height:140px;background:rgba(255,255,255,.04)"></div>
+      <div class="hero-info">
+        <div class="hero-badge-row">
+          <span class="hero-badge">{{ classroom.code }}</span>
+          <button class="hero-icon-btn" title="Copy class code" onclick="copyCode(event,'{{ classroom.code }}',this)">
+            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" stroke-width="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"/></svg>
+          </button>
+          <button class="hero-icon-btn" title="Share class code" onclick="shareCode(event,'{{ classroom.code }}','{{ classroom.name|escapejs }}')">
+            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3" stroke-width="2"/><circle cx="6" cy="12" r="3" stroke-width="2"/><circle cx="18" cy="19" r="3" stroke-width="2"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="hero-name">{{ classroom.name }}</div>
+        <div class="hero-meta">
+          <div class="hero-meta-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" stroke-width="1.8"/></svg>{{ classroom.students.count }} student{{ classroom.students.count|pluralize }}</div>
+          <div class="hero-meta-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-width="1.8"/></svg>{{ assignment_count }} assignment{{ assignment_count|pluralize }}</div>
+          <div class="hero-meta-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>{{ assigned_course_count }} course{{ assigned_course_count|pluralize }}</div>
+        </div>
+      </div>
+      <!-- Hero nav buttons — all open inline -->
+      <div class="hero-nav">
+        <button class="hn-btn active" onclick="switchTab('home',this)">🏠 Home</button>
+        <button class="hn-btn" onclick="switchTab('announce',this)">📢 Announce</button>
+        <button class="hn-btn" onclick="switchTab('courses',this)">📚 Courses</button>
+        <button class="hn-btn" onclick="switchTab('classwork',this)">📝 Classwork</button>
+        <button class="hn-btn" onclick="switchTab('people',this)">👥 People</button>
+        <button class="hn-btn" onclick="switchTab('progress',this)">📊 Progress</button>
+        <button class="hn-btn" onclick="switchTab('chat',this)">💬 Chat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CONTENT ── -->
   <div class="page">
 
-    <!-- HERO -->
-    <div class="class-hero">
-      <div class="class-hero-orb" style="right:-30px;top:-70px;width:240px;height:240px;background:rgba(255,255,255,.05)"></div>
-      <div class="class-hero-orb" style="right:140px;bottom:-90px;width:160px;height:160px;background:rgba(255,255,255,.04)"></div>
-      <div class="class-hero-info">
-        <div class="class-hero-badge">{{ classroom.code }}</div>
-        <h1>{{ classroom.name }}</h1>
-        <div class="class-hero-meta">
-          <div class="class-hero-meta-item">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" stroke-width="1.8"/></svg>
-            {{ classroom.students.count }} student{{ classroom.students.count|pluralize }}
-          </div>
-          <div class="class-hero-meta-item">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-width="1.8"/></svg>
-            {{ assignment_count }} assignment{{ assignment_count|pluralize }}
-          </div>
-          <div class="class-hero-meta-item">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            {{ assigned_course_count }} course{{ assigned_course_count|pluralize }} assigned
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;margin-top:20px">
-          <a href="{% url 'teacher_classroom_announce' classroom.id %}" class="btn btn-glass">
-            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" stroke-width="1.8" stroke-linecap="round"/></svg>
-            Announce
-          </a>
-          <a href="{% url 'teacher_classroom_classwork' classroom.id %}" class="btn btn-glass">
-            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-width="1.8"/></svg>
-            Classwork
-          </a>
-          <a href="{% url 'teacher_classroom_grade' classroom.id %}" class="btn btn-glass">
-            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Progress
-          </a>
-        </div>
-      </div>
-      <div class="class-stats">
-        <div class="cstat"><div class="cstat-val">{{ classroom.students.count }}</div><div class="cstat-lbl">Students</div></div>
-        <div class="cstat"><div class="cstat-val">{{ assigned_course_count }}</div><div class="cstat-lbl">Courses</div></div>
-        <div class="cstat"><div class="cstat-val">{{ avg_score }}%</div><div class="cstat-lbl">Avg Score</div></div>
-      </div>
-    </div>
-
-    <!-- TABS -->
-    <div class="tabs-bar">
-      <button class="tab-btn active" onclick="switchTab('students', this)">
-        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" stroke-width="2"/></svg>
-        Students
-        <span class="tab-count">{{ classroom.students.count }}</span>
-      </button>
-      <button class="tab-btn" onclick="switchTab('courses', this)">
-        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Assign Courses
-        <span class="tab-count">{{ assigned_course_count }}</span>
-      </button>
-    </div>
-
-    <!-- TAB: STUDENTS -->
-    <div class="tab-pane active" id="tab-students">
+    <!-- ══ HOME TAB ══ -->
+    <div class="tab-pane active" id="tab-home">
+      <!-- Student overview -->
       <div class="card">
         <div class="card-head">
-          <div>
-            <div class="card-title">Enrolled Students</div>
-            <div class="card-subtitle">{{ classroom.students.count }} student{{ classroom.students.count|pluralize }} in this classroom</div>
-          </div>
-          <a href="{% url 'teacher_classroom_peoples' classroom.id %}" class="btn btn-ghost" style="font-size:12px;padding:7px 14px">
-            Manage People →
-          </a>
+          <div><div class="card-title">Enrolled Students</div><div class="card-sub">{{ classroom.students.count }} student{{ classroom.students.count|pluralize }}</div></div>
+          <button class="btn btn-ghost btn-sm" onclick="switchTab('people',document.querySelector('.hn-btn:nth-child(5)'))">Manage People →</button>
         </div>
         {% if student_data %}
         <table class="dt">
-          <thead>
-            <tr>
-              <th>Student</th>
-              <th>Submitted</th>
-              <th>Avg Score</th>
-              <th>Grade</th>
-              <th>Status</th>
-            </tr>
-          </thead>
+          <thead><tr><th>Student</th><th>Submitted</th><th>Avg Score</th><th>Grade</th><th>Status</th></tr></thead>
           <tbody>
-            {% for s in student_data %}
-            <tr>
-              <td>
-                <div class="student-info">
-                  <div class="student-av">{{ s.user.get_full_name|slice:":2"|upper }}</div>
-                  <div>
-                    <div class="student-name">{{ s.user.get_full_name }}</div>
-                    <div class="student-email">{{ s.user.email }}</div>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <span style="font-family:var(--mono);font-size:13px;font-weight:600">{{ s.submitted }}</span>
-                <span style="color:var(--text-3);font-size:12px"> / {{ s.total_assignments }}</span>
-              </td>
-              <td>
-                <div class="prog-wrap">
-                  <div class="prog-bar">
-                    <div class="prog-fill {% if s.avg_pct >= 75 %}good{% elif s.avg_pct >= 50 %}warn{% else %}bad{% endif %}"
-                         style="width:{{ s.avg_pct }}%"></div>
-                  </div>
-                  <span class="prog-pct">{{ s.avg_pct }}%</span>
-                </div>
-              </td>
-              <td>
-                <span class="badge {% if s.grade_letter == 'A' %}badge-green{% elif s.grade_letter == 'B' %}badge-blue{% elif s.grade_letter == 'C' %}badge-amber{% elif s.grade_letter == 'F' %}badge-red{% else %}badge-gray{% endif %}">
-                  {{ s.grade_letter }}
-                </span>
-              </td>
-              <td>
-                {% if s.submitted == s.total_assignments and s.total_assignments > 0 %}
-                  <span class="badge badge-green">All submitted</span>
-                {% elif s.submitted > 0 %}
-                  <span class="badge badge-amber">In progress</span>
-                {% else %}
-                  <span class="badge badge-gray">Not started</span>
-                {% endif %}
-              </td>
-            </tr>
-            {% endfor %}
+          {% for s in student_data %}
+          <tr>
+            <td><div class="s-row"><div class="s-av">{{ s.user.get_full_name|slice:":2"|upper }}</div><div><div class="s-name">{{ s.user.get_full_name }}</div><div class="s-email">{{ s.user.email }}</div></div></div></td>
+            <td><span style="font-family:var(--mono);font-size:13px;font-weight:600">{{ s.submitted }}</span><span style="color:var(--text-3);font-size:12px"> / {{ s.total_assignments }}</span></td>
+            <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill {% if s.avg_pct >= 75 %}good{% elif s.avg_pct >= 50 %}warn{% else %}bad{% endif %}" style="width:{{ s.avg_pct }}%"></div></div><span class="prog-pct">{{ s.avg_pct }}%</span></div></td>
+            <td><span class="badge {% if s.grade_letter == 'A' %}badge-green{% elif s.grade_letter == 'B' %}badge-blue{% elif s.grade_letter == 'C' %}badge-amber{% elif s.grade_letter == 'F' %}badge-red{% else %}badge-gray{% endif %}">{{ s.grade_letter }}</span></td>
+            <td>{% if s.submitted == s.total_assignments and s.total_assignments > 0 %}<span class="badge badge-green">All submitted</span>{% elif s.submitted > 0 %}<span class="badge badge-amber">In progress</span>{% else %}<span class="badge badge-gray">Not started</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
           </tbody>
         </table>
         {% else %}
-        <div class="empty-state">
-          <div class="icon">👥</div>
-          <h3>No students yet</h3>
-          <p>Students can join using the class code <strong style="font-family:var(--mono);color:var(--brand)">{{ classroom.code }}</strong></p>
-        </div>
+        <div class="empty-state"><div class="ei">👥</div><h3>No students yet</h3><p>Share code <strong style="font-family:var(--mono);color:var(--brand)">{{ classroom.code }}</strong> to invite students</p></div>
         {% endif %}
       </div>
     </div>
 
-    <!-- TAB: ASSIGN COURSES -->
+    <!-- ══ ANNOUNCE TAB ══ -->
+    <div class="tab-pane" id="tab-announce">
+      <div class="two-col">
+        <div>
+          {% for a in announcements %}
+          <div class="ann-card {% if a.is_pinned %}pinned{% endif %}">
+            {% if a.is_pinned %}<span class="badge badge-blue" style="margin-bottom:7px;display:inline-block">📌 Pinned</span>{% endif %}
+            <div class="ann-title">{{ a.title }}</div>
+            <div class="ann-body-text">{{ a.body }}</div>
+            {% if a.meet_link %}<a href="{{ a.meet_link }}" target="_blank" class="meet-link">🎥 Join Live Class</a>{% endif %}
+            <div class="ann-meta">{{ a.created_at|date:"M d, Y · H:i" }}</div>
+          </div>
+          {% empty %}
+          <div class="empty-state"><div class="ei">📢</div><h3>No announcements yet</h3><p>Post your first announcement using the form.</p></div>
+          {% endfor %}
+        </div>
+        <div>
+          <div class="form-card">
+            <h3>Post Announcement</h3>
+            <form method="post" action="{% url 'teacher_classroom_announce' classroom.id %}">
+              {% csrf_token %}
+              <div class="fg"><label class="fl">Title</label><input type="text" class="fc" name="title" required placeholder="e.g. Week 3 Quiz reminder"></div>
+              <div class="fg"><label class="fl">Message</label><textarea class="fc-ta" name="body" rows="4" required placeholder="Details…"></textarea></div>
+              <div class="fg"><label class="fl">Meet Link <span style="color:var(--text-3);font-weight:400">(optional)</span></label><input type="url" class="fc" name="meet_link" placeholder="https://meet.google.com/…"></div>
+              <div class="fg"><label class="pin-row"><input type="checkbox" name="is_pinned" style="margin-right:4px"> Pin this announcement</label></div>
+              <button type="submit" class="btn btn-primary" style="width:100%">Post Announcement</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ COURSES TAB ══ -->
     <div class="tab-pane" id="tab-courses">
       <div class="card" style="overflow:visible">
         <div class="card-head">
-          <div>
-            <div class="card-title">Assign Courses to Classroom</div>
-            <div class="card-subtitle">Only assigned courses will be visible to students in this classroom</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:12px;color:var(--text-3)">
-              <span style="font-family:var(--mono);font-weight:700;color:var(--teacher)">{{ assigned_course_count }}</span> of {{ all_courses|length }} assigned
-            </span>
-          </div>
+          <div><div class="card-title">Assign Courses</div><div class="card-sub">Only assigned courses are visible to students</div></div>
+          <span style="font-size:12px;color:var(--text-3)"><span style="font-family:var(--mono);font-weight:700;color:var(--teacher)" id="assignedCount">{{ assigned_course_count }}</span> of {{ all_courses|length }} assigned</span>
         </div>
-
         {% if all_courses %}
-        <!-- Filter bar -->
-        <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px;border-radius:30px" id="filterAll" onclick="filterCourses('all')">All <span style="font-family:var(--mono);font-size:11px;color:var(--text-3)">{{ all_courses|length }}</span></button>
-          <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px;border-radius:30px" id="filterAssigned" onclick="filterCourses('assigned')">Assigned <span style="font-family:var(--mono);font-size:11px;color:var(--teacher)">{{ assigned_course_count }}</span></button>
-          <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px;border-radius:30px" id="filterUnassigned" onclick="filterCourses('unassigned')">Not Assigned</button>
+        <div class="filter-bar">
+          <button class="fb active" id="fb-all" onclick="filterCourses('all')">All <span style="font-family:var(--mono);font-size:11px">{{ all_courses|length }}</span></button>
+          <button class="fb" id="fb-assigned" onclick="filterCourses('assigned')">Assigned</button>
+          <button class="fb" id="fb-unassigned" onclick="filterCourses('unassigned')">Not Assigned</button>
         </div>
-
         <div class="course-grid" id="courseGrid">
           {% for course in all_courses %}
-          <div class="course-card {% if course.id in assigned_course_ids %}assigned-card{% else %}unassigned-card{% endif %}"
-               data-course-id="{{ course.id }}"
-               data-assigned="{% if course.id in assigned_course_ids %}true{% else %}false{% endif %}">
-
-            {% if course.id in assigned_course_ids %}
-            <span class="assigned-ribbon">✓ Assigned</span>
-            {% endif %}
-
-            <div class="course-card-head {% if course.id in assigned_course_ids %}assigned{% endif %}">
-              <div class="course-icon {% if course.id in assigned_course_ids %}assigned-icon{% endif %}">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </div>
-              <div class="course-title">{{ course.title }}</div>
+          <div class="course-card {% if course.id in assigned_course_ids %}assigned-card{% else %}unassigned-card{% endif %}" data-course-id="{{ course.id }}" data-assigned="{% if course.id in assigned_course_ids %}true{% else %}false{% endif %}">
+            {% if course.id in assigned_course_ids %}<span class="assigned-ribbon">✓ Assigned</span>{% endif %}
+            <div class="cc-head-area {% if course.id in assigned_course_ids %}assigned{% endif %}">
+              <div class="cc-icon {% if course.id in assigned_course_ids %}a-icon{% endif %}"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div class="cc-title-t">{{ course.title }}</div>
             </div>
-
-            <div class="course-body">
-              {% if course.description %}
-              <p class="course-desc">{{ course.description }}</p>
-              {% endif %}
-              <div class="course-meta">
-                <div class="course-meta-item">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke-width="1.8"/></svg>
-                  {{ course.concepts.count }} concept{{ course.concepts.count|pluralize }}
-                </div>
-                <div class="course-meta-item">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="1.8"/><path d="M12 6v6l4 2" stroke-width="1.8" stroke-linecap="round"/></svg>
-                  {{ course.status|capfirst }}
-                </div>
+            <div class="cc-body-area">
+              {% if course.description %}<p class="cc-desc">{{ course.description }}</p>{% endif %}
+              <div class="cc-meta-row">
+                <div class="cc-meta-i"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke-width="1.8"/></svg>{{ course.concepts.count }} concept{{ course.concepts.count|pluralize }}</div>
+                <div class="cc-meta-i"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="1.8"/><path d="M12 6v6l4 2" stroke-width="1.8" stroke-linecap="round"/></svg>{{ course.status|capfirst }}</div>
               </div>
-              <button
-                class="assign-btn {% if course.id in assigned_course_ids %}assigned{% else %}unassigned{% endif %}"
-                data-course-id="{{ course.id }}"
-                onclick="toggleAssign(this, {{ course.id }})">
-                {% if course.id in assigned_course_ids %}
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Assigned</span>
-                {% else %}
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2.5" stroke-linecap="round"/></svg>
-                <span>Assign to Class</span>
-                {% endif %}
+              <button class="assign-btn {% if course.id in assigned_course_ids %}assigned{% else %}unassigned{% endif %}" onclick="toggleAssign(this, {{ course.id }})">
+                {% if course.id in assigned_course_ids %}<svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Assigned</span>
+                {% else %}<svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2.5" stroke-linecap="round"/></svg><span>Assign to Class</span>{% endif %}
               </button>
             </div>
           </div>
           {% endfor %}
         </div>
         {% else %}
-        <div class="empty-state">
-          <div class="icon">📚</div>
-          <h3>No courses available</h3>
-          <p>Your school admin hasn't published any courses yet.</p>
-        </div>
+        <div class="empty-state"><div class="ei">📚</div><h3>No courses available</h3><p>Ask your school admin to publish courses.</p></div>
         {% endif %}
+      </div>
+    </div>
+
+    <!-- ══ CLASSWORK TAB ══ -->
+    <div class="tab-pane" id="tab-classwork">
+      <div class="cw-two">
+        <div>
+          {% for a in assignments %}
+          <div class="a-card">
+            <div class="a-head">
+              <div>
+                <div class="a-title"><a href="{% url 'assignment_detail' a.pk %}" style="color:inherit;text-decoration:none">{{ a.title }} →</a></div>
+                <div class="a-meta-t">Due {{ a.due_date|date:"M d, Y · H:i" }} · Max {{ a.max_score }} pts · {{ a.submission_count }}/{{ classroom.students.count }} submitted</div>
+              </div>
+              {% if a.due_date_only < today %}<span class="badge badge-red">Overdue</span>{% else %}<span class="badge badge-amber">Open</span>{% endif %}
+            </div>
+            {% if a.submission_count > 0 %}
+            <div style="overflow-x:auto">
+              <table class="dt">
+                <thead><tr><th>Student</th><th>Submitted</th><th>File</th><th>Score / Feedback</th></tr></thead>
+                <tbody>
+                {% for sub in a.submission_set.all %}
+                <tr>
+                  <td><strong>{{ sub.student.get_full_name }}</strong></td>
+                  <td style="font-size:12px;color:var(--text-3)">{{ sub.submitted_at|date:"M d · H:i" }}</td>
+                  <td>{% if sub.file %}<a href="{{ sub.file.url }}" target="_blank" class="btn btn-ghost btn-sm">View</a>{% else %}—{% endif %}</td>
+                  <td>
+                    <form method="post" class="grade-form" action="{% url 'teacher_classroom_classwork' classroom.id %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="submission_id" value="{{ sub.pk }}">
+                      <input type="number" name="score" class="g-input" value="{{ sub.score|default:'' }}" min="0" max="{{ a.max_score }}" placeholder="pts">
+                      <input type="text" name="feedback" class="fb-input" value="{{ sub.feedback }}" placeholder="Feedback…">
+                      <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div style="padding:18px;font-size:13px;color:var(--text-3)">No submissions yet.</div>
+            {% endif %}
+          </div>
+          {% empty %}
+          <div class="empty-state"><div class="ei">📝</div><h3>No assignments yet</h3><p>Create one using the form →</p></div>
+          {% endfor %}
+        </div>
+        <div>
+          <div class="form-card" style="position:sticky;top:calc(var(--topbar-h) + 170px)">
+            <h3>Create Assignment</h3>
+            <form method="post" enctype="multipart/form-data" action="{% url 'teacher_classroom_classwork' classroom.id %}">
+              {% csrf_token %}
+              <div class="fg"><label class="fl">Title *</label><input type="text" class="fc" name="title" required placeholder="e.g. Chapter 3 Exercise"></div>
+              <div class="fg"><label class="fl">Description</label><textarea class="fc-ta" name="description" rows="3" placeholder="Instructions…"></textarea></div>
+              <div class="two-inp">
+                <div class="fg"><label class="fl">Due Date *</label><input type="datetime-local" class="fc" name="due_date" required></div>
+                <div class="fg"><label class="fl">Max Score</label><input type="number" class="fc" name="max_score" value="20" min="1"></div>
+              </div>
+              <div class="fg">
+                <label class="fl">Attachment <span style="color:var(--text-3);font-weight:400">(optional)</span></label>
+                <div class="upload-zone" onclick="document.getElementById('fu').click()">
+                  <div style="font-size:22px;margin-bottom:4px">📎</div>
+                  <div style="font-size:12px;color:var(--text-3)">Click to upload</div>
+                  <input type="file" name="file" id="fu" style="display:none" onchange="document.getElementById('fl2').textContent=this.files[0]?.name||''">
+                </div>
+                <div id="fl2" style="font-size:12px;color:var(--brand);margin-top:5px"></div>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%">✚ Create Assignment</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PEOPLE TAB ══ -->
+    <div class="tab-pane" id="tab-people">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+          <h2 style="font-size:16px;font-weight:700">Students</h2>
+          <p style="font-size:13px;color:var(--text-2);margin-top:2px">{{ student_data|length }} enrolled · Share code <span class="code-chip">{{ classroom.code }}</span></p>
+        </div>
+      </div>
+      {% if student_data %}
+      <div class="card">
+        <table class="dt">
+          <thead><tr><th>Student</th><th>Email</th><th>Avg Grade</th><th>Submissions</th><th></th></tr></thead>
+          <tbody>
+          {% for row in student_data %}
+          <tr>
+            <td><div class="s-row"><div class="s-av">{{ row.user.get_full_name|slice:":2"|upper }}</div><div><div class="s-name">{{ row.user.get_full_name }}</div><div class="s-email">Joined {{ row.user.date_joined|date:"M Y" }}</div></div></div></td>
+            <td style="font-size:13px;color:var(--text-2)">{{ row.user.email|default:"—" }}</td>
+            <td><span style="font-family:var(--mono);font-weight:700;color:var(--brand)">{{ row.avg_pct }}%</span><span style="font-size:12px;color:var(--text-3);margin-left:4px">({{ row.grade_letter }})</span></td>
+            <td><span style="font-family:var(--mono);font-size:12px">{{ row.submitted }}/{{ row.total_assignments }}</span></td>
+            <td>
+              <form method="post" action="{% url 'teacher_classroom_peoples' classroom.id %}" style="display:inline" onsubmit="return confirm('Remove {{ row.user.get_full_name }}?')">
+                {% csrf_token %}
+                <input type="hidden" name="remove_student" value="{{ row.user.pk }}">
+                <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-val">{{ student_data|length }}</div><div class="stat-lbl">Total Students</div></div>
+        <div class="stat-card"><div class="stat-val">{{ assignment_count }}</div><div class="stat-lbl">Assignments</div></div>
+        <div class="stat-card"><div class="stat-val">{{ assigned_course_count }}</div><div class="stat-lbl">Courses Assigned</div></div>
+      </div>
+      {% else %}
+      <div class="empty-state"><div class="ei">👥</div><h3>No students yet</h3><p>Share code <strong style="font-family:var(--mono);color:var(--brand)">{{ classroom.code }}</strong></p></div>
+      {% endif %}
+    </div>
+
+    <!-- ══ PROGRESS TAB ══ -->
+    <div class="tab-pane" id="tab-progress">
+      {% if student_progress %}
+      {% for row in student_progress %}
+      <div class="student-card">
+        <div class="sc-head">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="sc-av">{{ row.student.get_full_name|slice:":2"|upper }}</div>
+            <div><div class="sc-name">{{ row.student.get_full_name }}</div><div class="sc-email">{{ row.student.email }}</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <div class="score-pill"><div class="lbl">Overall</div><div class="val" style="color:var(--brand)">{{ row.total_earned }}/{{ row.total_possible }}</div></div>
+            <div class="score-pill"><div class="lbl">Grade</div><div class="val" style="color:{% if row.overall_pct >= 75 %}var(--teacher){% elif row.overall_pct < 50 %}#b03030{% else %}#9a5a00{% endif %}">{{ row.overall_grade }}</div></div>
+            <div class="score-pill"><div class="lbl">Score</div><div class="val">{{ row.overall_pct }}%</div></div>
+          </div>
+        </div>
+        <table class="dt">
+          <thead><tr><th>Assignment</th><th>Score</th><th>Progress</th><th>Grade</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+          {% for r in row.rows %}
+          <tr>
+            <td><div style="font-weight:500">{{ r.assignment.title }}</div><div style="font-size:11px;color:var(--text-3)">Max {{ r.max_score }} pts</div></td>
+            <td style="font-family:var(--mono);font-weight:600">{% if r.score is not None %}{{ r.score }}/{{ r.max_score }}{% else %}—{% endif %}</td>
+            <td style="min-width:110px"><div style="display:flex;align-items:center;gap:6px"><div class="bar-wrap"><div class="bar-fill {% if r.pct >= 75 %}bar-green{% elif r.pct >= 50 %}bar-amber{% else %}bar-red{% endif %}" style="width:{{ r.pct|default:0 }}%"></div></div><span style="font-size:11.5px;color:var(--text-3)">{{ r.pct|default:0 }}%</span></div></td>
+            <td><span style="font-family:var(--mono);font-weight:700;font-size:14px;color:{% if r.pct >= 75 %}var(--teacher){% elif r.pct >= 50 %}#9a5a00{% else %}#b03030{% endif %}">{{ r.grade_letter }}</span></td>
+            <td>{% if r.submission %}{% if r.is_late %}<span class="badge badge-red">Late</span>{% else %}<span class="badge badge-green">On time</span>{% endif %}{% else %}<span class="badge badge-amber">Missing</span>{% endif %}</td>
+            <td>{% if r.submission %}<form method="post" action="{% url 'teacher_classroom_grade' classroom.id %}" class="grade-form">{% csrf_token %}<input type="hidden" name="submission_id" value="{{ r.submission.pk }}"><input type="number" name="score" class="g-input" value="{{ r.score|default:'' }}" min="0" max="{{ r.max_score }}" placeholder="pts"><button type="submit" class="btn btn-primary btn-sm">Save</button></form>{% else %}—{% endif %}</td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="empty-state"><div class="ei">📊</div><h3>No students enrolled</h3></div>
+      {% endif %}
+    </div>
+
+    <!-- ══ CHAT TAB ══ -->
+    <div class="tab-pane" id="tab-chat">
+      <div class="chat-wrap">
+        <div class="chat-split">
+          <!-- Student list -->
+          <div class="chat-sidebar">
+            <div class="chat-sidebar-head">Students</div>
+            <div class="chat-students">
+              {% for student in chat_students %}
+              <a href="?student={{ student.pk }}&tab=chat" class="chat-s-item {% if selected_student.pk == student.pk %}active{% endif %}" onclick="selectStudent(event, {{ student.pk }}, '{{ student.get_full_name|escapejs }}')">
+                <div class="chat-s-av">{{ student.get_full_name|slice:":2"|upper }}</div>
+                <span>{{ student.get_full_name|default:student.username }}</span>
+              </a>
+              {% empty %}
+              <div style="padding:14px;font-size:13px;color:var(--text-3)">No students yet.</div>
+              {% endfor %}
+            </div>
+          </div>
+          <!-- Chat window -->
+          <div class="chat-main">
+            {% if selected_student %}
+            <div class="chat-header">
+              💬 {{ selected_student.get_full_name|default:selected_student.username }}
+              <div class="chat-status">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">Connecting…</span>
+              </div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+              {% for msg in chat_messages %}
+              <div class="bubble {% if msg.sender == request.user %}sent{% else %}recv{% endif %}">
+                {{ msg.body }}
+                <div class="bubble-time">{{ msg.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
+              </div>
+              {% empty %}
+              <div class="chat-empty"><div class="icon">💬</div><p>No messages yet. Say hello!</p></div>
+              {% endfor %}
+            </div>
+            <div class="chat-footer">
+              <input type="text" class="chat-input" id="chatInput" placeholder="Type a message…" autocomplete="off"/>
+              <button class="btn btn-primary" id="chatSend">Send</button>
+            </div>
+            <script>
+              window.CHAT_CLASSROOM_ID = {{ classroom.pk }};
+              window.CHAT_MY_ID        = {{ request.user.pk }};
+              window.CHAT_RECEIVER_ID  = {{ selected_student.pk }};
+            </script>
+            {% load static %}
+            <script src="{% static 'js/chat.js' %}"></script>
+            {% else %}
+            <div class="chat-empty">
+              <div class="icon">👈</div>
+              <p>Select a student from the left to start chatting.</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
       </div>
     </div>
 
   </div><!-- /page -->
 </div><!-- /main -->
 
-<!-- TOAST -->
-<div class="toast" id="toast">
-  <span class="toast-dot"></span>
-  <span id="toastMsg"></span>
-</div>
+<div class="toast" id="toast"><span class="td"></span><span id="toastMsg"></span></div>
 
 <script>
-  const CLASSROOM_ID = {{ classroom.id }};
-  const CSRF_TOKEN   = '{{ csrf_token }}';
+const CLASSROOM_ID = {{ classroom.id }};
+const CSRF_TOKEN   = '{{ csrf_token }}';
 
-  // TAB SWITCHING
-  function switchTab(name, btn) {
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab-' + name).classList.add('active');
-    btn.classList.add('active');
-  }
+// ── TAB SWITCHING ──
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.hn-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
 
-  // FILTER COURSES
-  function filterCourses(type) {
-    document.querySelectorAll('#filterAll, #filterAssigned, #filterUnassigned').forEach(b => {
-      b.style.background = '';
-      b.style.color = '';
-      b.style.borderColor = '';
+// ── COURSE FILTER ──
+function filterCourses(type) {
+  ['fb-all','fb-assigned','fb-unassigned'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById('fb-' + (type === 'all' ? 'all' : type === 'assigned' ? 'assigned' : 'unassigned')).classList.add('active');
+  document.querySelectorAll('.course-card').forEach(card => {
+    const assigned = card.dataset.assigned === 'true';
+    card.style.display = type === 'all' ? '' : type === 'assigned' ? (assigned ? '' : 'none') : (!assigned ? '' : 'none');
+  });
+}
+
+// ── ASSIGN COURSE ──
+async function toggleAssign(btn, courseId) {
+  if (btn.classList.contains('loading')) return;
+  btn.classList.add('loading');
+  try {
+    const res  = await fetch(`/teacher/classroom/${CLASSROOM_ID}/assign-course/${courseId}/`, {
+      method:'POST', headers:{'X-CSRFToken':CSRF_TOKEN,'Content-Type':'application/json'}
     });
-    const activeBtn = document.getElementById(
-      type === 'all' ? 'filterAll' : type === 'assigned' ? 'filterAssigned' : 'filterUnassigned'
-    );
-    activeBtn.style.background = 'var(--brand)';
-    activeBtn.style.color = '#fff';
-    activeBtn.style.borderColor = 'var(--brand)';
-
-    document.querySelectorAll('.course-card').forEach(card => {
-      const isAssigned = card.dataset.assigned === 'true';
-      if (type === 'all') card.style.display = '';
-      else if (type === 'assigned') card.style.display = isAssigned ? '' : 'none';
-      else card.style.display = !isAssigned ? '' : 'none';
-    });
-  }
-
-  // ASSIGN / UNASSIGN COURSE
-  async function toggleAssign(btn, courseId) {
-    if (btn.classList.contains('loading')) return;
-    btn.classList.add('loading');
-
-    try {
-      const res = await fetch(`/teacher/classroom/${CLASSROOM_ID}/assign-course/${courseId}/`, {
-        method: 'POST',
-        headers: {
-          'X-CSRFToken': CSRF_TOKEN,
-          'Content-Type': 'application/json',
-        }
-      });
-      const data = await res.json();
-
-      const card   = btn.closest('.course-card');
-      const head   = card.querySelector('.course-card-head');
-      const icon   = card.querySelector('.course-icon');
-      let ribbon   = card.querySelector('.assigned-ribbon');
-
-      if (data.assigned) {
-        // Mark as assigned
-        btn.classList.remove('unassigned');
-        btn.classList.add('assigned');
-        btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Assigned</span>`;
-        head.classList.add('assigned');
-        icon.classList.add('assigned-icon');
-        card.dataset.assigned = 'true';
-        card.classList.remove('unassigned-card');
-        card.classList.add('assigned-card');
-        if (!ribbon) {
-          ribbon = document.createElement('span');
-          ribbon.className = 'assigned-ribbon';
-          card.appendChild(ribbon);
-        }
-        ribbon.textContent = '✓ Assigned';
-        showToast('Course assigned to classroom', 'success');
-      } else {
-        // Mark as unassigned
-        btn.classList.remove('assigned');
-        btn.classList.add('unassigned');
-        btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2.5" stroke-linecap="round"/></svg><span>Assign to Class</span>`;
-        head.classList.remove('assigned');
-        icon.classList.remove('assigned-icon');
-        card.dataset.assigned = 'false';
-        card.classList.remove('assigned-card');
-        card.classList.add('unassigned-card');
-        if (ribbon) ribbon.remove();
-        showToast('Course removed from classroom', 'success');
-      }
-
-      // Update counter in tabs bar
-      const assignedCount = document.querySelectorAll('.course-card[data-assigned="true"]').length;
-      document.querySelectorAll('.tab-btn')[1].querySelector('.tab-count').textContent = assignedCount;
-
-    } catch (e) {
-      showToast('Something went wrong', 'error');
-    } finally {
-      btn.classList.remove('loading');
+    const data = await res.json();
+    const card   = btn.closest('.course-card');
+    const head   = card.querySelector('.cc-head-area');
+    const icon   = card.querySelector('.cc-icon');
+    let ribbon   = card.querySelector('.assigned-ribbon');
+    const counter = document.getElementById('assignedCount');
+    if (data.assigned) {
+      btn.classList.replace('unassigned','assigned');
+      btn.innerHTML = `<svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Assigned</span>`;
+      head.classList.add('assigned'); icon.classList.add('a-icon');
+      card.dataset.assigned = 'true';
+      if (!ribbon) { ribbon = document.createElement('span'); ribbon.className = 'assigned-ribbon'; card.appendChild(ribbon); }
+      ribbon.textContent = '✓ Assigned';
+      counter.textContent = parseInt(counter.textContent) + 1;
+      showToast('Course assigned ✓', 'success');
+    } else {
+      btn.classList.replace('assigned','unassigned');
+      btn.innerHTML = `<svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2.5" stroke-linecap="round"/></svg><span>Assign to Class</span>`;
+      head.classList.remove('assigned'); icon.classList.remove('a-icon');
+      card.dataset.assigned = 'false';
+      if (ribbon) ribbon.remove();
+      counter.textContent = Math.max(0, parseInt(counter.textContent) - 1);
+      showToast('Course removed', 'success');
     }
+  } catch(e) { showToast('Something went wrong', 'error'); }
+  finally { btn.classList.remove('loading'); }
+}
+
+// ── COPY / SHARE ──
+const COPY_ICON=`<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" stroke-width="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"/></svg>`;
+const CHECK_ICON=`<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+function copyCode(e,code,btn){e.preventDefault();e.stopPropagation();const doIt=()=>{btn.classList.add('done');btn.innerHTML=CHECK_ICON;showToast('✓ Code copied: '+code,'success');setTimeout(()=>{btn.classList.remove('done');btn.innerHTML=COPY_ICON},2000)};if(navigator.clipboard){navigator.clipboard.writeText(code).then(doIt).catch(doIt)}else{const ta=document.createElement('textarea');ta.value=code;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);doIt()}}
+function shareCode(e,code,className){e.preventDefault();e.stopPropagation();const text=`Join my class "${className}" on EduPlatform!\nClass code: ${code}`;if(navigator.share){navigator.share({title:'Join '+className,text}).catch(()=>{})}else{navigator.clipboard.writeText(text).then(()=>showToast('📋 Share text copied!','success')).catch(()=>showToast('Code: '+code,'success'))}}
+
+// ── TOAST ──
+let toastT;
+function showToast(msg, type='success') {
+  const toast = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  toast.className = `toast ${type}`;
+  void toast.offsetWidth;
+  toast.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// ── PROFILE DROPDOWN ──
+const profileBtn = document.getElementById('profileBtn');
+const profileDropdown = document.getElementById('profileDropdown');
+profileBtn.addEventListener('click', e => { e.stopPropagation(); profileDropdown.classList.toggle('open'); });
+document.addEventListener('click', () => profileDropdown.classList.remove('open'));
+
+// ── RESTORE TAB FROM URL HASH OR QUERY ──
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const tab = params.get('tab') || location.hash.replace('#','');
+  const validTabs = ['home','announce','courses','classwork','people','progress','chat'];
+  if (tab && validTabs.includes(tab)) {
+    const idx = validTabs.indexOf(tab);
+    const btn = document.querySelectorAll('.hn-btn')[idx];
+    switchTab(tab, btn);
   }
-
-  // TOAST
-  let toastTimer;
-  function showToast(msg, type = 'success') {
-    const toast = document.getElementById('toast');
-    const dot   = toast.querySelector('.toast-dot');
-    document.getElementById('toastMsg').textContent = msg;
-    toast.className = `toast ${type}`;
-    void toast.offsetWidth;
-    toast.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
-  }
-
-  // Profile dropdown
-  const btn = document.getElementById('profileBtn');
-  const dd  = document.getElementById('profileDropdown');
-  btn.addEventListener('click', e => { e.stopPropagation(); dd.classList.toggle('open'); });
-  document.addEventListener('click', () => dd.classList.remove('open'));
-
-  // Init filter button style
-  document.getElementById('filterAll').style.background = 'var(--brand)';
-  document.getElementById('filterAll').style.color = '#fff';
-  document.getElementById('filterAll').style.borderColor = 'var(--brand)';
+})();
 </script>
 </body>
 </html>
