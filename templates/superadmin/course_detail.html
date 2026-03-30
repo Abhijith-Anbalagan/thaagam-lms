@@ -822,29 +822,18 @@ function addQuizQ(cid) {
   renderQuizEditor(cid);
 }
 function removeQuizQ(cid, qi) {
-  // Remove from data
   quizData[cid].splice(qi, 1);
-  
-  // Remove from DOM instantly
-  const qElement = document.getElementById(`quiz-q-${cid}-${qi}`);
-  if (qElement) qElement.remove();
-  
-  // Save to backend (no reload)
-  saveQuiz(cid, false);  // Pass false to skip reload
+  renderQuizEditor(cid);
 }
-
-function saveQuiz(cid, showReload = true) {
+function saveQuiz(cid) {
   const value = JSON.stringify(quizData[cid]);
   fetch(`/superadmin/concepts/${cid}/edit/`, {
     method:'POST', credentials:'same-origin',
     headers:{'X-CSRFToken':CSRF,'Content-Type':'application/x-www-form-urlencoded'},
     body: new URLSearchParams({field:'quiz', value}),
   }).then(r=>r.json()).then(d => {
-    if (d.success) { 
-      closeQuizModal(cid);
-      // ✅ Only reload if explicitly needed
-      if (showReload) location.reload();
-    }
+    if (d.success) { closeQuizModal(cid); location.reload(); }
+    else alert(d.error || 'Save failed');
   });
 }
 function esc(str) {
