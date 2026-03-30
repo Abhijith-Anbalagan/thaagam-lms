@@ -22,49 +22,49 @@
 </section>
 
 <section class="mb-8 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-    <div class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel">
+    <a href="{% if nav_classroom %}{% url 'student_classroom_courses' nav_classroom.id %}{% else %}{% url 'student_join_class' %}{% endif %}" class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel transition hover:shadow-lg hover:border-blue-200">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-3xl font-bold text-slate-900">{% if nav_classroom %}1{% else %}0{% endif %}</p>
-                <p class="mt-1 text-sm text-slate-500">Active class</p>
+                <p class="text-3xl font-bold text-slate-900" id="course-count">{{ total_courses }}</p>
+                <p class="mt-1 text-sm text-slate-500">Courses</p>
             </div>
             <div class="rounded-2xl bg-blue-100 p-3 text-blue-600"><i data-lucide="book-open" class="h-6 w-6"></i></div>
         </div>
-    </div>
-    <div class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel">
+    </a>
+    <a href="{% if nav_classroom %}{% url 'student_classroom_classwork' nav_classroom.id %}{% else %}#{% endif %}" class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel transition hover:shadow-lg hover:border-blue-200">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-3xl font-bold text-slate-900">{{ total_courses }}</p>
-                <p class="mt-1 text-sm text-slate-500">Learning resources</p>
-            </div>
-            <div class="rounded-2xl bg-emerald-100 p-3 text-emerald-600"><i data-lucide="layers-3" class="h-6 w-6"></i></div>
-        </div>
-    </div>
-    <div class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-3xl font-bold text-slate-900">{{ pending_assignments|length }}</p>
+                <p class="text-3xl font-bold text-slate-900" id="pending-count">{{ pending_assignments|length }}</p>
                 <p class="mt-1 text-sm text-slate-500">Pending assignments</p>
             </div>
             <div class="rounded-2xl bg-amber-100 p-3 text-amber-600"><i data-lucide="clipboard-list" class="h-6 w-6"></i></div>
         </div>
-    </div>
-    <div class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel">
+    </a>
+    <a href="{% if nav_classroom %}{% url 'student_classroom_grade' nav_classroom.id %}{% else %}#{% endif %}" class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel transition hover:shadow-lg hover:border-blue-200">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-3xl font-bold text-slate-900">{{ unread_count }}</p>
+                <p class="text-3xl font-bold text-slate-900" id="graded-count">{{ graded_assignments }}</p>
+                <p class="mt-1 text-sm text-slate-500">Graded assignments</p>
+            </div>
+            <div class="rounded-2xl bg-emerald-100 p-3 text-emerald-600"><i data-lucide="award" class="h-6 w-6"></i></div>
+        </div>
+    </a>
+    <a href="{% if nav_classroom %}{% url 'student_classroom_chat' nav_classroom.id %}{% else %}#{% endif %}" class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel transition hover:shadow-lg hover:border-blue-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-3xl font-bold text-slate-900" id="unread-count">{{ unread_count }}</p>
                 <p class="mt-1 text-sm text-slate-500">Unread messages</p>
             </div>
             <div class="rounded-2xl bg-violet-100 p-3 text-violet-600"><i data-lucide="message-circle" class="h-6 w-6"></i></div>
         </div>
-    </div>
+    </a>
 </section>
 
 <section class="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-[1.4fr_.9fr]">
     <div class="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-panel">
         <div class="mb-6 flex items-center justify-between gap-4">
             <div>
-                <h2 class="text-2xl font-semibold text-slate-900">My courses</h2>
+                <h2 class="text-2xl font-semibold text-slate-900">My Classroom</h2>
                 <p class="mt-1 text-sm text-slate-500">Open your course materials and continue learning from your enrolled class.</p>
             </div>
         </div>
@@ -146,58 +146,4 @@
 </section>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-  /* ═════════════════════════════════════════
-     PROFILE SYNC — Auto-update when profile changes
-     ═════════════════════════════════════════ */
-  function initProfileSync() {
-    const currentProfile = {
-      id: {{ request.user.pk }},
-      firstName: '{{ request.user.first_name|escapejs }}',
-      lastName: '{{ request.user.last_name|escapejs }}',
-      email: '{{ request.user.email|escapejs }}',
-      fullName: '{{ request.user.get_full_name|escapejs|default:request.user.username|escapejs }}'
-    };
-
-    function checkProfileUpdates() {
-      fetch('/superadmin/api/profile/')
-        .then(r => r.json())
-        .then(data => {
-          if (!data.success) return;
-          
-          // Check if any profile field changed
-          const changed = (
-            data.first_name !== currentProfile.firstName ||
-            data.last_name !== currentProfile.lastName ||
-            data.email !== currentProfile.email
-          );
-
-          if (changed) {
-            // Update local reference
-            currentProfile.firstName = data.first_name;
-            currentProfile.lastName = data.last_name;
-            currentProfile.email = data.email;
-            currentProfile.fullName = data.full_name;
-
-            // Reload page to refresh full profile
-            setTimeout(() => location.reload(), 500);
-          }
-        })
-        .catch(() => {
-          // Network error — silently ignore
-        });
-    }
-
-    // Check profile every 15 seconds
-    setInterval(checkProfileUpdates, 15000);
-  }
-
-  // Start sync when page loads
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initProfileSync);
-  } else {
-    initProfileSync();
-  }
-</script>
-{% endblock %}
+{% block extra_js %}{% endblock %}
