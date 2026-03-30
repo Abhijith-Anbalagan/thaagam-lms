@@ -141,6 +141,29 @@
 </div>
 
 <!-- ── GUVI Layout: Video Player + Sidebar ── -->
+{% if teacher_enrollments %}
+<div class="card" style="margin-bottom:18px;">
+  <div style="padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    <strong>Teacher Enrollments</strong>
+    <span class="pill-badge">{{ teacher_enrollments|length }} teacher{{ teacher_enrollments|length|pluralize }}</span>
+  </div>
+  <div style="padding:16px 18px;display:grid;gap:10px;">
+    {% for enrollment in teacher_enrollments %}
+    <div style="display:flex;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:#fafaf8;">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--brand-dark);">{{ enrollment.user.get_full_name|default:enrollment.user.username }}</div>
+        <div style="font-size:12px;color:var(--text-muted);">{{ enrollment.user.school.name|default:"No school" }}</div>
+      </div>
+      <div style="text-align:right;font-size:12px;color:var(--text-muted);">
+        <div>Enrolled {{ enrollment.enrolled_at|date:"M d, Y" }}</div>
+        <div>Deadline {{ enrollment.deadline_at|date:"M d, Y" }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
 <div class="guvi-layout">
 
   <!-- LEFT: Video Player + Tabs -->

@@ -1,4 +1,7 @@
+from datetime import timedelta
+
 from django.db import models
+from django.utils import timezone
 
 
 class School(models.Model):
@@ -6,6 +9,11 @@ class School(models.Model):
     address    = models.TextField(blank=True)
     is_active  = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.deadline_at is None:
+            self.deadline_at = timezone.now() + timedelta(days=30)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -99,6 +107,7 @@ class CourseEnrollment(models.Model):
         GlobalCourse, on_delete=models.CASCADE, related_name='enrollments'
     )
     enrolled_at = models.DateTimeField(auto_now_add=True)
+    deadline_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         db_table = 'superadmin_courseenrollment'
@@ -107,6 +116,11 @@ class CourseEnrollment(models.Model):
     def __str__(self):
         return f'{self.user.username} → {self.course.title}'
     
+    def save(self, *args, **kwargs):
+        if self.deadline_at is None:
+            self.deadline_at = timezone.now() + timedelta(days=30)
+        super().save(*args, **kwargs)
+
 class ClassroomCourseAssignment(models.Model):
     classroom = models.ForeignKey('classrooms.Classroom', on_delete=models.CASCADE, related_name='course_assignments')
     course = models.ForeignKey('superadmin.GlobalCourse', on_delete=models.CASCADE, related_name='classroom_assignments')

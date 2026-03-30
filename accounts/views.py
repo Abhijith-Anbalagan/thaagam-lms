@@ -52,7 +52,7 @@ def contact_us(request):
 # ─── Email Helpers ────────────────────────────────────────────────────────────
 def landing_view(request):
     if request.user.is_authenticated:
-        return redirect('public_dashboard')
+        return redirect(request.user.get_dashboard_url())
     return render(request, 'accounts/landing.html')  # ← update path
 
 
