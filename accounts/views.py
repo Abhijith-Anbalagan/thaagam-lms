@@ -5,12 +5,16 @@ from django.contrib import messages
 from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.password_validation import validate_password
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives  # ← fixed
 from django.forms import ValidationError
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
+from django.template.loader import render_to_string              # ← added
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
+from django.http import JsonResponse
+import json
+from django.contrib.auth import login, logout, update_session_auth_hash
 
 from classrooms.models import Classroom
 from .models import User, Invitation
@@ -20,9 +24,8 @@ from .forms import (
     ForgotPasswordForm, ResetPasswordForm,
 )
 
-from django.core.mail import send_mail
-from django.http import JsonResponse
-import json
+
+# ─── Contact Us ───────────────────────────────────────────────────────────────
 
 def contact_us(request):
     if request.method == 'POST':
@@ -38,7 +41,7 @@ def contact_us(request):
                 subject        = f'New Message from {email}',
                 message        = f'From: {email}\n\n{message}',
                 from_email     = 'noreply@eduplatform.com',
-                recipient_list = ['johnweslee07@gmail.com'],  # ← your johnGmail inbox
+                recipient_list = ['johnweslee07@gmail.com'],
                 fail_silently  = False,
             )
             return JsonResponse({'status': 'ok'})
@@ -49,13 +52,15 @@ def contact_us(request):
     return JsonResponse({'status': 'method not allowed'}, status=405)
 
 
-# ─── Email Helpers ────────────────────────────────────────────────────────────
+# ─── Landing ──────────────────────────────────────────────────────────────────
+
 def landing_view(request):
     if request.user.is_authenticated:
         return redirect(request.user.get_dashboard_url())
-    return render(request, 'accounts/landing.html')  # ← update path
+    return render(request, 'accounts/landing.html')
 
 
+# ─── Email Helpers ────────────────────────────────────────────────────────────
 
 def send_verification_email(user, verification_url):
     send_mail(
@@ -77,7 +82,7 @@ def send_password_reset_email(user, reset_url):
 
 # ─── Signup ───────────────────────────────────────────────────────────────────
 
-def signup_view(request):
+def signup_view(request):                                        # ← restored
     if request.user.is_authenticated:
         return redirect(request.user.get_dashboard_url())
 
@@ -144,6 +149,9 @@ def public_dashboard(request):
 # ─── Accept Invite ────────────────────────────────────────────────────────────
 
 def accept_invite_view(request, token):
+    if request.user.is_authenticated:
+        logout(request)
+        return redirect(request.get_full_path())
     try:
         invite = Invitation.objects.get(token=token)
     except Invitation.DoesNotExist:
@@ -289,7 +297,7 @@ def forgot_password_view(request):
             send_password_reset_email(user, reset_url)
 
         except User.DoesNotExist:
-            pass  # silently succeed — don't reveal if account exists
+            pass
 
     return render(request, 'accounts/forgot_password.html', {
         'form':        form,
@@ -351,5 +359,3 @@ def password_change_view(request):
         'pw_form': form,
         'show_pw': True,
     })
-    
-    

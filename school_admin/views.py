@@ -32,6 +32,7 @@ def dashboard(request):
         'total_teachers': teachers.count(),
         'total_students': students.count(),
         'total_classrooms': classrooms.count(),
+        'total_management': management.count(),
         'today': date.today(),
     })
 
