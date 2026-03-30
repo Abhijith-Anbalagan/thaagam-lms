@@ -63,33 +63,6 @@
     color: var(--text-muted);
     margin: 0;
   }
-  .school-list-box {
-    border: 1.5px solid var(--border);
-    border-radius: 8px;
-    max-height: 150px;
-    overflow-y: auto;
-    background: #fafaf8;
-  }
-  .school-list-box label {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    font-size: 13px;
-    color: var(--text-body);
-    cursor: pointer;
-    border-bottom: 1px solid var(--border);
-    transition: background .12s;
-    margin: 0;
-  }
-  .school-list-box label:last-child { border-bottom: none; }
-  .school-list-box label:hover { background: var(--brand-blue-light); }
-  .school-list-box input[type=checkbox] {
-    accent-color: var(--brand-blue);
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-  }
   .form-actions {
     display: flex;
     gap: 10px;
@@ -98,30 +71,21 @@
     border-top: 1px solid var(--border);
   }
   .form-actions .btn-primary { flex: 1; justify-content: center; padding: 10px 16px; font-size: 14px; }
-  
-  /* Landscape form layout */
-  .form-group {
-    margin-bottom: 14px;
-  }
-  
-  .form-group.full-width {
-    grid-column: 1 / -1;
-  }
-  
+
+  .form-group { margin-bottom: 14px; }
+  .form-group.full-width { grid-column: 1 / -1; }
   .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
     margin-bottom: 14px;
   }
-  
   .form-row-3 {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 16px;
     margin-bottom: 14px;
   }
-  
   .form-label {
     display: block;
     font-size: 13px;
@@ -129,7 +93,6 @@
     color: var(--text-1);
     margin-bottom: 6px;
   }
-  
   .form-control {
     width: 100%;
     padding: 9px 12px;
@@ -138,34 +101,30 @@
     border-radius: 8px;
     font-family: var(--font);
     transition: all 0.2s ease;
+    box-sizing: border-box;
   }
-  
   .form-control:focus {
     outline: none;
     border-color: var(--brand);
     box-shadow: 0 0 0 3px rgba(76, 104, 215, 0.1);
   }
-  
   .form-hint {
     font-size: 11px;
     color: var(--text-muted);
     margin-top: 4px;
   }
-  
   .form-error {
     font-size: 12px;
     color: var(--danger);
     margin-top: 4px;
     font-weight: 600;
   }
-  
   .checkbox-group {
     display: flex;
     gap: 16px;
     margin: 12px 0;
     flex-wrap: wrap;
   }
-  
   .checkbox-group label {
     display: flex;
     align-items: center;
@@ -174,20 +133,137 @@
     cursor: pointer;
     margin: 0;
   }
-  
   .checkbox-group input[type=checkbox] {
     accent-color: var(--brand-blue);
     width: 16px;
     height: 16px;
     flex-shrink: 0;
   }
-  
+
+  /* ── Multi-select dropdown ── */
+  .multi-select-wrapper {
+    position: relative;
+  }
+  .multi-select-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 12px;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-1);
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--font);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+  }
+  .multi-select-trigger:focus,
+  .multi-select-wrapper.open .multi-select-trigger {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(76, 104, 215, 0.1);
+  }
+  .multi-select-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-muted);
+  }
+  .multi-select-label.has-selection {
+    color: var(--text-1);
+  }
+  .multi-select-arrow {
+    width: 10px;
+    height: 6px;
+    flex-shrink: 0;
+    color: var(--text-muted);
+    margin-left: 8px;
+    transition: transform 0.2s;
+  }
+  .multi-select-wrapper.open .multi-select-arrow {
+    transform: rotate(180deg);
+  }
+  .multi-select-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.10);
+    z-index: 200;
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 4px;
+  }
+  .multi-select-wrapper.open .multi-select-menu {
+    display: block;
+  }
+  .multi-select-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    font-size: 13px;
+    color: var(--text-body);
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.1s;
+    margin: 0;
+    border-bottom: none;
+  }
+  .multi-select-option:hover {
+    background: var(--brand-blue-light);
+  }
+  .multi-select-option input[type="checkbox"] {
+    display: none;
+  }
+  .multi-select-check {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .multi-select-check svg {
+    width: 10px;
+    height: 8px;
+    color: #fff;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .multi-select-option input:checked ~ .multi-select-check {
+    background: var(--brand-blue, #4c68d7);
+    border-color: var(--brand-blue, #4c68d7);
+  }
+  .multi-select-option input:checked ~ .multi-select-check svg {
+    opacity: 1;
+  }
+  .multi-select-empty {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 12px;
+    margin: 0;
+    text-align: center;
+  }
+
   @media (max-width: 1024px) {
     .form-card { padding: 24px 24px; }
     .form-row, .form-row-3 { grid-template-columns: 1fr; }
     .top-bar { flex-direction: column; align-items: flex-start; gap: 16px; }
   }
-  
   @media (max-width: 640px) {
     .form-card { padding: 18px 16px; }
     .form-actions { flex-wrap: wrap; }
@@ -199,7 +275,6 @@
 {% block content %}
 <div class="page-center">
 
-  <!-- Top bar with title + nav buttons -->
   <div class="top-bar">
     <h1>Create New Course</h1>
     <div class="flex gap-8">
@@ -208,10 +283,8 @@
     </div>
   </div>
 
-  <!-- Form card -->
   <div class="form-card">
 
-    <!-- Card header -->
     <div class="card-icon-row">
       <div class="card-icon">📘</div>
       <div>
@@ -222,7 +295,7 @@
 
     <form method="post" enctype="multipart/form-data">{% csrf_token %}
 
-      <!-- Row 1: Course Name (full width) -->
+      <!-- Row 1: Course Name -->
       <div class="form-group full-width">
         <label class="form-label">Course Name <span style="color:#e24b4a;">*</span></label>
         <input type="text" name="title" class="form-control"
@@ -267,14 +340,14 @@
         </div>
       </div>
 
-      <!-- Row 4: Summary (full width) -->
+      <!-- Row 4: Summary -->
       <div class="form-group full-width">
         <label class="form-label">Course Summary</label>
         <textarea name="summary" class="form-control" rows="2"
                   placeholder="What will students learn from this course?">{{ form.summary.value|default:'' }}</textarea>
       </div>
 
-      <!-- Row 5: Checkboxes (Free + Certificate) -->
+      <!-- Row 5: Checkboxes -->
       <div class="checkbox-group">
         <label>
           <input type="checkbox" name="is_free" value="1"
@@ -288,25 +361,40 @@
         </label>
       </div>
 
-      <!-- Row 6: Assign to Schools (full width) -->
+      <!-- Row 6: Assign to Schools — multi-select dropdown -->
       <div class="form-group full-width">
         <label class="form-label">
           Assign to Schools
           <span style="font-size:12px;font-weight:400;color:var(--text-muted);margin-left:4px;">— optional</span>
         </label>
-        <div class="school-list-box">
-          {% for school in form.schools.field.queryset %}
-          <label>
-            <input type="checkbox" name="schools" value="{{ school.pk }}"
-              {% if school.pk|stringformat:"s" in form.schools.value|default:'' %}checked{% endif %}>
-            {{ school.name }}
-          </label>
-          {% empty %}
-          <p style="font-size:12px;color:var(--text-muted);padding:12px;margin:0;text-align:center;">
-            No active schools yet.
-          </p>
-          {% endfor %}
+
+        <div class="multi-select-wrapper" id="schoolDropdown">
+          <button type="button" class="multi-select-trigger" onclick="toggleSchoolDropdown()">
+            <span class="multi-select-label" id="schoolLabel">Select schools…</span>
+            <svg class="multi-select-arrow" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+
+          <div class="multi-select-menu" id="schoolMenu">
+            {% for school in form.schools.field.queryset %}
+            <label class="multi-select-option">
+              <input type="checkbox" name="schools" value="{{ school.pk }}"
+                {% if school.pk|stringformat:"s" in form.schools.value|default:'' %}checked{% endif %}
+                onchange="updateSchoolLabel()">
+              <span class="multi-select-check">
+                <svg viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 4l3 3 5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              {{ school.name }}
+            </label>
+            {% empty %}
+            <p class="multi-select-empty">No active schools yet.</p>
+            {% endfor %}
+          </div>
         </div>
+
         <p class="form-hint">Select one or more schools. You can change this later.</p>
       </div>
 
@@ -319,4 +407,40 @@
   </div>
 
 </div>
+
+<script>
+  function toggleSchoolDropdown() {
+    document.getElementById('schoolDropdown').classList.toggle('open');
+  }
+
+  function updateSchoolLabel() {
+    const menu = document.getElementById('schoolMenu');
+    const checked = menu.querySelectorAll('input[type="checkbox"]:checked');
+    const label = document.getElementById('schoolLabel');
+
+    if (checked.length === 0) {
+      label.textContent = 'Select schools…';
+      label.classList.remove('has-selection');
+    } else {
+      const names = Array.from(checked).map(cb =>
+        cb.closest('label').textContent.trim()
+      );
+      label.textContent = names.length <= 2
+        ? names.join(', ')
+        : `${names.slice(0, 2).join(', ')} +${names.length - 2} more`;
+      label.classList.add('has-selection');
+    }
+  }
+
+  // Close on outside click
+  document.addEventListener('click', function (e) {
+    const dropdown = document.getElementById('schoolDropdown');
+    if (!dropdown.contains(e.target)) {
+      dropdown.classList.remove('open');
+    }
+  });
+
+  // Init label for pre-checked values (edit form)
+  document.addEventListener('DOMContentLoaded', updateSchoolLabel);
+</script>
 {% endblock %}
