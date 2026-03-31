@@ -1,5 +1,37 @@
 {% extends 'base.html' %}
 {% block title %}Create Course{% endblock %}
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+
+  :root {
+    --ink: #0f0e0d;
+    --paper: #faf8f5;
+    --cream: #f2ede6;
+    --accent: #c8401a;
+    --accent-light: #f5e8e3;
+    --muted: #7a7470;
+    --border: #e0d9d0;
+    --shadow: rgba(15,14,13,0.08);
+    --blue: #1d5fa8;
+    --blue-light: #e8f0fa;
+    --green: #2a9d5c;
+    --green-light: #e6f4ed;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .page-title { font-family:'Playfair Display',Georgia,serif; color:var(--ink); }
+  .form-label { font-family:'DM Sans',sans-serif; color:var(--ink); }
+  .form-control { font-family:'DM Sans',sans-serif; color:var(--ink); border-color:var(--border); }
+  .form-control:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(200,64,26,0.1); }
+  .form-control::placeholder { color:#bbb5ae; font-weight:300; }
+  .btn-primary { background:linear-gradient(135deg,var(--blue),#6b82f5); box-shadow:0 4px 12px rgba(29,95,168,0.30); }
+  .btn-primary:hover { box-shadow:0 6px 20px rgba(29,95,168,0.40); }
+  .btn-ghost { border-color:var(--border); color:var(--muted); }
+  .btn-ghost:hover { background:var(--blue-light); border-color:var(--blue); color:var(--blue); }
+</style>
+{% endblock %}
 {% block content %}
 <div style="max-width:540px;">
   <h1 class="page-title mb-24">Create Global Course</h1>

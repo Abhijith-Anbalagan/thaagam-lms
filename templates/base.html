@@ -29,7 +29,13 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-inner">
       <div class="sidebar-user">
-        <div class="sidebar-avatar">{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</div>
+        <div class="sidebar-avatar">
+  {% if user.avatar %}
+    <img src="{{ user.avatar.url }}" alt="avatar">
+  {% else %}
+    {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+  {% endif %}
+</div>
         <div>
           <div class="sidebar-name">{{ user.get_full_name|default:user.username }}</div>
           <div class="sidebar-role" style="background:{{ user.role_color }};">{{ user.get_role_display }}</div>
