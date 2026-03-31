@@ -335,16 +335,25 @@ def reset_password_view(request, token):
 
 
 # ─── Profile ──────────────────────────────────────────────────────────────────
-
 @login_required
 def profile_view(request):
-    form = ProfileForm(request.POST or None, request.FILES or None, instance=request.user)
-    if request.method == 'POST' and form.is_valid():
-        form.save()
-        messages.success(request, 'Profile updated successfully.')
-        return redirect('profile')
-    return render(request, 'shared/profile_settings.html', {'form': form})
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            # ← refresh user from DB so avatar shows immediately
+            request.user.refresh_from_db()
+            messages.success(request, 'Profile updated successfully.')
+            return redirect('profile')
+        else:
+            messages.error(request, 'Please fix the errors below.')
+    else:
+        form = ProfileForm(instance=request.user)
 
+    return render(request, 'shared/profile_settings.html', {
+        'form'   : form,
+        'pw_form': PasswordChangeCustomForm(request.user),
+    })
 
 @login_required
 def password_change_view(request):

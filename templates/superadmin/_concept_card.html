@@ -16,19 +16,19 @@
         <div class="view-text {% if not concept.h3_course %}empty{% endif %}"
              onclick="startEdit(this,'input')"
              data-field="h3_course" data-id="{{ concept.pk }}"
-             style="font-size:12px;color:var(--text-muted);">
+             style="font-size:12px;color:var(--muted);">
           {{ concept.h3_course|default:"Click to add sub-heading" }}
         </div>
       </div>
     </div>
     <div class="flex gap-8" style="margin-left:12px;align-items:center;">
       <span style="font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;
-        {% if concept.level == 'beginner' %}background:#d1fae5;color:#065f46;
-        {% elif concept.level == 'intermediate' %}background:#fef3c7;color:#92400e;
-        {% else %}background:#fee2e2;color:#991b1b;{% endif %}">
+        {% if concept.level == 'beginner' %}background:var(--green-light);color:var(--green);
+        {% elif concept.level == 'intermediate' %}background:#fef5e6;color:#8b6914;
+        {% else %}background:var(--accent-light);color:var(--accent);{% endif %}">
         {{ concept.get_level_display }}
       </span>
-      <span style="font-size:11px;color:var(--text-muted);">Concept {{ forloop.counter }}</span>
+      <span style="font-size:11px;color:var(--muted);">Concept {{ forloop.counter }}</span>
       <button class="delete-btn" onclick="deleteConcept({{ concept.pk }}, this)">🗑 Delete</button>
     </div>
   </div>
@@ -53,12 +53,12 @@
         </div>
         <div class="video-play-btn" onclick="playVideo('{{ video.file.url }}','{{ video.title|default:'Untitled'|escapejs }}')">
           {{ video.title|default:"Untitled Video" }}
-          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Click to play ▶</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">Click to play ▶</div>
         </div>
         <button class="delete-btn" onclick="deleteVideo({{ video.pk }}, this)">🗑</button>
       </div>
       {% empty %}
-      <p style="font-size:13px;color:var(--text-muted);padding:8px 0;">No videos yet.</p>
+      <p style="font-size:13px;color:var(--muted);padding:8px 0;">No videos yet.</p>
       {% endfor %}
 
       <!-- Add video inline -->
@@ -81,7 +81,7 @@
     <!-- PDF tab -->
     <div class="tab-pane" id="pdf-{{ concept.pk }}">
       {% if concept.pdf %}
-      <div style="background:#f7f6f2;border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;">
+      <div style="background:var(--cream);border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;">
         <span style="font-size:28px;">📄</span>
         <div>
           <p style="font-weight:600;font-size:14px;margin:0 0 4px;">PDF Document</p>
@@ -89,7 +89,7 @@
         </div>
       </div>
       {% else %}
-      <p style="font-size:13px;color:var(--text-muted);">No PDF uploaded.</p>
+      <p style="font-size:13px;color:var(--muted);">No PDF uploaded.</p>
       {% endif %}
     </div>
 
@@ -97,9 +97,9 @@
     <div class="tab-pane" id="quiz-{{ concept.pk }}">
       <div id="quiz-rendered-{{ concept.pk }}">
         {% if concept.quiz %}
-          <p style="font-size:13px;color:var(--text-muted);">Loading quiz…</p>
+          <p style="font-size:13px;color:var(--muted);">Loading quiz…</p>
         {% else %}
-          <p style="font-size:13px;color:var(--text-muted);">No quiz added.</p>
+          <p style="font-size:13px;color:var(--muted);">No quiz added.</p>
         {% endif %}
       </div>
       <button class="btn btn-ghost btn-sm" style="margin-top:10px;"
@@ -110,9 +110,9 @@
     <div class="tab-pane" id="assignment-{{ concept.pk }}">
       <div id="assignment-rendered-{{ concept.pk }}">
         {% if concept.assignment %}
-          <p style="font-size:13px;color:var(--text-muted);">Loading…</p>
+          <p style="font-size:13px;color:var(--muted);">Loading…</p>
         {% else %}
-          <p style="font-size:13px;color:var(--text-muted);">No assignment added.</p>
+          <p style="font-size:13px;color:var(--muted);">No assignment added.</p>
         {% endif %}
       </div>
       <button class="btn btn-ghost btn-sm" style="margin-top:10px;"
