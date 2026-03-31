@@ -3,7 +3,7 @@ from . import views
 
 urlpatterns = [
     # Super Admin Analytics
-    path('superadmin/', views.superadmin_analytics, name='superadmin_analytics'),
+    path('superadmin/', views.superadmin_analytics, name='analytics_superadmin'),
 
     # School Admin Analytics
     path('school-admin/', views.school_admin_analytics, name='school_admin_analytics'),

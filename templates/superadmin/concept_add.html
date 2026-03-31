@@ -32,13 +32,13 @@
     max-width: 100%;
   }
 
-  .wizard-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    flex: 1;
+  .wizard-step { display:flex; flex-direction:column; align-items:center; gap:6px; flex:1; }
+  .wizard-step.clickable { cursor: pointer; }
+  .wizard-step.clickable:hover .wizard-circle {
+    transform: scale(1.12);
+    box-shadow: 0 4px 16px rgba(29,95,168,0.30);
   }
+  .wizard-step.clickable:hover .wizard-label { color: var(--blue); }
 
   .wizard-circle {
     width: 42px;
@@ -52,7 +52,7 @@
     flex-shrink: 0;
     transition: all 0.35s ease;
     box-shadow: 0 2px 8px var(--shadow);
-    cursor: default;
+    cursor: inherit;
   }
 
   .wizard-circle.done {
@@ -751,7 +751,8 @@ const WIZARD_STEPS = [
   { label: 'Assignment',          icon: '📝' },
 ];
 const TOTAL_STEPS = WIZARD_STEPS.length;
-let currentStep  = 1;
+let currentStep    = 1;
+let maxStepReached = 1;
 
 /* ══════════════════════════════════════════
    BUILD PROGRESS BAR
@@ -763,20 +764,25 @@ function buildProgressBar() {
   WIZARD_STEPS.forEach((step, i) => {
     const stepNum = i + 1;
     let circleClass = 'idle';
-    if (stepNum < currentStep)  circleClass = 'done';
+    if (stepNum < currentStep)   circleClass = 'done';
     if (stepNum === currentStep) circleClass = 'active';
+    // Steps beyond current but already visited stay as done visually
+    if (stepNum > currentStep && stepNum <= maxStepReached) circleClass = 'done';
+
+    const isClickable = true; // all steps clickable — forward validated, backward free
 
     const stepEl = document.createElement('div');
-    stepEl.className = 'wizard-step' + (stepNum === currentStep ? ' active' : '') + (stepNum < currentStep ? ' done' : '');
+    stepEl.className = 'wizard-step' + (stepNum === currentStep ? ' active' : '') + (stepNum < currentStep ? ' done' : '') + (isClickable ? ' clickable' : '');
+    if (isClickable) stepEl.onclick = function() { wizardGoTo(stepNum); };
     stepEl.innerHTML = `
-      <div class="wizard-circle ${circleClass}">${circleClass === 'done' ? '✓' : stepNum}</div>
+      <div class="wizard-circle ${circleClass}">${circleClass === 'done' ? '&#10003;' : stepNum}</div>
       <span class="wizard-label">${step.icon} ${step.label}</span>
     `;
     container.appendChild(stepEl);
 
     if (i < WIZARD_STEPS.length - 1) {
       const line = document.createElement('div');
-      line.className = 'wizard-line' + (stepNum < currentStep ? ' done' : stepNum === currentStep ? ' active' : '');
+      line.className = 'wizard-line' + (stepNum < maxStepReached ? ' done' : stepNum === currentStep ? ' active' : '');
       container.appendChild(line);
     }
   });
@@ -843,6 +849,7 @@ function wizardNext() {
   if (!validateStep(currentStep)) return;
   if (currentStep < TOTAL_STEPS) {
     currentStep++;
+    if (currentStep > maxStepReached) maxStepReached = currentStep;
     showStep(currentStep);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -854,6 +861,25 @@ function wizardPrev() {
     showStep(currentStep);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+}
+
+function wizardGoTo(step) {
+  if (step < 1 || step > TOTAL_STEPS) return;
+  // Going backward — always allowed
+  if (step < currentStep) {
+    currentStep = step;
+    showStep(currentStep);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  // Going forward — validate each step in between
+  for (let s = currentStep; s < step; s++) {
+    if (!validateStep(s)) return;
+  }
+  currentStep = step;
+  if (currentStep > maxStepReached) maxStepReached = currentStep;
+  showStep(currentStep);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /* ══════════════════════════════════════════

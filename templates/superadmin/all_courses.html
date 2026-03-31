@@ -91,7 +91,7 @@
   <div>
     <h1 class="page-title">All Courses</h1>
     <p class="text-muted" style="margin-top:4px;font-size:13px;">
-      {{ courses|length }} course{{ courses|length|pluralize }} · {{ published_count }} published · {{ draft_count }} drafts
+      {{ courses|length }} course{{ courses|length|pluralize }} · {{ published_count }} published · {{ draft_count }} Unpublished
     </p>
   </div>
   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
@@ -108,14 +108,14 @@
 <div class="stat-grid" style="margin-bottom:20px;">
   <div class="stat-card"><div class="stat-value">{{ courses|length }}</div><div class="stat-label">Total</div></div>
   <div class="stat-card"><div class="stat-value">{{ published_count }}</div><div class="stat-label">Published</div></div>
-  <div class="stat-card"><div class="stat-value">{{ draft_count }}</div><div class="stat-label">Drafts</div></div>
+  <div class="stat-card"><div class="stat-value">{{ draft_count }}</div><div class="stat-label">Unpublished</div></div>
 </div>
 
 <!-- Filter tabs -->
 <div class="filter-tabs">
   <button class="filter-tab active" onclick="setFilter('all',this)">All</button>
   <button class="filter-tab" onclick="setFilter('published',this)">Published</button>
-  <button class="filter-tab" onclick="setFilter('draft',this)">Drafts</button>
+  <button class="filter-tab" onclick="setFilter('draft',this)">Unpublished</button>
 </div>
 
 <!-- Courses grid — rendered by JS -->
@@ -211,14 +211,15 @@ function render() {
           ? `<img src="${c.cover}" alt="${c.title}">`
           : `<div class="gc-cover-placeholder">📘</div>`}
         <span class="gc-status-badge ${c.status === 'published' ? 'gc-status-published' : 'gc-status-draft'}">
-          ${c.statusLabel}
+          ${c.status === 'published' ? 'Published' : 'Unpublished'}
         </span>
       </div>
 
       <!-- Body -->
       <div class="gc-body">
-        <!-- Language + Hours -->
+        <!-- Status + Language + Hours -->
         <div class="gc-lang-hours">
+          <span class="gc-lang" style="background:${c.status === 'published' ? 'var(--green)' : '#f8d4cc'};color:${c.status === 'published' ? '#fff' : 'var(--accent)'}">${c.status === 'published' ? 'Published' : 'Unpublished'}</span>
           <span class="gc-lang">${c.language}</span>
           <span class="gc-hours">🎬 ${c.hours}h</span>
           <span class="gc-hours">📚 ${c.concepts} concept${c.concepts !== 1 ? 's' : ''}</span>
