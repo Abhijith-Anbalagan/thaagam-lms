@@ -2,11 +2,30 @@
 {% block title %}Profile Settings — EduPlatform{% endblock %}
 {% block extra_css %}
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+
+  :root {
+    --ink: #0f0e0d;
+    --paper: #faf8f5;
+    --cream: #f2ede6;
+    --accent: #c8401a;
+    --accent-light: #f5e8e3;
+    --muted: #7a7470;
+    --border: #e0d9d0;
+    --shadow: rgba(15,14,13,0.08);
+    --blue: #1d5fa8;
+    --blue-light: #e8f0fa;
+    --green: #2a9d5c;
+    --green-light: #e6f4ed;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
   .profile-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; max-width:860px; }
   .section-divider { display:flex; align-items:center; gap:12px; margin:22px 0 18px; }
-  .section-divider span { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); white-space:nowrap; }
+  .section-divider span { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); white-space:nowrap; font-family:'DM Sans',sans-serif; }
   .section-divider::before, .section-divider::after { content:''; flex:1; height:1px; background:var(--border); }
-  .avatar-block { width:72px; height:72px; border-radius:50%; background:var(--brand-blue-light); color:var(--brand-blue); font-size:28px; font-weight:700; display:flex; align-items:center; justify-content:center; margin-bottom:16px; }
+  .avatar-block { width:72px; height:72px; border-radius:50%; background:var(--blue-light); color:var(--blue); font-size:28px; font-weight:700; display:flex; align-items:center; justify-content:center; margin-bottom:16px; font-family:'Playfair Display',Georgia,serif; }
   @media (max-width:700px) { .profile-grid { grid-template-columns:1fr; } }
 </style>
 {% endblock %}
