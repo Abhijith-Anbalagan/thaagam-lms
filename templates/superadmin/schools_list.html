@@ -2,22 +2,43 @@
 {% block title %}Schools — EduPlatform{% endblock %}
 {% block extra_css %}
 <style>
-  .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
-  .search-bar { display:flex; align-items:center; gap:8px; background:#fff; border:1.5px solid var(--border); border-radius:8px; padding:6px 12px; width:260px; }
-  .search-bar input { border:none; outline:none; font-size:13px; color:var(--text-body); background:transparent; width:100%; }
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+
+  :root {
+    --ink: #0f0e0d;
+    --paper: #faf8f5;
+    --cream: #f2ede6;
+    --accent: #c8401a;
+    --accent-light: #f5e8e3;
+    --muted: #7a7470;
+    --border: #e0d9d0;
+    --shadow: rgba(15,14,13,0.08);
+    --blue: #1d5fa8;
+    --blue-light: #e8f0fa;
+    --green: #2a9d5c;
+    --green-light: #e6f4ed;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:16px; }
+  .search-bar { display:flex; align-items:center; gap:8px; background:#fff; border:1.5px solid var(--border); border-radius:10px; padding:8px 14px; width:260px; font-family:'DM Sans',sans-serif; transition:border-color 0.2s, box-shadow 0.2s; }
+  .search-bar input { border:none; outline:none; font-size:13px; color:var(--ink); background:transparent; width:100%; font-family:'DM Sans',sans-serif; }
+  .search-bar input::placeholder { color: #bbb5ae; font-weight: 300; }
+  .search-bar:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(200, 64, 26, 0.1); }
   .school-table td,.school-table th { vertical-align:middle; }
   .dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:5px; }
-  .dot-active { background:#1d9e75; }
-  .dot-suspended { background:#e24b4a; }
-  .pagination { display:flex; align-items:center; gap:6px; justify-content:center; margin-top:20px; flex-wrap:wrap; }
-  .pg-btn { min-width:34px; height:34px; border-radius:7px; border:1px solid var(--border); background:#fff; font-size:13px; font-weight:500; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:var(--text-body); transition:background .15s,color .15s,border-color .15s; }
-  .pg-btn:hover { background:var(--brand-blue-light); border-color:var(--brand-blue); color:var(--brand-blue); }
-  .pg-btn.active { background:var(--brand-blue); color:#fff; border-color:var(--brand-blue); }
+  .dot-active { background:var(--green); }
+  .dot-suspended { background:var(--accent); }
+  .pagination { display:flex; align-items:center; gap:6px; justify-content:center; margin-top:24px; flex-wrap:wrap; }
+  .pg-btn { min-width:34px; height:34px; border-radius:8px; border:1.5px solid var(--border); background:#fff; font-size:13px; font-weight:500; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:var(--ink); font-family:'DM Sans',sans-serif; transition:background .15s,color .15s,border-color .15s; }
+  .pg-btn:hover { background:var(--blue-light); border-color:var(--blue); color:var(--blue); }
+  .pg-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); }
   .pg-btn:disabled { opacity:.4; cursor:not-allowed; }
-  .confirm-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:1000; overflow-y:auto; }
-  .confirm-box { background:#fff; border-radius:16px; max-width:420px; margin:80px auto; padding:28px; box-shadow:var(--shadow-md); }
-  .confirm-title { font-size:17px; font-weight:700; color:#e24b4a; margin:0 0 8px; }
-  .confirm-warn { font-size:13px; color:#e24b4a; background:#fff0f0; border-radius:8px; padding:10px 14px; margin:12px 0 20px; }
+  .confirm-modal { display:none; position:fixed; inset:0; background:rgba(15,14,13,.50); z-index:1000; overflow-y:auto; }
+  .confirm-box { background:#fff; border-radius:16px; max-width:420px; margin:80px auto; padding:28px; box-shadow:0 4px 24px var(--shadow); font-family:'DM Sans',sans-serif; }
+  .confirm-title { font-size:17px; font-weight:700; color:var(--accent); margin:0 0 8px; font-family:'Playfair Display',Georgia,serif; }
+  .confirm-warn { font-size:13px; color:var(--accent); background:rgba(200,64,26,0.08); border:1.5px solid rgba(200,64,26,0.2); border-radius:10px; padding:12px 16px; margin:12px 0 20px; }
   .row-fade { animation:fadeOut .3s forwards; }
   @keyframes fadeOut { to { opacity:0; transform:translateX(20px); } }
 </style>

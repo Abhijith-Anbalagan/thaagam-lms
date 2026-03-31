@@ -21,7 +21,7 @@
   --radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-xl:20px;
   --shadow-sm:0 1px 4px rgba(26,31,54,.06);--shadow-md:0 4px 20px rgba(26,31,54,.10);
   --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
-  --nav-w:252px;--topbar-h:52px;--hero-h:auto;
+  --nav-w:252px;--topbar-h:56px;--hero-h:auto;
 }
 html,body{height:100%}
 body{font-family:var(--font);background:var(--page-bg);color:var(--text-1);font-size:14px;line-height:1.6;display:flex}
@@ -50,41 +50,20 @@ body{font-family:var(--font);background:var(--page-bg);color:var(--text-1);font-
 .main{margin-left:var(--nav-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
 
 /* ── TOPBAR ── */
-.topbar{background:var(--card-bg);border-bottom:1px solid var(--border);padding:0 28px;height:var(--topbar-h);display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-sm)}
-.breadcrumb{flex:1;display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text-3)}
-.breadcrumb a{color:var(--text-3);text-decoration:none;transition:color .15s}
-.breadcrumb a:hover{color:var(--brand)}
-.breadcrumb .cur{color:var(--text-1);font-weight:600}
-.topbar-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teacher),#1a9e7a);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;border:2px solid var(--teacher-bg);cursor:pointer;user-select:none}
-.topbar-profile{position:relative}
-.profile-dropdown{display:none;position:absolute;right:0;top:calc(100% + 8px);background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-md);min-width:160px;overflow:hidden;z-index:300}
-.profile-dropdown.open{display:block}
-.pd-item{display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:13px;font-weight:500;color:var(--text-1);text-decoration:none;transition:background .12s}
-.pd-item:hover{background:var(--page-bg)}
-.pd-item svg{width:15px;height:15px;color:var(--text-3);flex-shrink:0}
-.pd-item.danger{color:#b03030}
-.pd-item.danger svg{color:#b03030}
-.pd-divider{height:1px;background:var(--border);margin:2px 0}
 
-/* ── HERO (sticky below topbar) ── */
-.hero-wrap{position:sticky;top:var(--topbar-h);z-index:90}
-.class-hero{background:linear-gradient(135deg,#0c3326 0%,#0f6e56 55%,#186b49 100%);padding:22px 28px;display:flex;align-items:center;gap:24px;position:relative;overflow:hidden;box-shadow:0 4px 20px rgba(15,110,86,.22)}
-.hero-orb{position:absolute;border-radius:50%;pointer-events:none}
-.hero-info{flex:1;z-index:1}
-.hero-badge-row{display:flex;align-items:center;gap:6px;margin-bottom:7px}
-.hero-badge{font-family:var(--mono);font-size:11px;font-weight:600;color:rgba(255,255,255,.6);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);padding:3px 10px;border-radius:30px;display:inline-block;letter-spacing:1px}
-.hero-icon-btn{width:26px;height:26px;border-radius:6px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.7);transition:all .15s;flex-shrink:0;padding:0}
-.hero-icon-btn:hover{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.4);color:#fff}
-.hero-icon-btn.done{background:rgba(15,110,86,.3);border-color:rgba(15,110,86,.5);color:#6ee7b7}
-.hero-name{font-size:20px;font-weight:700;color:#fff;letter-spacing:-.3px;margin-bottom:4px}
-.hero-meta{display:flex;gap:16px;flex-wrap:wrap}
-.hero-meta-item{display:flex;align-items:center;gap:5px;font-size:12.5px;color:rgba(255,255,255,.65)}
-.hero-meta-item svg{width:13px;height:13px}
-/* hero nav buttons */
-.hero-nav{display:flex;gap:6px;flex-wrap:wrap;z-index:1;flex-shrink:0}
-.hn-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:30px;font-family:var(--font);font-size:12.5px;font-weight:600;cursor:pointer;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;transition:all .15s;text-decoration:none;white-space:nowrap}
-.hn-btn:hover{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.35)}
-.hn-btn.active{background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.5);box-shadow:0 2px 8px rgba(0,0,0,.15)}
+/* ── WB BANNER ── */
+.wb{background:linear-gradient(135deg,#0c3326 0%,#0f6e56 55%,#186b49 100%);border-radius:var(--radius-xl);padding:30px 36px;display:flex;align-items:center;gap:32px;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(15,110,86,.22)}
+.wb-orb{position:absolute;border-radius:50%;pointer-events:none}
+.wb h2{font-size:22px;font-weight:700;color:#fff;margin-bottom:5px;letter-spacing:-.3px}
+.wb p{font-size:13.5px;color:rgba(255,255,255,.62)}
+.wb-actions{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+.wb-stats{display:flex;gap:0;flex-shrink:0;z-index:1}
+.bstat{text-align:center;padding:0 26px}
+.bstat+.bstat{border-left:1px solid rgba(255,255,255,.12)}
+.bstat-val{font-family:var(--mono);font-size:28px;font-weight:700;color:#fff;line-height:1}
+.bstat-lbl{font-size:11px;color:rgba(255,255,255,.45);margin-top:4px}
+.btn-glass{background:rgba(255,255,255,.13);color:#fff;border:1.5px solid rgba(255,255,255,.2)}
+.btn-glass:hover,.btn-glass.active{background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.4)}
 
 /* ── CONTENT AREA ── */
 .page{padding:22px 28px;display:flex;flex-direction:column;gap:20px}
@@ -279,76 +258,46 @@ body{font-family:var(--font);background:var(--page-bg);color:var(--text-1);font-
   <nav class="nav-group">
     <div class="nav-label">Tools</div>
     <a class="nav-item" href="{% url 'teacher_announcements' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Announcements</a>
-    <a class="nav-item" href="{% url 'profile' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke-width="2"/></svg>Settings</a>
   </nav>
   <div class="sidebar-spacer"></div>
   <div class="sidebar-bottom">
-    <div class="user-card">
-      <div class="av">{{ request.user.get_full_name|slice:":2"|upper }}</div>
-      <div><div class="user-name">{{ request.user.get_full_name }}</div><div class="user-role">Teacher</div></div>
-    </div>
+    <a href="{% url 'profile' %}" class="nav-item"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Profile</a>
+    <a href="{% url 'logout' %}" class="nav-item" style="color:rgba(255,100,100,.7)"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Sign Out</a>
   </div>
 </aside>
 
 <!-- ── MAIN ── -->
 <div class="main">
 
-  <!-- TOPBAR -->
-  <header class="topbar">
-    <div class="breadcrumb">
-      <a href="{% url 'teacher_dashboard' %}">Dashboard</a>
-      <span>›</span>
-      <a href="{% url 'teacher_my_classrooms' %}">My Classrooms</a>
-      <span>›</span>
-      <span class="cur">{{ classroom.name }}</span>
-    </div>
-    <div class="topbar-profile">
-      <div class="topbar-av" id="profileBtn" style="{% if request.user.avatar %}padding:0;overflow:hidden;{% endif %}">{% if request.user.avatar %}<img src="{{ request.user.avatar.url }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">{% else %}{{ request.user.get_full_name|slice:":2"|upper }}{% endif %}</div>
-      <div class="profile-dropdown" id="profileDropdown">
-        <a href="{% url 'profile' %}" class="pd-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>View Profile</a>
-        <div class="pd-divider"></div>
-        <a href="{% url 'logout' %}" class="pd-item danger"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Log Out</a>
+  <!-- WB BANNER -->
+  <div class="page">
+  <div class="wb">
+    <div class="wb-orb" style="right:-30px;top:-70px;width:240px;height:240px;background:rgba(255,255,255,.05)"></div>
+    <div class="wb-orb" style="right:120px;bottom:-90px;width:160px;height:160px;background:rgba(255,255,255,.04)"></div>
+    <div style="flex:1;z-index:1">
+      <h2>{{ classroom.name }}</h2>
+      <p>
+        <span style="font-family:var(--mono);letter-spacing:1px">{{ classroom.code }}</span>
+        &nbsp;·&nbsp; {{ classroom.students.count }} student{{ classroom.students.count|pluralize }}
+        &nbsp;·&nbsp; {{ assignment_count }} assignment{{ assignment_count|pluralize }}
+        &nbsp;·&nbsp; {{ assigned_course_count }} course{{ assigned_course_count|pluralize }}
+      </p>
+      <div class="wb-actions">
+        <button class="btn btn-glass active" onclick="switchTab('home',this)">🏠 Home</button>
+        <button class="btn btn-glass" onclick="switchTab('announce',this)">📢 Announce</button>
+        <button class="btn btn-glass" onclick="switchTab('courses',this)">📚 Courses</button>
+        <button class="btn btn-glass" onclick="switchTab('classwork',this)">📝 Classwork</button>
+        <button class="btn btn-glass" onclick="switchTab('people',this)">👥 People</button>
+        <button class="btn btn-glass" onclick="switchTab('progress',this)">📊 Progress</button>
+        <button class="btn btn-glass" onclick="switchTab('chat',this)">💬 Chat</button>
       </div>
     </div>
-  </header>
-
-  <!-- STICKY HERO -->
-  <div class="hero-wrap">
-    <div class="class-hero">
-      <div class="hero-orb" style="right:-20px;top:-60px;width:200px;height:200px;background:rgba(255,255,255,.05)"></div>
-      <div class="hero-orb" style="right:110px;bottom:-80px;width:140px;height:140px;background:rgba(255,255,255,.04)"></div>
-      <div class="hero-info">
-        <div class="hero-badge-row">
-          <span class="hero-badge">{{ classroom.code }}</span>
-          <button class="hero-icon-btn" title="Copy class code" onclick="copyCode(event,'{{ classroom.code }}',this)">
-            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" stroke-width="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"/></svg>
-          </button>
-          <button class="hero-icon-btn" title="Share class code" onclick="shareCode(event,'{{ classroom.code }}','{{ classroom.name|escapejs }}')">
-            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3" stroke-width="2"/><circle cx="6" cy="12" r="3" stroke-width="2"/><circle cx="18" cy="19" r="3" stroke-width="2"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49" stroke-width="2" stroke-linecap="round"/></svg>
-          </button>
-        </div>
-        <div class="hero-name">{{ classroom.name }}</div>
-        <div class="hero-meta">
-          <div class="hero-meta-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" stroke-width="1.8"/></svg>{{ classroom.students.count }} student{{ classroom.students.count|pluralize }}</div>
-          <div class="hero-meta-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-width="1.8"/></svg>{{ assignment_count }} assignment{{ assignment_count|pluralize }}</div>
-          <div class="hero-meta-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>{{ assigned_course_count }} course{{ assigned_course_count|pluralize }}</div>
-        </div>
-      </div>
-      <!-- Hero nav buttons — all open inline -->
-      <div class="hero-nav">
-        <button class="hn-btn active" onclick="switchTab('home',this)">🏠 Home</button>
-        <button class="hn-btn" onclick="switchTab('announce',this)">📢 Announce</button>
-        <button class="hn-btn" onclick="switchTab('courses',this)">📚 Courses</button>
-        <button class="hn-btn" onclick="switchTab('classwork',this)">📝 Classwork</button>
-        <button class="hn-btn" onclick="switchTab('people',this)">👥 People</button>
-        <button class="hn-btn" onclick="switchTab('progress',this)">📊 Progress</button>
-        <button class="hn-btn" onclick="switchTab('chat',this)">💬 Chat</button>
-      </div>
+    <div class="wb-stats">
+      <div class="bstat"><div class="bstat-val">{{ classroom.students.count }}</div><div class="bstat-lbl">Students</div></div>
+      <div class="bstat"><div class="bstat-val">{{ assignment_count }}</div><div class="bstat-lbl">Assignments</div></div>
+      <div class="bstat"><div class="bstat-val">{{ assigned_course_count }}</div><div class="bstat-lbl">Courses</div></div>
     </div>
   </div>
-
-  <!-- ── CONTENT ── -->
-  <div class="page">
 
     <!-- ══ HOME TAB ══ -->
     <div class="tab-pane active" id="tab-home">
@@ -356,7 +305,7 @@ body{font-family:var(--font);background:var(--page-bg);color:var(--text-1);font-
       <div class="card">
         <div class="card-head">
           <div><div class="card-title">Enrolled Students</div><div class="card-sub">{{ classroom.students.count }} student{{ classroom.students.count|pluralize }}</div></div>
-          <button class="btn btn-ghost btn-sm" onclick="switchTab('people',document.querySelector('.hn-btn:nth-child(5)'))">Manage People →</button>
+          <button class="btn btn-ghost btn-sm" onclick="switchTab('people',document.querySelectorAll('.wb-actions .btn-glass')[4])">Manage People →</button>
         </div>
         {% if student_data %}
         <table class="dt">
@@ -675,7 +624,7 @@ const CSRF_TOKEN   = '{{ csrf_token }}';
 // ── TAB SWITCHING ──
 function switchTab(name, btn) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.hn-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.wb-actions .btn-glass').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   if (btn) btn.classList.add('active');
 }
@@ -744,12 +693,6 @@ function showToast(msg, type='success') {
   toastT = setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
-// ── PROFILE DROPDOWN ──
-const profileBtn = document.getElementById('profileBtn');
-const profileDropdown = document.getElementById('profileDropdown');
-profileBtn.addEventListener('click', e => { e.stopPropagation(); profileDropdown.classList.toggle('open'); });
-document.addEventListener('click', () => profileDropdown.classList.remove('open'));
-
 // ── RESTORE TAB FROM URL HASH OR QUERY ──
 (function() {
   const params = new URLSearchParams(window.location.search);
@@ -757,7 +700,7 @@ document.addEventListener('click', () => profileDropdown.classList.remove('open'
   const validTabs = ['home','announce','courses','classwork','people','progress','chat'];
   if (tab && validTabs.includes(tab)) {
     const idx = validTabs.indexOf(tab);
-    const btn = document.querySelectorAll('.hn-btn')[idx];
+    const btn = document.querySelectorAll('.wb-actions .btn-glass')[idx];
     switchTab(tab, btn);
   }
 })();
