@@ -627,23 +627,23 @@ body{font-family:var(--font);background:var(--page-bg);color:var(--text-1);font-
             <div class="chat-header">
               💬 {{ selected_student.get_full_name|default:selected_student.username }}
               <div class="chat-status">
-                <span class="status-dot" id="statusDot"></span>
-                <span id="statusText">Connecting…</span>
+                <span class="status-dot" id="chat-status-dot"></span>
+                <span id="chat-status-text">Connecting…</span>
               </div>
             </div>
-            <div class="chat-messages" id="chatMessages">
+            <div class="chat-messages" id="chat-messages">
               {% for msg in chat_messages %}
               <div class="bubble {% if msg.sender == request.user %}sent{% else %}recv{% endif %}">
                 {{ msg.body }}
                 <div class="bubble-time">{{ msg.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
               </div>
               {% empty %}
-              <div class="chat-empty"><div class="icon">💬</div><p>No messages yet. Say hello!</p></div>
+              <div class="empty-state"><div class="icon">💬</div><p>No messages yet. Say hello!</p></div>
               {% endfor %}
             </div>
             <div class="chat-footer">
-              <input type="text" class="chat-input" id="chatInput" placeholder="Type a message…" autocomplete="off"/>
-              <button class="btn btn-primary" id="chatSend">Send</button>
+              <input type="text" class="chat-input" id="chat-input" placeholder="Type a message…" autocomplete="off"/>
+              <button class="btn btn-primary" id="chat-send">Send</button>
             </div>
             <script>
               window.CHAT_CLASSROOM_ID = {{ classroom.pk }};
