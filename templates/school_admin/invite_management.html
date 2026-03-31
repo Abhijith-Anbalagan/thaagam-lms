@@ -1,357 +1,318 @@
 {% extends 'base.html' %}
-{% block title %}Invite Management{% endblock %}
-{% block content %}
-
+{% block title %}Invite Users{% endblock %}
+{% block extra_css %}
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
-
   :root {
-    --ink: #0f0e0d;
-    --paper: #faf8f5;
-    --cream: #f2ede6;
-    --accent: #16004b;
-    --accent-light: #f5e8e3;
-    --muted: #7a7470;
-    --border: #e0d9d0;
-    --shadow: rgba(15,14,13,0.08);
+    --ink:#0f0e0d; --paper:#faf8f5; --cream:#f2ede6; --accent:#c8401a;
+    --accent-light:#f5e8e3; --muted:#7a7470; --border:#e0d9d0;
+    --shadow:rgba(15,14,13,0.08); --blue:#1d5fa8; --blue-light:#e8f0fa;
+    --green:#2a9d5c; --green-light:#e6f4ed;
   }
+  * { box-sizing:border-box; margin:0; padding:0; }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* ── Make main-content not scroll — let inner cards scroll ── */
+  .main-content { overflow:hidden !important; }
 
-  .inv-page {
-    min-height: 100vh;
-    background: var(--paper);
-    font-family: 'DM Sans', sans-serif;
+  /* ── Wrapper fills exactly the available height ── */
+  .invite-wrap {
     display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 48px 20px 80px;
+    flex-direction: column;
+    /* 56px navbar + 28px top padding + 28px bottom padding = 112px */
+    height: calc(100vh - 112px);
+    font-family: 'DM Sans', sans-serif;
   }
 
-  .inv-shell {
-    width: 100%;
-    max-width: 620px;
-    animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-
-  @keyframes rise {
-    from { opacity: 0; transform: translateY(24px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  /* ── Header ── */
+  /* ── Page header — fixed height ── */
   .inv-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 36px;
-  }
-
-  .inv-header-left { display: flex; align-items: center; gap: 14px; }
-
-  .inv-icon {
-    width: 44px; height: 44px;
-    background: var(--accent);
-    border-radius: 12px;
-    display: grid; place-items: center;
     flex-shrink: 0;
+    margin-bottom: 10px;
+  }
+  .inv-title { font-family:'Playfair Display',serif; font-size:1.25rem; font-weight:900; color:var(--ink); }
+  .inv-sub   { font-size:11px; color:var(--muted); margin-top:2px; }
+
+  /* ── Two columns fill remaining height ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    flex: 1;
+    min-height: 0;   /* critical — allows flex child to shrink */
   }
 
-  .inv-icon svg { color: #fff; }
-
-  .inv-eyebrow {
-    font-size: 0.78rem;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 2px;
-  }
-
-  .inv-title {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 1.95rem;
-    font-weight: 900;
-    color: var(--ink);
-    line-height: 1.1;
-  }
-
-  .btn-ghost-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--muted);
-    text-decoration: none;
-    padding: 8px 14px;
-    border-radius: 8px;
-    border: 1.5px solid var(--border);
-    background: transparent;
-    transition: border-color 0.2s, color 0.2s, background 0.2s;
-    white-space: nowrap;
-  }
-
-  .btn-ghost-back:hover {
-    color: var(--ink);
-    border-color: var(--ink);
-    background: var(--cream);
-  }
-
-  /* ── Card ── */
-  .inv-card {
+  /* ── Each card fills its column, scrolls internally ── */
+  .card {
     background: #fff;
     border: 1.5px solid var(--border);
-    border-radius: 20px;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 2px 24px var(--shadow), 0 0 0 1px rgba(255,255,255,0.6) inset;
-  }
-
-  .inv-stripe {
-    height: 5px;
-    background: linear-gradient(90deg, var(--accent) 0%, #e8642e 60%, #f5a623 100%);
-  }
-
-  .inv-body { padding: 40px 44px 44px; }
-
-  /* ── Info banner ── */
-  .inv-info {
     display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    background: var(--accent-light);
-    border: 1.5px solid #e8c4b8;
-    border-radius: 12px;
-    padding: 16px 18px;
-    margin-bottom: 32px;
+    flex-direction: column;
+    min-height: 0;
   }
+  .card-stripe { height: 3px; flex-shrink: 0; background: linear-gradient(90deg,var(--accent),#f5a623); }
+  .card-body   { padding: 14px 16px; overflow-y: auto; flex: 1; min-height: 0; }
 
-  .inv-info svg { color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+  .card-title { font-family:'Playfair Display',serif; font-size:13px; font-weight:700; color:var(--ink); margin-bottom:3px; }
+  .card-sub   { font-size:11px; color:var(--muted); margin-bottom:10px; line-height:1.4; }
 
-  .inv-info-text {
-    font-size: 0.88rem;
-    color: #7a3520;
-    font-weight: 400;
-    line-height: 1.55;
-  }
+  .form-group { margin-bottom:10px; }
+  .form-label { display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:4px; }
+  .form-ctrl  { width:100%; padding:7px 10px; font-size:12px; border:1.5px solid var(--border); border-radius:7px; font-family:'DM Sans',sans-serif; outline:none; background:#fff; color:var(--ink); transition:border-color .2s; }
+  .form-ctrl:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(200,64,26,.1); }
+  select.form-ctrl { cursor:pointer; }
 
-  .inv-info-text strong { font-weight: 500; }
+  /* Drop zone */
+  .drop-zone { border:2px dashed var(--border); border-radius:8px; padding:14px 12px; text-align:center; cursor:pointer; transition:all .2s; background:var(--paper); position:relative; }
+  .drop-zone:hover,.drop-zone.drag-over { border-color:var(--blue); background:var(--blue-light); }
+  .drop-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+  .drop-icon { font-size:20px; margin-bottom:4px; }
+  .drop-text { font-size:12px; font-weight:600; color:var(--ink); }
+  .drop-sub  { font-size:10px; color:var(--muted); margin-top:2px; }
+  .drop-file-name { font-size:11px; font-weight:600; color:var(--blue); margin-top:4px; display:none; }
 
-  /* ── Field ── */
-  .field-block { display: flex; flex-direction: column; gap: 8px; margin-bottom: 32px; }
+  .template-row { display:flex; gap:6px; margin-bottom:10px; }
+  .btn-tpl { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border:1.5px solid var(--border); border-radius:5px; font-size:10px; font-weight:600; color:var(--muted); background:#fff; cursor:pointer; text-decoration:none; transition:all .15s; }
+  .btn-tpl:hover { border-color:var(--green); color:var(--green); background:var(--green-light); text-decoration:none; }
 
-  .field-label {
-    font-size: 0.78rem;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
+  .btn-primary { display:inline-flex; align-items:center; gap:5px; padding:7px 14px; background:var(--accent); color:#fff; border:none; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background .15s; }
+  .btn-primary:hover { background:#b03516; }
+  .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+  .btn-ghost  { display:inline-flex; align-items:center; gap:5px; padding:7px 12px; border:1.5px solid var(--border); border-radius:7px; font-size:12px; font-weight:500; color:var(--muted); text-decoration:none; background:transparent; transition:all .15s; cursor:pointer; }
+  .btn-ghost:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-light); text-decoration:none; }
 
-  .field-label span { color: var(--accent); margin-left: 2px; }
+  .progress-wrap { display:none; margin-top:8px; }
+  .progress-bar-bg   { background:var(--border); border-radius:4px; height:5px; overflow:hidden; }
+  .progress-bar-fill { height:5px; background:linear-gradient(90deg,var(--blue),var(--accent)); border-radius:4px; width:0%; transition:width .4s; }
+  .progress-label    { font-size:10px; color:var(--muted); margin-top:3px; text-align:center; }
 
-  .email-input-wrap { position: relative; }
+  .results-panel  { display:none; margin-top:10px; border-radius:8px; overflow:hidden; border:1.5px solid var(--border); }
+  .results-header { padding:8px 12px; font-weight:700; font-size:12px; display:flex; align-items:center; gap:6px; }
+  .results-header.success { background:var(--green-light); color:var(--green); }
+  .results-header.partial { background:#fff8e6; color:#9a6b1a; }
+  .results-header.error   { background:var(--accent-light); color:var(--accent); }
+  .results-stats { display:flex; gap:14px; padding:8px 12px; background:#fafaf8; border-bottom:1px solid var(--border); }
+  .results-stat  { text-align:center; }
+  .results-stat-val { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:700; color:var(--ink); }
+  .results-stat-lbl { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+  .results-list { max-height:100px; overflow-y:auto; padding:6px 12px; }
+  .result-row   { display:flex; align-items:center; gap:6px; padding:3px 0; font-size:11px; border-bottom:1px solid var(--border); }
+  .result-row:last-child { border-bottom:none; }
+  .result-dot-ok  { width:5px; height:5px; border-radius:50%; background:var(--green); flex-shrink:0; }
+  .result-dot-err { width:5px; height:5px; border-radius:50%; background:var(--accent); flex-shrink:0; }
+  .result-reason  { font-size:10px; color:var(--muted); margin-left:auto; }
 
-  .email-input-wrap svg {
-    position: absolute;
-    left: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--muted);
-    pointer-events: none;
-    opacity: 0.6;
-  }
+  .msg-box { padding:8px 10px; border-radius:7px; font-size:12px; margin-bottom:10px; }
+  .msg-ok  { background:var(--green-light); color:var(--green); }
+  .msg-err { background:var(--accent-light); color:var(--accent); }
 
-  .inv-input {
-    width: 100%;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 1.05rem;
-    font-weight: 400;
-    color: var(--ink);
-    background: var(--paper);
-    border: 1.5px solid var(--border);
-    border-radius: 12px;
-    padding: 14px 18px 14px 46px;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
-    -webkit-appearance: none;
-  }
-
-  .inv-input::placeholder { color: #bbb5ae; font-weight: 300; }
-
-  .inv-input:focus {
-    border-color: var(--accent);
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(200, 64, 26, 0.1);
-  }
-
-  .field-hint {
-    font-size: 0.82rem;
-    color: var(--muted);
-    font-weight: 300;
-    line-height: 1.5;
-  }
-
-  /* ── Divider ── */
-  .inv-divider {
-    border: none;
-    border-top: 1.5px solid var(--border);
-    margin: 0 -44px 32px;
-  }
-
-  /* ── Actions ── */
-  .inv-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .btn-send {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 13px 30px;
-    background: var(--accent);
-    color: #fff;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 500;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    letter-spacing: 0.02em;
-    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-    box-shadow: 0 4px 14px rgba(200,64,26,0.3);
-  }
-
-  .btn-send:hover {
-    background: #b03516;
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(200,64,26,0.38);
-  }
-
-  .btn-send:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(200,64,26,0.25);
-  }
-
-  .btn-cancel {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 13px 22px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--muted);
-    text-decoration: none;
-    border-radius: 12px;
-    border: 1.5px solid var(--border);
-    background: transparent;
-    transition: border-color 0.2s, color 0.2s, background 0.2s;
-  }
-
-  .btn-cancel:hover {
-    color: var(--ink);
-    border-color: var(--ink);
-    background: var(--cream);
-  }
-
-  @media (max-width: 520px) {
-    .inv-body { padding: 28px 22px 32px; }
-    .inv-divider { margin: 0 -22px 28px; }
-    .inv-title { font-size: 1.55rem; }
-    .inv-actions { flex-direction: column; align-items: stretch; }
-    .btn-send, .btn-cancel { justify-content: center; }
+  @media(max-width:760px){
+    .two-col { grid-template-columns:1fr; }
+    .main-content { overflow-y:auto !important; }
+    .invite-wrap { height:auto; }
   }
 </style>
+{% endblock %}
 
-<div class="inv-page">
-  <div class="inv-shell">
+{% block content %}
+<div class="invite-wrap">
 
-    <!-- Header -->
-    <div class="inv-header">
-      <div class="inv-header-left">
-        <div class="inv-icon">
-          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.73a16 16 0 0 0 5.38 5.38l1.62-1.84a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-            <path d="M15 2h6v6M21 2l-9 9"/>
-          </svg>
-        </div>
-        <div>
-          <div class="inv-eyebrow">School Admin</div>
-          <div class="inv-title">Invite User</div>
-        </div>
-      </div>
-      <a href="{% url 'school_admin_dashboard' %}" class="btn-ghost-back">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M19 12H5M12 5l-7 7 7 7"/>
-        </svg>
-        Cancel
-      </a>
+  <!-- Header -->
+  <div class="inv-header">
+    <div>
+      <div class="inv-title">✉️ Invite Users</div>
+      <div class="inv-sub">Send individual invites or upload a file to invite multiple users at once</div>
     </div>
+    <a href="{% url 'school_admin_dashboard' %}" class="btn-ghost">← Dashboard</a>
+  </div>
 
-    <!-- Card -->
-    <div class="inv-card">
-      <div class="inv-stripe"></div>
-      <div class="inv-body">
+  <!-- Two columns -->
+  <div class="two-col">
 
-        <!-- Info banner -->
-        <div class="inv-info">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
-          </svg>
-          <p class="inv-info-text">
-            The recipient will receive a <strong>secure invite link valid for 48 hours.</strong>
-            They'll be prompted to set a password and join your school on first sign-in.
-          </p>
-        </div>
+    <!-- ── Single Invite ── -->
+    <div class="card">
+      <div class="card-stripe"></div>
+      <div class="card-body">
+        <div class="card-title">👤 Single Invite</div>
+        <div class="card-sub">Send a secure invite link valid for 48 hours.</div>
+
+        {% if messages %}
+          {% for msg in messages %}
+            <div class="msg-box {% if msg.tags == 'error' %}msg-err{% else %}msg-ok{% endif %}">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
 
         <form method="post">
           {% csrf_token %}
-
-          <!-- Email field -->
-          <div class="field-block">
-            <label class="field-label" for="inv-email">Email Address <span>*</span></label>
-            <div class="email-input-wrap">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-              </svg>
-              <input
-                id="inv-email"
-                type="email"
-                name="email"
-                class="inv-input"
-                placeholder="colleague@school.com"
-                required
-                autocomplete="off"
-              >
-            </div>
-            <p class="field-hint">Enter the work email of the teacher or staff member you'd like to invite.</p>
+          <div class="form-group">
+            <label class="form-label">Email Address *</label>
+            <input type="email" name="email" class="form-ctrl" placeholder="colleague@school.com" required autocomplete="off">
           </div>
-
-          <hr class="inv-divider">
-
-          <!-- Actions -->
-          <div class="inv-actions">
-            <button type="submit" class="btn-send">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.73a16 16 0 0 0 5.38 5.38l1.62-1.84a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-              </svg>
-              Send Invite
-            </button>
-            <a href="{% url 'school_admin_dashboard' %}" class="btn-cancel">
-              Never mind
-            </a>
+          <div class="form-group">
+            <label class="form-label">Role</label>
+            <select name="role" class="form-ctrl">
+              <option value="management">Management</option>
+              <option value="teacher">Teacher</option>
+            </select>
           </div>
-
+          <button type="submit" class="btn-primary">📨 Send Invite</button>
         </form>
-
       </div>
-    </div><!-- /card -->
+    </div>
 
-  </div>
-</div>
+    <!-- ── Bulk Invite ── -->
+    <div class="card">
+      <div class="card-stripe" style="background:linear-gradient(90deg,var(--blue),#6b82f5);"></div>
+      <div class="card-body">
+        <div class="card-title">📂 Bulk Invite via File</div>
+        <div class="card-sub">Upload CSV or Excel — one email per row. Validates and sends automatically.</div>
 
+        <div class="template-row">
+          <a href="#" onclick="downloadCSVTemplate();return false;" class="btn-tpl">⬇ CSV Template</a>
+          <a href="#" onclick="downloadCSVTemplate();return false;" class="btn-tpl">⬇ Excel Template</a>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Role for all invitees</label>
+          <select id="bulk-role" class="form-ctrl">
+            <option value="management">Management</option>
+            <option value="teacher">Teacher</option>
+          </select>
+        </div>
+
+        <div class="drop-zone" id="drop-zone">
+          <input type="file" id="bulk-file" accept=".csv,.xlsx,.xls" onchange="onFileSelected(this)">
+          <div class="drop-icon">📄</div>
+          <div class="drop-text">Click to upload or drag & drop</div>
+          <div class="drop-sub">.csv, .xlsx, .xls — max 5 MB</div>
+          <div class="drop-file-name" id="file-name-label"></div>
+        </div>
+
+        <div class="progress-wrap" id="progress-wrap">
+          <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
+          <div class="progress-label" id="progress-label">Processing…</div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="btn-primary" id="bulk-send-btn" onclick="sendBulkInvites()" disabled>🚀 Send All Invites</button>
+          <button class="btn-ghost" onclick="resetBulk()">Reset</button>
+        </div>
+
+        <div class="results-panel" id="results-panel">
+          <div class="results-header" id="results-header"></div>
+          <div class="results-stats"  id="results-stats"></div>
+          <div class="results-list"   id="results-list"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /two-col -->
+</div><!-- /invite-wrap -->
+
+<script>
+const CSRF     = '{{ csrf_token }}';
+const BULK_URL = '{% url "school_admin_bulk_invite" %}';
+
+const dropZone = document.getElementById('drop-zone');
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+});
+
+function onFileSelected(input) { if (input.files[0]) setFile(input.files[0]); }
+
+function setFile(file) {
+  const ext = '.' + file.name.split('.').pop().toLowerCase();
+  if (!['.csv','.xlsx','.xls'].includes(ext)) { showError('Only .csv, .xlsx or .xls files are supported.'); return; }
+  if (file.size > 5*1024*1024) { showError('File too large. Max 5 MB.'); return; }
+  const lbl = document.getElementById('file-name-label');
+  lbl.textContent = '✅ ' + file.name; lbl.style.display = 'block';
+  document.getElementById('bulk-send-btn').disabled = false;
+  document.getElementById('results-panel').style.display = 'none';
+  const dt = new DataTransfer(); dt.items.add(file);
+  document.getElementById('bulk-file').files = dt.files;
+}
+
+function resetBulk() {
+  document.getElementById('bulk-file').value = '';
+  document.getElementById('file-name-label').style.display = 'none';
+  document.getElementById('bulk-send-btn').disabled = true;
+  document.getElementById('results-panel').style.display = 'none';
+  document.getElementById('progress-wrap').style.display = 'none';
+}
+
+function sendBulkInvites() {
+  const file = document.getElementById('bulk-file').files[0];
+  if (!file) { showError('Please select a file first.'); return; }
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('role', document.getElementById('bulk-role').value);
+  fd.append('csrfmiddlewaretoken', CSRF);
+  const btn = document.getElementById('bulk-send-btn');
+  btn.disabled = true; btn.textContent = '⏳ Sending…';
+  document.getElementById('progress-wrap').style.display = 'block';
+  animateProgress();
+  fetch(BULK_URL, { method:'POST', body:fd })
+    .then(r => r.json())
+    .then(data => {
+      stopProgress(); btn.textContent = '🚀 Send All Invites';
+      if (data.error) { showError(data.error); btn.disabled = false; return; }
+      showResults(data);
+    })
+    .catch(() => { stopProgress(); btn.textContent = '🚀 Send All Invites'; btn.disabled = false; showError('Network error.'); });
+}
+
+let progressInterval = null, progressVal = 0;
+function animateProgress() {
+  progressVal = 0;
+  const fill = document.getElementById('progress-fill'), label = document.getElementById('progress-label');
+  progressInterval = setInterval(() => {
+    if (progressVal < 85) { progressVal += Math.random()*8; fill.style.width = Math.min(progressVal,85)+'%'; label.textContent = `Processing… ${Math.round(Math.min(progressVal,85))}%`; }
+  }, 200);
+}
+function stopProgress() {
+  clearInterval(progressInterval);
+  document.getElementById('progress-fill').style.width = '100%';
+  document.getElementById('progress-label').textContent = 'Done!';
+  setTimeout(() => { document.getElementById('progress-wrap').style.display = 'none'; }, 600);
+}
+
+function showResults(data) {
+  const panel = document.getElementById('results-panel'), header = document.getElementById('results-header'),
+        stats = document.getElementById('results-stats'), list = document.getElementById('results-list');
+  header.className = data.failed===0 ? 'results-header success' : data.sent>0 ? 'results-header partial' : 'results-header error';
+  header.innerHTML = data.failed===0 ? `✅ All ${data.sent} invite${data.sent!==1?'s':''} sent!`
+                   : data.sent>0     ? `⚠️ ${data.sent} sent, ${data.failed} failed`
+                                     : `❌ All ${data.failed} failed`;
+  stats.innerHTML = `
+    <div class="results-stat"><div class="results-stat-val">${data.total}</div><div class="results-stat-lbl">Total</div></div>
+    <div class="results-stat"><div class="results-stat-val" style="color:var(--green);">${data.sent}</div><div class="results-stat-lbl">Sent</div></div>
+    <div class="results-stat"><div class="results-stat-val" style="color:var(--accent);">${data.failed}</div><div class="results-stat-lbl">Failed</div></div>`;
+  let html = '';
+  (data.sent_list||[]).forEach(e => html += `<div class="result-row"><span class="result-dot-ok"></span><span>${e}</span><span class="result-reason" style="color:var(--green);">Sent ✓</span></div>`);
+  (data.failed_list||[]).forEach(i => html += `<div class="result-row"><span class="result-dot-err"></span><span>${i.email}</span><span class="result-reason">${i.reason}</span></div>`);
+  list.innerHTML = html || '<p style="color:var(--muted);font-size:11px;text-align:center;padding:8px 0;">No details.</p>';
+  panel.style.display = 'block';
+}
+
+function showError(msg) {
+  const panel = document.getElementById('results-panel');
+  document.getElementById('results-header').className = 'results-header error';
+  document.getElementById('results-header').innerHTML = '❌ ' + msg;
+  document.getElementById('results-stats').innerHTML = '';
+  document.getElementById('results-list').innerHTML = '';
+  panel.style.display = 'block';
+}
+
+function downloadCSVTemplate() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['email\nexample1@school.com\nexample2@school.com\n'], {type:'text/csv'}));
+  a.download = 'invite_template.csv'; a.click(); URL.revokeObjectURL(a.href);
+}
+</script>
 {% endblock %}

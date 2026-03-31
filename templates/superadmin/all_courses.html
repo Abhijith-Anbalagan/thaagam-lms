@@ -203,7 +203,7 @@ function render() {
   }
 
   wrap.innerHTML = `<div class="course-grid">${page.map(c => `
-    <div class="gc-card" id="course-card-${c.id}">
+    <div class="gc-card" id="course-card-${c.id}" onclick="window.location='${c.detailUrl}'">
 
       <!-- Cover Image -->
       <div class="gc-cover">
@@ -237,8 +237,8 @@ function render() {
           <span>🗓 ${c.date}</span>
         </div>
 
-        <!-- Action Buttons (GUVI-style) -->
-        <div class="gc-actions">
+        <!-- Action Buttons -->
+        <div class="gc-actions" onclick="event.stopPropagation()">
           ${c.isFree
             ? `<a href="${c.detailUrl}" class="btn-free">▶ Learn for Free</a>`
             : `<a href="${c.detailUrl}" class="btn-free">▶ Open Course</a>`}

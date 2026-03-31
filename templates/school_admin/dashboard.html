@@ -338,7 +338,10 @@
           <div class="invite-row" id="invite-row-{{ inv.id }}">
             <div style="flex:1;">
               <div class="invite-email">{{ inv.email }}</div>
-              <div class="invite-meta">Invited {{ inv.created_at|date:"M d, Y" }} · expires {{ inv.expires_at|date:"M d" }}</div>
+              <div class="invite-meta">
+                <span style="background:{% if inv.role == 'teacher' %}#e8f0fa{% else %}#f0e8fa{% endif %};color:{% if inv.role == 'teacher' %}#1d5fa8{% else %}#534ab7{% endif %};padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;margin-right:6px;">{{ inv.role|title }}</span>
+                Invited {{ inv.created_at|date:"M d, Y" }} · expires {{ inv.expires_at|date:"M d" }}
+              </div>
             </div>
             <button class="btn-xs btn-activate" id="btn-{{ inv.id }}"
                     onclick="activateInvite({{ inv.id }}, '{{ inv.email }}')">Activate</button>
@@ -417,4 +420,88 @@
   </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+
+function deleteInvite(id) {
+  if (!confirm('Delete this pending invitation?')) return;
+  fetch(`/school-admin/invite-management/${id}/delete/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) {
+      const row = document.getElementById('invite-row-' + id);
+      if (row) row.remove();
+      if (!document.querySelectorAll('#pending-list .invite-row').length) {
+        document.getElementById('pending-section').style.display = 'none';
+      }
+    } else {
+      alert(d.error || 'Could not delete invitation.');
+    }
+  })
+  .catch(() => alert('Network error. Please try again.'));
+}
+
+function deleteMember(id) {
+  if (!confirm('Remove this management user?')) return;
+  fetch(`/school-admin/management/${id}/delete/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) {
+      const row = document.getElementById('member-row-' + id);
+      if (row) row.remove();
+      if (!document.querySelectorAll('#management-list .member-row').length) {
+        document.getElementById('management-list').innerHTML =
+          '<div class="empty-state" id="no-management">No management users yet.<br><a href="/school-admin/invite-management/">➕ Invite one now</a></div>';
+      }
+    } else {
+      alert(d.error || 'Could not remove user.');
+    }
+  })
+  .catch(() => alert('Network error. Please try again.'));
+}
+
+function activateInvite(id, email) {
+  if (!confirm(`Activate invite for ${email}? This will create their account immediately.`)) return;
+  fetch(`/school-admin/invite-management/${id}/activate/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) {
+      const row = document.getElementById('invite-row-' + id);
+      if (row) row.remove();
+      if (!document.querySelectorAll('#pending-list .invite-row').length) {
+        document.getElementById('pending-section').style.display = 'none';
+      }
+      const u = d.user;
+      const noMsg = document.getElementById('no-management');
+      if (noMsg) noMsg.remove();
+      const div = document.createElement('div');
+      div.className = 'member-row';
+      div.id = 'member-row-' + u.id;
+      div.innerHTML = `
+        <div class="m-avatar">${(u.name[0]||'?').toUpperCase()}</div>
+        <div style="flex:1;">
+          <div class="member-name">${u.name}</div>
+          <div class="member-email">${u.email}</div>
+        </div>
+        <button class="btn-xs btn-delete" onclick="deleteMember(${u.id})">🗑 Remove</button>`;
+      document.getElementById('management-list').appendChild(div);
+    } else {
+      alert(d.error || 'Could not activate invite.');
+    }
+  })
+  .catch(() => alert('Network error. Please try again.'));
+}
+</script>
 {% endblock %}

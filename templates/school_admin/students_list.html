@@ -1,434 +1,208 @@
 {% extends 'base.html' %}
-{% block title %}Students — {{ request.user.school.name }}{% endblock %}
-{% block content %}
-
+{% block title %}Students — {{ school.name }}{% endblock %}
+{% block extra_css %}
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
-
   :root {
-    --ink: #0f0e0d;
-    --paper: #faf8f5;
-    --cream: #f2ede6;
-    --accent: #01075a;
-    --accent-light: #f5e8e3;
-    --muted: #7a7470;
-    --border: #e0d9d0;
-    --shadow: rgba(15,14,13,0.08);
-    --blue: #1d5fa8;
-    --blue-light: #e8f0fa;
-    --green: #2a9d5c;
-    --green-light: #e6f4ed;
+    --ink:#0f0e0d; --paper:#faf8f5; --cream:#f2ede6; --accent:#c8401a;
+    --accent-light:#f5e8e3; --muted:#7a7470; --border:#e0d9d0;
+    --shadow:rgba(15,14,13,0.08); --blue:#1d5fa8; --blue-light:#e8f0fa;
+    --green:#2a9d5c; --green-light:#e6f4ed;
   }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'DM Sans',sans-serif; background:var(--paper); }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+  .page-title  { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:900; color:var(--ink); }
+  .page-sub    { font-size:13px; color:var(--muted); margin-top:3px; }
 
-  .stu-page {
-    min-height: 100vh;
-    background: var(--paper);
-    font-family: 'DM Sans', sans-serif;
-    padding: 48px 20px 80px;
-  }
+  .top-grid { display:grid; grid-template-columns:1fr 320px; gap:20px; margin-bottom:24px; }
+  @media(max-width:800px){ .top-grid { grid-template-columns:1fr; } }
 
-  .stu-shell {
-    width: 100%;
-    max-width: 900px;
-    margin: 0 auto;
-  }
+  .stat-row { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+  .stat-box { background:#fff; border:1.5px solid var(--border); border-radius:12px; padding:18px 20px; }
+  .stat-box-val { font-family:'Playfair Display',serif; font-size:2rem; font-weight:700; color:var(--ink); }
+  .stat-box-lbl { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-top:4px; }
 
-  .stu-shell > * {
-    animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-  .stu-shell > *:nth-child(1) { animation-delay: 0s; }
-  .stu-shell > *:nth-child(2) { animation-delay: 0.08s; }
+  .chart-card { background:#fff; border:1.5px solid var(--border); border-radius:14px; padding:20px; }
+  .chart-title { font-family:'Playfair Display',serif; font-size:14px; font-weight:700; color:var(--ink); margin-bottom:14px; }
 
-  @keyframes rise {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+  .card { background:#fff; border:1.5px solid var(--border); border-radius:14px; overflow:hidden; margin-bottom:20px; }
+  .card-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1.5px solid var(--border); background:var(--cream); flex-wrap:wrap; gap:10px; }
+  .card-title  { font-family:'Playfair Display',serif; font-size:15px; font-weight:700; color:var(--ink); }
 
-  /* ── Header ── */
-  .stu-header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    margin-bottom: 36px;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
+  .search-bar { display:flex; align-items:center; gap:8px; background:#fff; border:1.5px solid var(--border); border-radius:8px; padding:7px 12px; width:220px; transition:border-color .2s; }
+  .search-bar input { border:none; outline:none; font-size:13px; color:var(--ink); background:transparent; width:100%; font-family:'DM Sans',sans-serif; }
+  .search-bar:focus-within { border-color:var(--accent); }
 
-  .stu-header-left { display: flex; align-items: center; gap: 14px; }
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  thead tr { background:var(--cream); }
+  th { padding:11px 16px; text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); border-bottom:1.5px solid var(--border); white-space:nowrap; }
+  td { padding:13px 16px; border-bottom:1px solid var(--border); color:var(--ink); vertical-align:middle; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover td { background:var(--paper); }
 
-  .stu-icon {
-    width: 44px; height: 44px;
-    background: var(--accent);
-    border-radius: 12px;
-    display: grid; place-items: center;
-    flex-shrink: 0;
-  }
+  .avatar { width:34px; height:34px; border-radius:50%; background:var(--accent-light); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; font-family:'Playfair Display',serif; }
+  .u-cell  { display:flex; align-items:center; gap:10px; }
+  .u-name  { font-weight:600; color:var(--ink); }
+  .u-sub   { font-size:11px; color:var(--muted); margin-top:2px; }
 
-  .stu-icon svg { color: #fff; }
+  .score-bar-wrap { display:flex; align-items:center; gap:8px; }
+  .score-bar-bg   { flex:1; height:6px; background:var(--border); border-radius:4px; min-width:60px; }
+  .score-bar-fill { height:6px; border-radius:4px; transition:width .4s; }
+  .score-high  { background:var(--green); }
+  .score-mid   { background:#f5a623; }
+  .score-low   { background:var(--accent); }
+  .score-label { font-size:12px; font-weight:600; min-width:38px; text-align:right; }
 
-  .stu-eyebrow {
-    font-size: 0.78rem;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 2px;
-  }
+  .num-pill { background:var(--cream); color:var(--muted); font-size:12px; font-weight:600; padding:3px 10px; border-radius:99px; }
 
-  .stu-title {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 1.95rem;
-    font-weight: 900;
-    color: var(--ink);
-    line-height: 1.1;
-  }
+  tr.hidden { display:none; }
 
-  .btn-ghost-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--muted);
-    text-decoration: none;
-    padding: 8px 14px;
-    border-radius: 8px;
-    border: 1.5px solid var(--border);
-    background: transparent;
-    transition: border-color 0.2s, color 0.2s, background 0.2s;
-    white-space: nowrap;
-  }
-
-  .btn-ghost-back:hover {
-    color: var(--ink);
-    border-color: var(--ink);
-    background: var(--cream);
-  }
-
-  /* ── Card ── */
-  .stu-card {
-    background: #fff;
-    border: 1.5px solid var(--border);
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 2px 24px var(--shadow);
-  }
-
-  .stu-stripe {
-    height: 5px;
-    background: linear-gradient(90deg, var(--accent) 0%, #e8642e 60%, #f5a623 100%);
-  }
-
-  .stu-card-inner { padding: 32px 36px 36px; }
-
-  .stu-card-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 24px;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .stu-section-title {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: var(--ink);
-  }
-
-  .stu-card-head-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .stu-count-badge {
-    font-size: 0.78rem;
-    font-weight: 500;
-    padding: 4px 12px;
-    background: var(--cream);
-    border: 1.5px solid var(--border);
-    border-radius: 99px;
-    color: var(--muted);
-    white-space: nowrap;
-  }
-
-  /* ── Search ── */
-  .stu-search-wrap {
-    position: relative;
-  }
-
-  .stu-search-wrap svg {
-    position: absolute;
-    left: 11px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--muted);
-    pointer-events: none;
-  }
-
-  #stu-search {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.88rem;
-    font-weight: 400;
-    color: var(--ink);
-    background: var(--paper);
-    border: 1.5px solid var(--border);
-    border-radius: 8px;
-    padding: 7px 14px 7px 32px;
-    outline: none;
-    width: 190px;
-    transition: border-color 0.2s, box-shadow 0.2s, width 0.3s;
-  }
-
-  #stu-search::placeholder { color: #bbb5ae; font-weight: 300; }
-
-  #stu-search:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(200, 64, 26, 0.1);
-    width: 230px;
-  }
-
-  /* ── Table ── */
-  .stu-table-wrap {
-    overflow-x: auto;
-    border-radius: 12px;
-    border: 1.5px solid var(--border);
-  }
-
-  .stu-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.92rem;
-  }
-
-  .stu-table thead tr { background: var(--cream); }
-
-  .stu-table th {
-    padding: 12px 18px;
-    text-align: left;
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    border-bottom: 1.5px solid var(--border);
-    white-space: nowrap;
-  }
-
-  .stu-table th:nth-child(3),
-  .stu-table th:nth-child(4) { text-align: right; }
-
-  .stu-table tbody tr {
-    border-bottom: 1px solid var(--border);
-    transition: background 0.15s;
-  }
-
-  .stu-table tbody tr:last-child { border-bottom: none; }
-  .stu-table tbody tr:hover { background: var(--paper); }
-
-  .stu-table td {
-    padding: 14px 18px;
-    color: var(--ink);
-    vertical-align: middle;
-  }
-
-  .stu-table td:nth-child(3),
-  .stu-table td:nth-child(4) { text-align: right; }
-
-  /* avatar + name */
-  .stu-name-cell {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-  }
-
-  .stu-avatar {
-    width: 34px; height: 34px;
-    border-radius: 50%;
-    background: var(--accent-light);
-    border: 1.5px solid var(--border);
-    display: grid; place-items: center;
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: var(--accent);
-    flex-shrink: 0;
-    text-transform: uppercase;
-  }
-
-  .stu-fullname {
-    font-weight: 500;
-    color: var(--ink);
-  }
-
-  /* email */
-  .stu-email {
-    color: var(--muted);
-    font-weight: 300;
-    font-size: 0.88rem;
-  }
-
-  /* submissions */
-  .sub-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px 12px;
-    background: var(--blue-light);
-    color: var(--blue);
-    border-radius: 99px;
-    font-size: 0.82rem;
-    font-weight: 500;
-  }
-
-  /* score */
-  .score-pill {
-    display: inline-flex;
-    align-items: center;
-    padding: 3px 12px;
-    border-radius: 99px;
-    font-size: 0.82rem;
-    font-weight: 500;
-  }
-
-  .score-pill.high   { background: var(--green-light); color: var(--green); }
-  .score-pill.mid    { background: #fff8e6; color: #9a6b1a; }
-  .score-pill.low    { background: var(--accent-light); color: var(--accent); }
-  .score-pill.none   { color: var(--muted); font-weight: 300; font-style: italic; background: none; }
-
-  /* empty */
-  .empty-row td {
-    text-align: center;
-    color: var(--muted);
-    font-weight: 300;
-    padding: 48px 18px;
-    font-style: italic;
-  }
-
-  /* hidden by search */
-  tr.stu-hidden { display: none; }
-
-  @media (max-width: 640px) {
-    .stu-card-inner { padding: 22px 18px 28px; }
-    .stu-title { font-size: 1.55rem; }
-    #stu-search { width: 140px; }
-    #stu-search:focus { width: 160px; }
-  }
+  .btn-ghost { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; font-weight:500; color:var(--muted); text-decoration:none; background:transparent; transition:all .15s; }
+  .btn-ghost:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-light); text-decoration:none; }
 </style>
+{% endblock %}
 
-<div class="stu-page">
-  <div class="stu-shell">
+{% block content %}
 
-    <!-- Header -->
-    <div class="stu-header">
-      <div class="stu-header-left">
-        <div class="stu-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-          </svg>
-        </div>
-        <div>
-          <div class="stu-eyebrow">School Admin</div>
-          <div class="stu-title">Students</div>
-        </div>
-      </div>
-      <a href="{% url 'school_admin_dashboard' %}" class="btn-ghost-back">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M19 12H5M12 5l-7 7 7 7"/>
-        </svg>
-        Dashboard
-      </a>
+<div class="page-header">
+  <div>
+    <div class="page-title">🎓 Students</div>
+    <div class="page-sub">{{ school.name }} · {{ total_students }} student{{ total_students|pluralize }} enrolled</div>
+  </div>
+  <a href="{% url 'school_admin_dashboard' %}" class="btn-ghost">← Dashboard</a>
+</div>
+
+<!-- Stats + Chart -->
+<div class="top-grid">
+  <div class="stat-row">
+    <div class="stat-box">
+      <div class="stat-box-val">{{ total_students }}</div>
+      <div class="stat-box-lbl">Total Students</div>
     </div>
+    <div class="stat-box">
+      <div class="stat-box-val">{{ score_ranges.s90_100 }}</div>
+      <div class="stat-box-lbl">Top Performers (≥90%)</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-box-val">{{ score_ranges.s0_49 }}</div>
+      <div class="stat-box-lbl">Need Attention (&lt;50%)</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-box-val">{{ score_ranges.no_score }}</div>
+      <div class="stat-box-lbl">No Submissions</div>
+    </div>
+  </div>
 
-    <!-- Card -->
-    <div class="stu-card">
-      <div class="stu-stripe"></div>
-      <div class="stu-card-inner">
-
-        <div class="stu-card-head">
-          <div class="stu-section-title">All Students</div>
-          <div class="stu-card-head-right">
-            <span class="stu-count-badge">{{ students|length }} enrolled</span>
-            <div class="stu-search-wrap">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-              <input type="text" id="stu-search" placeholder="Search students…" autocomplete="off">
-            </div>
-          </div>
-        </div>
-
-        <div class="stu-table-wrap">
-          <table class="stu-table" id="stu-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Submissions</th>
-                <th>Avg Score</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for s in students %}
-              <tr data-name="{{ s.get_full_name|default:s.username|lower }}" data-email="{{ s.email|lower }}">
-                <td>
-                  <div class="stu-name-cell">
-                    <div class="stu-avatar">{{ s.get_full_name|default:s.username|slice:":1" }}</div>
-                    <span class="stu-fullname">{{ s.get_full_name|default:s.username }}</span>
-                  </div>
-                </td>
-                <td><span class="stu-email">{{ s.email }}</span></td>
-                <td>
-                  <span class="sub-pill">{{ s.submission_count }}</span>
-                </td>
-                <td>
-                  {% if s.avg_score %}
-                    {% if s.avg_score >= 75 %}
-                      <span class="score-pill high">{{ s.avg_score|floatformat:1 }}%</span>
-                    {% elif s.avg_score >= 50 %}
-                      <span class="score-pill mid">{{ s.avg_score|floatformat:1 }}%</span>
-                    {% else %}
-                      <span class="score-pill low">{{ s.avg_score|floatformat:1 }}%</span>
-                    {% endif %}
-                  {% else %}
-                    <span class="score-pill none">—</span>
-                  {% endif %}
-                </td>
-              </tr>
-              {% empty %}
-              <tr class="empty-row">
-                <td colspan="4">No students enrolled yet.</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-      </div>
-    </div><!-- /card -->
-
+  <!-- Doughnut Chart -->
+  <div class="chart-card">
+    <div class="chart-title">📊 Performance Distribution</div>
+    <canvas id="perfChart" height="180"></canvas>
   </div>
 </div>
 
-<script>
-  const searchInput = document.getElementById('stu-search');
-  const rows = document.querySelectorAll('#stu-table tbody tr[data-name]');
+<!-- Table -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">All Students</span>
+    <div class="search-bar">
+      <span style="color:var(--muted);">🔍</span>
+      <input type="text" id="stu-search" placeholder="Search by name or email…">
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table id="stu-table">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Email</th>
+          <th>Classrooms</th>
+          <th>Submissions</th>
+          <th>Performance</th>
+          <th>Joined</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in students %}
+        <tr data-name="{{ s.get_full_name|default:s.username|lower }}" data-email="{{ s.email|lower }}">
+          <td>
+            <div class="u-cell">
+              <div class="avatar">{{ s.get_full_name|default:s.username|slice:":1"|upper }}</div>
+              <div>
+                <div class="u-name">{{ s.get_full_name|default:s.username }}</div>
+                <div class="u-sub">@{{ s.username }}</div>
+              </div>
+            </div>
+          </td>
+          <td style="color:var(--muted);">{{ s.email }}</td>
+          <td><span class="num-pill">{{ s.classroom_count }}</span></td>
+          <td><span class="num-pill">{{ s.submission_count }}</span></td>
+          <td>
+            {% if s.avg_score %}
+              {% if s.avg_score >= 75 %}
+                <div class="score-bar-wrap">
+                  <div class="score-bar-bg"><div class="score-bar-fill score-high" style="width:{{ s.avg_score|floatformat:0 }}%"></div></div>
+                  <span class="score-label" style="color:var(--green);">{{ s.avg_score|floatformat:1 }}%</span>
+                </div>
+              {% elif s.avg_score >= 50 %}
+                <div class="score-bar-wrap">
+                  <div class="score-bar-bg"><div class="score-bar-fill score-mid" style="width:{{ s.avg_score|floatformat:0 }}%"></div></div>
+                  <span class="score-label" style="color:#9a6b1a;">{{ s.avg_score|floatformat:1 }}%</span>
+                </div>
+              {% else %}
+                <div class="score-bar-wrap">
+                  <div class="score-bar-bg"><div class="score-bar-fill score-low" style="width:{{ s.avg_score|floatformat:0 }}%"></div></div>
+                  <span class="score-label" style="color:var(--accent);">{{ s.avg_score|floatformat:1 }}%</span>
+                </div>
+              {% endif %}
+            {% else %}
+              <span style="color:var(--muted);font-style:italic;font-size:12px;">No score</span>
+            {% endif %}
+          </td>
+          <td style="color:var(--muted);font-size:12px;">{{ s.date_joined|date:"M d, Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted);">No students enrolled yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 
-  searchInput.addEventListener('input', function () {
-    const q = this.value.toLowerCase().trim();
-    rows.forEach(row => {
-      const match = row.dataset.name.includes(q) || row.dataset.email.includes(q);
-      row.classList.toggle('stu-hidden', !match);
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  // Search
+  document.getElementById('stu-search').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('#stu-table tbody tr[data-name]').forEach(r => {
+      r.classList.toggle('hidden', !r.dataset.name.includes(q) && !r.dataset.email.includes(q));
     });
   });
-</script>
 
+  // Doughnut chart
+  new Chart(document.getElementById('perfChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['90–100%', '75–89%', '50–74%', '0–49%', 'No Score'],
+      datasets: [{
+        data: [
+          {{ score_ranges.s90_100 }},
+          {{ score_ranges.s75_89 }},
+          {{ score_ranges.s50_74 }},
+          {{ score_ranges.s0_49 }},
+          {{ score_ranges.no_score }},
+        ],
+        backgroundColor: ['#2a9d5c','#1d5fa8','#f5a623','#c8401a','#e0d9d0'],
+        borderWidth: 2,
+        borderColor: '#fff',
+      }]
+    },
+    options: {
+      cutout: '65%',
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10 } } },
+    }
+  });
+</script>
 {% endblock %}

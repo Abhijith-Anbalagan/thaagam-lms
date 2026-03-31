@@ -251,6 +251,7 @@
     display: flex;
     flex-direction: column;
     transition: box-shadow .2s, transform .2s;
+    cursor: pointer;
   }
   .gc-card:hover {
     box-shadow: 0 4px 24px var(--shadow);
@@ -521,7 +522,7 @@
   {% if courses %}
   <div class="course-grid">
     {% for course in courses %}
-    <div class="gc-card">
+    <div class="gc-card" onclick="window.location='{% url 'superadmin_course_detail' course.pk %}'">
 
       <!-- Cover — image if uploaded, else CSS gradient fallback -->
       <div class="gc-cover" data-lang="{{ course.language|default:'english'|lower }}">
@@ -553,7 +554,7 @@
           <span>🏫 {{ course.schools.count }} school{{ course.schools.count|pluralize }}</span>
         </div>
 
-        <div class="gc-actions">
+        <div class="gc-actions" onclick="event.stopPropagation()">
           {% if course.is_free %}
             <a href="{% url 'superadmin_course_detail' course.pk %}" class="btn-primary-sm">▶ Learn Free</a>
           {% else %}

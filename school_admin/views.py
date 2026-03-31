@@ -18,7 +18,7 @@ def dashboard(request):
     teachers      = User.objects.filter(school=school, role='teacher')
     students      = User.objects.filter(school=school, role='student')
     management    = User.objects.filter(school=school, role='management')
-    pending       = Invitation.objects.filter(school=school, role='management', accepted=False).order_by('-created_at')
+    pending       = Invitation.objects.filter(school=school, accepted=False).order_by('-created_at')
     classrooms    = Classroom.objects.filter(school=school)
     announcements = Announcement.objects.filter(school=school).order_by('-created_at')[:5]
     return render(request, 'school_admin/dashboard.html', {
@@ -41,22 +41,22 @@ def dashboard(request):
 def invite_management(request):
     if request.method == 'POST':
         email = request.POST.get('email', '').strip()
+        role  = request.POST.get('role', 'management')
+        if role not in ('management', 'teacher'):
+            role = 'management'
         if email:
-            # Check if user already exists
             if User.objects.filter(email__iexact=email).exists():
                 messages.error(request, f'{email} is already a registered user.')
                 return redirect('school_admin_invite_management')
-
-            # Check if a pending invite already exists
             if Invitation.objects.filter(email__iexact=email, accepted=False).exists():
                 messages.error(request, f'An invitation has already been sent to {email}.')
                 return redirect('school_admin_invite_management')
-
             inv = Invitation.objects.create(
-                email=email, role='management',
+                email=email, role=role,
                 school=request.user.school, invited_by=request.user,
             )
             from django.conf import settings
+            from django.core.mail import send_mail
             site_url     = settings.SITE_URL.rstrip('/')
             activate_url = f'{site_url}/accept-invite/{inv.token}/'
             html_body = render_to_string('school_admin/email_invite.html', {
@@ -64,19 +64,126 @@ def invite_management(request):
                 'school_name':  request.user.school.name,
                 'invited_by':   request.user.get_full_name() or request.user.username,
                 'activate_url': activate_url,
+                'role':         role,
             })
-            from django.core.mail import send_mail
             send_mail(
                 subject=f"You're invited to join {request.user.school.name} on EduPlatform",
-                message=f'You have been invited as Management. Accept: {activate_url}',
+                message=f'You have been invited as {role.title()}. Accept: {activate_url}',
                 from_email=None,
                 recipient_list=[email],
                 html_message=html_body,
                 fail_silently=True,
             )
-            messages.success(request, f'Invitation sent to {email}.')
-            return redirect('school_admin_dashboard')
+            messages.success(request, f'Invitation sent to {email} as {role.title()}.')
+            return redirect('school_admin_invite_management')
     return render(request, 'school_admin/invite_management.html')
+
+
+@role_required('school_admin')
+def bulk_invite(request):
+    """Parse CSV/Excel file and send invitations to all valid emails."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    uploaded = request.FILES.get('file')
+    role     = request.POST.get('role', 'management')
+    if role not in ('management', 'teacher'):
+        role = 'management'
+
+    if not uploaded:
+        return JsonResponse({'error': 'No file uploaded.'}, status=400)
+
+    filename = uploaded.name.lower()
+    emails   = []
+
+    try:
+        if filename.endswith('.csv'):
+            import csv, io
+            text = uploaded.read().decode('utf-8-sig')  # handle BOM
+            reader = csv.reader(io.StringIO(text))
+            for row in reader:
+                for cell in row:
+                    val = cell.strip()
+                    if '@' in val:
+                        emails.append(val.lower())
+
+        elif filename.endswith(('.xlsx', '.xls')):
+            import openpyxl
+            wb = openpyxl.load_workbook(uploaded, read_only=True, data_only=True)
+            ws = wb.active
+            for row in ws.iter_rows(values_only=True):
+                for cell in row:
+                    if cell and isinstance(cell, str) and '@' in cell:
+                        emails.append(cell.strip().lower())
+            wb.close()
+        else:
+            return JsonResponse({'error': 'Only .csv, .xlsx or .xls files are supported.'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': f'Could not read file: {str(e)}'}, status=400)
+
+    if not emails:
+        return JsonResponse({'error': 'No email addresses found in the file.'}, status=400)
+
+    # Deduplicate
+    emails = list(dict.fromkeys(emails))
+
+    from django.conf import settings
+    from django.core.mail import send_mail
+
+    school      = request.user.school
+    invited_by  = request.user.get_full_name() or request.user.username
+    site_url    = settings.SITE_URL.rstrip('/')
+
+    sent = []
+    failed = []
+
+    for email in emails:
+        # Validate basic format
+        if len(email) > 254 or '.' not in email.split('@')[-1]:
+            failed.append({'email': email, 'reason': 'Invalid email format'})
+            continue
+
+        if User.objects.filter(email__iexact=email).exists():
+            failed.append({'email': email, 'reason': 'Already a registered user'})
+            continue
+
+        if Invitation.objects.filter(email__iexact=email, accepted=False, school=school).exists():
+            failed.append({'email': email, 'reason': 'Invite already sent'})
+            continue
+
+        try:
+            inv = Invitation.objects.create(
+                email=email, role=role,
+                school=school, invited_by=request.user,
+            )
+            activate_url = f'{site_url}/accept-invite/{inv.token}/'
+            html_body = render_to_string('school_admin/email_invite.html', {
+                'email':        email,
+                'school_name':  school.name,
+                'invited_by':   invited_by,
+                'activate_url': activate_url,
+                'role':         role,
+            })
+            send_mail(
+                subject=f"You're invited to join {school.name} on EduPlatform",
+                message=f'You have been invited as {role.title()}. Accept: {activate_url}',
+                from_email=None,
+                recipient_list=[email],
+                html_message=html_body,
+                fail_silently=True,
+            )
+            sent.append(email)
+        except Exception as e:
+            failed.append({'email': email, 'reason': str(e)})
+
+    return JsonResponse({
+        'success': True,
+        'total':   len(emails),
+        'sent':    len(sent),
+        'failed':  len(failed),
+        'sent_list':   sent,
+        'failed_list': failed,
+    })
 
 
 @role_required('school_admin')
@@ -84,7 +191,7 @@ def activate_invite(request, invite_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     school = request.user.school
-    inv    = get_object_or_404(Invitation, id=invite_id, school=school, role='management')
+    inv    = get_object_or_404(Invitation, id=invite_id, school=school)
     if inv.accepted:
         return JsonResponse({'error': 'Already accepted'}, status=400)
     if timezone.now() > inv.expires_at:
@@ -97,14 +204,14 @@ def activate_invite(request, invite_id):
         i += 1
     import secrets, string
     temp_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
-    user = User(username=username, email=inv.email, role='management', school=school)
+    user = User(username=username, email=inv.email, role=inv.role, school=school)
     user.set_password(temp_password)
     user.save()
     inv.accepted = True
     inv.save()
     from django.core.mail import send_mail
     send_mail(
-        subject='Your EduPlatform Management Account is Active',
+        subject=f'Your EduPlatform {inv.role.title()} Account is Active',
         message=f'Your account has been activated.\nEmail: {inv.email}\nTemporary Password: {temp_password}\nLogin: /login/',
         from_email=None,
         recipient_list=[inv.email],
@@ -113,10 +220,9 @@ def activate_invite(request, invite_id):
     return JsonResponse({
         'success': True,
         'user': {
-            'id':       user.id,
-            'name':     user.get_full_name() or user.username,
-            'email':    user.email,
-            'username': user.username,
+            'id':    user.id,
+            'name':  user.get_full_name() or user.username,
+            'email': user.email,
         }
     })
 
@@ -126,7 +232,7 @@ def delete_invite(request, invite_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     school = request.user.school
-    inv    = get_object_or_404(Invitation, id=invite_id, school=school, role='management', accepted=False)
+    inv    = get_object_or_404(Invitation, id=invite_id, school=school, accepted=False)
     inv.delete()
     return JsonResponse({'success': True})
 
@@ -183,19 +289,33 @@ def poll_management(request):
 
 @role_required('school_admin')
 def reports(request):
+    from classrooms.models import Classroom
     school     = request.user.school
-    classrooms = Classroom.objects.filter(school=school)
+    classrooms = Classroom.objects.filter(school=school).annotate(
+        num_students=Count('students', distinct=True),
+        assignment_count=Count('assignments', distinct=True),
+        submission_count=Count('assignments__submissions', distinct=True),
+        avg_score=Avg('assignments__submissions__score'),
+    )
     teachers   = User.objects.filter(school=school, role='teacher')
     students   = User.objects.filter(school=school, role='student')
     avg_score  = Submission.objects.filter(
         assignment__classroom__school=school, score__isnull=False
     ).aggregate(avg=Avg('score'))['avg']
+    total_submissions = Submission.objects.filter(
+        assignment__classroom__school=school
+    ).count()
+    graded_submissions = Submission.objects.filter(
+        assignment__classroom__school=school, score__isnull=False
+    ).count()
     return render(request, 'school_admin/reports.html', {
-        'school': school,
-        'classrooms': classrooms,
-        'avg_score': avg_score,
-        'total_teachers': teachers.count(),
-        'total_students': students.count(),
+        'school':              school,
+        'classrooms':          classrooms,
+        'avg_score':           avg_score,
+        'total_teachers':      teachers.count(),
+        'total_students':      students.count(),
+        'total_submissions':   total_submissions,
+        'graded_submissions':  graded_submissions,
     })
 
 
@@ -203,9 +323,14 @@ def reports(request):
 def teachers_list(request):
     school   = request.user.school
     teachers = User.objects.filter(school=school, role='teacher').annotate(
-        classroom_count=Count('classrooms')
-    )
-    return render(request, 'school_admin/teachers_list.html', {'teachers': teachers})
+        classroom_count=Count('classrooms'),
+        num_students=Count('classrooms__students', distinct=True),
+        submission_count=Count('classrooms__assignments__submissions', distinct=True),
+    ).prefetch_related('classrooms').order_by('first_name')
+    return render(request, 'school_admin/teachers_list.html', {
+        'teachers': teachers,
+        'school': school,
+    })
 
 
 @role_required('school_admin')
@@ -213,9 +338,30 @@ def students_list(request):
     school   = request.user.school
     students = User.objects.filter(school=school, role='student').annotate(
         submission_count=Count('submissions'),
-        avg_score=Avg('submissions__score')
-    )
-    return render(request, 'school_admin/students_list.html', {'students': students})
+        avg_score=Avg('submissions__score'),
+        classroom_count=Count('joined_classrooms', distinct=True),
+    ).order_by('first_name')
+
+    # Chart data
+    score_ranges = {'s90_100': 0, 's75_89': 0, 's50_74': 0, 's0_49': 0, 'no_score': 0}
+    for s in students:
+        if s.avg_score is None:
+            score_ranges['no_score'] += 1
+        elif s.avg_score >= 90:
+            score_ranges['s90_100'] += 1
+        elif s.avg_score >= 75:
+            score_ranges['s75_89'] += 1
+        elif s.avg_score >= 50:
+            score_ranges['s50_74'] += 1
+        else:
+            score_ranges['s0_49'] += 1
+
+    return render(request, 'school_admin/students_list.html', {
+        'students': students,
+        'school': school,
+        'score_ranges': score_ranges,
+        'total_students': students.count(),
+    })
 
 
 @role_required('school_admin')

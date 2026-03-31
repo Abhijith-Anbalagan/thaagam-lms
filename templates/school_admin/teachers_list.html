@@ -1,416 +1,165 @@
 {% extends 'base.html' %}
-{% block title %}Teachers — {{ request.user.school.name }}{% endblock %}
-{% block content %}
-
+{% block title %}Teachers — {{ school.name }}{% endblock %}
+{% block extra_css %}
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
-
   :root {
-    --ink: #0f0e0d;
-    --paper: #faf8f5;
-    --cream: #f2ede6;
-    --accent: #04003d;
-    --accent-light: #f5e8e3;
-    --muted: #7a7470;
-    --border: #e0d9d0;
-    --shadow: rgba(15,14,13,0.08);
-    --blue: #1d5fa8;
-    --blue-light: #e8f0fa;
-    --green: #2a9d5c;
-    --green-light: #e6f4ed;
+    --ink:#0f0e0d; --paper:#faf8f5; --cream:#f2ede6; --accent:#c8401a;
+    --accent-light:#f5e8e3; --muted:#7a7470; --border:#e0d9d0;
+    --shadow:rgba(15,14,13,0.08); --blue:#1d5fa8; --blue-light:#e8f0fa;
+    --green:#2a9d5c; --green-light:#e6f4ed;
   }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'DM Sans',sans-serif; background:var(--paper); }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+  .page-title  { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:900; color:var(--ink); }
+  .page-sub    { font-size:13px; color:var(--muted); margin-top:3px; }
 
-  .tch-page {
-    min-height: 100vh;
-    background: var(--paper);
-    font-family: 'DM Sans', sans-serif;
-    padding: 48px 20px 80px;
-  }
+  .stat-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:14px; margin-bottom:24px; }
+  .stat-box { background:#fff; border:1.5px solid var(--border); border-radius:12px; padding:18px 20px; }
+  .stat-box-val { font-family:'Playfair Display',serif; font-size:2rem; font-weight:700; color:var(--ink); }
+  .stat-box-lbl { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-top:4px; }
 
-  .tch-shell {
-    width: 100%;
-    max-width: 900px;
-    margin: 0 auto;
-  }
+  .card { background:#fff; border:1.5px solid var(--border); border-radius:14px; overflow:hidden; margin-bottom:20px; }
+  .card-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1.5px solid var(--border); background:var(--cream); flex-wrap:wrap; gap:10px; }
+  .card-title  { font-family:'Playfair Display',serif; font-size:15px; font-weight:700; color:var(--ink); }
 
-  .tch-shell > * {
-    animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-  .tch-shell > *:nth-child(1) { animation-delay: 0s; }
-  .tch-shell > *:nth-child(2) { animation-delay: 0.08s; }
+  .search-bar { display:flex; align-items:center; gap:8px; background:#fff; border:1.5px solid var(--border); border-radius:8px; padding:7px 12px; width:220px; transition:border-color .2s; }
+  .search-bar input { border:none; outline:none; font-size:13px; color:var(--ink); background:transparent; width:100%; font-family:'DM Sans',sans-serif; }
+  .search-bar:focus-within { border-color:var(--accent); }
 
-  @keyframes rise {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  thead tr { background:var(--cream); }
+  th { padding:11px 16px; text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); border-bottom:1.5px solid var(--border); white-space:nowrap; }
+  td { padding:13px 16px; border-bottom:1px solid var(--border); color:var(--ink); vertical-align:middle; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover td { background:var(--paper); }
 
-  /* ── Header ── */
-  .tch-header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    margin-bottom: 36px;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
+  .avatar { width:34px; height:34px; border-radius:50%; background:var(--green-light); color:var(--green); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; font-family:'Playfair Display',serif; }
+  .u-cell  { display:flex; align-items:center; gap:10px; }
+  .u-name  { font-weight:600; color:var(--ink); }
+  .u-sub   { font-size:11px; color:var(--muted); margin-top:2px; }
 
-  .tch-header-left { display: flex; align-items: center; gap: 14px; }
+  .badge-active   { background:var(--green-light); color:var(--green); font-size:11px; font-weight:600; padding:3px 10px; border-radius:99px; }
+  .badge-inactive { background:var(--accent-light); color:var(--accent); font-size:11px; font-weight:600; padding:3px 10px; border-radius:99px; }
 
-  .tch-icon {
-    width: 44px; height: 44px;
-    background: var(--accent);
-    border-radius: 12px;
-    display: grid; place-items: center;
-    flex-shrink: 0;
-  }
+  .cls-list { display:flex; flex-wrap:wrap; gap:4px; }
+  .cls-pill { background:var(--blue-light); color:var(--blue); font-size:11px; font-weight:500; padding:2px 8px; border-radius:6px; }
+  .cls-none { color:var(--muted); font-style:italic; font-size:12px; }
 
-  .tch-icon svg { color: #fff; }
+  .num-pill { background:var(--cream); color:var(--muted); font-size:12px; font-weight:600; padding:3px 10px; border-radius:99px; }
 
-  .tch-eyebrow {
-    font-size: 0.78rem;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 2px;
-  }
+  tr.hidden { display:none; }
 
-  .tch-title {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 1.95rem;
-    font-weight: 900;
-    color: var(--ink);
-    line-height: 1.1;
-  }
-
-  .btn-ghost-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--muted);
-    text-decoration: none;
-    padding: 8px 14px;
-    border-radius: 8px;
-    border: 1.5px solid var(--border);
-    background: transparent;
-    transition: border-color 0.2s, color 0.2s, background 0.2s;
-    white-space: nowrap;
-  }
-
-  .btn-ghost-back:hover {
-    color: var(--ink);
-    border-color: var(--ink);
-    background: var(--cream);
-  }
-
-  /* ── Card ── */
-  .tch-card {
-    background: #fff;
-    border: 1.5px solid var(--border);
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 2px 24px var(--shadow);
-  }
-
-  .tch-stripe {
-    height: 5px;
-    background: linear-gradient(90deg, var(--accent) 0%, #e8642e 60%, #f5a623 100%);
-  }
-
-  .tch-card-inner { padding: 32px 36px 36px; }
-
-  .tch-card-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 24px;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .tch-section-title {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: var(--ink);
-  }
-
-  .tch-card-head-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .tch-count-badge {
-    font-size: 0.78rem;
-    font-weight: 500;
-    padding: 4px 12px;
-    background: var(--cream);
-    border: 1.5px solid var(--border);
-    border-radius: 99px;
-    color: var(--muted);
-    white-space: nowrap;
-  }
-
-  /* ── Search ── */
-  .tch-search-wrap { position: relative; }
-
-  .tch-search-wrap svg {
-    position: absolute;
-    left: 11px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--muted);
-    pointer-events: none;
-  }
-
-  #tch-search {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.88rem;
-    font-weight: 400;
-    color: var(--ink);
-    background: var(--paper);
-    border: 1.5px solid var(--border);
-    border-radius: 8px;
-    padding: 7px 14px 7px 32px;
-    outline: none;
-    width: 190px;
-    transition: border-color 0.2s, box-shadow 0.2s, width 0.3s;
-  }
-
-  #tch-search::placeholder { color: #bbb5ae; font-weight: 300; }
-
-  #tch-search:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(200, 64, 26, 0.1);
-    width: 230px;
-  }
-
-  /* ── Table ── */
-  .tch-table-wrap {
-    overflow-x: auto;
-    border-radius: 12px;
-    border: 1.5px solid var(--border);
-  }
-
-  .tch-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.92rem;
-  }
-
-  .tch-table thead tr { background: var(--cream); }
-
-  .tch-table th {
-    padding: 12px 18px;
-    text-align: left;
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    border-bottom: 1.5px solid var(--border);
-    white-space: nowrap;
-  }
-
-  .tch-table th:last-child { text-align: right; }
-
-  .tch-table tbody tr {
-    border-bottom: 1px solid var(--border);
-    transition: background 0.15s;
-  }
-
-  .tch-table tbody tr:last-child { border-bottom: none; }
-  .tch-table tbody tr:hover { background: var(--paper); }
-
-  .tch-table td {
-    padding: 14px 18px;
-    color: var(--ink);
-    vertical-align: middle;
-  }
-
-  .tch-table td:last-child { text-align: right; }
-
-  /* avatar + name */
-  .tch-name-cell {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-  }
-
-  .tch-avatar {
-    width: 34px; height: 34px;
-    border-radius: 50%;
-    background: var(--green-light);
-    border: 1.5px solid #c0e4d0;
-    display: grid; place-items: center;
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: var(--green);
-    flex-shrink: 0;
-    text-transform: uppercase;
-  }
-
-  .tch-fullname { font-weight: 500; color: var(--ink); }
-
-  /* email */
-  .tch-email {
-    color: var(--muted);
-    font-weight: 300;
-    font-size: 0.88rem;
-  }
-
-  /* username */
-  .tch-username {
-    display: inline-block;
-    padding: 3px 10px;
-    background: var(--blue-light);
-    color: var(--blue);
-    border-radius: 6px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    letter-spacing: 0.04em;
-  }
-
-  /* classrooms */
-  .tch-class-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 12px;
-    border-radius: 99px;
-    font-size: 0.82rem;
-    font-weight: 500;
-  }
-
-  .tch-class-pill.has  { background: var(--accent-light); color: var(--accent); }
-  .tch-class-pill.none { background: var(--cream); color: var(--muted); font-weight: 300; font-style: italic; }
-
-  /* empty */
-  .tch-empty td {
-    text-align: center;
-    color: var(--muted);
-    font-weight: 300;
-    padding: 48px 18px;
-    font-style: italic;
-  }
-
-  tr.tch-hidden { display: none; }
-
-  @media (max-width: 640px) {
-    .tch-card-inner { padding: 22px 18px 28px; }
-    .tch-title { font-size: 1.55rem; }
-    #tch-search { width: 140px; }
-    #tch-search:focus { width: 160px; }
-  }
+  .btn-ghost { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; font-weight:500; color:var(--muted); text-decoration:none; background:transparent; transition:all .15s; }
+  .btn-ghost:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-light); text-decoration:none; }
 </style>
+{% endblock %}
 
-<div class="tch-page">
-  <div class="tch-shell">
+{% block content %}
 
-    <!-- Header -->
-    <div class="tch-header">
-      <div class="tch-header-left">
-        <div class="tch-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-          </svg>
-        </div>
-        <div>
-          <div class="tch-eyebrow">School Admin</div>
-          <div class="tch-title">Teachers</div>
-        </div>
-      </div>
-      <a href="{% url 'school_admin_dashboard' %}" class="btn-ghost-back">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M19 12H5M12 5l-7 7 7 7"/>
-        </svg>
-        Dashboard
-      </a>
+<div class="page-header">
+  <div>
+    <div class="page-title">👩🏫 Teachers</div>
+    <div class="page-sub">{{ school.name }} · {{ teachers|length }} teacher{{ teachers|length|pluralize }} on staff</div>
+  </div>
+  <a href="{% url 'school_admin_dashboard' %}" class="btn-ghost">← Dashboard</a>
+</div>
+
+<!-- Stats -->
+<div class="stat-row">
+  <div class="stat-box">
+    <div class="stat-box-val">{{ teachers|length }}</div>
+    <div class="stat-box-lbl">Total Teachers</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-box-val">{{ teachers|length }}</div>
+    <div class="stat-box-lbl">Active</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-box-val">
+      {% with total=0 %}
+        {% for t in teachers %}{% if t.classroom_count %}{{ t.classroom_count|add:total }}{% endif %}{% endfor %}
+      {% endwith %}
+      {{ teachers|length }}
     </div>
+    <div class="stat-box-lbl">Classrooms</div>
+  </div>
+</div>
 
-    <!-- Card -->
-    <div class="tch-card">
-      <div class="tch-stripe"></div>
-      <div class="tch-card-inner">
-
-        <div class="tch-card-head">
-          <div class="tch-section-title">All Teachers</div>
-          <div class="tch-card-head-right">
-            <span class="tch-count-badge">{{ teachers|length }} on staff</span>
-            <div class="tch-search-wrap">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-              <input type="text" id="tch-search" placeholder="Search teachers…" autocomplete="off">
+<!-- Table -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">All Teachers</span>
+    <div class="search-bar">
+      <span style="color:var(--muted);">🔍</span>
+      <input type="text" id="tch-search" placeholder="Search by name or email…">
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table id="tch-table">
+      <thead>
+        <tr>
+          <th>Teacher</th>
+          <th>Email</th>
+          <th>Status</th>
+          <th>Classrooms</th>
+          <th>Students</th>
+          <th>Submissions</th>
+          <th>Joined</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in teachers %}
+        <tr data-name="{{ t.get_full_name|default:t.username|lower }}" data-email="{{ t.email|lower }}">
+          <td>
+            <div class="u-cell">
+              <div class="avatar">{{ t.get_full_name|default:t.username|slice:":1"|upper }}</div>
+              <div>
+                <div class="u-name">{{ t.get_full_name|default:t.username }}</div>
+                <div class="u-sub">@{{ t.username }}</div>
+              </div>
             </div>
-          </div>
-        </div>
-
-        <div class="tch-table-wrap">
-          <table class="tch-table" id="tch-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Username</th>
-                <th>Classrooms</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for t in teachers %}
-              <tr data-name="{{ t.get_full_name|default:t.username|lower }}" data-email="{{ t.email|lower }}" data-username="{{ t.username|lower }}">
-                <td>
-                  <div class="tch-name-cell">
-                    <div class="tch-avatar">{{ t.get_full_name|default:t.username|slice:":1" }}</div>
-                    <span class="tch-fullname">{{ t.get_full_name|default:t.username }}</span>
-                  </div>
-                </td>
-                <td><span class="tch-email">{{ t.email }}</span></td>
-                <td><span class="tch-username">@{{ t.username }}</span></td>
-                <td>
-                  {% if t.classroom_count %}
-                    <span class="tch-class-pill has">{{ t.classroom_count }} class{{ t.classroom_count|pluralize:"room,rooms" }}</span>
-                  {% else %}
-                    <span class="tch-class-pill none">None</span>
-                  {% endif %}
-                </td>
-              </tr>
-              {% empty %}
-              <tr class="tch-empty">
-                <td colspan="4">No teachers on staff yet.</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-      </div>
-    </div><!-- /card -->
-
+          </td>
+          <td style="color:var(--muted);">{{ t.email }}</td>
+          <td>
+            {% if t.is_active %}
+              <span class="badge-active">Active</span>
+            {% else %}
+              <span class="badge-inactive">Inactive</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if t.classrooms.all %}
+              <div class="cls-list">
+                {% for cls in t.classrooms.all %}
+                  <span class="cls-pill">{{ cls.name }}</span>
+                {% endfor %}
+              </div>
+            {% else %}
+              <span class="cls-none">None assigned</span>
+            {% endif %}
+          </td>
+          <td><span class="num-pill">{{ t.num_students }}</span></td>
+          <td><span class="num-pill">{{ t.submission_count }}</span></td>
+          <td style="color:var(--muted);font-size:12px;">{{ t.date_joined|date:"M d, Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted);">No teachers yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
 
 <script>
-  const searchInput = document.getElementById('tch-search');
-  const rows = document.querySelectorAll('#tch-table tbody tr[data-name]');
-
-  searchInput.addEventListener('input', function () {
-    const q = this.value.toLowerCase().trim();
-    rows.forEach(row => {
-      const match =
-        row.dataset.name.includes(q) ||
-        row.dataset.email.includes(q) ||
-        row.dataset.username.includes(q);
-      row.classList.toggle('tch-hidden', !match);
+  document.getElementById('tch-search').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('#tch-table tbody tr[data-name]').forEach(r => {
+      r.classList.toggle('hidden', !r.dataset.name.includes(q) && !r.dataset.email.includes(q));
     });
   });
 </script>
-
 {% endblock %}

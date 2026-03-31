@@ -118,11 +118,12 @@ let deleteAdminId = null;
 const allAdmins = [
   {% for admin in admins %}
   {
-    id: {{ admin.pk }},
-    name: "{{ admin.get_full_name|default:admin.username|escapejs }}",
-    email: "{{ admin.email|escapejs }}",
-    school: "{{ admin.school.name|default:'No school'|escapejs }}",
-    active: {{ admin.is_active|yesno:'true,false' }},
+    id:        {{ admin.pk }},
+    name:      "{{ admin.get_full_name|default:admin.username|escapejs }}",
+    email:     "{{ admin.email|escapejs }}",
+    school:    "{{ admin.school.name|default:'No school'|escapejs }}",
+    schoolUrl: "{% if admin.school %}{% url 'superadmin_school_detail' admin.school.pk %}{% endif %}",
+    active:    {{ admin.is_active|yesno:'true,false' }},
   },
   {% endfor %}
 ];
@@ -159,7 +160,12 @@ function render() {
           </div>
         </div>
       </td>
-      <td style="font-size:13px;color:var(--muted);">🏫 <span id="school-lbl-${a.id}">${a.school}</span></td>
+      <td style="font-size:13px;">
+        ${a.schoolUrl
+          ? `<a href="${a.schoolUrl}" style="color:var(--blue);font-weight:500;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">🏫 ${a.school}</a>`
+          : `<span style="color:var(--muted);">🏫 ${a.school}</span>`
+        }
+      </td>
       <td>
         <span id="badge-${a.id}" class="badge ${a.active ? 'badge-success' : 'badge-danger'}">
           ${a.active ? 'Active' : 'Suspended'}
