@@ -30,24 +30,12 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding: 48px 20px 80px;
+    padding: 48px 24px 80px;
   }
 
   .prf-shell {
     width: 100%;
-    max-width: 640px;
-  }
-
-  .prf-shell > * {
-    animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-  .prf-shell > *:nth-child(1) { animation-delay: 0s; }
-  .prf-shell > *:nth-child(2) { animation-delay: 0.07s; }
-  .prf-shell > *:nth-child(3) { animation-delay: 0.14s; }
-
-  @keyframes rise {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
+    max-width: 780px;
   }
 
   /* ── Page header ── */
@@ -56,6 +44,7 @@
     align-items: center;
     gap: 14px;
     margin-bottom: 36px;
+    animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
   .prf-icon {
@@ -85,6 +74,25 @@
     line-height: 1.1;
   }
 
+  /* ── Two-column grid ── */
+  .prf-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .prf-col {
+    animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .prf-col:nth-child(1) { animation-delay: 0.07s; }
+  .prf-col:nth-child(2) { animation-delay: 0.16s; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
   /* ── Shared card shell ── */
   .prf-card {
     background: #fff;
@@ -92,7 +100,6 @@
     border-radius: 20px;
     overflow: hidden;
     box-shadow: 0 2px 24px var(--shadow);
-    margin-bottom: 20px;
   }
 
   .prf-stripe {
@@ -100,23 +107,52 @@
     background: linear-gradient(90deg, var(--accent) 0%, #e8642e 60%, #f5a623 100%);
   }
 
-  .prf-card-body { padding: 36px 40px 40px; }
+  .prf-stripe-blue {
+    height: 5px;
+    background: linear-gradient(90deg, #1d5fa8 0%, #3b82f6 60%, #60a5fa 100%);
+  }
+
+  .prf-card-body { padding: 32px 36px 36px; }
+
+  /* ── Card title ── */
+  .prf-card-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .prf-card-title-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+
+  .prf-card-title-icon.orange { background: var(--accent-light); }
+  .prf-card-title-icon.orange svg { color: var(--accent); }
+
+  .prf-card-title-icon.blue { background: var(--blue-light); }
+  .prf-card-title-icon.blue svg { color: var(--blue); }
 
   /* ── Avatar hero ── */
   .prf-avatar-hero {
     display: flex;
     align-items: center;
-    gap: 24px;
-    padding-bottom: 32px;
-    margin-bottom: 32px;
+    gap: 20px;
+    padding-bottom: 28px;
+    margin-bottom: 28px;
     border-bottom: 1.5px solid var(--border);
-    flex-wrap: wrap;
   }
 
   .prf-avatar-wrap { position: relative; flex-shrink: 0; }
 
   .prf-avatar-ring {
-    width: 88px; height: 88px;
+    width: 76px; height: 76px;
     border-radius: 50%;
     border: 2.5px solid var(--border);
     overflow: hidden;
@@ -132,7 +168,7 @@
 
   .prf-avatar-initials {
     font-family: 'Playfair Display', Georgia, serif;
-    font-size: 2rem;
+    font-size: 1.7rem;
     font-weight: 900;
     color: var(--accent);
   }
@@ -150,11 +186,10 @@
   .prf-avatar-ring:hover .prf-avatar-overlay { opacity: 1; }
   .prf-avatar-overlay svg { color: #fff; }
 
-  /* camera badge */
   .prf-cam-badge {
     position: absolute;
     bottom: 2px; right: 2px;
-    width: 24px; height: 24px;
+    width: 22px; height: 22px;
     background: var(--accent);
     border-radius: 50%;
     border: 2px solid #fff;
@@ -167,7 +202,7 @@
 
   .prf-identity-name {
     font-family: 'Playfair Display', Georgia, serif;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--ink);
     margin-bottom: 6px;
@@ -179,7 +214,7 @@
   .prf-identity-meta {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
     flex-wrap: wrap;
   }
 
@@ -187,7 +222,7 @@
     display: inline-block;
     padding: 3px 12px;
     border-radius: 99px;
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     font-weight: 500;
     letter-spacing: 0.04em;
     color: #fff;
@@ -202,14 +237,14 @@
     background: var(--cream);
     border: 1.5px solid var(--border);
     border-radius: 99px;
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     color: var(--muted);
     font-weight: 400;
   }
 
   .prf-school-chip svg { color: var(--accent); opacity: 0.7; }
 
-  /* ── Section divider ── */
+  /* ── Section label ── */
   .prf-section-label {
     display: flex;
     align-items: center;
@@ -219,7 +254,7 @@
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--muted);
-    margin-bottom: 20px;
+    margin-bottom: 18px;
   }
 
   .prf-section-label::after {
@@ -234,15 +269,15 @@
   .form-grid-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 16px;
+    gap: 14px;
+    margin-bottom: 14px;
   }
 
-  .field-block { display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; }
+  .field-block { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
   .field-block:last-of-type { margin-bottom: 0; }
 
   .field-label {
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     font-weight: 500;
     letter-spacing: 0.09em;
     text-transform: uppercase;
@@ -252,13 +287,13 @@
   .prf-input {
     width: 100%;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.97rem;
+    font-size: 0.95rem;
     font-weight: 400;
     color: var(--ink);
     background: var(--paper);
     border: 1.5px solid var(--border);
     border-radius: 10px;
-    padding: 11px 14px;
+    padding: 10px 13px;
     outline: none;
     transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
     -webkit-appearance: none;
@@ -272,6 +307,12 @@
     box-shadow: 0 0 0 3px rgba(200, 64, 26, 0.1);
   }
 
+  /* blue focus for password inputs */
+  .prf-input.blue-focus:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(29, 95, 168, 0.1);
+  }
+
   .form-error {
     font-size: 0.8rem;
     color: var(--red);
@@ -279,13 +320,13 @@
     margin-top: -4px;
   }
 
-  /* ── Actions row ── */
+  /* ── Actions ── */
   .prf-actions {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-top: 28px;
-    padding-top: 24px;
+    margin-top: 24px;
+    padding-top: 20px;
     border-top: 1.5px solid var(--border);
     flex-wrap: wrap;
   }
@@ -294,11 +335,11 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 11px 26px;
+    padding: 10px 22px;
     background: var(--accent);
     color: #fff;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.92rem;
+    font-size: 0.9rem;
     font-weight: 500;
     border: none;
     border-radius: 10px;
@@ -319,9 +360,9 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 11px 18px;
+    padding: 10px 16px;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.88rem;
+    font-size: 0.86rem;
     font-weight: 500;
     color: var(--red);
     text-decoration: none;
@@ -334,32 +375,41 @@
 
   .btn-signout:hover { background: #fecaca; border-color: var(--red); }
 
-  /* ── Password card ── */
   .btn-pw {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 11px 26px;
+    padding: 10px 22px;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.92rem;
+    font-size: 0.9rem;
     font-weight: 500;
-    color: var(--ink);
-    background: var(--cream);
-    border: 1.5px solid var(--border);
+    color: #fff;
+    background: var(--blue);
+    border: none;
     border-radius: 10px;
     cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
-    margin-top: 20px;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 14px rgba(29,95,168,0.28);
+    margin-top: 4px;
   }
 
-  .btn-pw:hover { background: var(--border); border-color: #c8bfb5; }
+  .btn-pw:hover {
+    background: #174e8a;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(29,95,168,0.36);
+  }
 
-  @media (max-width: 560px) {
-    .prf-card-body { padding: 24px 20px 28px; }
-    .form-grid-2 { grid-template-columns: 1fr; }
+  .btn-pw:active { transform: translateY(0); }
+
+  /* ── Responsive ── */
+  @media (max-width: 760px) {
+    .prf-columns { grid-template-columns: 1fr; }
     .prf-title { font-size: 1.55rem; }
-    .prf-avatar-hero { gap: 16px; }
-    .prf-identity-name { font-size: 1.2rem; }
+  }
+
+  @media (max-width: 480px) {
+    .prf-card-body { padding: 22px 18px 26px; }
+    .form-grid-2 { grid-template-columns: 1fr; }
   }
 </style>
 {% endblock %}
@@ -381,147 +431,169 @@
       </div>
     </div>
 
-    <!-- ── Profile card ── -->
-    <div class="prf-card">
-      <div class="prf-stripe"></div>
-      <div class="prf-card-body">
+    <!-- ── Two-column layout ── -->
+    <div class="prf-columns">
 
-        <!-- Avatar hero -->
-        <div class="prf-avatar-hero">
-          <div class="prf-avatar-wrap">
-            <label for="avatar-input" style="cursor:pointer;">
-              <div class="prf-avatar-ring">
-                {% if user.avatar %}
-                  <img src="{{ user.avatar.url }}" id="avatar-preview" alt="avatar">
-                {% else %}
-                  <div class="prf-avatar-initials" id="avatar-initials">
-                    {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+      <!-- ── LEFT: Profile Info ── -->
+      <div class="prf-col">
+        <div class="prf-card">
+          <div class="prf-stripe"></div>
+          <div class="prf-card-body">
+
+            <div class="prf-card-title">
+              <span class="prf-card-title-icon orange">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+              </span>
+              Profile Info
+            </div>
+
+            <!-- Avatar hero -->
+            <div class="prf-avatar-hero">
+              <div class="prf-avatar-wrap">
+                <label for="avatar-input" style="cursor:pointer;">
+                  <div class="prf-avatar-ring">
+                    {% if user.avatar %}
+                      <img src="{{ user.avatar.url }}" id="avatar-preview" alt="avatar">
+                    {% else %}
+                      <div class="prf-avatar-initials" id="avatar-initials">
+                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                      </div>
+                      <img src="" id="avatar-preview" style="display:none;width:100%;height:100%;object-fit:cover;">
+                    {% endif %}
+                    <div class="prf-avatar-overlay">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+                      </svg>
+                    </div>
                   </div>
-                  <img src="" id="avatar-preview" style="display:none;width:100%;height:100%;object-fit:cover;">
-                {% endif %}
-                <div class="prf-avatar-overlay">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                </label>
+                <div class="prf-cam-badge">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
                   </svg>
                 </div>
               </div>
-            </label>
-            <div class="prf-cam-badge">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
-              </svg>
+              <div class="prf-identity">
+                <div class="prf-identity-name">{{ user.get_full_name|default:user.username }}</div>
+                <div class="prf-identity-meta">
+                  <span class="prf-role-pill">{{ user.get_role_display }}</span>
+                  {% if user.school %}
+                  <span class="prf-school-chip">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    {{ user.school.name }}
+                  </span>
+                  {% endif %}
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div class="prf-identity">
-            <div class="prf-identity-name">{{ user.get_full_name|default:user.username }}</div>
-            <div class="prf-identity-meta">
-              <span class="prf-role-pill">{{ user.get_role_display }}</span>
-              {% if user.school %}
-              <span class="prf-school-chip">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
-                {{ user.school.name }}
-              </span>
-              {% endif %}
-            </div>
+            <!-- Profile form -->
+            <form method="post" enctype="multipart/form-data" id="profile-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="profile">
+              <input type="file" name="avatar" id="avatar-input" accept="image/*" style="display:none;" onchange="previewAvatar(this)">
+
+              <div class="prf-section-label">Personal Info</div>
+
+              <div class="form-grid-2">
+                <div class="field-block">
+                  <label class="field-label" for="id_first_name">First Name</label>
+                  <input type="text" id="id_first_name" name="first_name" value="{{ user.first_name }}" class="prf-input" placeholder="First name">
+                </div>
+                <div class="field-block">
+                  <label class="field-label" for="id_last_name">Last Name</label>
+                  <input type="text" id="id_last_name" name="last_name" value="{{ user.last_name }}" class="prf-input" placeholder="Last name">
+                </div>
+              </div>
+
+              <div class="field-block">
+                <label class="field-label" for="id_email">Email</label>
+                <input type="email" id="id_email" name="email" value="{{ user.email }}" class="prf-input" placeholder="your@email.com">
+              </div>
+<!--
+              <div class="field-block">
+                <label class="field-label" for="id_phone">Phone</label>
+                <input type="text" id="id_phone" name="phone" value="{{ user.phone }}" class="prf-input" placeholder="+91 00000 00000">
+              </div> -->
+
+              <div class="prf-actions">
+                <button type="submit" class="btn-save">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                  </svg>
+                  Save Changes
+                </button>
+                
+              </div>
+            </form>
+
           </div>
         </div>
-
-        <!-- Profile form -->
-        <form method="post" enctype="multipart/form-data" id="profile-form">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="profile">
-          <input type="file" name="avatar" id="avatar-input" accept="image/*" style="display:none;" onchange="previewAvatar(this)">
-
-          <div class="prf-section-label">Personal Info</div>
-
-          <div class="form-grid-2">
-            <div class="field-block">
-              <label class="field-label" for="id_first_name">First Name</label>
-              <input type="text" id="id_first_name" name="first_name" value="{{ user.first_name }}" class="prf-input" placeholder="First name">
-            </div>
-            <div class="field-block">
-              <label class="field-label" for="id_last_name">Last Name</label>
-              <input type="text" id="id_last_name" name="last_name" value="{{ user.last_name }}" class="prf-input" placeholder="Last name">
-            </div>
-          </div>
-
-          <div class="field-block">
-            <label class="field-label" for="id_email">Email</label>
-            <input type="email" id="id_email" name="email" value="{{ user.email }}" class="prf-input" placeholder="your@email.com">
-          </div>
-
-          <div class="field-block">
-            <label class="field-label" for="id_phone">Phone</label>
-            <input type="text" id="id_phone" name="phone" value="{{ user.phone }}" class="prf-input" placeholder="+91 00000 00000">
-          </div>
-
-          <div class="prf-actions">
-            <button type="submit" class="btn-save">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
-              </svg>
-              Save Changes
-            </button>
-            <a href="{% url 'logout' %}" class="btn-signout" onclick="return confirm('Sign out?')">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-              </svg>
-              Sign Out
-            </a>
-          </div>
-        </form>
-
       </div>
-    </div>
 
-    <!-- ── Password card ── -->
-    <div class="prf-card">
-      <div class="prf-stripe"></div>
-      <div class="prf-card-body">
+      <!-- ── RIGHT: Change Password ── -->
+      <div class="prf-col">
+        <div class="prf-card">
+          <div class="prf-stripe-blue"></div>
+          <div class="prf-card-body">
 
-        <div class="prf-section-label">Change Password</div>
-
-        <form method="post" action="{% url 'password_change' %}">
-          {% csrf_token %}
-
-          <div class="field-block">
-            <label class="field-label" for="id_old_password">Current Password</label>
-            <input type="password" id="id_old_password" name="old_password" class="prf-input" placeholder="Enter current password">
-            {% if pw_form.old_password.errors %}
-            <div class="form-error">{{ pw_form.old_password.errors.0 }}</div>
-            {% endif %}
-          </div>
-
-          <div class="form-grid-2">
-            <div class="field-block">
-              <label class="field-label" for="id_new_password1">New Password</label>
-              <input type="password" id="id_new_password1" name="new_password1" class="prf-input" placeholder="New password">
-              {% if pw_form.new_password1.errors %}
-              <div class="form-error">{{ pw_form.new_password1.errors.0 }}</div>
-              {% endif %}
+            <div class="prf-card-title">
+              <span class="prf-card-title-icon blue">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </span>
+              Change Password
             </div>
-            <div class="field-block">
-              <label class="field-label" for="id_new_password2">Confirm Password</label>
-              <input type="password" id="id_new_password2" name="new_password2" class="prf-input" placeholder="Confirm password">
-              {% if pw_form.new_password2.errors %}
-              <div class="form-error">{{ pw_form.new_password2.errors.0 }}</div>
-              {% endif %}
-            </div>
+
+            <form method="post" action="{% url 'password_change' %}">
+              {% csrf_token %}
+
+              <div class="prf-section-label">Security</div>
+
+              <div class="field-block">
+                <label class="field-label" for="id_old_password">Current Password</label>
+                <input type="password" id="id_old_password" name="old_password" class="prf-input blue-focus" placeholder="Enter current password">
+                {% if pw_form.old_password.errors %}
+                <div class="form-error">{{ pw_form.old_password.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="field-block">
+                <label class="field-label" for="id_new_password1">New Password</label>
+                <input type="password" id="id_new_password1" name="new_password1" class="prf-input blue-focus" placeholder="New password">
+                {% if pw_form.new_password1.errors %}
+                <div class="form-error">{{ pw_form.new_password1.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="field-block">
+                <label class="field-label" for="id_new_password2">Confirm Password</label>
+                <input type="password" id="id_new_password2" name="new_password2" class="prf-input blue-focus" placeholder="Confirm new password">
+                {% if pw_form.new_password2.errors %}
+                <div class="form-error">{{ pw_form.new_password2.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="prf-actions" style="border-top: none; padding-top: 8px; margin-top: 8px;">
+                <button type="submit" class="btn-pw">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  Update Password
+                </button>
+              </div>
+            </form>
+
           </div>
-
-          <button type="submit" class="btn-pw">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-            Update Password
-          </button>
-        </form>
-
+        </div>
       </div>
-    </div>
+
+    </div><!-- end .prf-columns -->
 
   </div>
 </div>
