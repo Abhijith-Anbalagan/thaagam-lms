@@ -209,7 +209,7 @@ body{font-family:var(--font);background:var(--page-bg);color:var(--text-1);font-
               <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=announce" class="tc">📢 Announce</a>
               <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=courses" class="tc">📚 Courses</a>
               <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=classwork" class="tc">📝 Classwork{% if classroom.ungraded_count %}<span class="dot"></span>{% endif %}</a>
-              <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=people" class="tc">👥 People</a>
+              <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=people" class="tc">👥 Students</a>
               <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=progress" class="tc">📊 Progress</a>
               <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=chat" class="tc">💬 Chat</a>
             </div>

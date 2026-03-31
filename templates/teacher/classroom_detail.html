@@ -287,7 +287,7 @@ body{font-family:var(--font);background:var(--page-bg);color:var(--text-1);font-
         <button class="btn btn-glass" onclick="switchTab('announce',this)">📢 Announce</button>
         <button class="btn btn-glass" onclick="switchTab('courses',this)">📚 Courses</button>
         <button class="btn btn-glass" onclick="switchTab('classwork',this)">📝 Classwork</button>
-        <button class="btn btn-glass" onclick="switchTab('people',this)">👥 People</button>
+        <button class="btn btn-glass" onclick="switchTab('people',this)">👥 Students</button>
         <button class="btn btn-glass" onclick="switchTab('progress',this)">📊 Progress</button>
         <button class="btn btn-glass" onclick="switchTab('chat',this)">💬 Chat</button>
       </div>
@@ -305,7 +305,7 @@ body{font-family:var(--font);background:var(--page-bg);color:var(--text-1);font-
       <div class="card">
         <div class="card-head">
           <div><div class="card-title">Enrolled Students</div><div class="card-sub">{{ classroom.students.count }} student{{ classroom.students.count|pluralize }}</div></div>
-          <button class="btn btn-ghost btn-sm" onclick="switchTab('people',document.querySelectorAll('.wb-actions .btn-glass')[4])">Manage People →</button>
+          <button class="btn btn-ghost btn-sm" onclick="switchTab('people',document.querySelectorAll('.wb-actions .btn-glass')[4])">Manage Students →</button>
         </div>
         {% if student_data %}
         <table class="dt">
@@ -517,6 +517,12 @@ body{font-family:var(--font);background:var(--page-bg);color:var(--text-1);font-
     <!-- ══ PROGRESS TAB ══ -->
     <div class="tab-pane" id="tab-progress">
       {% if student_progress %}
+      <div style="display:flex;justify-content:flex-end;margin-bottom:4px">
+        <button onclick="downloadProgressReport()" class="btn btn-primary btn-sm">
+          <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Download Report
+        </button>
+      </div>
       {% for row in student_progress %}
       <div class="student-card">
         <div class="sc-head">
@@ -691,6 +697,30 @@ function showToast(msg, type='success') {
   toast.classList.add('show');
   clearTimeout(toastT);
   toastT = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// ── DOWNLOAD PROGRESS REPORT ──
+function downloadProgressReport() {
+  const rows = [['Student','Email','Assignment','Max Score','Score','Percentage','Grade','Status']];
+  {% for row in student_progress %}
+  {% for r in row.rows %}
+  rows.push([
+    '{{ row.student.get_full_name|escapejs }}',
+    '{{ row.student.email|escapejs }}',
+    '{{ r.assignment.title|escapejs }}',
+    '{{ r.max_score }}',
+    '{% if r.score is not None %}{{ r.score }}{% else %}-{% endif %}',
+    '{% if r.pct is not None %}{{ r.pct }}%{% else %}-{% endif %}',
+    '{{ r.grade_letter }}',
+    '{% if r.submission %}{% if r.is_late %}Late{% else %}On time{% endif %}{% else %}Missing{% endif %}'
+  ]);
+  {% endfor %}
+  {% endfor %}
+  const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = '{{ classroom.name|escapejs }}_progress_report.csv';
+  a.click();
 }
 
 // ── RESTORE TAB FROM URL HASH OR QUERY ──
