@@ -200,8 +200,10 @@ class UserStatusConsumer(AsyncWebsocketConsumer):
 
 
 class PresenceConsumer(AsyncWebsocketConsumer):
-
     async def connect(self):
+        # ✅ Initialize first to prevent AttributeError in disconnect if auth fails
+        self.group_name = None 
+        
         user = self.scope['user']
         if not user.is_authenticated:
             await self.close()
@@ -218,6 +220,23 @@ class PresenceConsumer(AsyncWebsocketConsumer):
             'online_teachers': online_teacher_ids,
         }))
 
+    async def disconnect(self, code):
+        # ✅ Safe check: only discard if group_add was actually called
+        if self.group_name:
+            await self.channel_layer.group_discard(
+                self.group_name, 
+                self.channel_name
+            )
+
+    async def presence_update(self, event):
+        """Handler for 'presence.update' group messages"""
+        await self.send(text_data=json.dumps({
+            'type': 'presence.update',
+            'user_id': event['user_id'],
+            'user_role': event['user_role'],
+            'status': event['status'],
+        }))
+
     @database_sync_to_async
     def get_online_teachers(self):
         from django.core.cache import cache
@@ -225,21 +244,10 @@ class PresenceConsumer(AsyncWebsocketConsumer):
 
         online_teacher_ids = []
         for t in User.objects.filter(role='teacher'):
-            # Check if cache value is explicitly True (not None or False)
+            # Check if cache value is explicitly True
             if cache.get(f'user_online_{t.pk}') is True:
                 online_teacher_ids.append(t.pk)
         return online_teacher_ids
-
-    async def disconnect(self, code):
-        await self.channel_layer.group_discard(self.group_name, self.channel_name)
-
-    async def presence_update(self, event):
-        await self.send(text_data=json.dumps({
-            'type': 'presence.update',
-            'user_id': event['user_id'],
-            'user_role': event['user_role'],
-            'status': event['status'],
-        }))
 
 
 class StudentNotificationConsumer(AsyncWebsocketConsumer):
@@ -260,3 +268,4 @@ class StudentNotificationConsumer(AsyncWebsocketConsumer):
 
     async def student_notification(self, event):
         await self.send(text_data=json.dumps(event['payload']))
+
