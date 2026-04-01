@@ -368,3 +368,9 @@ def password_change_view(request):
         'pw_form': form,
         'show_pw': True,
     })
+    
+    
+    
+    
+    
+    
