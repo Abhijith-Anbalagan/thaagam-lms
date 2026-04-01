@@ -344,6 +344,10 @@
 
                 socket.onmessage = (event) => {
                     const data = JSON.parse(event.data);
+                    if (data.type === 'forced_redirect') {
+                        window.location.href = data.url;
+                        return;
+                    }
                     if (data.type === 'chat') {
                         if (activeNav === 'chat' && currentClassroomId === data.classroom_id) {
                             return;
