@@ -417,7 +417,10 @@ class StudentAnalyticsService(BaseAnalyticsService):
         ).order_by('month')
 
     def get_assignment_tracking(self, month=None):
-        """Get assignment completion status, optionally filtered by month."""
+        """Get assignment completion status for this student only."""
+        from django.db.models import OuterRef, Subquery, BooleanField, DateTimeField
+        from assignments.models import Submission
+
         assignments = Assignment.objects.filter(
             classroom__students=self.user
         )
@@ -425,27 +428,40 @@ class StudentAnalyticsService(BaseAnalyticsService):
         if month:
             try:
                 year, month_value = map(int, month.split('-'))
-                assignments = assignments.filter(due_date__year=year, due_date__month=month_value)
+                assignments = assignments.filter(
+                    due_date__year=year, due_date__month=month_value
+                )
             except ValueError:
                 pass
 
+        # Subqueries scoped to this student only
+        my_sub = Submission.objects.filter(
+            assignment=OuterRef('pk'), student=self.user
+        )
+
         assignments = assignments.annotate(
             submitted=Case(
-                When(submissions__student=self.user, then=True),
+                When(pk__in=Submission.objects.filter(student=self.user).values('assignment_id'), then=True),
                 default=False,
                 output_field=IntegerField()
             ),
-            score=F('submissions__score'),
-            submitted_at=F('submissions__submitted_at'),
+            score=Subquery(my_sub.values('score')[:1]),
+            submitted_at=Subquery(my_sub.values('submitted_at')[:1]),
             is_late=Case(
-                When(submissions__student=self.user, submissions__submitted_at__gt=F('due_date'), then=True),
+                When(
+                    pk__in=Submission.objects.filter(
+                        student=self.user,
+                        submitted_at__gt=F('assignment__due_date')
+                    ).values('assignment_id'),
+                    then=True
+                ),
                 default=False,
                 output_field=IntegerField()
             )
         ).values(
             'id', 'title', 'due_date', 'max_score', 'submitted',
             'score', 'submitted_at', 'is_late'
-        ).order_by('-due_date')
+        ).order_by('-due_date').distinct()
 
         return assignments
 

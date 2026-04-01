@@ -41,6 +41,8 @@ class User(AbstractUser):
     password_reset_token      = models.UUIDField(null=True, blank=True, unique=True)
     password_reset_expires_at = models.DateTimeField(null=True, blank=True)
 
+    last_seen = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         pass
 

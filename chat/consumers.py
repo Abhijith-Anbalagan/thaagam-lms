@@ -96,7 +96,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(room, payload)
 
     async def chat_message(self, event):
-        await self.send(text_data=json.dumps(event))
+        # Forward all fields including attachment info
+        await self.send(text_data=json.dumps({k: v for k, v in event.items() if k != 'type'} | {'type': 'chat_message'}))
 
     @database_sync_to_async
     def user_in_classroom(self, user, classroom_id):
@@ -165,6 +166,8 @@ class UserStatusConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, code):
         if hasattr(self, 'group_name'):
+            # Save last_seen timestamp for the disconnecting user
+            last_seen_iso = await self.save_last_seen(self.user.pk)
             # Broadcast offline status
             await self.channel_layer.group_send(
                 self.group_name,
@@ -174,6 +177,7 @@ class UserStatusConsumer(AsyncWebsocketConsumer):
                     'user_name': self.user.get_full_name() or self.user.username,
                     'status': 'offline',
                     'role': self.user.role,
+                    'last_seen': last_seen_iso,
                 }
             )
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
@@ -186,7 +190,16 @@ class UserStatusConsumer(AsyncWebsocketConsumer):
             'user_name': event['user_name'],
             'status': event['status'],
             'role': event['role'],
+            'last_seen': event.get('last_seen'),
         }))
+
+    @database_sync_to_async
+    def save_last_seen(self, user_id):
+        from django.utils import timezone
+        from accounts.models import User
+        now = timezone.now()
+        User.objects.filter(pk=user_id).update(last_seen=now)
+        return now.isoformat()
 
     @database_sync_to_async
     def user_in_classroom(self, user, classroom_id):
@@ -214,10 +227,11 @@ class PresenceConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
         # Send full teacher online snapshot on connect.
-        online_teacher_ids = await self.get_online_teachers()
+        online_teacher_ids, last_seen_map = await self.get_teacher_presence()
         await self.send(text_data=json.dumps({
             'type': 'presence.snapshot',
             'online_teachers': online_teacher_ids,
+            'last_seen': last_seen_map,
         }))
 
     async def disconnect(self, code):
@@ -235,19 +249,44 @@ class PresenceConsumer(AsyncWebsocketConsumer):
             'user_id': event['user_id'],
             'user_role': event['user_role'],
             'status': event['status'],
+            'last_seen': event.get('last_seen'),
         }))
 
     @database_sync_to_async
-    def get_online_teachers(self):
+    def get_teacher_presence(self):
         from django.core.cache import cache
+        from django.utils import timezone
+        from django.contrib.sessions.models import Session
         from accounts.models import User
 
-        online_teacher_ids = []
-        for t in User.objects.filter(role='teacher'):
-            # Check if cache value is explicitly True
-            if cache.get(f'user_online_{t.pk}') is True:
-                online_teacher_ids.append(t.pk)
-        return online_teacher_ids
+        # Build set of user IDs with active sessions as ground truth
+        active_user_ids = set()
+        try:
+            for session in Session.objects.filter(expire_date__gt=timezone.now()):
+                try:
+                    data = session.get_decoded()
+                    uid = data.get('_auth_user_id')
+                    if uid:
+                        active_user_ids.add(int(uid))
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        online_ids = []
+        last_seen_map = {}
+        for t in User.objects.filter(role='teacher').only('pk', 'last_seen'):
+            cached = cache.get(f'user_online_{t.pk}')
+            # Trust cache if explicitly set; fall back to session check
+            if cached is True or (cached is None and t.pk in active_user_ids):
+                online_ids.append(t.pk)
+                # Ensure cache is warm for next time
+                if cached is None:
+                    cache.set(f'user_online_{t.pk}', True, timeout=None)
+            else:
+                if t.last_seen:
+                    last_seen_map[str(t.pk)] = t.last_seen.isoformat()
+        return online_ids, last_seen_map
 
 
 class StudentNotificationConsumer(AsyncWebsocketConsumer):

@@ -90,6 +90,9 @@ def _student_layout_context(request, classroom=None, active_nav=None):
 def dashboard(request):
     classrooms    = request.user.joined_classrooms.select_related('teacher', 'school').all()
     classroom     = classrooms.first()
+
+    if not classroom:
+        return redirect('student_join_class')
     pending       = []
     graded_count  = 0
 
@@ -301,19 +304,71 @@ def classroom_grade(request, class_id):
 @role_required('student')
 def classroom_chat(request, class_id):
     classroom = _get_classroom(request, class_id)
-    teacher   = classroom.teacher
+
+    # All classrooms the student is in (for multi-classroom teacher list)
+    all_classrooms = request.user.joined_classrooms.select_related('teacher').all()
+
+    # Build teacher list — one per classroom, deduplicated by teacher pk
+    seen = set()
+    teachers = []
+    for c in all_classrooms:
+        t = c.teacher
+        if t.pk not in seen:
+            seen.add(t.pk)
+            teachers.append({'teacher': t, 'classroom': c})
+
+    # Selected teacher — from ?teacher= param or default to current classroom's teacher
+    selected_teacher_id = request.GET.get('teacher')
+    selected_entry = None
+    if selected_teacher_id:
+        for entry in teachers:
+            if str(entry['teacher'].pk) == str(selected_teacher_id):
+                selected_entry = entry
+                break
+    if not selected_entry and teachers:
+        selected_entry = next(
+            (e for e in teachers if e['classroom'].pk == classroom.pk),
+            teachers[0]
+        )
+
+    teacher          = selected_entry['teacher'] if selected_entry else classroom.teacher
+    chat_classroom   = selected_entry['classroom'] if selected_entry else classroom
+
     msgs = Message.objects.filter(
-        classroom=classroom,
+        classroom=chat_classroom,
         sender__in=[request.user, teacher],
         receiver__in=[request.user, teacher],
     ).order_by('created_at')
     msgs.filter(receiver=request.user, is_read=False).update(is_read=True)
     request.session['student_last_seen_messages'] = timezone.now().isoformat()
+
+    from django.core.cache import cache
+    from django.contrib.sessions.models import Session
+
+    cached = cache.get(f'user_online_{teacher.pk}')
+    if cached is None:
+        active_ids = set()
+        for s in Session.objects.filter(expire_date__gt=timezone.now()):
+            try:
+                uid = s.get_decoded().get('_auth_user_id')
+                if uid:
+                    active_ids.add(int(uid))
+            except Exception:
+                pass
+        teacher_online = teacher.pk in active_ids
+        if teacher_online:
+            cache.set(f'user_online_{teacher.pk}', True, timeout=None)
+    else:
+        teacher_online = cached is True
+
     context = {
-        'classroom':    classroom,
-        'teacher':      teacher,
-        'chat_messages': msgs,
-        'active_tab':   'chat',
+        'classroom':        chat_classroom,
+        'teacher':          teacher,
+        'teacher_online':   teacher_online,
+        'chat_messages':    msgs,
+        'teachers':         teachers,
+        'selected_teacher': teacher,
+        'active_tab':       'chat',
         **_student_layout_context(request, classroom=classroom, active_nav='chat'),
     }
     return render(request, 'student/classroom_chat.html', context)

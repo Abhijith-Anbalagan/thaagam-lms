@@ -167,6 +167,7 @@ def classroom_detail(request, classroom_id):
         elif request.POST.get('remove_student'):
             student_id = request.POST.get('remove_student')
             classroom.students.remove(student_id)
+            notify_students([student_id], {'type': 'forced_redirect', 'url': '/student/join/'})
             messages.success(request, 'Student removed.')
 
         # Create assignment
@@ -581,6 +582,7 @@ def classroom_peoples(request, classroom_id):
         student_id = request.POST.get('remove_student')
         if student_id:
             classroom.students.remove(student_id)
+            notify_students([student_id], {'type': 'forced_redirect', 'url': '/student/join/'})
             messages.success(request, 'Student removed.')
             return redirect('teacher_classroom_peoples', classroom_id=classroom_id)
 
