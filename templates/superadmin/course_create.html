@@ -43,7 +43,7 @@
         <select name="school" class="form-control"><option value="">— All Schools —</option>{% for s in form.school.field.queryset %}<option value="{{ s.pk }}">{{ s.name }}</option>{% endfor %}</select>
       </div>
       <div class="form-group"><label class="form-label">Status</label>
-        <select name="status" class="form-control"><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select>
+        <select name="status" class="form-control"><option value="draft">Unpublished</option><option value="published">Published</option><option value="archived">Archived</option></select>
       </div>
       <div class="flex gap-8"><button type="submit" class="btn btn-primary">Create</button><a href="{% url 'superadmin_dashboard' %}" class="btn btn-ghost">Cancel</a></div>
     </form>

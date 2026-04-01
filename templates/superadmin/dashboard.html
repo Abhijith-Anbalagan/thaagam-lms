@@ -85,6 +85,16 @@
     border-radius: var(--radius);
     padding: 18px 20px;
     font-family:'DM Sans',sans-serif;
+    cursor: pointer;
+    transition: all .15s;
+    text-decoration: none;
+    display: block;
+    color: inherit;
+  }
+  .sa-stat:hover {
+    border-color: var(--blue);
+    box-shadow: 0 2px 12px var(--shadow);
+    transform: translateY(-2px);
   }
   .sa-stat-icon { font-size: 18px; margin-bottom: 10px; }
   .sa-stat-val {
@@ -158,8 +168,15 @@
   }
   .school-table tbody tr:last-child td { border-bottom: none; }
   .school-table tbody tr:hover td { background: var(--cream); }
-  .school-name { font-weight: 600; color: var(--ink) !important; font-family:'Playfair Display',Georgia,serif; }
+  .school-name { font-weight: 600; color: var(--blue) !important; font-family:'Playfair Display',Georgia,serif; }
+  .school-name:hover { text-decoration: underline !important; }
   .school-table .col-action { text-align: right; }
+
+  .dash-pagination { display:flex; align-items:center; gap:6px; justify-content:center; margin-top:14px; flex-wrap:wrap; }
+  .dash-pg-btn { min-width:30px; height:30px; border-radius:7px; border:1.5px solid var(--border); background:#fff; font-size:12px; font-weight:500; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:var(--ink); font-family:'DM Sans',sans-serif; transition:background .15s,color .15s,border-color .15s; }
+  .dash-pg-btn:hover { background:var(--blue-light); border-color:var(--blue); color:var(--blue); }
+  .dash-pg-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .dash-pg-btn:disabled { opacity:.4; cursor:not-allowed; }
 
   .badge {
     display: inline-flex;
@@ -234,6 +251,7 @@
     display: flex;
     flex-direction: column;
     transition: box-shadow .2s, transform .2s;
+    cursor: pointer;
   }
   .gc-card:hover {
     box-shadow: 0 4px 24px var(--shadow);
@@ -381,31 +399,31 @@
 
 <!-- ── Stats ── -->
 <div class="sa-stat-grid">
-  <div class="sa-stat">
+  <a href="{% url 'superadmin_schools_list' %}" class="sa-stat">
     <div class="sa-stat-icon">🏫</div>
     <div class="sa-stat-val">{{ total_schools }}</div>
     <div class="sa-stat-lbl">Schools</div>
-  </div>
-  <div class="sa-stat">
+  </a>
+  <a href="{% url 'superadmin_all_admins' %}" class="sa-stat">
     <div class="sa-stat-icon">👔</div>
     <div class="sa-stat-val">{{ total_management }}</div>
     <div class="sa-stat-lbl">Management</div>
-  </div>
-  <div class="sa-stat">
+  </a>
+  <a href="{% url 'superadmin_schools_list' %}" class="sa-stat">
     <div class="sa-stat-icon">👩‍🏫</div>
     <div class="sa-stat-val">{{ total_teachers }}</div>
     <div class="sa-stat-lbl">Teachers</div>
-  </div>
-  <div class="sa-stat">
+  </a>
+  <a href="{% url 'superadmin_schools_list' %}" class="sa-stat">
     <div class="sa-stat-icon">🎓</div>
     <div class="sa-stat-val">{{ total_students }}</div>
     <div class="sa-stat-lbl">Students</div>
-  </div>
-  <div class="sa-stat">
+  </a>
+  <a href="{% url 'superadmin_schools_list' %}" class="sa-stat">
     <div class="sa-stat-icon">🏛</div>
     <div class="sa-stat-val">{{ total_classrooms }}</div>
     <div class="sa-stat-lbl">Classrooms</div>
-  </div>
+  </a>
 </div>
 
 <!-- ── Schools ── -->
@@ -426,26 +444,66 @@
         <th class="col-action"></th>
       </tr>
     </thead>
-    <tbody>
-      {% for school in schools %}
-      <tr>
-        <td class="school-name">{{ school.name }}</td>
-        <td>{{ school.student_count }}</td>
-        <td>{{ school.teacher_count }}</td>
-        <td>
-          {% if school.is_active %}
-            <span class="badge badge-success">Active</span>
-          {% else %}
-            <span class="badge badge-danger">Suspended</span>
-          {% endif %}
-        </td>
-        <td class="col-action">
-          <a href="{% url 'superadmin_school_detail' school.pk %}" class="btn-ghost">View</a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
+    <tbody id="dash-school-tbody"></tbody>
   </table>
+  <div class="dash-pagination" id="dash-pagination"></div>
+
+  <script>
+  const DASH_PER_PAGE = 5;
+  let dashPage = 1;
+  const dashSchools = [
+    {% for school in schools %}
+    {
+      pk:       {{ school.pk }},
+      name:     "{{ school.name|escapejs }}",
+      students: {{ school.student_count }},
+      teachers: {{ school.teacher_count }},
+      active:   {{ school.is_active|yesno:'true,false' }},
+      url:      "{% url 'superadmin_school_detail' school.pk %}",
+    },
+    {% endfor %}
+  ];
+
+  function dashRender() {
+    const start = (dashPage - 1) * DASH_PER_PAGE;
+    const page  = dashSchools.slice(start, start + DASH_PER_PAGE);
+    document.getElementById('dash-school-tbody').innerHTML = page.map(s => `
+      <tr>
+        <td><a href="${s.url}" class="school-name" style="text-decoration:none;">${s.name}</a></td>
+        <td>${s.students}</td>
+        <td>${s.teachers}</td>
+        <td>${s.active
+          ? '<span class="badge badge-success">Active</span>'
+          : '<span class="badge badge-danger">Suspended</span>'}
+        </td>
+        <td class="col-action"><a href="${s.url}" class="btn-ghost">View</a></td>
+      </tr>`).join('');
+    dashRenderPagination();
+  }
+
+  function dashRenderPagination() {
+    const total = Math.ceil(dashSchools.length / DASH_PER_PAGE);
+    const pg = document.getElementById('dash-pagination');
+    if (total <= 1) { pg.innerHTML = ''; return; }
+    let html = `<button class="dash-pg-btn" onclick="dashGoPage(${dashPage-1})" ${dashPage===1?'disabled':''}>&lsaquo;</button>`;
+    for (let p = 1; p <= total; p++) {
+      html += `<button class="dash-pg-btn ${p===dashPage?'active':''}" onclick="dashGoPage(${p})">${p}</button>`;
+    }
+    html += `<button class="dash-pg-btn" onclick="dashGoPage(${dashPage+1})" ${dashPage===total?'disabled':''}>&rsaquo;</button>`;
+    html += `<span style="font-size:11px;color:var(--muted);margin-left:4px;">${dashPage}/${total}</span>`;
+    pg.innerHTML = html;
+  }
+
+  function dashGoPage(p) {
+    const total = Math.ceil(dashSchools.length / DASH_PER_PAGE);
+    if (p < 1 || p > total) return;
+    dashPage = p;
+    dashRender();
+  }
+
+  dashRender();
+  </script>
+
   {% else %}
   <p class="sa-empty">No schools yet.</p>
   {% endif %}
@@ -464,13 +522,17 @@
   {% if courses %}
   <div class="course-grid">
     {% for course in courses %}
-    <div class="gc-card">
+    <div class="gc-card" onclick="window.location='{% url 'superadmin_course_detail' course.pk %}'">
 
-      <!-- Cover — pure CSS, no image needed -->
+      <!-- Cover — image if uploaded, else CSS gradient fallback -->
       <div class="gc-cover" data-lang="{{ course.language|default:'english'|lower }}">
-        <span class="gc-cover-mono">{{ course.title|slice:":2"|upper }}</span>
+        {% if course.cover_image %}
+          <img src="{{ course.cover_image.url }}" alt="{{ course.title }}" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;">
+        {% else %}
+          <span class="gc-cover-mono">{{ course.title|slice:":2"|upper }}</span>
+        {% endif %}
         <span class="status-badge {% if course.status == 'published' %}status-published{% else %}status-draft{% endif %}">
-          {{ course.get_status_display }}
+          {% if course.status == 'published' %}Published{% else %}Unpublished{% endif %}
         </span>
       </div>
 
@@ -492,7 +554,7 @@
           <span>🏫 {{ course.schools.count }} school{{ course.schools.count|pluralize }}</span>
         </div>
 
-        <div class="gc-actions">
+        <div class="gc-actions" onclick="event.stopPropagation()">
           {% if course.is_free %}
             <a href="{% url 'superadmin_course_detail' course.pk %}" class="btn-primary-sm">▶ Learn Free</a>
           {% else %}

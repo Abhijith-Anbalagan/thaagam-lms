@@ -135,6 +135,8 @@
       <option value="students_asc">Fewest Students</option>
       <option value="teachers_desc">Most Teachers</option>
       <option value="classrooms_desc">Most Classrooms</option>
+      <option value="performance_high">High Performance</option>
+      <option value="performance_low">Low Performance</option>
     </select>
     <span id="result-count" style="font-size:12px;color:var(--text-muted);"></span>
   </div>
@@ -158,6 +160,7 @@
           <th class="sortable" data-col="cc" onclick="columnSort('cc')">
             Classrooms <span class="sort-icon"></span>
           </th>
+          <th>Performance</th>
         </tr>
       </thead>
       <tbody id="breakdown-tbody"></tbody>
@@ -185,14 +188,26 @@ const MAX_TC = {{ max_teachers }};
 const allRows = [
   {% for s in school_breakdown %}
   {
+    id:     {{ s.id|default:s.pk|default:"0" }},
     name:   "{{ s.name|escapejs }}",
     active: {{ s.is_active|yesno:'true,false' }},
     sc:     {{ s.sc }},
     tc:     {{ s.tc }},
-    cc:     {{ s.cc }},   // classrooms count
+    cc:     {{ s.cc }},
+    performance: calculatePerformance({{ s.sc }}, {{ s.tc }}, {{ s.cc }}),
   },
   {% endfor %}
 ];
+
+// Calculate performance score based on student engagement metrics
+function calculatePerformance(students, teachers, classrooms) {
+  if (students === 0 || teachers === 0 || classrooms === 0) return 0;
+  // Performance formula: (students per teacher) × (students per classroom) × engagement factor
+  const studentTeacherRatio = students / teachers;
+  const studentClassroomRatio = students / classrooms;
+  const performanceScore = (studentTeacherRatio * 0.5) + (studentClassroomRatio * 0.5);
+  return performanceScore;
+}
 
 let filtered = [...allRows];
 
@@ -204,14 +219,23 @@ function filterAndRender() {
   // Filter by search
   filtered = allRows.filter(r => r.name.toLowerCase().includes(q));
 
-  // Sort
-  const [col, dir] = srt.split('_');
-  filtered.sort((a, b) => {
-    let va = col === 'name' ? a.name : a[col === 'students' ? 'sc' : col === 'teachers' ? 'tc' : col === 'classrooms' ? 'cc' : col];
-    let vb = col === 'name' ? b.name : b[col === 'students' ? 'sc' : col === 'teachers' ? 'tc' : col === 'classrooms' ? 'cc' : col];
-    if (typeof va === 'string') return dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
-    return dir === 'asc' ? va - vb : vb - va;
-  });
+  // Apply performance filter if selected
+  if (srt.startsWith('performance_')) {
+    const avgPerformance = allRows.reduce((sum, r) => sum + r.performance, 0) / allRows.length;
+    const isHigh = srt === 'performance_high';
+    filtered = filtered.filter(r => isHigh ? r.performance >= avgPerformance : r.performance < avgPerformance);
+    // Sort by performance
+    filtered.sort((a, b) => b.performance - a.performance);
+  } else {
+    // Regular sort
+    const [col, dir] = srt.split('_');
+    filtered.sort((a, b) => {
+      let va = col === 'name' ? a.name : a[col === 'students' ? 'sc' : col === 'teachers' ? 'tc' : col === 'classrooms' ? 'cc' : col];
+      let vb = col === 'name' ? b.name : b[col === 'students' ? 'sc' : col === 'teachers' ? 'tc' : col === 'classrooms' ? 'cc' : col];
+      if (typeof va === 'string') return dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+      return dir === 'asc' ? va - vb : vb - va;
+    });
+  }
 
   currentPage = 1;
   render();
@@ -261,7 +285,7 @@ function renderTable() {
       : '';
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted);">No schools found.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted);">No schools found.</td></tr>`;
     document.getElementById('pagination').innerHTML = '';
     return;
   }
@@ -269,11 +293,18 @@ function renderTable() {
   tbody.innerHTML = page.map((r, i) => {
     const scPct = MAX_SC > 0 ? Math.round((r.sc / MAX_SC) * 100) : 0;
     const tcPct = MAX_TC > 0 ? Math.round((r.tc / MAX_TC) * 100) : 0;
+    const avgPerformance = allRows.reduce((sum, row) => sum + row.performance, 0) / allRows.length;
+    const performanceLevel = r.performance >= avgPerformance ? '🟢 High' : '🔴 Low';
 
     return `
     <tr>
       <td style="color:var(--text-muted);font-size:12px;">${start + i + 1}</td>
-      <td><strong>${r.name}</strong></td>
+      <td>
+        ${r.id
+          ? `<a href="/superadmin/schools/${r.id}/" style="font-weight:600;color:var(--blue);text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${r.name}</a>`
+          : `<strong>${r.name}</strong>`
+        }
+      </td>
       <td>
         ${r.active
           ? '<span class="badge badge-success">Active</span>'
@@ -288,6 +319,7 @@ function renderTable() {
         <span class="bar-wrap"><span class="bar-fill bar-green" style="width:${tcPct}%"></span></span>
       </td>
       <td>${r.cc}</td>
+      <td><span style="font-weight:500;font-size:12px;">${performanceLevel}</span></td>
     </tr>`;
   }).join('');
 
@@ -331,9 +363,11 @@ function goPage(p) {
 
 // ── Export CSV ──────────────────────────────────────────
 function exportCSV() {
-  const headers = ['#', 'School Name', 'Status', 'Students', 'Teachers', 'Classrooms'];
+  const headers = ['#', 'School Name', 'Status', 'Students', 'Teachers', 'Classrooms', 'Performance'];
   const csvRows = [headers.join(',')];
+  const avgPerformance = allRows.reduce((sum, r) => sum + r.performance, 0) / allRows.length;
   filtered.forEach((r, i) => {
+    const perfLevel = r.performance >= avgPerformance ? 'High' : 'Low';
     csvRows.push([
       i + 1,
       `"${r.name.replace(/"/g, '""')}"`,
@@ -341,6 +375,7 @@ function exportCSV() {
       r.sc,
       r.tc,
       r.cc,
+      perfLevel,
     ].join(','));
   });
   const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });

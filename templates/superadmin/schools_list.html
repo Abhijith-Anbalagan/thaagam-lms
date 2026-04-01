@@ -145,7 +145,7 @@ function render() {
   tbody.innerHTML = page.map((s, i) => `
     <tr id="row-${s.id}">
       <td style="color:var(--text-muted);font-size:12px;">${start + i + 1}</td>
-      <td><strong>${s.name}</strong></td>
+      <td><a href="${s.detailUrl}" style="font-weight:600;color:var(--blue);text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${s.name}</a></td>
       <td style="color:var(--text-muted);max-width:180px;">${s.address}</td>
       <td>${s.students}</td>
       <td>${s.teachers}</td>
