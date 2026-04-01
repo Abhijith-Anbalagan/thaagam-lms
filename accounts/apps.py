@@ -8,6 +8,7 @@ class AccountsConfig(AppConfig):
 
     def ready(self):
         import accounts.signals  # noqa
+        self.initialize_teacher_presence_cache()
 
     def initialize_teacher_presence_cache(self):
         """Initialize presence cache for teachers on app startup."""

@@ -28,10 +28,17 @@
   .search-bar input::placeholder { color: #bbb5ae; font-weight: 300; }
   .search-bar:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(200, 64, 26, 0.1); }
   
-  .admin-card { display:flex; align-items:center; gap:14px; padding:16px 18px; border-radius:12px; border:1.5px solid var(--border); background:#fff; margin-bottom:12px; transition:box-shadow .2s, border-color .2s; }
-  .admin-card:hover { box-shadow: 0 2px 24px var(--shadow); border-color: var(--accent); }
-  
-  .avatar { width:42px; height:42px; border-radius:50%; background: var(--accent-light); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; flex-shrink:0; font-family: 'Playfair Display', Georgia, serif; }
+  .avatar { width:34px; height:34px; border-radius:50%; background:var(--accent-light); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; font-family:'Playfair Display',Georgia,serif; }
+
+  .admin-table { width:100%; border-collapse:collapse; font-family:'DM Sans',sans-serif; }
+  .admin-table thead tr { border-bottom:1.5px solid var(--border); background:#fafbfc; }
+  .admin-table th { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); padding:11px 14px; text-align:left; white-space:nowrap; }
+  .admin-table td { padding:12px 14px; font-size:13.5px; color:var(--ink); border-bottom:1px solid var(--border); vertical-align:middle; }
+  .admin-table tbody tr:last-child td { border-bottom:none; }
+  .admin-table tbody tr:hover td { background:#fafbfc; }
+  .u-cell { display:flex; align-items:center; gap:10px; }
+  .u-name { font-size:13.5px; font-weight:600; color:var(--ink); }
+  .u-sub  { font-size:12px; color:var(--muted); margin-top:2px; }
   
   .pagination { display:flex; align-items:center; gap:6px; justify-content:center; margin-top:24px; flex-wrap:wrap; }
   .pg-btn { min-width:34px; height:34px; border-radius:8px; border:1.5px solid var(--border); background:#fff; font-size:13px; font-weight:500; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:var(--ink); transition:background .15s,color .15s,border-color .15s; font-family: 'DM Sans', sans-serif; }
@@ -64,43 +71,22 @@
   </div>
 </div>
 
-<div class="card">
-  <div id="admin-list"></div>
-  <div class="pagination" id="pagination"></div>
-</div>
-
-<!-- Transfer Modal -->
-<div class="modal-wrap" id="transfer-modal">
-  <div class="modal-box">
-    <div class="modal-hd">
-      <h3>Transfer Admin</h3>
-      <button class="modal-close" onclick="closeTransfer()">✕</button>
-    </div>
-    <p style="font-size:14px;color:var(--text-muted);margin:0 0 14px;">
-      Transfer <strong id="transfer-name"></strong> to a different school.
-    </p>
-    <div class="form-group">
-      <label class="form-label">Select School</label>
-      <select id="transfer-school-select" class="form-control">
-       {% for school in schools_without_admin %}
-<option value="{{ school.pk }}">
-  {{ school.name }}{% if school.has_admin %} (has admin){% endif %}
-</option>
-{% empty %}
-<option disabled>No active schools available</option>
-{% endfor %}
-      </select>
-    </div>
-    <!-- Warning shown when selected school already has an admin -->
-    <p id="transfer-warn" style="display:none;font-size:12px;color:#e24b4a;
-       background:#fff0f0;padding:8px 12px;border-radius:6px;margin-top:6px;">
-      ⚠️ This school already has an admin. They will be unlinked.
-    </p>
-    <div style="display:flex;gap:10px;margin-top:12px;">
-      <button class="btn btn-primary" onclick="doTransfer()">Transfer</button>
-      <button class="btn btn-ghost" onclick="closeTransfer()">Cancel</button>
-    </div>
+<div class="card" style="padding:0;overflow:hidden;">
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Admin</th>
+          <th>School</th>
+          <th>Status</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="admin-list"></tbody>
+    </table>
   </div>
+  <div class="pagination" id="pagination" style="padding:16px;"></div>
 </div>
 
 <!-- Delete Modal -->
@@ -128,16 +114,16 @@ const CSRF = '{{ csrf_token }}';
 const PER_PAGE = 10;
 let currentPage = 1;
 let deleteAdminId = null;
-let transferAdminId = null;
 
 const allAdmins = [
   {% for admin in admins %}
   {
-    id: {{ admin.pk }},
-    name: "{{ admin.get_full_name|default:admin.username|escapejs }}",
-    email: "{{ admin.email|escapejs }}",
-    school: "{{ admin.school.name|default:'No school'|escapejs }}",
-    active: {{ admin.is_active|yesno:'true,false' }},
+    id:        {{ admin.pk }},
+    name:      "{{ admin.get_full_name|default:admin.username|escapejs }}",
+    email:     "{{ admin.email|escapejs }}",
+    school:    "{{ admin.school.name|default:'No school'|escapejs }}",
+    schoolUrl: "{% if admin.school %}{% url 'superadmin_school_detail' admin.school.pk %}{% endif %}",
+    active:    {{ admin.is_active|yesno:'true,false' }},
   },
   {% endfor %}
 ];
@@ -157,41 +143,66 @@ function render() {
   const list  = document.getElementById('admin-list');
 
   if (filtered.length === 0) {
-    list.innerHTML = '<p class="text-muted" style="text-align:center;padding:40px 0;">No admins found.</p>';
+    list.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px 0;color:var(--muted);">No admins found.</td></tr>';
     document.getElementById('pagination').innerHTML = '';
     return;
   }
 
-  list.innerHTML = page.map(a => `
-    <div class="admin-card" id="admin-card-${a.id}">
-      <div class="avatar">${a.name.charAt(0).toUpperCase()}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:14px;font-weight:600;color:var(--brand-dark);">${a.name}</div>
-        <div style="font-size:12px;color:var(--text-muted);">${a.email}</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">🏫 <span id="school-lbl-${a.id}">${a.school}</span></div>
-      </div>
-      <span id="badge-${a.id}" class="badge ${a.active ? 'badge-success' : 'badge-danger'}">${a.active ? 'Active' : 'Suspended'}</span>
-      <div style="display:flex;gap:6px;flex-shrink:0;">
-        <button class="btn btn-ghost btn-sm" onclick="openTransfer(${a.id}, '${a.name.replace(/'/g,"\\'")}')">Transfer</button>
-        <button id="toggle-btn-${a.id}" class="btn btn-sm ${a.active ? 'btn-outline' : 'btn-success'}" onclick="toggleAdmin(${a.id})">
-          ${a.active ? 'Suspend' : 'Activate'}
-        </button>
-        <button class="btn btn-sm btn-danger" onclick="openDelModal(${a.id}, '${a.name.replace(/'/g,"\\'")}')">🗑</button>
-      </div>
-    </div>`).join('');
+  list.innerHTML = page.map((a, i) => `
+    <tr id="admin-card-${a.id}">
+      <td style="color:var(--muted);font-size:12px;">${start + i + 1}</td>
+      <td>
+        <div class="u-cell">
+          <div class="avatar">${a.name.charAt(0).toUpperCase()}</div>
+          <div>
+            <div class="u-name">${a.name}</div>
+            <div class="u-sub">${a.email}</div>
+          </div>
+        </div>
+      </td>
+      <td style="font-size:13px;">
+        ${a.schoolUrl
+          ? `<a href="${a.schoolUrl}" style="color:var(--blue);font-weight:500;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">🏫 ${a.school}</a>`
+          : `<span style="color:var(--muted);">🏫 ${a.school}</span>`
+        }
+      </td>
+      <td>
+        <span id="badge-${a.id}" class="badge ${a.active ? 'badge-success' : 'badge-danger'}">
+          ${a.active ? 'Active' : 'Suspended'}
+        </span>
+      </td>
+      <td style="text-align:right;">
+        <div style="display:flex;gap:6px;justify-content:flex-end;">
+          <button id="toggle-btn-${a.id}" class="btn btn-sm ${a.active ? 'btn-outline' : 'btn-success'}" onclick="toggleAdmin(${a.id})">
+            ${a.active ? 'Suspend' : 'Activate'}
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="openDelModal(${a.id}, '${a.name.replace(/'/g,"\\'")}')">🗑</button>
+        </div>
+      </td>
+    </tr>`).join('');
 
   renderPagination();
 }
 
 function renderPagination() {
   const total = Math.ceil(filtered.length / PER_PAGE);
-  if (total <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
-  let html = `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+  const start = (currentPage - 1) * PER_PAGE + 1;
+  const end   = Math.min(currentPage * PER_PAGE, filtered.length);
+  const info  = filtered.length > 0
+    ? `<span style="font-size:12px;color:var(--muted);">Showing ${start}–${end} of ${filtered.length} admin${filtered.length !== 1 ? 's' : ''}</span>`
+    : '';
+
+  if (total <= 1) {
+    document.getElementById('pagination').innerHTML = info;
+    return;
+  }
+
+  let html = info;
+  html += `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
   for (let p = 1; p <= total; p++) {
     html += `<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
   }
   html += `<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===total?'disabled':''}>›</button>`;
-  html += `<span style="font-size:12px;color:var(--text-muted);margin-left:6px;">Page ${currentPage} of ${total}</span>`;
   document.getElementById('pagination').innerHTML = html;
 }
 
@@ -215,35 +226,6 @@ function toggleAdmin(id) {
     const btn   = document.getElementById('toggle-btn-' + id);
     if (badge) { badge.textContent = d.is_active ? 'Active' : 'Suspended'; badge.className = 'badge ' + (d.is_active ? 'badge-success' : 'badge-danger'); }
     if (btn)   { btn.textContent = d.is_active ? 'Suspend' : 'Activate'; btn.className = 'btn btn-sm ' + (d.is_active ? 'btn-outline' : 'btn-success'); }
-  });
-}
-
-function openTransfer(id, name) {
-  transferAdminId = id;
-  document.getElementById('transfer-name').textContent = name;
-  document.getElementById('transfer-modal').style.display = 'block';
-  document.body.style.overflow = 'hidden';
-}
-
-function closeTransfer() {
-  document.getElementById('transfer-modal').style.display = 'none';
-  document.body.style.overflow = '';
-  transferAdminId = null;
-}
-
-function doTransfer() {
-  const schoolId = document.getElementById('transfer-school-select').value;
-  fetch(`/superadmin/admins/${transferAdminId}/action/`, {
-    method: 'POST',
-    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `action=transfer&school_id=${schoolId}`,
-  }).then(r => r.json()).then(d => {
-    if (d.success) {
-      // Updates the school label on the card without page reload
-      const lbl = document.getElementById('school-lbl-' + transferAdminId);
-      if (lbl) lbl.textContent = d.school_name;
-      closeTransfer();
-    }
   });
 }
 
@@ -278,8 +260,8 @@ document.getElementById('del-confirm-btn').addEventListener('click', function ()
   });
 });
 
-[document.getElementById('transfer-modal'), document.getElementById('del-modal')].forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) { closeTransfer(); closeDelModal(); } });
+[document.getElementById('del-modal')].forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) { closeDelModal(); } });
 });
 
 render();

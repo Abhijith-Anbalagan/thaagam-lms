@@ -150,7 +150,7 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Playfair Display', serif; }
       {% if course.status == 'draft' %}
         <button type="submit" name="action" value="publish" class="btn btn-primary">Publish</button>
       {% else %}
-        <button type="submit" name="action" value="draft" class="btn btn-outline">Move to Draft</button>
+        <button type="submit" name="action" value="unpublished" class="btn btn-outline">Unpublished</button>
       {% endif %}
     </form>
     <a href="{% url 'superadmin_concept_add' course.pk %}" class="btn btn-ghost">+ Add Concept</a>

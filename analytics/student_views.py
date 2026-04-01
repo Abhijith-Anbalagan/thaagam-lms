@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from accounts.decorators import role_required
@@ -11,6 +11,10 @@ from students.views import _student_layout_context
 @role_required('student')
 def student_analytics(request):
     """Student analytics dashboard."""
+    classrooms = request.user.joined_classrooms.all()
+    if not classrooms.exists():
+        return redirect('student_join_class')
+
     service = StudentAnalyticsService(request.user)
 
     context = {

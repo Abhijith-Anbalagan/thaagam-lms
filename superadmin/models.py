@@ -34,7 +34,7 @@ class School(models.Model):
 
 
 class GlobalCourse(models.Model):
-    STATUS = [('draft', 'Draft'), ('published', 'Published')]
+    STATUS = [('draft', 'Unpublished'), ('published', 'Published')]
     LEVEL  = [('beginner', 'Beginner'), ('intermediate', 'Intermediate'), ('advanced', 'Advanced')]
     LANGUAGE_CHOICES = [
         ('english', 'English'), ('tamil', 'Tamil'), ('hindi', 'Hindi'),

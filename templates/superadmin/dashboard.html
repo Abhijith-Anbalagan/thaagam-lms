@@ -131,11 +131,18 @@
     background: var(--surface);
     border: 1.5px solid var(--border);
     border-radius: var(--radius);
-    padding: 20px 22px 18px;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.2s, box-shadow 0.2s;
-    animation: fadeUp 0.5s ease both;
+    padding: 18px 20px;
+    font-family:'DM Sans',sans-serif;
+    cursor: pointer;
+    transition: all .15s;
+    text-decoration: none;
+    display: block;
+    color: inherit;
+  }
+  .sa-stat:hover {
+    border-color: var(--blue);
+    box-shadow: 0 2px 12px var(--shadow);
+    transform: translateY(-2px);
   }
 
   .stat-card:hover {
@@ -265,40 +272,19 @@
     border-bottom: 1px solid var(--border);
     vertical-align: middle;
   }
+  .school-table tbody tr:last-child td { border-bottom: none; }
+  .school-table tbody tr:hover td { background: var(--cream); }
+  .school-name { font-weight: 600; color: var(--blue) !important; font-family:'Playfair Display',Georgia,serif; }
+  .school-name:hover { text-decoration: underline !important; }
+  .school-table .col-action { text-align: right; }
 
-  .schools-table tbody tr:last-child td { border-bottom: none; }
+  .dash-pagination { display:flex; align-items:center; gap:6px; justify-content:center; margin-top:14px; flex-wrap:wrap; }
+  .dash-pg-btn { min-width:30px; height:30px; border-radius:7px; border:1.5px solid var(--border); background:#fff; font-size:12px; font-weight:500; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:var(--ink); font-family:'DM Sans',sans-serif; transition:background .15s,color .15s,border-color .15s; }
+  .dash-pg-btn:hover { background:var(--blue-light); border-color:var(--blue); color:var(--blue); }
+  .dash-pg-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .dash-pg-btn:disabled { opacity:.4; cursor:not-allowed; }
 
-  .schools-table tbody tr {
-    transition: background 0.15s;
-    cursor: pointer;
-  }
-
-  .schools-table tbody tr:hover td {
-    background: var(--surface-2);
-  }
-
-  .school-name-cell {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    color: var(--ink) !important;
-    font-size: 13px !important;
-  }
-
-  .count-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-radius: 99px;
-    padding: 3px 10px;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--ink-2);
-  }
-
-  /* ── Status badges ── */
-  .status {
+  .badge {
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -352,13 +338,13 @@
 
   .course-mini {
     display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 22px;
-    border-bottom: 1px solid var(--border);
-    transition: background 0.15s;
-    text-decoration: none;
-    color: inherit;
+    flex-direction: column;
+    transition: box-shadow .2s, transform .2s;
+    cursor: pointer;
+  }
+  .gc-card:hover {
+    box-shadow: 0 4px 24px var(--shadow);
+    transform: translateY(-2px);
   }
 
   .course-mini:last-child { border-bottom: none; }
@@ -439,53 +425,158 @@
 {% block content %}
 <div class="dash">
 
-  <!-- ── Top Bar ── -->
-  <div class="dash-topbar">
-    <div>
-      <div class="dash-greeting">
-        Good day, <span>{{ user.first_name|default:"Admin" }}</span> 
+<!-- ── Header ── -->
+<div class="sa-header">
+  <div>
+    <h1>Dashboard</h1>
+    <p>Platform overview — all schools &amp; courses</p>
+  </div>
+  <div class="pill-bar">
+    <a href="{% url 'superadmin_create_school' %}"  class="pill active">+ New School</a>
+    <a href="{% url 'superadmin_course_list' %}"    class="pill">Course</a>
+    <a href="{% url 'superadmin_all_admins' %}"     class="pill">Admins</a>
+    <a href="{% url 'superadmin_analytics' %}"      class="pill">Analytics</a>
+  </div>
+</div>
+
+<!-- ── Stats ── -->
+<div class="sa-stat-grid">
+  <a href="{% url 'superadmin_schools_list' %}" class="sa-stat">
+    <div class="sa-stat-icon">🏫</div>
+    <div class="sa-stat-val">{{ total_schools }}</div>
+    <div class="sa-stat-lbl">Schools</div>
+  </a>
+  <a href="{% url 'superadmin_all_admins' %}" class="sa-stat">
+    <div class="sa-stat-icon">👔</div>
+    <div class="sa-stat-val">{{ total_management }}</div>
+    <div class="sa-stat-lbl">Management</div>
+  </a>
+  <a href="{% url 'superadmin_schools_list' %}" class="sa-stat">
+    <div class="sa-stat-icon">👩‍🏫</div>
+    <div class="sa-stat-val">{{ total_teachers }}</div>
+    <div class="sa-stat-lbl">Teachers</div>
+  </a>
+  <a href="{% url 'superadmin_schools_list' %}" class="sa-stat">
+    <div class="sa-stat-icon">🎓</div>
+    <div class="sa-stat-val">{{ total_students }}</div>
+    <div class="sa-stat-lbl">Students</div>
+  </a>
+  <a href="{% url 'superadmin_schools_list' %}" class="sa-stat">
+    <div class="sa-stat-icon">🏛</div>
+    <div class="sa-stat-val">{{ total_classrooms }}</div>
+    <div class="sa-stat-lbl">Classrooms</div>
+  </a>
+</div>
+
+<!-- ── Schools ── -->
+<div class="sa-card">
+  <div class="sa-section-head">
+    <h2>Schools</h2>
+    <a href="{% url 'superadmin_schools_list' %}" class="sa-view-link">View all →</a>
+  </div>
+
+  {% if schools %}
+  <table class="school-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Students</th>
+        <th>Teachers</th>
+        <th>Status</th>
+        <th class="col-action"></th>
+      </tr>
+    </thead>
+    <tbody id="dash-school-tbody"></tbody>
+  </table>
+  <div class="dash-pagination" id="dash-pagination"></div>
+
+  <script>
+  const DASH_PER_PAGE = 5;
+  let dashPage = 1;
+  const dashSchools = [
+    {% for school in schools %}
+    {
+      pk:       {{ school.pk }},
+      name:     "{{ school.name|escapejs }}",
+      students: {{ school.student_count }},
+      teachers: {{ school.teacher_count }},
+      active:   {{ school.is_active|yesno:'true,false' }},
+      url:      "{% url 'superadmin_school_detail' school.pk %}",
+    },
+    {% endfor %}
+  ];
+
+  function dashRender() {
+    const start = (dashPage - 1) * DASH_PER_PAGE;
+    const page  = dashSchools.slice(start, start + DASH_PER_PAGE);
+    document.getElementById('dash-school-tbody').innerHTML = page.map(s => `
+      <tr>
+        <td><a href="${s.url}" class="school-name" style="text-decoration:none;">${s.name}</a></td>
+        <td>${s.students}</td>
+        <td>${s.teachers}</td>
+        <td>${s.active
+          ? '<span class="badge badge-success">Active</span>'
+          : '<span class="badge badge-danger">Suspended</span>'}
+        </td>
+        <td class="col-action"><a href="${s.url}" class="btn-ghost">View</a></td>
+      </tr>`).join('');
+    dashRenderPagination();
+  }
+
+  function dashRenderPagination() {
+    const total = Math.ceil(dashSchools.length / DASH_PER_PAGE);
+    const pg = document.getElementById('dash-pagination');
+    if (total <= 1) { pg.innerHTML = ''; return; }
+    let html = `<button class="dash-pg-btn" onclick="dashGoPage(${dashPage-1})" ${dashPage===1?'disabled':''}>&lsaquo;</button>`;
+    for (let p = 1; p <= total; p++) {
+      html += `<button class="dash-pg-btn ${p===dashPage?'active':''}" onclick="dashGoPage(${p})">${p}</button>`;
+    }
+    html += `<button class="dash-pg-btn" onclick="dashGoPage(${dashPage+1})" ${dashPage===total?'disabled':''}>&rsaquo;</button>`;
+    html += `<span style="font-size:11px;color:var(--muted);margin-left:4px;">${dashPage}/${total}</span>`;
+    pg.innerHTML = html;
+  }
+
+  function dashGoPage(p) {
+    const total = Math.ceil(dashSchools.length / DASH_PER_PAGE);
+    if (p < 1 || p > total) return;
+    dashPage = p;
+    dashRender();
+  }
+
+  dashRender();
+  </script>
+
+  {% else %}
+  <p class="sa-empty">No schools yet.</p>
+  {% endif %}
+</div>
+
+<!-- ── Courses ── -->
+<div class="sa-card">
+  <div class="sa-section-head">
+    <h2>
+      Recent Courses
+      <span style="font-weight:400; color:var(--ink-4); font-size:12px;">({{ courses|length }} latest)</span>
+    </h2>
+    <a href="{% url 'superadmin_all_courses' %}" class="sa-view-link">View all →</a>
+  </div>
+
+  {% if courses %}
+  <div class="course-grid">
+    {% for course in courses %}
+    <div class="gc-card" onclick="window.location='{% url 'superadmin_course_detail' course.pk %}'">
+
+      <!-- Cover — image if uploaded, else CSS gradient fallback -->
+      <div class="gc-cover" data-lang="{{ course.language|default:'english'|lower }}">
+        {% if course.cover_image %}
+          <img src="{{ course.cover_image.url }}" alt="{{ course.title }}" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;">
+        {% else %}
+          <span class="gc-cover-mono">{{ course.title|slice:":2"|upper }}</span>
+        {% endif %}
+        <span class="status-badge {% if course.status == 'published' %}status-published{% else %}status-draft{% endif %}">
+          {% if course.status == 'published' %}Published{% else %}Unpublished{% endif %}
+        </span>
       </div>
-      <div class="dash-sub">Platform overview — all schools &amp; courses</div>
-    </div>
-    <div class="dash-actions">
-      <a href="{% url 'superadmin_create_school' %}" class="btn-dash primary">+ New School</a>
-      <a href="{% url 'superadmin_course_list' %}"   class="btn-dash">📘 Course</a>
-      <a href="{% url 'superadmin_all_admins' %}"    class="btn-dash">👤 Admins</a>
-      <a href="{% url 'superadmin_analytics' %}"     class="btn-dash">📊 Analytics</a>
-    </div>
-  </div>
-
-  <!-- ── Stats ── -->
-  <div class="stat-grid">
-    <div class="stat-card">
-      <span class="stat-emoji"></span>
-      <div class="stat-val">{{ total_schools }}</div>
-      <div class="stat-lbl">Schools</div>
-    </div>
-    <div class="stat-card">
-      <span class="stat-emoji"></span>
-      <div class="stat-val">{{ total_management }}</div>
-      <div class="stat-lbl">Management</div>
-    </div>
-    <div class="stat-card">
-      <span class="stat-emoji"></span>
-      <div class="stat-val">{{ total_teachers }}</div>
-      <div class="stat-lbl">Teachers</div>
-    </div>
-    <div class="stat-card">
-      <span class="stat-emoji"></span>
-      <div class="stat-val">{{ total_students }}</div>
-      <div class="stat-lbl">Students</div>
-    </div>
-    <div class="stat-card">
-      <span class="stat-emoji"></span>
-      <div class="stat-val">{{ total_classrooms }}</div>
-      <div class="stat-lbl">Classrooms</div>
-    </div>
-  </div>
-
-  <!-- ── Body ── -->
-  <div class="dash-body">
 
     <!-- LEFT: Schools -->
     <div class="dash-card">
@@ -553,30 +644,18 @@
           <a href="{% url 'superadmin_all_courses' %}" class="dash-view-all">View all →</a>
         </div>
 
-        {% if courses %}
-          {% for course in courses %}
-          <a href="{% url 'superadmin_course_detail' course.pk %}" class="course-mini">
-            <div class="course-mini-cover" data-lang="{{ course.language|default:'english'|lower }}">
-              {{ course.title|slice:":2"|upper }}
-            </div>
-            <div class="course-mini-info">
-              <div class="course-mini-title">{{ course.title }}</div>
-              <div class="course-mini-meta">
-                📚 {{ course.concepts.count }} concepts &nbsp;·&nbsp;
-                <span class="status {% if course.status == 'published' %}status-published{% else %}status-draft{% endif %}" 
-                      style="padding:2px 8px; font-size:10px;">
-                  {{ course.get_status_display }}
-                </span>
-              </div>
-            </div>
-          </a>
-          {% endfor %}
-        {% else %}
-        <div class="empty-state">
-          No courses yet.<br>
-          <a href="{% url 'superadmin_course_list' %}" style="color:var(--accent); font-weight:600;">
-            Create one →
-          </a>
+        <div class="gc-actions" onclick="event.stopPropagation()">
+          {% if course.is_free %}
+            <a href="{% url 'superadmin_course_detail' course.pk %}" class="btn-primary-sm">▶ Learn Free</a>
+          {% else %}
+            <a href="{% url 'superadmin_course_detail' course.pk %}" class="btn-primary-sm">▶ Open</a>
+          {% endif %}
+          {% if course.has_certificate %}
+            <button class="btn-cert-sm"
+              onclick="window.location='{% url 'superadmin_course_detail' course.pk %}'">
+              🏅 Certificate
+            </button>
+          {% endif %}
         </div>
         {% endif %}
       </div>

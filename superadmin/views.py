@@ -484,10 +484,11 @@ def course_detail(request, course_id):
 
     if request.method == 'POST':
         action = request.POST.get('action')
-        if action in ('publish', 'draft'):
+        if action in ('publish', 'unpublished'):
             course.status = 'published' if action == 'publish' else 'draft'
             course.save()
-            messages.success(request, f'Course marked as {course.status}.')
+            status_display = 'Published' if course.status == 'published' else 'Unpublished'
+            messages.success(request, f'Course Marked As {status_display}')
             return redirect('superadmin_course_detail', course_id=course.pk)
         # NEW: handle course meta update (cover, language, hours, summary)
         if action == 'update_meta':

@@ -384,7 +384,7 @@ body { font-family: var(--font); background: var(--page-bg); color: var(--text-1
               <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=classwork" class="tc">
                 📝 Classwork{% if classroom.ungraded_count %}<span class="dot"></span>{% endif %}
               </a>
-              <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=people" class="tc">👥 People</a>
+              <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=people" class="tc">👥 Students</a>
               <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=progress" class="tc">📊 Progress</a>
               <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=chat" class="tc">💬 Chat</a>
             </div>
@@ -446,7 +446,17 @@ function copyCode(e, code, btn) {
 
 function shareCode(e, code, className) {
   e.preventDefault(); e.stopPropagation();
-  const text = `Join my class "${className}" on EduPlatform!\nClass code: ${code}`;
+  var loginUrl = window.location.origin + '/login/';
+  var text = 'Join my class "' + className + '" on EduPlatform!
+Login here: ' + loginUrl + '
+Class code: ' + code;
+  if (navigator.share) {
+    navigator.share({ title: 'Join ' + className, text: text }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(text).then(function(){ showCodeToast('Copied!'); }).catch(function(){ showCodeToast('Code: ' + code); });
+  }
+}/login/`;
+  const text = `Join my class `"`${className}`" on EduPlatform!\nLogin here: ${loginUrl}\nClass code: ${code}`;
   if (navigator.share) {
     navigator.share({ title: 'Join ' + className, text }).catch(() => {});
   } else {
