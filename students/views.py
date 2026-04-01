@@ -312,11 +312,34 @@ def classroom_chat(request, class_id):
     ).order_by('created_at')
     msgs.filter(receiver=request.user, is_read=False).update(is_read=True)
     request.session['student_last_seen_messages'] = timezone.now().isoformat()
+
+    from django.core.cache import cache
+    from django.contrib.sessions.models import Session
+
+    # Check cache first; fall back to active session check
+    cached = cache.get(f'user_online_{teacher.pk}')
+    if cached is None:
+        # Cache cold (e.g. server restart) — check active sessions
+        active_ids = set()
+        for s in Session.objects.filter(expire_date__gt=timezone.now()):
+            try:
+                uid = s.get_decoded().get('_auth_user_id')
+                if uid:
+                    active_ids.add(int(uid))
+            except Exception:
+                pass
+        teacher_online = teacher.pk in active_ids
+        if teacher_online:
+            cache.set(f'user_online_{teacher.pk}', True, timeout=None)
+    else:
+        teacher_online = cached is True
+
     context = {
-        'classroom':    classroom,
-        'teacher':      teacher,
-        'chat_messages': msgs,
-        'active_tab':   'chat',
+        'classroom':      classroom,
+        'teacher':        teacher,
+        'teacher_online': teacher_online,
+        'chat_messages':  msgs,
+        'active_tab':     'chat',
         **_student_layout_context(request, classroom=classroom, active_nav='chat'),
     }
     return render(request, 'student/classroom_chat.html', context)

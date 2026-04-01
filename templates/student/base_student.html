@@ -427,34 +427,8 @@
             const presenceSocket = new WebSocket(`${proto}://${window.location.host}/ws/presence/`);
 
             presenceSocket.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type === 'presence.update' && data.user_role === 'teacher') {
-                    const statusText = document.getElementById('status-text');
-                    const statusDot = document.getElementById('status-dot');
-                    if (statusText && statusDot) {
-                        // check only current teacher in classroom chat page
-                        if (window.CHAT_RECEIVER_ID && Number(window.CHAT_RECEIVER_ID) === Number(data.user_id)) {
-                            if (data.status === 'online') {
-                                statusText.textContent = 'Online';
-                                statusDot.style.backgroundColor = '#22c55e';
-                            } else {
-                                statusText.textContent = 'Offline';
-                                statusDot.style.backgroundColor = '#ef4444';
-                            }
-                        }
-                    }
-                }
-                if (data.type === 'presence.snapshot' && data.online_teachers) {
-                    const teacherId = window.CHAT_RECEIVER_ID ? Number(window.CHAT_RECEIVER_ID) : null;
-                    if (teacherId != null && data.online_teachers.includes(teacherId)) {
-                        const statusText = document.getElementById('status-text');
-                        const statusDot = document.getElementById('status-dot');
-                        if (statusText && statusDot) {
-                            statusText.textContent = 'Online';
-                            statusDot.style.backgroundColor = '#22c55e';
-                        }
-                    }
-                }
+                // Presence updates for status-dot/status-text are handled
+                // by the chat page's own dedicated presence socket.
             };
 
             presenceSocket.onclose = () => {

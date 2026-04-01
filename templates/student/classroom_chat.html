@@ -41,8 +41,8 @@
             <div>
                 <p class="font-semibold text-slate-900">{{ teacher.get_full_name|default:teacher.username }}</p>
                 <div class="mt-1 flex items-center gap-2 text-xs text-slate-500">
-                    <span id="status-dot" class="inline-block h-2.5 w-2.5 rounded-full bg-amber-500"></span>
-                    <span id="status-text">Checking status...</span>
+                    <span id="status-dot" class="inline-block h-2.5 w-2.5 rounded-full {% if teacher_online %}bg-green-500{% else %}bg-red-500{% endif %}"></span>
+                    <span id="status-text">{% if teacher_online %}Online{% elif teacher.last_seen %}Last seen {{ teacher.last_seen|timesince }} ago{% else %}Offline{% endif %}</span>
                 </div>
             </div>
         </div>
@@ -71,6 +71,9 @@
             <input type="text" id="chat-input" class="flex-1 rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100" placeholder="Ask your teacher something..." autocomplete="off">
             <button id="chat-send" class="rounded-2xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700">Send</button>
         </div>
+        <!-- hidden elements so chat.js targets these instead of status-dot -->
+        <span id="chat-status-dot" class="hidden"></span>
+        <span id="chat-status-text" class="hidden"></span>
     </div>
 </section>
 {% endblock %}
@@ -83,76 +86,78 @@
 </script>
 <script src="{% static 'js/chat.js' %}"></script>
 <script>
-    // Real-time teacher status via global presence only (logged in state).
+    // Teacher online/offline status via PresenceConsumer.
+    // The snapshot fires immediately on connect with the full online list + last_seen map.
     (function () {
         const teacherId = Number(window.CHAT_RECEIVER_ID);
-        const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        let presenceSocket;
-        let hasSnapshot = false;
+        const proto     = window.location.protocol === 'https:' ? 'wss' : 'ws';
 
-        function setStatusOnline() {
-            const dotEl = document.getElementById('status-dot');
-            const textEl = document.getElementById('status-text');
-            if (!dotEl || !textEl) return;
-            dotEl.style.backgroundColor = '#22c55e';
-            textEl.textContent = 'Online';
+        function setDot(online, lastSeenIso) {
+            const dot  = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            if (!dot || !text) return;
+            if (online) {
+                dot.style.backgroundColor = '#22c55e';
+                text.textContent = 'Online';
+            } else {
+                dot.style.backgroundColor = '#ef4444';
+                text.textContent = lastSeenIso ? formatLastSeen(lastSeenIso).text : 'Offline';
+            }
         }
 
-        function setStatusOffline() {
-            const dotEl = document.getElementById('status-dot');
-            const textEl = document.getElementById('status-text');
-            if (!dotEl || !textEl) return;
-            dotEl.style.backgroundColor = '#ef4444';
-            textEl.textContent = 'Offline';
+        function formatLastSeen(iso) {
+            const now  = new Date();
+            const seen = new Date(iso);
+            const diff = Math.floor((now - seen) / 1000);
+
+            if (diff < 60)     return { text: 'Last seen just now' };
+
+            if (diff < 3600) {
+                const m = Math.floor(diff / 60);
+                return { text: 'Last seen ' + m + ' minute' + (m === 1 ? '' : 's') + ' ago' };
+            }
+
+            // Same day — show time like "Last seen at 5:30 PM"
+            const sameDay = now.toDateString() === seen.toDateString();
+            if (sameDay) {
+                const time = seen.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+                return { text: 'Last seen today at ' + time };
+            }
+
+            // Yesterday
+            const yesterday = new Date(now);
+            yesterday.setDate(now.getDate() - 1);
+            if (yesterday.toDateString() === seen.toDateString()) {
+                const time = seen.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+                return { text: 'Last seen yesterday at ' + time };
+            }
+
+            // Older — show date like "Last seen 28 Mar"
+            const dateStr = seen.toLocaleDateString([], { day: 'numeric', month: 'short' });
+            return { text: 'Last seen ' + dateStr };
         }
 
-        function setStatusChecking() {
-            const dotEl = document.getElementById('status-dot');
-            const textEl = document.getElementById('status-text');
-            if (!dotEl || !textEl) return;
-            dotEl.style.backgroundColor = '#facc15';
-            textEl.textContent = 'Checking status…';
-        }
+        function connect() {
+            const ws = new WebSocket(`${proto}://${window.location.host}/ws/presence/`);
 
-        function connectPresenceSocket() {
-            presenceSocket = new WebSocket(`${proto}://${window.location.host}/ws/presence/`);
-
-            presenceSocket.onopen = () => {
-                if (!hasSnapshot) {
-                    setStatusChecking();
-                }
-            };
-
-            presenceSocket.onmessage = (event) => {
-                const data = JSON.parse(event.data);
+            ws.onmessage = (e) => {
+                const data = JSON.parse(e.data);
 
                 if (data.type === 'presence.snapshot') {
-                    hasSnapshot = true;
                     const online = Array.isArray(data.online_teachers) && data.online_teachers.includes(teacherId);
-                    (online ? setStatusOnline : setStatusOffline)();
+                    const lastSeen = data.last_seen && data.last_seen[String(teacherId)];
+                    setDot(online, online ? null : lastSeen);
                 }
 
                 if (data.type === 'presence.update' && Number(data.user_id) === teacherId && data.user_role === 'teacher') {
-                    hasSnapshot = true;
-                    (data.status === 'online' ? setStatusOnline : setStatusOffline)();
+                    setDot(data.status === 'online', data.status === 'online' ? null : data.last_seen);
                 }
             };
 
-            presenceSocket.onclose = () => {
-                // keep last known status for continuity;
-                // attempt reconnect in background
-                setTimeout(connectPresenceSocket, 5000);
-            };
-
-            presenceSocket.onerror = () => {
-                // do not force offline, keep last known to avoid flicker.
-                if (!hasSnapshot) {
-                    setStatusOffline();
-                }
-            };
+            ws.onclose = () => setTimeout(connect, 3000);
         }
 
-        connectPresenceSocket();
+        connect();
     })();
 </script>
 {% endblock %}

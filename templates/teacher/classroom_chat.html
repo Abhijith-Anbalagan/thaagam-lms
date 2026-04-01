@@ -131,8 +131,8 @@ html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);col
         <div class="chat-header">💬 Chat with {{ selected_student.get_full_name|default:selected_student.username }}
           <span style="float:right;display:flex;align-items:center;gap:10px;font-weight:400;">
             <span style="display:flex;align-items:center;gap:6px;">
-              <span id="chat-status-dot" style="width:9px;height:9px;border-radius:50%;background:#ef4444;display:inline-block;"></span>
-              <span id="chat-status-text" style="font-size:12px;color:var(--text-3);">Reconnecting…</span>
+              <span id="chat-status-dot" style="width:9px;height:9px;border-radius:50%;background:#facc15;display:inline-block;"></span>
+              <span id="chat-status-text" style="font-size:12px;color:var(--text-3);">Connecting…</span>
             </span>
             <span style="display:flex;align-items:center;gap:6px;">
               <span id="chat-peer-status-dot" style="width:9px;height:9px;border-radius:50%;background:#facc15;display:inline-block;"></span>
@@ -162,6 +162,36 @@ html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);col
           window.CHAT_RECEIVER_ID  = {{ selected_student.pk }};
         </script>
         <script src="{% static 'js/chat.js' %}"></script>
+        <script>
+          // Real-time student status via UserStatusConsumer.
+          (function () {
+            const studentId   = Number(window.CHAT_RECEIVER_ID);
+            const classroomId = Number(window.CHAT_CLASSROOM_ID);
+            const proto       = window.location.protocol === 'https:' ? 'wss' : 'ws';
+
+            function setPeerDot(online) {
+              const dot  = document.getElementById('chat-peer-status-dot');
+              const text = document.getElementById('chat-peer-status-text');
+              if (!dot || !text) return;
+              dot.style.background = online ? '#22c55e' : '#ef4444';
+              text.textContent     = online ? 'Student online' : 'Student offline';
+            }
+
+            function connect() {
+              const ws = new WebSocket(`${proto}://${window.location.host}/ws/status/${classroomId}/`);
+              ws.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                if (data.type === 'status_update' && Number(data.user_id) === studentId) {
+                  setPeerDot(data.status === 'online');
+                }
+              };
+              ws.onclose = () => setTimeout(connect, 3000);
+            }
+
+            setPeerDot(false);
+            connect();
+          })();
+        </script>
         {% else %}
         <div class="empty-state"><div class="icon">👈</div><p>Select a student from the left to view their messages.</p></div>
         {% endif %}
