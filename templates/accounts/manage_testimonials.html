@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Testimonials</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap');
+
+:root {
+  --brand-dark:       #1a1f36;
+  --brand-blue:       #4c68d7;
+  --brand-blue-hover: #3a55c4;
+  --brand-blue-light: #e8eeff;
+  --page-bg:          #eef0f3;
+  --card-bg:          #ffffff;
+  --border:           #e8e6e0;
+  --text-body:        #3d3d3a;
+  --text-muted:       #9e9c95;
+  --success:          #1d9e75;
+  --success-bg:       #d4f5ea;
+  --danger:           #e24b4a;
+  --danger-bg:        #fde8e8;
+  --warning:          #ba7517;
+  --warning-bg:       #fdf3e0;
+  --radius-sm:        6px;
+  --radius-md:        10px;
+  --radius-lg:        14px;
+  --shadow-sm:        0 1px 4px rgba(0,0,0,.06);
+  --shadow-md:        0 4px 16px rgba(0,0,0,.10);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--page-bg);
+  color: var(--text-body);
+  min-height: 100vh;
+}
+
+/* ── Top nav bar ── */
+.topbar {
+  background: var(--brand-dark);
+  padding: 0 32px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar-logo {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 400;
+}
+.topbar-logo span { color: var(--brand-blue); }
+.topbar-back {
+  font-size: 12px;
+  color: rgba(255,255,255,0.45);
+  text-decoration: none;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.15s;
+}
+.topbar-back:hover { color: #fff; }
+
+/* ── Page wrapper ── */
+.page-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 36px 24px 60px;
+}
+
+/* ── Page header ── */
+.page-header {
+  margin-bottom: 28px;
+}
+.page-header h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 30px;
+  color: var(--brand-dark);
+  font-weight: 400;
+  margin-bottom: 4px;
+}
+.page-header p {
+  color: var(--text-muted);
+  font-size: 13.5px;
+}
+
+/* ── Stats row ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.stat-icon {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.stat-icon.pending-icon { background: var(--warning-bg); }
+.stat-icon.approved-icon { background: var(--success-bg); }
+.stat-icon.total-icon { background: var(--brand-blue-light); }
+.stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+.stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--brand-dark);
+  line-height: 1;
+}
+.stat-card.pending .stat-value { color: var(--warning); }
+.stat-card.approved .stat-value { color: var(--success); }
+.stat-card.total .stat-value { color: var(--brand-blue); }
+
+/* ── Filter bar ── */
+.filter-bar {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-sm);
+}
+.filter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+}
+.filter-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.filter-tab {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.filter-tab:hover {
+  border-color: var(--brand-blue);
+  color: var(--brand-blue);
+}
+.filter-tab.active {
+  background: var(--brand-blue);
+  border-color: var(--brand-blue);
+  color: #fff;
+}
+.filter-tab.active-warning {
+  background: var(--warning-bg);
+  border-color: var(--warning);
+  color: var(--warning);
+}
+.filter-tab.active-success {
+  background: var(--success-bg);
+  border-color: var(--success);
+  color: var(--success);
+}
+.filter-tab.active-danger {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* search */
+.filter-search {
+  margin-left: auto;
+  position: relative;
+}
+.filter-search input {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  padding: 7px 12px 7px 32px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--page-bg);
+  color: var(--text-body);
+  outline: none;
+  width: 200px;
+  transition: border-color 0.15s, width 0.2s;
+}
+.filter-search input:focus {
+  border-color: var(--brand-blue);
+  width: 240px;
+  background: #fff;
+}
+.filter-search .search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+/* ── Results summary ── */
+.results-summary {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  padding-left: 2px;
+}
+.results-summary strong { color: var(--text-body); }
+
+/* ── Testimonial card ── */
+.testimonial-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s, opacity 0.3s, transform 0.3s;
+  animation: cardIn 0.25s ease both;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.testimonial-card:hover { box-shadow: var(--shadow-md); }
+.testimonial-card.approved-card { border-left: 3px solid var(--success); }
+.testimonial-card.rejected-card { border-left: 3px solid var(--danger); opacity: 0.75; }
+.testimonial-card.hide { display: none; }
+
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.card-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--brand-blue-light);
+  color: var(--brand-blue);
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.author-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--brand-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.author-meta {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.card-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.stars {
+  color: #f5a623;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+.status-pending  { background: var(--warning-bg);  color: var(--warning); }
+.status-approved { background: var(--success-bg);  color: var(--success); }
+.status-rejected { background: var(--danger-bg);   color: var(--danger);  }
+
+.card-message {
+  font-size: 13.5px;
+  color: var(--text-body);
+  line-height: 1.65;
+  padding: 10px 13px;
+  background: var(--page-bg);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--border);
+  margin-bottom: 14px;
+}
+
+/* ── Card actions ── */
+.card-actions {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-approve { background: var(--success-bg); color: var(--success); }
+.btn-approve:hover { background: var(--success); color: #fff; }
+.btn-reject  { background: var(--warning-bg); color: var(--warning); }
+.btn-reject:hover  { background: var(--warning); color: #fff; }
+.btn-delete  { background: var(--danger-bg);  color: var(--danger);  margin-left: auto; }
+.btn-delete:hover  { background: var(--danger);  color: #fff; }
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  background: var(--card-bg);
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+  font-size: 14px;
+  display: none;
+}
+.empty-state.visible { display: block; }
+.empty-icon { font-size: 30px; margin-bottom: 12px; }
+
+/* ── Confirm delete modal ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,31,54,0.55);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 28px 28px 24px;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+  animation: modalIn 0.2s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.modal h3 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  color: var(--brand-dark);
+  margin-bottom: 8px;
+  font-weight: 400;
+}
+.modal p {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 22px;
+}
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.btn-cancel {
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--page-bg);
+  color: var(--text-body);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-cancel:hover { background: var(--border); }
+.btn-confirm-delete {
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--danger);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-confirm-delete:hover { background: #c73a3a; }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .topbar { padding: 0 16px; }
+  .page-wrapper { padding: 24px 16px 48px; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .stats-row .stat-card.total { grid-column: span 2; }
+  .filter-search { margin-left: 0; width: 100%; }
+  .filter-search input { width: 100%; }
+  .filter-search input:focus { width: 100%; }
+  .card-top { flex-wrap: wrap; }
+  .btn-delete { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <a href="/" class="topbar-logo">Thaagam <span>LMS</span></a>
+  <a href="/" class="topbar-back">&#8592; Back to dashboard</a>
+</div>
+
+<div class="page-wrapper">
+
+  <!-- Header -->
+  <div class="page-header">
+    <h1>Manage Testimonials</h1>
+    <p>Review, approve, reject or delete submitted testimonials from the public.</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card pending">
+      <div class="stat-icon pending-icon">&#9201;</div>
+      <div>
+        <div class="stat-label">Pending</div>
+        <div class="stat-value">{{ pending.count }}</div>
+      </div>
+    </div>
+    <div class="stat-card approved">
+      <div class="stat-icon approved-icon">&#10003;</div>
+      <div>
+        <div class="stat-label">Approved</div>
+        <div class="stat-value">{{ approved.count }}</div>
+      </div>
+    </div>
+    <div class="stat-card total">
+      <div class="stat-icon total-icon">&#9733;</div>
+      <div>
+        <div class="stat-label">Total</div>
+        <div class="stat-value">{{ pending.count|add:approved.count }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <span class="filter-label">Filter</span>
+    <div class="filter-tabs">
+      <button class="filter-tab active" onclick="filterCards('all', this)">All</button>
+      <button class="filter-tab" onclick="filterCards('pending', this)">Pending</button>
+      <button class="filter-tab" onclick="filterCards('approved', this)">Approved</button>
+      <button class="filter-tab" onclick="filterCards('rejected', this)">Rejected</button>
+    </div>
+    <div class="filter-search">
+      <span class="search-icon">&#128269;</span>
+      <input type="text" id="search-input" placeholder="Search by name..." oninput="searchCards(this.value)">
+    </div>
+  </div>
+
+  <!-- Results summary -->
+  <p class="results-summary" id="results-summary"></p>
+
+  <!-- Cards list -->
+  <div id="cards-list">
+
+    {% for t in pending %}
+    <div class="testimonial-card" data-status="pending" data-name="{{ t.name|lower }}">
+      <div class="card-top">
+        <div class="card-author">
+          <div class="avatar">{{ t.name|first|upper }}</div>
+          <div>
+            <div class="author-name">{{ t.name }}</div>
+            <div class="author-meta">{{ t.email|default:"No email provided" }}</div>
+          </div>
+        </div>
+        <div class="card-right">
+          <div class="stars">
+            {% for i in "12345" %}{% if forloop.counter <= t.rating %}★{% else %}☆{% endif %}{% endfor %}
+          </div>
+          <span class="status-badge status-pending">Pending</span>
+        </div>
+      </div>
+      <div class="card-message">"{{ t.message }}"</div>
+      <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="id" value="{{ t.id }}">
+        <div class="card-actions">
+          <button class="btn btn-approve" name="action" value="approved">&#10003; Approve</button>
+          <button class="btn btn-reject"  name="action" value="rejected">&#10007; Reject</button>
+          
+        </div>
+      </form>
+    </div>
+    {% endfor %}
+
+    {% for t in approved %}
+    <div class="testimonial-card approved-card" data-status="approved" data-name="{{ t.name|lower }}">
+      <div class="card-top">
+        <div class="card-author">
+          <div class="avatar">{{ t.name|first|upper }}</div>
+          <div>
+            <div class="author-name">{{ t.name }}</div>
+            <div class="author-meta">{{ t.email|default:"No email provided" }}</div>
+          </div>
+        </div>
+        <div class="card-right">
+          <div class="stars">
+            {% for i in "12345" %}{% if forloop.counter <= t.rating %}★{% else %}☆{% endif %}{% endfor %}
+          </div>
+          <span class="status-badge status-approved">&#10003; Approved</span>
+        </div>
+      </div>
+      <div class="card-message">"{{ t.message }}"</div>
+      <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="id" value="{{ t.id }}">
+        <div class="card-actions">
+          <button class="btn btn-reject" name="action" value="rejected">&#10007; Delete</button>
+        </div>
+      </form>
+    </div>
+    {% endfor %}
+
+  </div>
+
+  <!-- Empty state (shown via JS) -->
+  <div class="empty-state" id="empty-state">
+    <div class="empty-icon">&#128269;</div>
+    <p>No testimonials match your filter.</p>
+  </div>
+
+</div>
+
+<!-- Delete confirm modal -->
+
+<script>
+  let activeFilter = 'all';
+  let activeSearch = '';
+
+  function applyFilters() {
+    const cards = document.querySelectorAll('.testimonial-card');
+    let visible = 0;
+    cards.forEach(card => {
+      const status = card.dataset.status;
+      const name = card.dataset.name || '';
+      const matchFilter = activeFilter === 'all' || status === activeFilter;
+      const matchSearch = name.includes(activeSearch.toLowerCase());
+      if (matchFilter && matchSearch) {
+        card.classList.remove('hide');
+        visible++;
+      } else {
+        card.classList.add('hide');
+      }
+    });
+    const summary = document.getElementById('results-summary');
+    summary.innerHTML = visible === 0
+      ? ''
+      : 'Showing <strong>' + visible + '</strong> testimonial' + (visible !== 1 ? 's' : '');
+    document.getElementById('empty-state').classList.toggle('visible', visible === 0);
+  }
+
+  function filterCards(status, btn) {
+    activeFilter = status;
+    document.querySelectorAll('.filter-tab').forEach(t => {
+      t.classList.remove('active', 'active-warning', 'active-success', 'active-danger');
+    });
+    if (status === 'pending')  btn.classList.add('active-warning');
+    else if (status === 'approved') btn.classList.add('active-success');
+    else if (status === 'rejected') btn.classList.add('active-danger');
+    else btn.classList.add('active');
+    applyFilters();
+  }
+
+  function searchCards(val) {
+    activeSearch = val.toLowerCase();
+    applyFilters();
+  }
+
+  function confirmDelete(id, name) {
+    document.getElementById('delete-id').value = id;
+    document.getElementById('modal-message').textContent =
+      'You are about to permanently delete the testimonial by "' + name + '". This cannot be undone.';
+    document.getElementById('delete-modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('delete-modal').classList.remove('open');
+  }
+
+  document.getElementById('delete-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // Init summary
+  applyFilters();
+</script>
+</body>
+</html>

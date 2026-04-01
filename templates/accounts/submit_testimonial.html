@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Share Your Testimonial</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;1,300&family=DM+Sans:wght@400;500;600&display=swap');
+
+:root {
+  --brand-dark:       #1a1f36;
+  --brand-blue:       #4c68d7;
+  --brand-blue-hover: #3a55c4;
+  --brand-blue-light: #e8eeff;
+  --page-bg:          #eef0f3;
+  --card-bg:          #ffffff;
+  --border:           #e8e6e0;
+  --text-body:        #3d3d3a;
+  --text-muted:       #9e9c95;
+  --radius-sm:        6px;
+  --radius-md:        10px;
+  --radius-lg:        16px;
+  --shadow-md:        0 4px 24px rgba(0,0,0,.10);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ── DESKTOP: split layout, no scroll ── */
+@media (min-width: 768px) {
+  html, body { overflow: hidden; background: var(--brand-dark); }
+
+  .page {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .left {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 44px 48px;
+  }
+
+  .mobile-header { display: none; }
+
+  .right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 48px;
+    background: var(--page-bg);
+  }
+
+  .form-card {
+    width: 100%;
+    max-width: 440px;
+    padding: 32px 32px 26px;
+  }
+
+  .left-mid h1 { font-size: 40px; }
+}
+
+/* ── MOBILE: single column, scrollable ── */
+@media (max-width: 767px) {
+  html, body {
+    overflow-y: auto;
+    background: var(--page-bg);
+  }
+
+  .page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .left {
+    display: none; /* hide big left panel on mobile */
+  }
+
+  .mobile-header {
+    display: block;
+    background: var(--brand-dark);
+    padding: 20px 24px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .mobile-header::after {
+    content: '';
+    position: absolute;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    border: 1px solid rgba(76,104,215,0.2);
+    top: -60px; right: -60px;
+    pointer-events: none;
+  }
+  .mobile-header .logo {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    text-decoration: none;
+    display: block;
+    margin-bottom: 16px;
+  }
+  .mobile-header .logo span { color: var(--brand-blue); }
+  .mobile-header h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 300;
+    color: #fff;
+    line-height: 1.2;
+  }
+  .mobile-header h2 em {
+    font-style: italic;
+    color: #a8b8f8;
+  }
+  .mobile-header p {
+    font-size: 13px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 8px;
+    line-height: 1.6;
+  }
+
+  .right {
+    flex: 1;
+    padding: 24px 20px 32px;
+    background: var(--page-bg);
+  }
+
+  .form-card {
+    width: 100%;
+    padding: 24px 20px 20px;
+  }
+
+  .left-mid h1 { font-size: 32px; }
+}
+
+/* ── Left Panel (desktop only) ── */
+.left {
+  background: var(--brand-dark);
+  position: relative;
+  overflow: hidden;
+}
+.left::before {
+  content: '';
+  position: absolute;
+  width: 380px; height: 380px;
+  border-radius: 50%;
+  border: 1px solid rgba(76,104,215,0.15);
+  top: -100px; right: -100px;
+  pointer-events: none;
+}
+.left::after {
+  content: '';
+  position: absolute;
+  width: 220px; height: 220px;
+  border-radius: 50%;
+  border: 1px solid rgba(76,104,215,0.10);
+  bottom: 40px; left: -70px;
+  pointer-events: none;
+}
+
+.logo {
+  font-family: 'Fraunces', serif;
+  font-size: 19px;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+  letter-spacing: -0.3px;
+}
+.logo span { color: var(--brand-blue); }
+
+.left-mid { position: relative; z-index: 1; }
+
+.eyebrow {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brand-blue);
+  margin-bottom: 14px;
+}
+.left-mid h1 {
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  color: #fff;
+  line-height: 1.2;
+  margin-bottom: 18px;
+}
+.left-mid h1 em { font-style: italic; color: #a8b8f8; }
+.left-mid p {
+  font-size: 13.5px;
+  color: rgba(255,255,255,0.4);
+  line-height: 1.7;
+  max-width: 280px;
+}
+
+.quote-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  position: relative;
+  z-index: 1;
+}
+.q-text {
+  font-family: 'Fraunces', serif;
+  font-size: 13px;
+  font-style: italic;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.65;
+  margin-bottom: 12px;
+}
+.q-author { display: flex; align-items: center; gap: 9px; }
+.q-avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--brand-blue);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.q-name { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.55); }
+.q-role { font-size: 11px; color: rgba(255,255,255,0.28); }
+.stars-sm { margin-left: auto; color: #f5a623; font-size: 11px; letter-spacing: 1px; }
+
+/* ── Form Card ── */
+.form-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  animation: fadeUp 0.35s ease both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.form-card h2 {
+  font-family: 'Fraunces', serif;
+  font-size: 21px;
+  font-weight: 600;
+  color: var(--brand-dark);
+  margin-bottom: 3px;
+}
+.subtitle {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+/* Django form.as_p styles */
+.form-card form p {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 11px;
+}
+.form-card form p label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--brand-dark);
+  letter-spacing: 0.03em;
+}
+.form-card form p input[type="text"],
+.form-card form p input[type="email"],
+.form-card form p textarea,
+.form-card form p select {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--text-body);
+  background: var(--page-bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  -webkit-appearance: none;
+}
+.form-card form p input[type="text"]:focus,
+.form-card form p input[type="email"]:focus,
+.form-card form p textarea:focus,
+.form-card form p select:focus {
+  border-color: var(--brand-blue);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(76,104,215,0.10);
+}
+.form-card form p textarea {
+  resize: none;
+  height: 74px;
+  line-height: 1.6;
+}
+.form-card form p input[type="radio"] {
+  width: auto;
+  margin-right: 4px;
+  accent-color: var(--brand-blue);
+}
+
+.btn-submit {
+  width: 100%;
+  padding: 12px;
+  background: var(--brand-blue);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  margin-top: 4px;
+  letter-spacing: 0.02em;
+  transition: background 0.15s, transform 0.12s;
+  -webkit-appearance: none;
+}
+.btn-submit:hover { background: var(--brand-blue-hover); transform: translateY(-1px); }
+.btn-submit:active { transform: translateY(0); }
+
+.form-note {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 10px;
+  line-height: 1.6;
+}
+.form-note a {
+  color: var(--brand-blue);
+  text-decoration: none;
+  font-weight: 500;
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- MOBILE HEADER (shows only on mobile) -->
+  <div class="mobile-header">
+    <a href="/" class="logo">Thaagam <span>LMS</span></a>
+    <h2>Share your<br><em>experience</em></h2>
+    <p>Your feedback helps our community grow.</p>
+  </div>
+
+  <!-- LEFT (desktop only) -->
+  <div class="left">
+    <a href="/" class="logo">Thaagam <span>LMS</span></a>
+    <div class="left-mid">
+      <p class="eyebrow">Community voices</p>
+      <h1>Your words<br><em>inspire</em><br>others.</h1>
+      <p>Every testimonial helps parents and students discover what makes our school community truly special.</p>
+    </div>
+    <div class="quote-card">
+      <p class="q-text">"The teachers here genuinely care about every student's progress. My daughter has grown so much this year."</p>
+      <div class="q-author">
+        <div class="q-avatar">P</div>
+        <div>
+          <div class="q-name">Priya Anand</div>
+          <div class="q-role">Parent · Grade 6</div>
+        </div>
+        <div class="stars-sm">★★★★★</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+   <div class="form-card">
+  <h2>Share your experience</h2>
+  <p class="subtitle">Takes less than a minute &middot; Reviewed before publishing</p>
+
+  <form method="POST">
+    {% csrf_token %}
+
+    <p>
+      <label for="id_name">Name</label>
+      {{ form.name }}
+      {{ form.name.errors }}
+    </p>
+
+    <p>
+      <label for="id_email">Email</label>
+      {{ form.email }}
+      {{ form.email.errors }}
+    </p>
+
+    <p>
+      <label for="id_rating">Rating</label>
+      {{ form.rating }}
+      {{ form.rating.errors }}
+    </p>
+
+    <p>
+      <label for="id_message">Message</label>
+      <textarea
+        name="message"
+        id="id_message"
+        maxlength="300"
+        rows="4"
+        oninput="updateCount(this)"
+        placeholder="Share your experience... (max 300 characters)">{{ form.message.value|default:'' }}</textarea>
+      {{ form.message.errors }}
+      <small id="char-count" style="color:#888; float:right;">300 characters remaining</small>
+    </p>
+
+    <button type="submit" class="btn-submit">Submit Testimonial &rarr;</button>
+  </form>
+
+  <p class="form-note">
+    Visible after admin approval &nbsp;&middot;&nbsp;
+    <a href="/">Back to home</a>
+  </p>
+</div>
+</div>
+</body>
+<script>
+function updateCount(el) {
+  const remaining = 300 - el.value.length;
+  const label = document.getElementById('char-count');
+  label.textContent = remaining + ' characters remaining';
+
+  if (remaining < 50)       { label.style.color = '#e53e3e'; }  // red warning
+  else if (remaining < 100) { label.style.color = '#dd6b20'; }  // orange
+  else                      { label.style.color = '#888';    }  // grey normal
+}
+</script>
+</html>

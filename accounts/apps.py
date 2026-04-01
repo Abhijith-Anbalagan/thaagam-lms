@@ -8,8 +8,6 @@ class AccountsConfig(AppConfig):
 
     def ready(self):
         import accounts.signals  # noqa
-        # Initialize cache for teachers who might be logged in
-        self.initialize_teacher_presence_cache()
 
     def initialize_teacher_presence_cache(self):
         """Initialize presence cache for teachers on app startup."""
@@ -41,6 +39,7 @@ class AccountsConfig(AppConfig):
 
         except (OperationalError, ProgrammingError):
             # Database tables don't exist yet (before first migration)
+<<<<<<< HEAD
             return 
         
         
@@ -48,3 +47,6 @@ class AccountsConfig(AppConfig):
         
         
         
+=======
+            return
+>>>>>>> m1-accounts

@@ -304,7 +304,6 @@ def create_school(request):
                 [a['email']],
                 fail_silently=True,
             )
-
         messages.success(
             request,
             f'School "{school.name}" created with {len(admins_data)} admin account(s).'

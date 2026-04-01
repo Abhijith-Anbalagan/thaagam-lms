@@ -18,3 +18,7 @@ class GlobalConceptAdmin(admin.ModelAdmin):
 @admin.register(GlobalConceptVideo)
 class GlobalConceptVideoAdmin(admin.ModelAdmin):
     list_display = ['concept', 'title', 'order']
+    
+from django.contrib import admin
+
+

@@ -9,7 +9,7 @@ class School(models.Model):
     address    = models.TextField(blank=True)
     is_active  = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    deadline_at = models.TimeField(null=True,blank=True)
+    deadline_at = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if self.deadline_at is None:
@@ -62,7 +62,7 @@ class GlobalCourse(models.Model):
     def __str__(self):
         return self.title
 
-
+        
 class GlobalConceptVideo(models.Model):
     concept   = models.ForeignKey('GlobalConcept', on_delete=models.CASCADE, related_name='videos')
     title     = models.CharField(max_length=200, blank=True)
