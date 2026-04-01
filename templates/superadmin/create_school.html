@@ -2,23 +2,41 @@
 {% block title %}New School — EduPlatform{% endblock %}
 {% block extra_css %}
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+
+  :root {
+    --ink: #0f0e0d;
+    --paper: #faf8f5;
+    --cream: #f2ede6;
+    --accent: #c8401a;
+    --accent-light: #f5e8e3;
+    --muted: #7a7470;
+    --border: #e0d9d0;
+    --shadow: rgba(15,14,13,0.08);
+    --blue: #1d5fa8;
+    --blue-light: #e8f0fa;
+    --green: #2a9d5c;
+    --green-light: #e6f4ed;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
   .section-divider { display:flex; align-items:center; gap:12px; margin:24px 0 18px; }
-  .section-divider span { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); white-space:nowrap; }
+  .section-divider span { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); white-space:nowrap; font-family:'DM Sans',sans-serif; }
   .section-divider::before, .section-divider::after { content:''; flex:1; height:1px; background:var(--border); }
 
-  .admin-block { background:#fafaf8; border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:12px; }
-  .admin-block-title { font-size:13px; font-weight:700; color:var(--brand-dark); margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; }
+  .admin-block { background:var(--cream); border:1.5px solid var(--border); border-radius:12px; padding:16px; margin-bottom:12px; }
+  .admin-block-title { font-size:13px; font-weight:700; color:var(--ink); margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; font-family:'Playfair Display',Georgia,serif; }
   .admin-block-title-left { display:flex; align-items:center; gap:8px; }
-  .required-badge { font-size:10px; font-weight:600; background:#d1fae5; color:#065f46; border-radius:20px; padding:2px 8px; }
-  .optional-badge { font-size:10px; font-weight:600; background:#f0f3ff; color:#4c68d7; border-radius:20px; padding:2px 8px; }
-  .remove-admin-btn { background:none; border:none; cursor:pointer; color:#e24b4a; font-size:18px; line-height:1; padding:2px 6px; border-radius:6px; transition:background .15s; }
-  .remove-admin-btn:hover { background:#fff0f0; }
-  .add-admin-btn { display:flex; align-items:center; gap:8px; padding:10px 16px; border-radius:10px; border:1.5px dashed var(--brand-blue); background:#f0f3ff; color:var(--brand-blue); font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; width:100%; justify-content:center; margin-bottom:12px; }
-  .add-admin-btn:hover { background:#e0e7ff; border-style:solid; }
-  .add-admin-btn:disabled { opacity:.4; cursor:not-allowed; border-style:dashed; background:#f0f3ff; }
-  .admin-count-hint { font-size:11px; color:var(--text-muted); text-align:center; margin-bottom:0; }
+  .required-badge { font-size:10px; font-weight:600; background:var(--green-light); color:var(--green); border-radius:20px; padding:2px 8px; font-family:'DM Sans',sans-serif; }
+  .optional-badge { font-size:10px; font-weight:600; background:var(--blue-light); color:var(--blue); border-radius:20px; padding:2px 8px; font-family:'DM Sans',sans-serif; }
+  .remove-admin-btn { background:none; border:none; cursor:pointer; color:var(--accent); font-size:18px; line-height:1; padding:2px 6px; border-radius:6px; transition:background .15s; }
+  .remove-admin-btn:hover { background:var(--accent-light); }
+  .add-admin-btn { display:flex; align-items:center; gap:8px; padding:10px 16px; border-radius:10px; border:1.5px dashed var(--blue); background:var(--blue-light); color:var(--blue); font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; width:100%; justify-content:center; margin-bottom:12px; font-family:'DM Sans',sans-serif; }
+  .add-admin-btn:hover { background:rgba(29,95,168,0.15); border-style:solid; }
+  .add-admin-btn:disabled { opacity:.4; cursor:not-allowed; border-style:dashed; background:var(--blue-light); }
+  .admin-count-hint { font-size:11px; color:var(--muted); text-align:center; margin-bottom:0; font-family:'DM Sans',sans-serif; }
 
-  /* Landscape: all fields in one wide row per section */
   .fields-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
   .admin-fields-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
 

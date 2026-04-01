@@ -23,7 +23,7 @@
   --radius-sm:         6px;
   --radius-md:         10px;
   --radius-lg:         14px;
-  --shadow-sm:         0 1px 4px rgba(0,0,0,.06);
+  --shadow-sm:         0 1px 4px rgba(22, 4, 4, 0.06);
   --shadow-md:         0 4px 16px rgba(0,0,0,.08);
 }
 
@@ -118,8 +118,7 @@ img { max-width: 100%; }
   align-items: center;
   gap: 10px;
   padding: 4px 16px 14px;
-}
-.sidebar-avatar {
+}.sidebar-avatar {
   width: 38px;
   height: 38px;
   border-radius: 50%;
@@ -131,7 +130,16 @@ img { max-width: 100%; }
   font-size: 14px;
   font-weight: 700;
   flex-shrink: 0;
+  overflow: hidden;   /* ← added */
 }
+
+.sidebar-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .sidebar-name {
   font-size: 13px;
   font-weight: 600;
