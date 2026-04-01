@@ -149,3 +149,21 @@ class ClassroomCourseAssignment(models.Model):
 
     def __str__(self):
         return f"{self.classroom.name} ← {self.course.title}"
+
+
+class ConceptProgress(models.Model):
+    """Tracks which concepts a student has marked as completed."""
+    student  = models.ForeignKey(
+        'accounts.User', on_delete=models.CASCADE, related_name='concept_progress'
+    )
+    concept  = models.ForeignKey(
+        GlobalConcept, on_delete=models.CASCADE, related_name='progress_records'
+    )
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'superadmin_conceptprogress'
+        unique_together = ('student', 'concept')
+
+    def __str__(self):
+        return f'{self.student.username} ✓ {self.concept.header}'

@@ -1,114 +1,470 @@
 {% extends 'student/base_student.html' %}
+{% block title %}{{ course.title }} — EduPlatform{% endblock %}
+{% block topbar_context %}My Courses{% endblock %}
+{% block topbar_title %}{{ course.title }}{% endblock %}
 
-{% block title %}{{ course.title }} - EduPlatform{% endblock %}
-{% block topbar_context %}{{ course.title }}{% endblock %}
-{% block topbar_title %}Course Details{% endblock %}
+{% block extra_css %}
+<style>
+.course-layout { display:grid; grid-template-columns:1fr 300px; gap:20px; align-items:start; }
+@media(max-width:1024px){ .course-layout{ grid-template-columns:1fr; } }
+
+/* Player */
+.player-wrap { background:#000; border-radius:16px; overflow:hidden; aspect-ratio:16/9; position:relative; }
+.player-wrap video, .player-wrap iframe { width:100%; height:100%; display:block; border:none; }
+
+/* Play overlay */
+.play-overlay { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:14px; cursor:pointer; z-index:10;
+  background:linear-gradient(135deg,rgba(30,27,75,.92),rgba(29,78,216,.85)); color:#fff;
+  transition:background .2s; }
+.play-overlay:hover .play-btn-circle { transform:scale(1.1); background:rgba(255,255,255,.25); }
+.play-btn-circle { width:72px; height:72px; border-radius:50%; border:3px solid rgba(255,255,255,.7);
+  display:flex; align-items:center; justify-content:center; transition:all .2s; }
+.play-btn-circle svg { width:32px; height:32px; fill:white; margin-left:4px; }
+.play-overlay p { font-size:13px; opacity:.75; max-width:240px; text-align:center; }
+
+/* Sidebar */
+.course-sidebar { position:sticky; top:80px; border-radius:16px; border:1px solid #e2e8f0;
+  background:#fff; overflow:hidden; max-height:calc(100vh - 100px); display:flex; flex-direction:column; }
+.sidebar-scroll { overflow-y:auto; flex:1; }
+.mod-item { display:flex; align-items:flex-start; gap:10px; padding:10px 16px; cursor:pointer;
+  border-bottom:1px solid #f1f5f9; transition:background .12s; }
+.mod-item:hover { background:#eff6ff; }
+.mod-item.active { background:#dbeafe; border-left:3px solid #2563eb; }
+.mod-num { font-size:11px; font-weight:700; color:#94a3b8; width:20px; text-align:center; flex-shrink:0; padding-top:2px; }
+.prog-bar { background:linear-gradient(90deg,#2563eb,#7c3aed); border-radius:99px; transition:width .4s; }
+
+/* Tabs */
+.ctabs { display:flex; border-bottom:2px solid #e2e8f0; margin:16px 0 14px; }
+.ctab { padding:8px 18px; font-size:13px; font-weight:500; color:#64748b; background:none;
+  border:none; border-bottom:2px solid transparent; margin-bottom:-2px; cursor:pointer; transition:all .15s; }
+.ctab.active { color:#2563eb; border-bottom-color:#2563eb; font-weight:600; }
+.ctab-pane { display:none; }
+.ctab-pane.active { display:block; }
+
+/* Quiz */
+.quiz-option { cursor:pointer; transition:all .15s; }
+.quiz-option:hover { border-color:#2563eb; background:#eff6ff; }
+.quiz-option.selected { border-color:#2563eb; background:#dbeafe; }
+.quiz-option.correct  { border-color:#16a34a !important; background:#dcfce7 !important; }
+.quiz-option.wrong    { border-color:#dc2626 !important; background:#fee2e2 !important; }
+.quiz-submitted .quiz-option { pointer-events:none; }
+</style>
+{% endblock %}
 
 {% block content %}
-<section class="mb-8 rounded-[2rem] bg-gradient-to-r from-blue-600 via-blue-500 to-violet-500 p-8 text-white shadow-2xl shadow-blue-500/20">
-    {% if course.cover_image %}
-    <div class="mb-4 aspect-video overflow-hidden rounded-lg">
-        <img src="{{ course.cover_image.url }}" alt="{{ course.title }}" class="h-full w-full object-cover">
-    </div>
-    {% endif %}
-    <div class="flex items-center gap-3 mb-3">
-        <span class="inline-flex rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-600">{{ course.get_level_display|default:"General" }}</span>
-        {% if course.is_free %}
-        <span class="inline-flex rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-600">Free</span>
-        {% endif %}
-    </div>
-    <h1 class="text-3xl font-bold">{{ course.title }}</h1>
-    <p class="mt-2 text-blue-50">{{ course.description }}</p>
-    <div class="mt-4 flex items-center gap-6 text-sm text-blue-100">
-        <span>{{ course.concepts.count }} concepts</span>
-        <span>{{ course.total_hours }} hours</span>
-        <span>Enrolled {{ enrollment.enrolled_at|date:"M j, Y" }}</span>
-        {% if enrollment.deadline_at %}
-        <span>Due {{ enrollment.deadline_at|date:"M j, Y" }}</span>
-        {% endif %}
-    </div>
-</section>
+{% csrf_token %}
+<script>const CSRF='{{ csrf_token }}';</script>
 
-{% if concepts %}
-<section class="space-y-6">
-    {% for concept in concepts %}
-    <article class="overflow-hidden rounded-[1.75rem] border border-white/70 bg-white shadow-panel">
-        <div class="border-b border-slate-100 bg-slate-50 px-6 py-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h2 class="text-xl font-semibold text-slate-900">{{ concept.header }}</h2>
-                    {% if concept.h3_course %}
-                    <p class="mt-1 text-sm text-slate-600">{{ concept.h3_course }}</p>
-                    {% endif %}
-                </div>
-                <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">{{ concept.get_level_display }}</span>
-            </div>
+<!-- Breadcrumb -->
+<div class="mb-4 flex items-center gap-2 text-xs text-slate-400">
+    {% if nav_classroom %}
+    <a href="{% url 'student_classroom_courses' nav_classroom.id %}" class="hover:text-blue-600 transition">My Courses</a>
+    <i data-lucide="chevron-right" class="h-3 w-3"></i>
+    {% endif %}
+    <span class="font-semibold text-slate-700">{{ course.title }}</span>
+</div>
+
+<div class="course-layout">
+
+  <!-- LEFT -->
+  <div>
+    <!-- Player -->
+    <div class="player-wrap" id="player-wrap">
+      <!-- Idle state: course info -->
+      <div id="player-idle" class="play-overlay" style="cursor:default;">
+        <div style="text-align:center;padding:24px;">
+          <p style="font-size:18px;font-weight:700;margin-bottom:8px;">{{ course.title }}</p>
+          <p style="font-size:13px;opacity:.65;">Select a module from the right to begin</p>
         </div>
-        <div class="p-6">
-            {% if concept.pdf %}
-            <div class="mb-4">
-                <h3 class="mb-2 text-sm font-semibold text-slate-900">Study Material</h3>
-                <a href="{{ concept.pdf.url }}" target="_blank" class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700">
-                    <i data-lucide="file-text" class="h-4 w-4"></i>
-                    Download PDF
+      </div>
+      <!-- Ready state: video loaded, waiting for click -->
+      <div id="player-ready" class="play-overlay hidden" onclick="startPlay()">
+        <div class="play-btn-circle">
+          <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+        </div>
+        <p id="ready-title">Click to play</p>
+      </div>
+      <!-- Actual players (hidden until play clicked) -->
+      <video id="main-video" class="hidden" style="width:100%;height:100%;background:#000;"></video>
+      <iframe id="main-iframe" class="hidden" style="width:100%;height:100%;" frameborder="0"
+              allow="fullscreen; picture-in-picture" allowfullscreen></iframe>
+    </div>
+
+    <!-- Now playing label -->
+    <div id="now-playing" class="hidden mt-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
+      <i data-lucide="play-circle" class="h-4 w-4 text-blue-600"></i>
+      <span id="now-playing-title"></span>
+    </div>
+
+    <!-- Tabs — hidden until module selected -->
+    <div id="content-area" class="hidden">
+      <div class="ctabs">
+        <button class="ctab active" onclick="switchTab(this,'tab-notes')">Notes & PDF</button>
+        <button class="ctab" onclick="switchTab(this,'tab-quiz')">Quiz</button>
+        <button class="ctab" onclick="switchTab(this,'tab-assignment')">Assignment</button>
+      </div>
+      <div id="tab-notes"      class="ctab-pane active"></div>
+      <div id="tab-quiz"       class="ctab-pane"></div>
+      <div id="tab-assignment" class="ctab-pane"></div>
+    </div>
+
+    <!-- Course overview (shown before any module selected) -->
+    <div id="course-overview" class="mt-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-3">
+      <div class="flex flex-wrap gap-2">
+        <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600">{{ course.get_level_display|default:"General" }}</span>
+        <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500 capitalize">{{ course.language }}</span>
+        {% if course.is_free %}<span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Free</span>{% endif %}
+        {% if course.has_certificate %}<span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">Certificate</span>{% endif %}
+      </div>
+      <h2 class="text-xl font-bold text-slate-900">{{ course.title }}</h2>
+      {% if course.description %}<p class="text-sm text-slate-600 leading-relaxed">{{ course.description }}</p>{% endif %}
+      <div class="flex flex-wrap gap-5 text-sm text-slate-500 pt-1">
+        <span class="flex items-center gap-1.5"><i data-lucide="layers" class="h-4 w-4"></i>{{ total_concepts }} modules</span>
+        <span class="flex items-center gap-1.5"><i data-lucide="clock" class="h-4 w-4"></i>{{ course.total_hours }}h</span>
+        <span class="flex items-center gap-1.5"><i data-lucide="calendar" class="h-4 w-4"></i>Enrolled {{ enrollment.enrolled_at|date:"M j, Y" }}</span>
+        {% if enrollment.deadline_at %}<span class="flex items-center gap-1.5 text-rose-500"><i data-lucide="alert-circle" class="h-4 w-4"></i>Due {{ enrollment.deadline_at|date:"M j, Y" }}</span>{% endif %}
+      </div>
+      {% if nav_classroom %}
+      <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 flex items-start gap-3">
+        <i data-lucide="clipboard-list" class="h-4 w-4 flex-shrink-0 text-blue-600 mt-0.5"></i>
+        <div>
+          <p class="text-sm font-semibold text-blue-900">Teacher Assignments</p>
+          <p class="text-xs text-blue-700 mt-0.5">Your teacher also assigns separate classwork tasks.</p>
+          <a href="{% url 'student_classroom_classwork' nav_classroom.id %}"
+             class="mt-2 inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700 transition">
+            View <i data-lucide="arrow-right" class="h-3 w-3"></i>
+          </a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div><!-- /LEFT -->
+
+  <!-- RIGHT sidebar -->
+  <div class="course-sidebar shadow-sm">
+    <div class="border-b border-slate-200 bg-slate-50 px-4 py-4">
+      <div class="mb-1 flex items-center justify-between text-xs font-semibold text-slate-500">
+        <span>Progress</span>
+        <span id="pct-label" class="text-blue-600">{{ progress_pct }}%</span>
+      </div>
+      <div class="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+        <div id="sidebar-progress-bar" class="prog-bar h-full" style="width:{{ progress_pct }}%"></div>
+      </div>
+      <p class="mt-1 text-xs text-slate-400"><span id="sidebar-done">{{ completed_count }}</span> of {{ total_concepts }} done</p>
+    </div>
+
+    <div class="sidebar-scroll">
+      <p class="px-4 pt-3 pb-1 text-xs font-bold uppercase tracking-wider text-slate-400">Modules</p>
+      {% for concept in concepts %}
+      <div class="mod-item {% if concept.id in completed_ids %}bg-emerald-50{% endif %}"
+           id="mod-item-{{ concept.id }}"
+           onclick="selectModule({{ concept.id }})">
+        <span class="mod-num">
+          {% if concept.id in completed_ids %}<span class="text-emerald-500 text-base">✓</span>{% else %}{{ forloop.counter }}{% endif %}
+        </span>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs font-semibold text-slate-800 leading-snug">{{ concept.header }}</p>
+          {% if concept.h3_course %}<p class="text-xs text-slate-400 mt-0.5">{{ concept.h3_course }}</p>{% endif %}
+          <p class="text-xs text-slate-400 mt-0.5">
+            {% if concept.videos.all %}{{ concept.videos.count }} video{{ concept.videos.count|pluralize }}{% endif %}
+            {% if concept.pdf %} · PDF{% endif %}
+            {% if concept.quiz %} · Quiz{% endif %}
+          </p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="border-t border-slate-200 p-4">
+      <button id="complete-btn" onclick="toggleComplete()"
+          class="w-full rounded-xl py-2.5 text-sm font-bold transition bg-slate-100 text-slate-500 cursor-not-allowed" disabled>
+        Select a module first
+      </button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script id="concepts-data" type="application/json">
+[{% for concept in concepts %}{
+  "id":{{ concept.id }},
+  "header":"{{ concept.header|escapejs }}",
+  "h3_course":"{{ concept.h3_course|escapejs }}",
+  "level":"{{ concept.get_level_display }}",
+  "completed":{% if concept.id in completed_ids %}true{% else %}false{% endif %},
+  "pdf":"{% if concept.pdf %}{{ concept.pdf.url }}{% endif %}",
+  "quiz":{{ concept.quiz|default:"[]"|safe }},
+  "assignment":"{{ concept.assignment|escapejs }}",
+  "videos":[{% for v in concept.videos.all %}{"title":"{{ v.title|default:'Video Lesson'|escapejs }}","url":"{% if v.video_url %}{{ v.video_url|escapejs }}{% elif v.file %}{{ v.file.url|escapejs }}{% endif %}","type":"{% if v.video_url %}url{% else %}file{% endif %}"}{% if not forloop.last %},{% endif %}{% endfor %}]
+}{% if not forloop.last %},{% endif %}{% endfor %}]
+</script>
+
+<script>
+const conceptsData = JSON.parse(document.getElementById('concepts-data').textContent);
+let activeConceptId = null;
+let pendingSrc = null, pendingType = null;
+let maxWatched = 0; // furthest second reached — no forward skip beyond this
+
+// ── Select module ─────────────────────────────────────────────────────────────
+function selectModule(id) {
+    activeConceptId = id;
+    const concept = conceptsData.find(c => c.id === id);
+    if (!concept) return;
+
+    // Sidebar highlight
+    document.querySelectorAll('.mod-item').forEach(el => el.classList.remove('active'));
+    const item = document.getElementById('mod-item-' + id);
+    if (item) { item.classList.add('active'); }
+
+    // Hide course overview, show content tabs
+    document.getElementById('course-overview').classList.add('hidden');
+    document.getElementById('content-area').classList.remove('hidden');
+
+    // Reset player to ready state (play overlay) with first video loaded
+    const videoEl  = document.getElementById('main-video');
+    const iframeEl = document.getElementById('main-iframe');
+    videoEl.classList.add('hidden');
+    iframeEl.classList.add('hidden');
+    videoEl.pause && videoEl.pause();
+    videoEl.src = '';
+    iframeEl.src = '';
+    document.getElementById('now-playing').classList.add('hidden');
+
+    if (concept.videos.length) {
+        const v = concept.videos[0];
+        pendingSrc  = v.url;
+        pendingType = v.type;
+        document.getElementById('ready-title').textContent = v.title;
+        document.getElementById('player-idle').classList.add('hidden');
+        document.getElementById('player-ready').classList.remove('hidden');
+    } else {
+        pendingSrc = null;
+        document.getElementById('player-ready').classList.add('hidden');
+        document.getElementById('player-idle').classList.remove('hidden');
+        document.getElementById('player-idle').querySelector('p:last-child').textContent = 'No video for this module';
+    }
+
+    // Populate tabs
+    populateNotes(concept);
+    renderQuizTab(concept);
+    populateAssignment(concept);
+
+    // Switch to Notes tab by default
+    document.querySelectorAll('.ctab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.ctab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelector('.ctab').classList.add('active');
+    document.getElementById('tab-notes').classList.add('active');
+
+    updateCompleteBtn(concept.completed);
+    lucide.createIcons();
+}
+
+// ── Start play (user clicked overlay) ────────────────────────────────────────
+function startPlay() {
+    if (!pendingSrc) return;
+    document.getElementById('player-ready').classList.add('hidden');
+    loadPlayer(pendingSrc, pendingType, document.getElementById('ready-title').textContent);
+}
+
+function loadPlayer(src, type, title) {
+    const videoEl  = document.getElementById('main-video');
+    const iframeEl = document.getElementById('main-iframe');
+    maxWatched = 0;
+
+    if (type === 'url') {
+        const ytMatch = src.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+        const isDirect = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(src);
+        if (ytMatch) {
+            iframeEl.src = `https://www.youtube.com/embed/${ytMatch[1]}?rel=0`;
+            iframeEl.classList.remove('hidden');
+        } else if (isDirect) {
+            setupVideoEl(videoEl, src);
+        } else {
+            iframeEl.src = src;
+            iframeEl.classList.remove('hidden');
+        }
+    } else {
+        setupVideoEl(videoEl, src);
+    }
+
+    document.getElementById('now-playing-title').textContent = title;
+    document.getElementById('now-playing').classList.remove('hidden');
+    lucide.createIcons();
+}
+
+function setupVideoEl(videoEl, src) {
+    videoEl.src = src;
+    videoEl.classList.remove('hidden');
+    videoEl.play().catch(() => {});
+
+    // No forward seeking — track furthest point reached
+    videoEl.addEventListener('timeupdate', () => {
+        if (videoEl.currentTime > maxWatched + 1) {
+            // User tried to skip forward — snap back
+            videoEl.currentTime = maxWatched;
+        } else if (videoEl.currentTime > maxWatched) {
+            maxWatched = videoEl.currentTime;
+        }
+    }, { passive: true });
+
+    videoEl.addEventListener('seeking', () => {
+        if (videoEl.currentTime > maxWatched + 0.5) {
+            videoEl.currentTime = maxWatched;
+        }
+    });
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(btn, paneId) {
+    document.querySelectorAll('.ctab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.ctab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(paneId).classList.add('active');
+}
+
+// ── Notes ─────────────────────────────────────────────────────────────────────
+function populateNotes(concept) {
+    const el = document.getElementById('tab-notes');
+    if (concept.pdf) {
+        el.innerHTML = `
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Study Notes</p>
+                <a href="${concept.pdf}" target="_blank"
+                   class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-700 transition mb-4">
+                   📄 Download PDF
                 </a>
-            </div>
-            {% endif %}
-            
-            {% if concept.videos.all %}
-            <div class="mb-4">
-                <h3 class="mb-3 text-sm font-semibold text-slate-900">Video Lessons</h3>
-                <div class="space-y-3">
-                    {% for video in concept.videos.all %}
-                    <div class="flex items-center gap-4 rounded-lg border border-slate-200 p-4">
-                        <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
-                            <i data-lucide="play" class="h-6 w-6"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-slate-900">{{ video.title|default:"Video Lesson" }}</h4>
-                            <p class="text-sm text-slate-500">Video content</p>
-                        </div>
-                        {% if video.video_url %}
-                        <a href="{{ video.video_url }}" target="_blank" class="inline-flex rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
-                            Watch
-                        </a>
-                        {% elif video.file %}
-                        <a href="{{ video.file.url }}" target="_blank" class="inline-flex rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700">
-                            Download
-                        </a>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
+                <div class="rounded-xl overflow-hidden border border-slate-200" style="height:580px;">
+                    <iframe src="${concept.pdf}" style="width:100%;height:580px;border:none;"></iframe>
                 </div>
+            </div>`;
+    } else {
+        el.innerHTML = '<div class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-400">No notes or PDF for this module.</div>';
+    }
+}
+
+// ── Quiz ─────────────────────────────────────────────────────────────────────
+function renderQuizTab(concept) {
+    const el = document.getElementById('tab-quiz');
+    const questions = Array.isArray(concept.quiz) ? concept.quiz : [];
+    if (!questions.length) {
+        el.innerHTML = '<div class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-400">No quiz for this module.</div>';
+        return;
+    }
+    el.innerHTML = '';
+    questions.forEach((q, qi) => {
+        const card = document.createElement('div');
+        card.className = 'mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-5';
+        card.innerHTML = `
+            <p class="mb-3 font-semibold text-slate-800 text-sm flex items-start gap-2">
+                <span class="inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-amber-400 text-xs font-bold text-white">${qi+1}</span>
+                ${escHtml(q.question)}
+            </p>
+            <div class="space-y-2 quiz-options" data-correct="${q.correct}">
+                ${(q.options||[]).map((opt,oi)=>`
+                    <div class="quiz-option flex items-center gap-3 rounded-xl border border-amber-200 bg-white px-4 py-2.5 text-sm text-slate-700"
+                         data-index="${oi}" onclick="selectOption(this)">
+                        <span class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 border-slate-300 text-xs font-bold">${String.fromCharCode(65+oi)}</span>
+                        <span>${escHtml(opt)}</span>
+                    </div>`).join('')}
             </div>
-            {% endif %}
-            
-            {% if concept.quiz %}
-            <div class="mb-4">
-                <h3 class="mb-2 text-sm font-semibold text-slate-900">Quiz</h3>
-                <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                    <p class="text-sm text-slate-700">{{ concept.quiz|linebreaks }}</p>
+            <div class="quiz-feedback mt-3 hidden text-sm font-semibold"></div>
+            <button onclick="submitAnswer(this)" class="mt-3 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-white hover:bg-amber-600 transition">Check Answer</button>`;
+        el.appendChild(card);
+    });
+}
+
+function selectOption(el) {
+    const group = el.closest('.quiz-options');
+    if (!group || group.classList.contains('quiz-submitted')) return;
+    group.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+}
+
+function submitAnswer(btn) {
+    const card     = btn.closest('div.rounded-2xl');
+    const group    = card.querySelector('.quiz-options');
+    const feedback = card.querySelector('.quiz-feedback');
+    const selected = group.querySelector('.quiz-option.selected');
+    if (!selected) {
+        feedback.textContent = 'Please select an answer first.';
+        feedback.className = 'quiz-feedback mt-3 text-sm font-semibold text-slate-500';
+        feedback.classList.remove('hidden'); return;
+    }
+    const correct = parseInt(group.dataset.correct);
+    const chosen  = parseInt(selected.dataset.index);
+    group.classList.add('quiz-submitted');
+    group.querySelectorAll('.quiz-option').forEach((o,i) => {
+        if (i === correct) o.classList.add('correct');
+        else if (i === chosen && chosen !== correct) o.classList.add('wrong');
+    });
+    feedback.classList.remove('hidden');
+    feedback.textContent = chosen === correct ? '✓ Correct!' : `✗ Incorrect. Correct answer: ${String.fromCharCode(65+correct)}.`;
+    feedback.className = `quiz-feedback mt-3 text-sm font-semibold ${chosen === correct ? 'text-emerald-600' : 'text-rose-600'}`;
+    btn.remove();
+}
+
+// ── Assignment ────────────────────────────────────────────────────────────────
+function populateAssignment(concept) {
+    const el = document.getElementById('tab-assignment');
+    if (concept.assignment) {
+        el.innerHTML = `
+            <div class="rounded-2xl border border-violet-200 bg-violet-50 p-6 shadow-sm">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="text-lg">📝</span>
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Course Assignment</p>
+                    <span class="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-700">Course</span>
                 </div>
-            </div>
-            {% endif %}
-            
-            {% if concept.assignment %}
-            <div class="mb-4">
-                <h3 class="mb-2 text-sm font-semibold text-slate-900">Assignment</h3>
-                <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                    <p class="text-sm text-slate-700">{{ concept.assignment|linebreaks }}</p>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-    </article>
-    {% endfor %}
-</section>
-{% else %}
-<section class="rounded-[1.75rem] border border-dashed border-slate-300 bg-white p-12 text-center text-slate-500 shadow-panel">
-    <i data-lucide="book-open" class="mx-auto h-10 w-10"></i>
-    <h2 class="mt-4 text-lg font-semibold text-slate-900">No content available</h2>
-    <p class="mt-2 text-sm">This course doesn't have any concepts yet.</p>
-</section>
-{% endif %}
+                <div class="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">${escHtml(concept.assignment)}</div>
+            </div>`;
+    } else {
+        el.innerHTML = '<div class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-400">No assignment for this module.</div>';
+    }
+}
+
+// ── Mark complete ─────────────────────────────────────────────────────────────
+function updateCompleteBtn(completed) {
+    const btn = document.getElementById('complete-btn');
+    btn.disabled = false;
+    btn.className = completed
+        ? 'w-full rounded-xl py-2.5 text-sm font-bold transition bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+        : 'w-full rounded-xl py-2.5 text-sm font-bold transition bg-blue-600 text-white hover:bg-blue-700';
+    btn.textContent = completed ? '✓ Completed' : 'Mark as Complete';
+}
+
+async function toggleComplete() {
+    if (!activeConceptId) return;
+    const btn = document.getElementById('complete-btn');
+    btn.disabled = true;
+    try {
+        const res  = await fetch(`/student/api/concept-complete/${activeConceptId}/`, {
+            method:'POST', headers:{'X-CSRFToken':CSRF}
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        const concept = conceptsData.find(c => c.id === activeConceptId);
+        if (concept) concept.completed = data.completed;
+        updateCompleteBtn(data.completed);
+        const item = document.getElementById('mod-item-' + activeConceptId);
+        if (item) {
+            item.querySelector('.mod-num').innerHTML = data.completed
+                ? '<span class="text-emerald-500 text-base">✓</span>'
+                : String(conceptsData.findIndex(c=>c.id===activeConceptId)+1);
+            data.completed ? item.classList.add('bg-emerald-50') : item.classList.remove('bg-emerald-50');
+        }
+        document.getElementById('sidebar-progress-bar').style.width = data.progress_pct + '%';
+        document.getElementById('sidebar-done').textContent = data.completed_count;
+        document.getElementById('pct-label').textContent = data.progress_pct + '%';
+    } catch(e) { console.error(e); }
+    finally { btn.disabled = false; }
+}
+
+function escHtml(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+document.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); });
+</script>
 {% endblock %}
