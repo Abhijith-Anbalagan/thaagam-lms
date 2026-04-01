@@ -370,6 +370,14 @@ def password_change_view(request):
         'pw_form': form,
         'show_pw': True,
     })
+<<<<<<< HEAD
+    
+    
+    
+    
+    
+    
+=======
         
 def landing(request):
     testimonials = Testimonial.objects.filter(status='approved').order_by('-created_at')
@@ -418,3 +426,4 @@ def manage_testimonials(request):
     pending = Testimonial.objects.filter(status='pending').order_by('-created_at')
     approved = Testimonial.objects.filter(status='approved').order_by('-created_at')
     return render(request, 'accounts/manage_testimonials.html', {'pending': pending, 'approved': approved})
+>>>>>>> m1-accounts
