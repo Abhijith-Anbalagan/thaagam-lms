@@ -1,13 +1,13 @@
 import uuid
 from datetime import timedelta
-
+from .models import User, Invitation, Testimonial   
 from django.contrib import messages
 from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.password_validation import validate_password
 from django.core.mail import send_mail, EmailMultiAlternatives  # ← fixed
 from django.forms import ValidationError
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.template.loader import render_to_string              # ← added
 from django.urls import reverse
 from django.utils import timezone
@@ -23,6 +23,8 @@ from .forms import (
     ProfileForm, PasswordChangeCustomForm,
     ForgotPasswordForm, ResetPasswordForm,
 )
+from .models import Testimonial
+from .forms import TestimonialForm
 
 
 # ─── Contact Us ───────────────────────────────────────────────────────────────
@@ -368,3 +370,60 @@ def password_change_view(request):
         'pw_form': form,
         'show_pw': True,
     })
+<<<<<<< HEAD
+    
+    
+    
+    
+    
+    
+=======
+        
+def landing(request):
+    testimonials = Testimonial.objects.filter(status='approved').order_by('-created_at')
+    return render(request, 'accounts/landing.html', {'testimonials': testimonials})
+# ✅ Public — no login required 
+def submit_testimonial(request):
+    if request.method == 'POST':
+        form = TestimonialForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return render(request, 'accounts/testimonial_success.html')
+    else:
+        form = TestimonialForm()
+    return render(request, 'accounts/submit_testimonial.html', {'form': form})
+
+# 🔒 Admin only
+@login_required
+def manage_testimonials(request):
+    if request.method == 'POST':
+        testimonial_id = request.POST.get('id')
+        action = request.POST.get('action')
+        testimonial = get_object_or_404(Testimonial, id=testimonial_id)
+        if action in ['approved', 'rejected']:
+            testimonial.status = action
+            testimonial.save()
+    pending = Testimonial.objects.filter(status='pending').order_by('-created_at')
+    approved = Testimonial.objects.filter(status='approved').order_by('-created_at')
+    return render(request, 'accounts/manage_testimonials.html', {'pending': pending, 'approved': approved})
+
+
+@login_required
+def manage_testimonials(request):
+    if request.method == 'POST':
+        testimonial_id = request.POST.get('id')
+        action = request.POST.get('action')
+        testimonial = get_object_or_404(Testimonial, id=testimonial_id)
+
+        if action == 'approved':
+            testimonial.status = 'approved'
+            testimonial.save()
+        elif action == 'rejected':
+            testimonial.delete()  # ← delete from DB instead of saving
+        elif action == 'deleted':
+            testimonial.delete()
+
+    pending = Testimonial.objects.filter(status='pending').order_by('-created_at')
+    approved = Testimonial.objects.filter(status='approved').order_by('-created_at')
+    return render(request, 'accounts/manage_testimonials.html', {'pending': pending, 'approved': approved})
+>>>>>>> m1-accounts

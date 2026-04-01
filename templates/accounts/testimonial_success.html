@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thank You | Thaagam LMS</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f8f9fb; font-family: -apple-system, sans-serif; padding: 2rem; }
+    .card { background: #fff; border-radius: 20px; border: 1px solid #e5e7eb; padding: 3rem 2.5rem; max-width: 480px; width: 100%; text-align: center; }
+    .icon-wrap { width: 72px; height: 72px; border-radius: 50%; background: #dcfce7; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; }
+    h2 { font-size: 22px; font-weight: 700; color: #111; margin-bottom: 10px; }
+    .subtitle { font-size: 15px; color: #555; line-height: 1.7; margin-bottom: 2rem; }
+    .steps { background: #f8f9fb; border-radius: 12px; padding: 1.25rem; margin-bottom: 2rem; text-align: left; }
+    .step { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .step:last-child { margin-bottom: 0; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot.active { background: #f59e0b; }
+    .dot.done { background: #16a34a; }
+    .dot.pending { background: #d1d5db; }
+    .step-label { font-size: 13px; }
+    .step-label.active { color: #555; }
+    .step-label.pending { color: #aaa; }
+    .btn-primary { display: block; width: 100%; background: #111; color: #fff; text-decoration: none; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+    .btn-secondary { display: block; width: 100%; background: #fff; color: #555; text-decoration: none; padding: 14px; border-radius: 10px; font-size: 15px; border: 1px solid #e5e7eb; }
+  </style>
+</head>
+<body>
+  <div class="card">
+
+    <div class="icon-wrap">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+
+    <h2>Thank you for sharing!</h2>
+    <p class="subtitle">Your testimonial has been submitted and is awaiting admin approval. It will appear on our website once reviewed.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="dot done"></div>
+        <span class="step-label active">Submitted successfully</span>
+      </div>
+      <div class="step">
+        <div class="dot active"></div>
+        <span class="step-label active">Under review by our team</span>
+      </div>
+      <div class="step">
+        <div class="dot pending"></div>
+        <span class="step-label pending">Approved &amp; published</span>
+      </div>
+    </div>
+
+    <a href="{% url 'landing' %}" class="btn-primary">Back to Home</a>
+    <a href="{% url 'submit_testimonial' %}" class="btn-secondary">Submit another testimonial</a>
+
+  </div>
+</body>
+</html>

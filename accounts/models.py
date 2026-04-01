@@ -118,3 +118,23 @@ class Invitation(models.Model):
     @property
     def is_valid(self):
         return not self.accepted and timezone.now() < self.expires_at
+    
+class Testimonial(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+    name = models.CharField(max_length=100, default='')       # ← add default
+    email = models.EmailField(blank=False, default='')         # ← add default
+    message = models.TextField(max_length=200, default='')     # ← add default
+    rating = models.IntegerField(default=5)                   # ← already has default
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='pending'                                     # ← already has default
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.status}"

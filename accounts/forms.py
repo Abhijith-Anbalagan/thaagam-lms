@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from .models import User
+from .models import Testimonial
 
 
 
@@ -149,3 +150,20 @@ class ResetPasswordForm(forms.Form):
         return cleaned_data
     
     
+
+
+
+class TestimonialForm(forms.ModelForm):
+    rating = forms.ChoiceField(
+        choices=[(i, f"{i} ★") for i in range(1, 6)],
+        widget=forms.RadioSelect
+    )
+
+    class Meta:
+        model = Testimonial
+        fields = ['name', 'email', 'message', 'rating']
+        widgets = {
+            'name': forms.TextInput(attrs={'placeholder': 'Your name'}),
+            'email': forms.EmailInput(attrs={'placeholder': 'Your email (optional)'}),
+            'message': forms.Textarea(attrs={'placeholder': 'Share your experience...', 'rows': 4}),
+        }

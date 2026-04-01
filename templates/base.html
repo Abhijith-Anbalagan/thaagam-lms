@@ -50,6 +50,8 @@
   <a href="{% url 'superadmin_all_courses' %}" class="sidebar-link {% if request.resolver_match.url_name in 'superadmin_all_courses,superadmin_course_list,superadmin_course_detail,superadmin_concept_add,superadmin_concept_edit,superadmin_video_add' %}active{% endif %}"><span class="sl-icon">📘</span> Courses</a>
   <a href="{% url 'superadmin_analytics' %}" class="sidebar-link {% if request.resolver_match.url_name == 'superadmin_analytics' %}active{% endif %}"><span class="sl-icon">📊</span> Analytics</a>
 
+  <a href="{% url 'manage_testimonials' %}" class="sidebar-link {% if request.resolver_match.url_name == 'manage_testimonials' %}active{% endif %}"><span class="sl-icon">💬</span> Manage Testimonials</a>
+
   {% elif user.role == 'school_admin' %}
   <a href="{% url 'school_admin_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_dashboard' %}active{% endif %}"><span class="sl-icon">🏠</span> Dashboard</a>
   <a href="{% url 'school_admin_invite_management' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_invite_management' %}active{% endif %}"><span class="sl-icon">➕</span> Invite Management</a>
@@ -126,3 +128,10 @@ function toggleSidebar() {
 {% endif %}
 </body>
 </html>
+
+
+
+
+
+
+

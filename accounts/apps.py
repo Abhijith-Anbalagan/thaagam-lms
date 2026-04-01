@@ -40,4 +40,14 @@ class AccountsConfig(AppConfig):
 
         except (OperationalError, ProgrammingError):
             # Database tables don't exist yet (before first migration)
+<<<<<<< HEAD
+            return 
+        
+        
+        
+        
+        
+        
+=======
             return
+>>>>>>> m1-accounts
