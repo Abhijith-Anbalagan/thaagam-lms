@@ -446,7 +446,17 @@ function copyCode(e, code, btn) {
 
 function shareCode(e, code, className) {
   e.preventDefault(); e.stopPropagation();
-  const text = `Join my class "${className}" on EduPlatform!\nClass code: ${code}`;
+  var loginUrl = window.location.origin + '/login/';
+  var text = 'Join my class "' + className + '" on EduPlatform!
+Login here: ' + loginUrl + '
+Class code: ' + code;
+  if (navigator.share) {
+    navigator.share({ title: 'Join ' + className, text: text }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(text).then(function(){ showCodeToast('Copied!'); }).catch(function(){ showCodeToast('Code: ' + code); });
+  }
+}/login/`;
+  const text = `Join my class `"`${className}`" on EduPlatform!\nLogin here: ${loginUrl}\nClass code: ${code}`;
   if (navigator.share) {
     navigator.share({ title: 'Join ' + className, text }).catch(() => {});
   } else {
