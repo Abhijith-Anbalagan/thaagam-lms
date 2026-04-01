@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% block title %}Management Dashboard{% endblock %}
 {% block extra_css %}
 <style>
@@ -25,7 +25,7 @@
 .mgmt-page { padding: 28px 32px; display: flex; flex-direction: column; gap: 22px; }
 
 .wb {
-  background: linear-gradient(135deg, #0c2a5e 0%, #1a3fa6 55%, #2d52c4 100%);
+  background: linear-gradient(135deg, #0c2a5e 0%, #1a3fa6 55%, #2f53bf 100%);
   border-radius: var(--radius-xl); padding: 30px 36px;
   display: flex; align-items: center; gap: 32px;
   position: relative; overflow: hidden;
@@ -36,8 +36,9 @@
 .wb p   { font-size: 13.5px; color: rgba(255,255,255,.62); }
 .wb-actions { display: flex; gap: 10px; margin-top: 20px; }
 .wb-stats { display: flex; gap: 0; flex-shrink: 0; z-index: 1; }
-.bstat { text-align: center; padding: 0 28px; }
+.bstat { text-align: center; padding: 0 28px; transition: opacity .15s; }
 .bstat + .bstat { border-left: 1px solid rgba(255,255,255,.12); }
+a.bstat:hover { opacity: .75; }
 .bstat-val { font-family: var(--mono); font-size: 28px; font-weight: 700; color: #fff; line-height: 1; }
 .bstat-lbl { font-size: 11px; color: rgba(255,255,255,.45); margin-top: 4px; }
 
@@ -245,7 +246,6 @@
       <div class="s-card"><div class="s-icon">🎓</div><div class="s-val">{{ total_students }}</div><div class="s-lbl">Total Students</div></div>
       <div class="s-card"><div class="s-icon">📝</div><div class="s-val">{{ avg_submission_rate }}%</div><div class="s-lbl">Avg Submission</div></div>
       <div class="s-card"><div class="s-icon">🏆</div><div class="s-val">{{ avg_grade }}</div><div class="s-lbl">Avg Grade</div></div>
-      <div class="s-card"><div class="s-icon">✅</div><div class="s-val">{{ attendance_rate }}%</div><div class="s-lbl">Attendance</div></div>
     </div>
     {% if class_perf %}
     <div class="card">
@@ -258,8 +258,6 @@
           <div class="bar-wrap"><div class="bar-fill" style="width:{{ c.submission_rate }}%;background:var(--brand);"></div></div>
           <div style="font-size:12px;color:var(--text-2);margin:8px 0 2px;">Avg Grade <span style="float:right;font-weight:700;color:var(--text-1);">{{ c.avg_grade }}</span></div>
           <div class="bar-wrap"><div class="bar-fill" style="width:{{ c.avg_grade }}%;background:#1d9e75;"></div></div>
-          <div style="font-size:12px;color:var(--text-2);margin:8px 0 2px;">Attendance <span style="float:right;font-weight:700;color:var(--text-1);">{{ c.attendance }}%</span></div>
-          <div class="bar-wrap"><div class="bar-fill" style="width:{{ c.attendance }}%;background:#d97706;"></div></div>
           <div style="font-size:12px;color:var(--text-3);margin-top:10px;">👥 {{ c.students }} student{{ c.students|pluralize }}</div>
         </div>
         {% endfor %}
@@ -270,65 +268,114 @@
 
   <!-- TAB: ANALYTICS -->
   <div class="tab-pane" id="tab-analytics">
+
     <div class="stat-row">
-      <div class="s-card"><div class="s-icon">👩‍🏫</div><div class="s-val">{{ total_teachers }}</div><div class="s-lbl">Teachers</div></div>
-      <div class="s-card"><div class="s-icon">🎓</div><div class="s-val">{{ total_students }}</div><div class="s-lbl">Students</div></div>
-      <div class="s-card"><div class="s-icon">🏛</div><div class="s-val">{{ total_classrooms }}</div><div class="s-lbl">Classrooms</div></div>
-      <div class="s-card"><div class="s-icon">📝</div><div class="s-val">{{ total_assignments }}</div><div class="s-lbl">Assignments</div></div>
-      <div class="s-card"><div class="s-icon">🎬</div><div class="s-val">{{ total_videos }}</div><div class="s-lbl">Videos</div></div>
-      <div class="s-card"><div class="s-icon">📊</div><div class="s-val">{{ avg_submission_rate }}%</div><div class="s-lbl">Submission Rate</div></div>
-      <div class="s-card"><div class="s-icon">🏆</div><div class="s-val">{{ avg_grade }}</div><div class="s-lbl">Avg Grade</div></div>
-      <div class="s-card"><div class="s-icon">✅</div><div class="s-val">{{ attendance_rate }}%</div><div class="s-lbl">Attendance</div></div>
+      <div class="s-card"><div class="s-icon">&#128105;&#8205;&#127979;</div><div class="s-val">{{ total_teachers }}</div><div class="s-lbl">Teachers</div></div>
+      <div class="s-card"><div class="s-icon">&#127891;</div><div class="s-val">{{ total_students }}</div><div class="s-lbl">Students</div></div>
+      <div class="s-card"><div class="s-icon">&#127963;</div><div class="s-val">{{ total_classrooms }}</div><div class="s-lbl">Classrooms</div></div>
+
+      <div class="s-card"><div class="s-icon">&#128202;</div><div class="s-val">{{ avg_submit_rate }}%</div><div class="s-lbl">Avg Submission</div></div>
+      <div class="s-card"><div class="s-icon">&#127942;</div><div class="s-val">{{ avg_grade }}</div><div class="s-lbl">Avg Grade</div></div>
+      <div class="s-card"><div class="s-icon">&#128172;</div><div class="s-val">{{ engagement.messages_sent }}</div><div class="s-lbl">Messages (30d)</div></div>
+      <div class="s-card"><div class="s-icon">&#128101;</div><div class="s-val">{{ engagement.active_students }}</div><div class="s-lbl">Active Students</div></div>
     </div>
+
     <div class="card">
-      <div class="card-head"><span class="card-title">👩‍🏫 Teacher Activity</span></div>
+      <div class="card-head"><span class="card-title">&#128246; Engagement Metrics &mdash; Last 30 Days</span></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0;">
+        <div style="padding:20px 24px;border-right:1px solid var(--border);text-align:center;">
+          <div style="font-size:28px;font-weight:700;font-family:var(--mono);color:var(--brand);">{{ engagement.active_students }}</div>
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-3);margin-top:4px;">Active Students</div>
+        </div>
+        <div style="padding:20px 24px;border-right:1px solid var(--border);text-align:center;">
+          <div style="font-size:28px;font-weight:700;font-family:var(--mono);color:#1d9e75;">{{ engagement.messages_sent }}</div>
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-3);margin-top:4px;">Messages Sent</div>
+        </div>
+        <div style="padding:20px 24px;text-align:center;">
+          <div style="font-size:28px;font-weight:700;font-family:var(--mono);color:#d97706;">{{ engagement.announcements_created }}</div>
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-3);margin-top:4px;">Announcements</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">&#128105;&#8205;&#127979; Instructor Performance</span></div>
       {% if teacher_data %}
       <div style="overflow-x:auto">
         <table class="dt">
-          <thead><tr><th>Teacher</th><th>Active Classes</th><th>Assignments</th><th>Videos</th><th>Students</th></tr></thead>
+          <thead><tr><th>Teacher</th><th>Classes</th><th>Students</th><th>Assignments</th><th>Videos</th></tr></thead>
           <tbody>
           {% for t in teacher_data %}
           <tr>
             <td><div class="t-cell"><div class="t-av">{{ t.name|first|upper }}</div><span style="font-weight:600;">{{ t.name }}</span></div></td>
             <td><span class="badge badge-blue">{{ t.classes }}</span></td>
+            <td class="mono">{{ t.students }}</td>
             <td class="mono">{{ t.assignments }}</td>
             <td class="mono">{{ t.videos }}</td>
-            <td class="mono">{{ t.students }}</td>
           </tr>
           {% endfor %}
           </tbody>
         </table>
       </div>
-      {% else %}<div class="empty-state">No teacher data yet.</div>{% endif %}
+      {% else %}<div class="empty-state">No instructor data yet.</div>{% endif %}
     </div>
+
     <div class="card">
-      <div class="card-head"><span class="card-title">🏛 Class Performance</span></div>
-      {% if class_perf %}
+      <div class="card-head"><span class="card-title">&#127963; Course Performance &amp; Completion Rates</span></div>
+      {% if course_completion %}
       <div style="overflow-x:auto">
         <table class="dt">
-          <thead><tr><th>Classroom</th><th>Teacher</th><th>Students</th><th>Submission Rate</th><th>Avg Grade</th><th>Attendance</th></tr></thead>
+          <thead><tr><th>Classroom</th><th>Assignments</th><th>Submissions</th><th>Completion Rate</th><th>Status</th></tr></thead>
           <tbody>
-          {% for c in class_perf %}
+          {% for c in course_completion %}
           <tr>
             <td style="font-weight:700;">{{ c.name }}</td>
-            <td>{{ c.teacher }}</td>
-            <td class="mono">{{ c.students }}</td>
-            <td>
+            <td class="mono">{{ c.total_assignments }}</td>
+            <td class="mono">{{ c.completed_submissions }}</td>
+            <td style="min-width:160px;">
               <div style="display:flex;align-items:center;gap:8px;">
-                <div style="flex:1;background:var(--border);border-radius:99px;height:5px;overflow:hidden;min-width:60px;"><div style="height:100%;border-radius:99px;background:var(--brand);width:{{ c.submission_rate }}%;"></div></div>
-                <span class="mono" style="white-space:nowrap;">{{ c.submission_rate }}%</span>
+                <div style="flex:1;background:var(--border);border-radius:99px;height:5px;overflow:hidden;min-width:80px;">
+                  <div style="height:100%;border-radius:99px;background:{% if c.completion_rate >= 70 %}#1d9e75{% elif c.completion_rate >= 40 %}var(--brand){% else %}#d97706{% endif %};width:{{ c.completion_rate }}%;"></div>
+                </div>
+                <span class="mono" style="font-size:12px;font-weight:700;">{{ c.completion_rate }}%</span>
               </div>
             </td>
             <td>
-              <div style="display:flex;align-items:center;gap:8px;">
-                <div style="flex:1;background:var(--border);border-radius:99px;height:5px;overflow:hidden;min-width:60px;"><div style="height:100%;border-radius:99px;background:#1d9e75;width:{{ c.avg_grade }}%;"></div></div>
-                <span class="mono" style="white-space:nowrap;">{{ c.avg_grade }}</span>
-              </div>
+              {% if c.completion_rate >= 70 %}<span class="badge badge-green">On Track</span>
+              {% elif c.completion_rate >= 40 %}<span class="badge badge-blue">In Progress</span>
+              {% else %}<span class="badge badge-amber">Needs Attention</span>{% endif %}
             </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}<div class="empty-state">No course data yet.</div>{% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">&#128221; Assessment Results</span></div>
+      {% if assignment_analytics %}
+      <div style="overflow-x:auto">
+        <table class="dt">
+          <thead><tr><th>Assignment</th><th>Due Date</th><th>Students</th><th>Submitted</th><th>Late</th><th>Submission Rate</th></tr></thead>
+          <tbody>
+          {% for a in assignment_analytics %}
+          <tr>
+            <td style="font-weight:600;">{{ a.title }}</td>
+            <td style="font-size:12px;color:var(--text-3);">{{ a.due_date|date:"M d, Y" }}</td>
+            <td class="mono">{{ a.total_students }}</td>
+            <td class="mono">{{ a.submissions_count }}</td>
             <td>
+              {% if a.late_submissions %}<span class="badge badge-amber">{{ a.late_submissions }} late</span>
+              {% else %}<span class="badge badge-green">None</span>{% endif %}
+            </td>
+            <td style="min-width:140px;">
               <div style="display:flex;align-items:center;gap:8px;">
-                <div style="flex:1;background:var(--border);border-radius:99px;height:5px;overflow:hidden;min-width:60px;"><div style="height:100%;border-radius:99px;background:#d97706;width:{{ c.attendance }}%;"></div></div>
-                <span class="mono" style="white-space:nowrap;">{{ c.attendance }}%</span>
+                <div style="flex:1;background:var(--border);border-radius:99px;height:5px;overflow:hidden;min-width:70px;">
+                  <div style="height:100%;border-radius:99px;background:{% if a.submission_rate >= 70 %}#1d9e75{% elif a.submission_rate >= 40 %}var(--brand){% else %}#d97706{% endif %};width:{{ a.submission_rate }}%;"></div>
+                </div>
+                <span class="mono" style="font-size:12px;font-weight:700;">{{ a.submission_rate }}%</span>
               </div>
             </td>
           </tr>
@@ -336,10 +383,80 @@
           </tbody>
         </table>
       </div>
-      {% else %}<div class="empty-state">No classroom data yet.</div>{% endif %}
+      {% else %}<div class="empty-state">No assessment data yet.</div>{% endif %}
     </div>
-  </div>
 
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><span class="card-title">&#127942; Top Performing Classrooms</span></div>
+        <div style="padding:0 22px;">
+          {% for c in top_classrooms %}
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);">
+            <div>
+              <div style="font-weight:700;font-size:13px;">{{ c.name }}</div>
+              <div style="font-size:11px;color:var(--text-3);">{{ c.student_count }} students</div>
+            </div>
+            <span class="badge badge-green mono">{{ c.avg_score|floatformat:1|default:"&mdash;" }}%</span>
+          </div>
+          {% empty %}<div class="empty-state" style="padding:24px;">No data yet.</div>{% endfor %}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">&#9888;&#65039; Needs Attention</span></div>
+        <div style="padding:0 22px;">
+          {% for c in weak_classrooms %}
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);">
+            <div>
+              <div style="font-weight:700;font-size:13px;">{{ c.name }}</div>
+              <div style="font-size:11px;color:var(--text-3);">{{ c.student_count }} students</div>
+            </div>
+            <span class="badge badge-amber mono">{{ c.avg_score|floatformat:1|default:"&mdash;" }}%</span>
+          </div>
+          {% empty %}<div class="empty-state" style="padding:24px;">No data yet.</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">&#128187; System Usage Summary</span></div>
+      <div style="overflow-x:auto">
+        <table class="dt">
+          <thead><tr><th>Classroom</th><th>Students</th><th>Avg Score</th><th>Submission Rate</th><th>Performance</th></tr></thead>
+          <tbody>
+          {% for c in dept_performance %}
+          <tr>
+            <td style="font-weight:700;">{{ c.name }}</td>
+            <td class="mono">{{ c.student_count }}</td>
+            <td>
+              {% if c.avg_score %}
+              <span class="mono" style="color:{% if c.avg_score >= 70 %}#1d9e75{% elif c.avg_score >= 50 %}var(--brand){% else %}#d97706{% endif %};font-weight:700;">{{ c.avg_score|floatformat:1 }}%</span>
+              {% else %}<span style="color:var(--text-3);">&#8212;</span>{% endif %}
+            </td>
+            <td style="min-width:140px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="flex:1;background:var(--border);border-radius:99px;height:5px;overflow:hidden;min-width:70px;">
+                  <div style="height:100%;border-radius:99px;background:var(--brand);width:{{ c.submission_rate|floatformat:0 }}%;"></div>
+                </div>
+                <span class="mono" style="font-size:12px;">{{ c.submission_rate|floatformat:1 }}%</span>
+              </div>
+            </td>
+            <td>
+              {% if c.avg_score %}
+                {% if c.avg_score >= 70 %}<span class="badge badge-green">Good</span>
+                {% elif c.avg_score >= 50 %}<span class="badge badge-blue">Average</span>
+                {% else %}<span class="badge badge-amber">Low</span>{% endif %}
+              {% else %}<span class="badge badge-gray">No Data</span>{% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5"><div class="empty-state">No data yet.</div></td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
   <!-- TAB: ANNOUNCEMENTS -->
   <div class="tab-pane" id="tab-announcements">
     <div class="card">
@@ -477,3 +594,10 @@ if (document.readyState === 'loading') {
 }
 </script>
 {% endblock %}
+
+
+
+
+
+
+

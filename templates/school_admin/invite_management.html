@@ -137,7 +137,9 @@
       <div class="card-stripe"></div>
       <div class="card-body">
         <div class="card-title">👤 Single Invite</div>
+        </br>
         <div class="card-sub">Send a secure invite link valid for 48 hours.</div>
+        </br>
 
         {% if messages %}
           {% for msg in messages %}
@@ -149,15 +151,19 @@
           {% csrf_token %}
           <div class="form-group">
             <label class="form-label">Email Address *</label>
+            </br>
             <input type="email" name="email" class="form-ctrl" placeholder="colleague@school.com" required autocomplete="off">
           </div>
+          </br>
           <div class="form-group">
             <label class="form-label">Role</label>
+            </br>
             <select name="role" class="form-ctrl">
               <option value="management">Management</option>
               <option value="teacher">Teacher</option>
             </select>
           </div>
+          </br>
           <button type="submit" class="btn-primary">📨 Send Invite</button>
         </form>
       </div>
@@ -168,21 +174,26 @@
       <div class="card-stripe" style="background:linear-gradient(90deg,var(--blue),#6b82f5);"></div>
       <div class="card-body">
         <div class="card-title">📂 Bulk Invite via File</div>
+      </br>
+  
         <div class="card-sub">Upload CSV or Excel — one email per row. Validates and sends automatically.</div>
-
+      </br>
         <div class="template-row">
           <a href="#" onclick="downloadCSVTemplate();return false;" class="btn-tpl">⬇ CSV Template</a>
+          </br>
+          </br>
           <a href="#" onclick="downloadCSVTemplate();return false;" class="btn-tpl">⬇ Excel Template</a>
         </div>
-
+           </br>
         <div class="form-group">
           <label class="form-label">Role for all invitees</label>
+          </br>
           <select id="bulk-role" class="form-ctrl">
             <option value="management">Management</option>
             <option value="teacher">Teacher</option>
           </select>
         </div>
-
+          </br>
         <div class="drop-zone" id="drop-zone">
           <input type="file" id="bulk-file" accept=".csv,.xlsx,.xls" onchange="onFileSelected(this)">
           <div class="drop-icon">📄</div>
@@ -195,6 +206,7 @@
           <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
           <div class="progress-label" id="progress-label">Processing…</div>
         </div>
+        </br>
 
         <div style="display:flex;gap:8px;margin-top:10px;">
           <button class="btn-primary" id="bulk-send-btn" onclick="sendBulkInvites()" disabled>🚀 Send All Invites</button>

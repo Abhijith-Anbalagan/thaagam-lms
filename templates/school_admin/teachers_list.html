@@ -75,16 +75,11 @@
     <div class="stat-box-lbl">Total Teachers</div>
   </div>
   <div class="stat-box">
-    <div class="stat-box-val">{{ teachers|length }}</div>
+    <div class="stat-box-val">{{ active_teachers }}</div>
     <div class="stat-box-lbl">Active</div>
   </div>
   <div class="stat-box">
-    <div class="stat-box-val">
-      {% with total=0 %}
-        {% for t in teachers %}{% if t.classroom_count %}{{ t.classroom_count|add:total }}{% endif %}{% endfor %}
-      {% endwith %}
-      {{ teachers|length }}
-    </div>
+    <div class="stat-box-val">{{ total_classrooms }}</div>
     <div class="stat-box-lbl">Classrooms</div>
   </div>
 </div>

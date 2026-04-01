@@ -327,9 +327,13 @@ def teachers_list(request):
         num_students=Count('classrooms__students', distinct=True),
         submission_count=Count('classrooms__assignments__submissions', distinct=True),
     ).prefetch_related('classrooms').order_by('first_name')
+    total_classrooms = Classroom.objects.filter(school=school).count()
+    active_teachers  = teachers.filter(is_active=True).count()
     return render(request, 'school_admin/teachers_list.html', {
-        'teachers': teachers,
-        'school': school,
+        'teachers':         teachers,
+        'school':           school,
+        'total_classrooms': total_classrooms,
+        'active_teachers':  active_teachers,
     })
 
 
