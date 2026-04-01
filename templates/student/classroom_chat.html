@@ -51,10 +51,35 @@
 
     <div id="chat-messages" class="chat-scroll chat-window bg-slate-50 p-6">
         {% for message in chat_messages %}
-        <div class="mb-4 flex {% if message.sender == request.user %}justify-end{% else %}justify-start{% endif %}">
-            <div class="bubble {% if message.sender == request.user %}sent bg-blue-600 text-white{% else %}recv border border-slate-200 bg-white text-slate-900{% endif %} max-w-[75%] rounded-[1.35rem] px-4 py-3 text-sm leading-6 shadow-sm">
-                {{ message.body }}
-                <div class="bubble-time mt-1 text-xs opacity-70">{{ message.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
+        <div class="mb-3 flex {% if message.sender == request.user %}justify-end{% else %}justify-start{% endif %}">
+            {% if message.sender == request.user %}
+            <div class="bubble bg-blue-600 text-white max-w-[72%] rounded-2xl shadow-sm text-sm leading-relaxed">
+            {% else %}
+            <div class="bubble bg-white text-slate-900 border border-slate-200 max-w-[72%] rounded-2xl shadow-sm text-sm leading-relaxed">
+            {% endif %}
+                {% if message.attachment %}
+                    {% if message.attachment.name|lower|slice:"-4:" == ".jpg" or message.attachment.name|lower|slice:"-5:" == ".jpeg" or message.attachment.name|lower|slice:"-4:" == ".png" or message.attachment.name|lower|slice:"-4:" == ".gif" or message.attachment.name|lower|slice:"-5:" == ".webp" %}
+                        <a href="{{ message.attachment.url }}" target="_blank" class="block">
+                            <img src="{{ message.attachment.url }}" class="w-full rounded-xl object-cover" style="max-height:240px;min-width:160px;" alt="image"/>
+                        </a>
+                        {% if message.body %}<p class="px-3 pt-2 pb-1">{{ message.body }}</p>{% endif %}
+                        <div class="bubble-time px-3 pb-2 text-xs opacity-60 text-right">{{ message.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
+                    {% else %}
+                        <a href="{{ message.attachment.url }}" target="_blank" class="flex items-center gap-3 rounded-xl border {% if message.sender == request.user %}bg-blue-500 border-blue-400{% else %}bg-slate-50 border-slate-200{% endif %} px-4 py-3 no-underline hover:opacity-80 transition">
+                            <span class="text-2xl flex-shrink-0">📎</span>
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate font-medium text-sm {% if message.sender == request.user %}text-white{% else %}text-slate-800{% endif %}">{{ message.attachment.name|slice:"17:" }}</p>
+                                <p class="text-xs mt-0.5 {% if message.sender == request.user %}text-blue-200{% else %}text-slate-400{% endif %}">Tap to download</p>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0 {% if message.sender == request.user %}text-blue-200{% else %}text-slate-400{% endif %}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        </a>
+                        {% if message.body %}<p class="px-1 pt-2 pb-1">{{ message.body }}</p>{% endif %}
+                        <div class="bubble-time pt-1 pb-1 px-1 text-xs opacity-60 text-right">{{ message.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
+                    {% endif %}
+                {% else %}
+                    <p class="px-4 py-3">{{ message.body }}</p>
+                    <div class="bubble-time px-4 pb-2 text-xs opacity-60 text-right">{{ message.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
+                {% endif %}
             </div>
         </div>
         {% empty %}
@@ -67,11 +92,15 @@
     </div>
 
     <div class="border-t border-slate-200 bg-white px-6 py-5">
-        <div class="flex gap-3">
+        <div id="chat-file-preview" class="hidden mb-3"></div>
+        <div class="flex items-center gap-2">
+            <button id="chat-file-btn" type="button" title="Attach file" class="flex-shrink-0 rounded-2xl border border-slate-200 p-3 text-slate-500 transition hover:bg-slate-100 hover:text-blue-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a4 4 0 00-5.656-5.656L5.757 10.757a6 6 0 108.486 8.486L20 13"/></svg>
+            </button>
+            <input type="file" id="chat-file-input" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip">
             <input type="text" id="chat-input" class="flex-1 rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100" placeholder="Ask your teacher something..." autocomplete="off">
-            <button id="chat-send" class="rounded-2xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700">Send</button>
+            <button id="chat-send" class="flex-shrink-0 rounded-2xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700">Send</button>
         </div>
-        <!-- hidden elements so chat.js targets these instead of status-dot -->
         <span id="chat-status-dot" class="hidden"></span>
         <span id="chat-status-text" class="hidden"></span>
     </div>
@@ -83,6 +112,7 @@
     window.CHAT_CLASSROOM_ID = {{ classroom.pk }};
     window.CHAT_MY_ID = {{ request.user.pk }};
     window.CHAT_RECEIVER_ID = {{ teacher.pk }};
+    window.CHAT_CSRF_TOKEN = '{{ csrf_token }}';
 </script>
 <script src="{% static 'js/chat.js' %}"></script>
 <script>

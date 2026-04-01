@@ -143,9 +143,30 @@ html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);col
         <div class="chat-messages" id="chat-messages">
           {% for msg in chat_messages %}
           <div class="bubble-wrapper {% if msg.sender == request.user %}sent{% else %}recv{% endif %}">
-            <div class="bubble {% if msg.sender == request.user %}sent{% else %}recv{% endif %}">
-              {{ msg.body }}
-              <div class="bubble-time">{{ msg.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
+            <div class="bubble {% if msg.sender == request.user %}sent{% else %}recv{% endif %}" style="overflow:hidden;">
+              {% if msg.attachment %}
+                {% if msg.attachment.name|lower|slice:"-4:" == ".jpg" or msg.attachment.name|lower|slice:"-5:" == ".jpeg" or msg.attachment.name|lower|slice:"-4:" == ".png" or msg.attachment.name|lower|slice:"-4:" == ".gif" or msg.attachment.name|lower|slice:"-5:" == ".webp" %}
+                  <a href="{{ msg.attachment.url }}" target="_blank" style="display:block;">
+                    <img src="{{ msg.attachment.url }}" style="width:100%;max-height:240px;object-fit:cover;border-radius:8px;display:block;" alt="image"/>
+                  </a>
+                  {% if msg.body %}<p style="padding:8px 4px 4px;">{{ msg.body }}</p>{% endif %}
+                  <div class="bubble-time" style="text-align:right;padding:2px 4px 4px;">{{ msg.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
+                {% else %}
+                  <a href="{{ msg.attachment.url }}" target="_blank" style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;text-decoration:none;{% if msg.sender == request.user %}background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);{% else %}background:#f8fafc;border:1px solid #e2e8f0;{% endif %}">
+                    <span style="font-size:24px;flex-shrink:0;">📎</span>
+                    <div style="min-width:0;flex:1;">
+                      <p style="margin:0;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;{% if msg.sender == request.user %}color:#fff;{% else %}color:#1a1f36;{% endif %}">{{ msg.attachment.name|slice:"17:" }}</p>
+                      <p style="margin:2px 0 0;font-size:11px;{% if msg.sender == request.user %}color:rgba(255,255,255,.6);{% else %}color:#9496a8;{% endif %}">Tap to download</p>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;flex-shrink:0;{% if msg.sender == request.user %}color:rgba(255,255,255,.6);{% else %}color:#9496a8;{% endif %}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                  </a>
+                  {% if msg.body %}<p style="padding:8px 4px 4px;">{{ msg.body }}</p>{% endif %}
+                  <div class="bubble-time" style="text-align:right;padding:2px 4px 4px;">{{ msg.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
+                {% endif %}
+              {% else %}
+                {{ msg.body }}
+                <div class="bubble-time">{{ msg.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
+              {% endif %}
             </div>
           </div>
           {% empty %}
@@ -153,13 +174,21 @@ html,body{height:100%}body{font-family:var(--font);background:var(--page-bg);col
           {% endfor %}
         </div>
         <div class="chat-footer">
-          <input type="text" id="chat-input" placeholder="Type a reply…" autocomplete="off"/>
+          <button id="chat-file-btn" type="button" title="Attach file" style="flex-shrink:0;background:var(--page-bg);border:1.5px solid var(--border);border-radius:40px;padding:9px 12px;cursor:pointer;color:var(--text-2);transition:all .15s;" onmouseover="this.style.borderColor='var(--brand)'" onmouseout="this.style.borderColor='var(--border)'">
+            <svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px;display:block;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a4 4 0 00-5.656-5.656L5.757 10.757a6 6 0 108.486 8.486L20 13"/></svg>
+          </button>
+          <input type="file" id="chat-file-input" style="display:none;" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip">
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+            <div id="chat-file-preview" class="hidden"></div>
+            <input type="text" id="chat-input" placeholder="Type a reply…" autocomplete="off"/>
+          </div>
           <button id="chat-send" class="btn btn-primary">Send</button>
         </div>
         <script>
           window.CHAT_CLASSROOM_ID = {{ classroom.pk }};
           window.CHAT_MY_ID        = {{ request.user.pk }};
           window.CHAT_RECEIVER_ID  = {{ selected_student.pk }};
+          window.CHAT_CSRF_TOKEN   = '{{ csrf_token }}';
         </script>
         <script src="{% static 'js/chat.js' %}"></script>
         <script>

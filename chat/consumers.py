@@ -96,7 +96,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(room, payload)
 
     async def chat_message(self, event):
-        await self.send(text_data=json.dumps(event))
+        # Forward all fields including attachment info
+        await self.send(text_data=json.dumps({k: v for k, v in event.items() if k != 'type'} | {'type': 'chat_message'}))
 
     @database_sync_to_async
     def user_in_classroom(self, user, classroom_id):

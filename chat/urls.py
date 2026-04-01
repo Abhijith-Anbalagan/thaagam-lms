@@ -1,2 +1,6 @@
 from django.urls import path
-urlpatterns = []  # Chat views live in teacher/student URL configs
+from chat import views
+
+urlpatterns = [
+    path('upload/<int:classroom_id>/', views.upload_attachment, name='chat_upload_attachment'),
+]
