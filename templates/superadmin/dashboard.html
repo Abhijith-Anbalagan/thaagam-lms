@@ -2,166 +2,303 @@
 {% block title %}Super Admin — EduPlatform{% endblock %}
 {% block extra_css %}
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
-
-  * { box-sizing: border-box; }
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600&display=swap');
 
   :root {
-    --ink: #0f0e0d;
-    --paper: #faf8f5;
-    --cream: #f2ede6;
-    --accent: #c8401a;
-    --accent-light: #f5e8e3;
-    --muted: #7a7470;
-    --border: #e0d9d0;
-    --shadow: rgba(15,14,13,0.08);
-    --blue: #1d5fa8;
-    --blue-light: #e8f0fa;
-    --green: #2a9d5c;
-    --green-light: #e6f4ed;
-    --radius: 12px;
-    font-family: 'DM Sans', sans-serif;
+    --ink:          #0a0a0f;
+    --ink-2:        #3a3a4a;
+    --ink-3:        #7a7a8a;
+    --surface:      #ffffff;
+    --surface-2:    #f6f6f9;
+    --surface-3:    #ededf3;
+    --accent:       #5b4bea;
+    --accent-2:     #8b7df8;
+    --accent-glow:  rgba(91,75,234,0.15);
+    --green:        #00c896;
+    --green-bg:     #e6faf5;
+    --red:          #ff4d6d;
+    --red-bg:       #fff0f3;
+    --amber:        #f59e0b;
+    --amber-bg:     #fffbeb;
+    --border:       rgba(0,0,0,0.07);
+    --shadow-sm:    0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md:    0 4px 20px rgba(0,0,0,0.08);
+    --shadow-lg:    0 12px 40px rgba(0,0,0,0.12);
+    --radius:       14px;
+    --radius-sm:    8px;
   }
 
-  .sa-header {
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .dash {
+    font-family:  sans-serif;
+    background: var(--surface-2);
+    min-height: 100vh;
+    padding: 32px 36px 60px;
+    color: var(--ink);
+  }
+
+  /* ── Top bar ── */
+  .dash-topbar {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    margin-bottom: 28px;
-    gap: 16px;
+    margin-bottom: 36px;
+    gap: 20px;
     flex-wrap: wrap;
   }
-  .sa-header h1 {
-    font-size: 24px;
-    font-weight: 700;
+
+  .dash-greeting {
+    font-family:  sans-serif;
+    font-size: 28px;
+    font-weight: 800;
     color: var(--ink);
-    margin: 0;
-    font-family:'Playfair Display',Georgia,serif;
-  }
-  .sa-header p {
-    font-size: 13px;
-    color: var(--muted);
-    margin: 3px 0 0;
-    font-family:'DM Sans',sans-serif;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
   }
 
-  .pill-bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-  .pill {
-    padding: 7px 16px;
+  .dash-greeting span {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .dash-sub {
+    font-size: 13px;
+    color: var(--ink-3);
+    margin-top: 4px;
+    font-weight: 400;
+  }
+
+  .dash-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .btn-dash {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
     border-radius: 99px;
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
+    font-family: 'Outfit', sans-serif;
     border: 1.5px solid var(--border);
-    background: #fff;
-    color: var(--muted);
+    background: var(--surface);
+    color: var(--ink-2);
+    text-decoration: none;
     cursor: pointer;
-    text-decoration: none;
-    transition: background .15s, color .15s, border-color .15s;
+    transition: all 0.18s ease;
     white-space: nowrap;
-    font-family:'DM Sans',sans-serif;
   }
-  .pill:hover {
-    border-color: var(--blue);
-    color: var(--blue);
-    background: var(--blue-light);
-    text-decoration: none;
-  }
-  .pill.active {
-    background: var(--blue);
-    color: #fff;
-    border-color: var(--blue);
-  }
-  .pill.active:hover { background: #1449a3; }
 
-  .sa-stat-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 14px;
-    margin-bottom: 24px;
+  .btn-dash:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-glow);
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
   }
-  .sa-stat {
-    background: #fff;
+
+  .btn-dash.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 4px 14px rgba(91,75,234,0.35);
+  }
+
+  .btn-dash.primary:hover {
+    background: #4a3bd4;
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(91,75,234,0.45);
+  }
+
+  /* ── Stat grid ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--surface);
     border: 1.5px solid var(--border);
     border-radius: var(--radius);
-    padding: 18px 20px;
-    font-family:'DM Sans',sans-serif;
+    padding: 20px 22px 18px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    animation: fadeUp 0.5s ease both;
   }
-  .sa-stat-icon { font-size: 18px; margin-bottom: 10px; }
-  .sa-stat-val {
-    font-family: 'Playfair Display',Georgia,serif;
-    font-size: 28px;
-    font-weight: 700;
+
+  .stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    border-radius: 3px 3px 0 0;
+  }
+
+  .stat-card:nth-child(2)::before { background: linear-gradient(90deg, #00c896, #34d399); }
+  .stat-card:nth-child(3)::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .stat-card:nth-child(4)::before { background: linear-gradient(90deg, #ff4d6d, #fb7185); }
+  .stat-card:nth-child(5)::before { background: linear-gradient(90deg, #0ea5e9, #38bdf8); }
+
+  .stat-emoji {
+    font-size: 22px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .stat-val {
+    font-family:  sans-serif;
+    font-size: 32px;
+    font-weight: 800;
     color: var(--ink);
     line-height: 1;
-  }
-  .sa-stat-lbl {
-    font-size: 11px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: .07em;
-    color: var(--muted);
-    margin-top: 5px;
-    font-family:'DM Sans',sans-serif;
+    letter-spacing: -1px;
   }
 
-  .sa-card {
-    background: #fff;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px 22px;
-    margin-bottom: 20px;
-  }
-  .sa-section-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-  }
-  .sa-section-head h2 {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--ink);
-    margin: 0;
-    font-family:'Playfair Display',Georgia,serif;
-  }
-  .sa-view-link {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--blue);
-    text-decoration: none;
-    padding: 5px 10px;
-    border-radius: 6px;
-    transition: background .15s;
-    font-family:'DM Sans',sans-serif;
-  }
-  .sa-view-link:hover { background: var(--blue-light); text-decoration: none; }
-
-  .school-table { width: 100%; border-collapse: collapse; }
-  .school-table th {
+  .stat-lbl {
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: .07em;
-    color: var(--muted);
-    padding: 8px 12px 12px;
+    letter-spacing: 0.08em;
+    color: var(--ink-3);
+    margin-top: 6px;
+  }
+
+  /* ── Section layout ── */
+  .dash-body {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* ── Card ── */
+  .dash-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    animation: fadeUp 0.5s ease both;
+    animation-delay: 0.1s;
+  }
+
+  .dash-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px;
+    border-bottom: 1.5px solid var(--border);
+  }
+
+  .dash-card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dash-card-title-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .dash-view-all {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    text-decoration: none;
+    padding: 5px 12px;
+    border-radius: 99px;
+    transition: background 0.15s;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .dash-view-all:hover {
+    background: var(--accent-glow);
+    text-decoration: none;
+  }
+
+  /* ── Schools table ── */
+  .schools-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .schools-table th {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-3);
+    padding: 10px 22px;
     text-align: left;
     border-bottom: 1.5px solid var(--border);
-    font-family:'DM Sans',sans-serif;
+    background: var(--surface-2);
   }
-  .school-table td {
-    padding: 12px;
+
+  .schools-table td {
+    padding: 14px 22px;
     font-size: 13.5px;
-    color: var(--ink);
+    color: var(--ink-2);
     border-bottom: 1px solid var(--border);
     vertical-align: middle;
-    font-family:'DM Sans',sans-serif;
   }
-  .school-table tbody tr:last-child td { border-bottom: none; }
-  .school-table tbody tr:hover td { background: var(--cream); }
-  .school-name { font-weight: 600; color: var(--ink) !important; font-family:'Playfair Display',Georgia,serif; }
-  .school-table .col-action { text-align: right; }
 
-  .badge {
+  .schools-table tbody tr:last-child td { border-bottom: none; }
+
+  .schools-table tbody tr {
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+
+  .schools-table tbody tr:hover td {
+    background: var(--surface-2);
+  }
+
+  .school-name-cell {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    color: var(--ink) !important;
+    font-size: 13px !important;
+  }
+
+  .count-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-2);
+  }
+
+  /* ── Status badges ── */
+  .status {
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -169,353 +306,283 @@
     border-radius: 99px;
     font-size: 11px;
     font-weight: 600;
-    font-family:'DM Sans',sans-serif;
+    letter-spacing: 0.02em;
   }
-  .badge::before {
+
+  .status::before {
     content: '';
-    width: 5px;
-    height: 5px;
+    width: 5px; height: 5px;
     border-radius: 50%;
     flex-shrink: 0;
   }
-  .badge-success { background: var(--green-light); color: var(--green); }
-  .badge-success::before { background: var(--green); }
-  .badge-danger  { background:var(--accent-light); color:var(--accent); }
-  .badge-danger::before  { background:var(--accent); }
 
-  .status-badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 99px;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: .3px;
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    font-family:'DM Sans',sans-serif;
-  }
-  .status-published { background: var(--green-light); color: var(--green); }
-  .status-draft     { background:var(--accent-light); color:var(--accent); }
+  .status-active  { background: var(--green-bg); color: #007a5e; }
+  .status-active::before { background: var(--green); }
+  .status-suspended { background: var(--red-bg); color: #cc2444; }
+  .status-suspended::before { background: var(--red); }
+  .status-draft { background: var(--amber-bg); color: #92610a; }
+  .status-draft::before { background: var(--amber); }
+  .status-published { background: var(--green-bg); color: #007a5e; }
+  .status-published::before { background: var(--green); }
 
-  .btn-ghost {
+  .btn-view {
     display: inline-flex;
     align-items: center;
-    padding: 7px 14px;
+    padding: 6px 14px;
+    background: var(--surface-2);
     border: 1.5px solid var(--border);
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--muted);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-2);
     text-decoration: none;
-    background: transparent;
-    transition: all .15s;
-    cursor: pointer;
-    font-family:'DM Sans',sans-serif;
+    transition: all 0.15s;
+    font-family: 'Outfit', sans-serif;
   }
-  .btn-ghost:hover {
-    border-color: var(--blue);
-    color: var(--blue);
-    background: var(--blue-light);
+
+  .btn-view:hover {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+    color: var(--accent);
     text-decoration: none;
   }
 
-  .course-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 16px;
-  }
+  /* ── Courses grid (right column) ── */
+  .courses-col { display: flex; flex-direction: column; gap: 20px; }
 
-  .gc-card {
-    background: #fff;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
+  .course-mini {
     display: flex;
-    flex-direction: column;
-    transition: box-shadow .2s, transform .2s;
-  }
-  .gc-card:hover {
-    box-shadow: 0 4px 24px var(--shadow);
-    transform: translateY(-2px);
+    align-items: center;
+    gap: 14px;
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    text-decoration: none;
+    color: inherit;
   }
 
-  .gc-cover {
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    position: relative;
+  .course-mini:last-child { border-bottom: none; }
+  .course-mini:hover { background: var(--surface-2); text-decoration: none; }
+
+  .course-mini-cover {
+    width: 44px; height: 44px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
-  }
-  .gc-cover { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
-  .gc-cover[data-lang="python"]     { background: linear-gradient(135deg, #1c3557 0%, #0ea5e9 100%); }
-  .gc-cover[data-lang="javascript"] { background: linear-gradient(135deg, #3b2f00 0%, #ca8a04 100%); }
-  .gc-cover[data-lang="react"]      { background: linear-gradient(135deg, #0c1a35 0%, #38bdf8 100%); }
-  .gc-cover[data-lang="html"]       { background: linear-gradient(135deg, #3b0a00 0%, #ea580c 100%); }
-  .gc-cover[data-lang="css"]        { background: linear-gradient(135deg, #0b1f3a 0%, #6366f1 100%); }
-  .gc-cover[data-lang="sql"]        { background: linear-gradient(135deg, #0a2318 0%, #10b981 100%); }
-  .gc-cover[data-lang="java"]       { background: linear-gradient(135deg, #2d0a00 0%, #dc2626 100%); }
-  .gc-cover[data-lang="tamil"]      { background: linear-gradient(135deg, #1a0533 0%, #7c3aed 100%); }
-  .gc-cover[data-lang="english"]    { background: linear-gradient(135deg, #0c2340 0%, var(--blue) 100%); }
-
-  .gc-cover-icon {
-    font-size: 36px;
-    line-height: 1;
-    opacity: .9;
-    user-select: none;
-  }
-
-  .gc-cover-mono {
-    font-family: 'Playfair Display',Georgia,serif;
-    font-size: 28px;
-    font-weight: 700;
-    color: rgba(255,255,255,.5);
-    letter-spacing: -1px;
-  }
-
-  .gc-body {
-    padding: 16px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .gc-tags { display: flex; gap: 6px; align-items: center; }
-  .gc-lang-tag {
-    font-size: 10px;
-    font-weight: 600;
-    background: var(--blue-light);
-    color: var(--blue);
-    border-radius: 99px;
-    padding: 3px 9px;
-    text-transform: uppercase;
-    letter-spacing: .4px;
-    font-family:'DM Sans',sans-serif;
-  }
-  .gc-hours-tag { font-size: 11px; color:var(--muted); font-family:'DM Sans',sans-serif; }
-  .gc-title {
+    font-family: 'Syne', sans-serif;
     font-size: 14px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.9);
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  }
+
+  .course-mini-cover[data-lang="python"]     { background: linear-gradient(135deg,#1c3557,#0ea5e9); }
+  .course-mini-cover[data-lang="javascript"] { background: linear-gradient(135deg,#3b2f00,#ca8a04); }
+  .course-mini-cover[data-lang="react"]      { background: linear-gradient(135deg,#0c1a35,#38bdf8); }
+  .course-mini-cover[data-lang="html"]       { background: linear-gradient(135deg,#3b0a00,#ea580c); }
+  .course-mini-cover[data-lang="css"]        { background: linear-gradient(135deg,#0b1f3a,#6366f1); }
+  .course-mini-cover[data-lang="sql"]        { background: linear-gradient(135deg,#0a2318,#10b981); }
+
+  .course-mini-info { flex: 1; min-width: 0; }
+
+  .course-mini-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
     font-weight: 700;
     color: var(--ink);
-    line-height: 1.35;
-    font-family:'Playfair Display',Georgia,serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .gc-desc {
-    font-size: 12px;
-    color: var(--muted);
-    line-height: 1.5;
-    margin: 0;
-    font-family:'DM Sans',sans-serif;
-  }
-  .gc-meta {
-    display: flex;
-    gap: 10px;
+
+  .course-mini-meta {
     font-size: 11px;
-    color: var(--muted);
-    font-family:'DM Sans',sans-serif;
+    color: var(--ink-3);
+    margin-top: 3px;
   }
-  .gc-actions { display: flex; gap: 6px; margin-top: 4px; }
 
-  .btn-primary-sm {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 7px 13px;
-    background: var(--blue);
-    color: #fff;
-    border: none;
-    border-radius: 7px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    text-decoration: none;
-    transition: background .15s;
-    font-family:'DM Sans',sans-serif;
-  }
-  .btn-primary-sm:hover { background: #1449a3; color: #fff; text-decoration: none; }
-
-  .btn-cert-sm {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 7px 10px;
-    background: transparent;
-    color: var(--green);
-    border: 1.5px solid var(--green);
-    border-radius: 7px;
-    font-size: 11px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all .15s;
-    font-family:'DM Sans',sans-serif;
-  }
-  .btn-cert-sm:hover { background: var(--green-light); }
-
-  .sa-empty {
+  .empty-state {
     text-align: center;
-    padding: 40px 0;
+    padding: 40px 24px;
+    color: var(--ink-3);
     font-size: 13px;
-    color: var(--muted);
-    font-family:'DM Sans',sans-serif;
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .stat-card:nth-child(1) { animation-delay: 0.05s; }
+  .stat-card:nth-child(2) { animation-delay: 0.10s; }
+  .stat-card:nth-child(3) { animation-delay: 0.15s; }
+  .stat-card:nth-child(4) { animation-delay: 0.20s; }
+  .stat-card:nth-child(5) { animation-delay: 0.25s; }
+
+  /* ── Responsive ── */
+  @media (max-width: 1100px) {
+    .stat-grid { grid-template-columns: repeat(3, 1fr); }
+    .dash-body { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .dash { padding: 20px 16px 48px; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .dash-greeting { font-size: 22px; }
   }
 </style>
 {% endblock %}
 
 {% block content %}
+<div class="dash">
 
-<!-- ── Header ── -->
-<div class="sa-header">
-  <div>
-    <h1>Dashboard</h1>
-    <p>Platform overview — all schools &amp; courses</p>
-  </div>
-  <div class="pill-bar">
-    <a href="{% url 'superadmin_create_school' %}"  class="pill active">+ New School</a>
-    <a href="{% url 'superadmin_course_list' %}"    class="pill">Course</a>
-    <a href="{% url 'superadmin_all_admins' %}"     class="pill">Admins</a>
-    <a href="{% url 'superadmin_analytics' %}"      class="pill">Analytics</a>
-  </div>
-</div>
-
-<!-- ── Stats ── -->
-<div class="sa-stat-grid">
-  <div class="sa-stat">
-    <div class="sa-stat-icon">🏫</div>
-    <div class="sa-stat-val">{{ total_schools }}</div>
-    <div class="sa-stat-lbl">Schools</div>
-  </div>
-  <div class="sa-stat">
-    <div class="sa-stat-icon">👔</div>
-    <div class="sa-stat-val">{{ total_management }}</div>
-    <div class="sa-stat-lbl">Management</div>
-  </div>
-  <div class="sa-stat">
-    <div class="sa-stat-icon">👩‍🏫</div>
-    <div class="sa-stat-val">{{ total_teachers }}</div>
-    <div class="sa-stat-lbl">Teachers</div>
-  </div>
-  <div class="sa-stat">
-    <div class="sa-stat-icon">🎓</div>
-    <div class="sa-stat-val">{{ total_students }}</div>
-    <div class="sa-stat-lbl">Students</div>
-  </div>
-  <div class="sa-stat">
-    <div class="sa-stat-icon">🏛</div>
-    <div class="sa-stat-val">{{ total_classrooms }}</div>
-    <div class="sa-stat-lbl">Classrooms</div>
-  </div>
-</div>
-
-<!-- ── Schools ── -->
-<div class="sa-card">
-  <div class="sa-section-head">
-    <h2>Schools</h2>
-    <a href="{% url 'superadmin_schools_list' %}" class="sa-view-link">View all →</a>
-  </div>
-
-  {% if schools %}
-  <table class="school-table">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Students</th>
-        <th>Teachers</th>
-        <th>Status</th>
-        <th class="col-action"></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for school in schools %}
-      <tr>
-        <td class="school-name">{{ school.name }}</td>
-        <td>{{ school.student_count }}</td>
-        <td>{{ school.teacher_count }}</td>
-        <td>
-          {% if school.is_active %}
-            <span class="badge badge-success">Active</span>
-          {% else %}
-            <span class="badge badge-danger">Suspended</span>
-          {% endif %}
-        </td>
-        <td class="col-action">
-          <a href="{% url 'superadmin_school_detail' school.pk %}" class="btn-ghost">View</a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <p class="sa-empty">No schools yet.</p>
-  {% endif %}
-</div>
-
-<!-- ── Courses ── -->
-<div class="sa-card">
-  <div class="sa-section-head">
-    <h2>
-      Recent Courses
-      <span style="font-weight:400; color:var(--ink-4); font-size:12px;">({{ courses|length }} latest)</span>
-    </h2>
-    <a href="{% url 'superadmin_all_courses' %}" class="sa-view-link">View all →</a>
-  </div>
-
-  {% if courses %}
-  <div class="course-grid">
-    {% for course in courses %}
-    <div class="gc-card">
-
-      <!-- Cover — pure CSS, no image needed -->
-      <div class="gc-cover" data-lang="{{ course.language|default:'english'|lower }}">
-        <span class="gc-cover-mono">{{ course.title|slice:":2"|upper }}</span>
-        <span class="status-badge {% if course.status == 'published' %}status-published{% else %}status-draft{% endif %}">
-          {{ course.get_status_display }}
-        </span>
+  <!-- ── Top Bar ── -->
+  <div class="dash-topbar">
+    <div>
+      <div class="dash-greeting">
+        Good day, <span>{{ user.first_name|default:"Admin" }}</span> 
       </div>
-
-      <!-- Body -->
-      <div class="gc-body">
-        <div class="gc-tags">
-          <span class="gc-lang-tag">{{ course.language|default:"English"|capfirst }}</span>
-          <span class="gc-hours-tag">🎬 {{ course.total_hours|default:"0" }}h</span>
-        </div>
-
-        <div class="gc-title">{{ course.title }}</div>
-
-        {% if course.description %}
-        <p class="gc-desc">{{ course.description|truncatechars:72 }}</p>
-        {% endif %}
-
-        <div class="gc-meta">
-          <span>📚 {{ course.concepts.count }} concept{{ course.concepts.count|pluralize }}</span>
-          <span>🏫 {{ course.schools.count }} school{{ course.schools.count|pluralize }}</span>
-        </div>
-
-        <div class="gc-actions">
-          {% if course.is_free %}
-            <a href="{% url 'superadmin_course_detail' course.pk %}" class="btn-primary-sm">▶ Learn Free</a>
-          {% else %}
-            <a href="{% url 'superadmin_course_detail' course.pk %}" class="btn-primary-sm">▶ Open</a>
-          {% endif %}
-          {% if course.has_certificate %}
-            <button class="btn-cert-sm"
-              onclick="window.location='{% url 'superadmin_course_detail' course.pk %}'">
-              🏅 Certificate
-            </button>
-          {% endif %}
-        </div>
-      </div>
-
+      <div class="dash-sub">Platform overview — all schools &amp; courses</div>
     </div>
-    {% endfor %}
+    <div class="dash-actions">
+      <a href="{% url 'superadmin_create_school' %}" class="btn-dash primary">+ New School</a>
+      <a href="{% url 'superadmin_course_list' %}"   class="btn-dash">📘 Course</a>
+      <a href="{% url 'superadmin_all_admins' %}"    class="btn-dash">👤 Admins</a>
+      <a href="{% url 'superadmin_analytics' %}"     class="btn-dash">📊 Analytics</a>
+    </div>
   </div>
-  {% else %}
-  <p class="sa-empty">
-    No courses yet.
-    <a href="{% url 'superadmin_course_list' %}" style="color:var(--brand);">Create one</a>
-  </p>
-  {% endif %}
-</div>
 
+  <!-- ── Stats ── -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <span class="stat-emoji"></span>
+      <div class="stat-val">{{ total_schools }}</div>
+      <div class="stat-lbl">Schools</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-emoji"></span>
+      <div class="stat-val">{{ total_management }}</div>
+      <div class="stat-lbl">Management</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-emoji"></span>
+      <div class="stat-val">{{ total_teachers }}</div>
+      <div class="stat-lbl">Teachers</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-emoji"></span>
+      <div class="stat-val">{{ total_students }}</div>
+      <div class="stat-lbl">Students</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-emoji"></span>
+      <div class="stat-val">{{ total_classrooms }}</div>
+      <div class="stat-lbl">Classrooms</div>
+    </div>
+  </div>
+
+  <!-- ── Body ── -->
+  <div class="dash-body">
+
+    <!-- LEFT: Schools -->
+    <div class="dash-card">
+      <div class="dash-card-head">
+        <div class="dash-card-title">
+          <span class="dash-card-title-dot"></span>
+          Schools
+        </div>
+        <a href="{% url 'superadmin_schools_list' %}" class="dash-view-all">View all →</a>
+      </div>
+
+      {% if schools %}
+      <table class="schools-table">
+        <thead>
+          <tr>
+            <th>School</th>
+            <th>Students</th>
+            <th>Teachers</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for school in schools %}
+          <tr onclick="window.location='{% url 'superadmin_school_detail' school.pk %}'">
+            <td class="school-name-cell">{{ school.name }}</td>
+            <td><span class="count-chip">🎓 {{ school.student_count }}</span></td>
+            <td><span class="count-chip">👩‍🏫 {{ school.teacher_count }}</span></td>
+            <td>
+              {% if school.is_active %}
+                <span class="status status-active">Active</span>
+              {% else %}
+                <span class="status status-suspended">Suspended</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'superadmin_school_detail' school.pk %}" 
+                 class="btn-view"
+                 onclick="event.stopPropagation()">
+                View →
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">
+        No schools yet.<br>
+        <a href="{% url 'superadmin_create_school' %}" style="color:var(--accent); font-weight:600;">
+          Create your first school →
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- RIGHT: Courses -->
+    <div class="courses-col">
+      <div class="dash-card" style="animation-delay:0.2s;">
+        <div class="dash-card-head">
+          <div class="dash-card-title">
+            <span class="dash-card-title-dot" style="background:var(--green);"></span>
+            Recent Courses
+          </div>
+          <a href="{% url 'superadmin_all_courses' %}" class="dash-view-all">View all →</a>
+        </div>
+
+        {% if courses %}
+          {% for course in courses %}
+          <a href="{% url 'superadmin_course_detail' course.pk %}" class="course-mini">
+            <div class="course-mini-cover" data-lang="{{ course.language|default:'english'|lower }}">
+              {{ course.title|slice:":2"|upper }}
+            </div>
+            <div class="course-mini-info">
+              <div class="course-mini-title">{{ course.title }}</div>
+              <div class="course-mini-meta">
+                📚 {{ course.concepts.count }} concepts &nbsp;·&nbsp;
+                <span class="status {% if course.status == 'published' %}status-published{% else %}status-draft{% endif %}" 
+                      style="padding:2px 8px; font-size:10px;">
+                  {{ course.get_status_display }}
+                </span>
+              </div>
+            </div>
+          </a>
+          {% endfor %}
+        {% else %}
+        <div class="empty-state">
+          No courses yet.<br>
+          <a href="{% url 'superadmin_course_list' %}" style="color:var(--accent); font-weight:600;">
+            Create one →
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div><!-- end dash-body -->
+
+</div><!-- end dash -->
 {% endblock %}

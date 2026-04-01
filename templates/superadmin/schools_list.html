@@ -2,95 +2,538 @@
 {% block title %}Schools — EduPlatform{% endblock %}
 {% block extra_css %}
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600&display=swap');
 
   :root {
-    --ink: #0f0e0d;
-    --paper: #faf8f5;
-    --cream: #f2ede6;
-    --accent: #c8401a;
-    --accent-light: #f5e8e3;
-    --muted: #7a7470;
-    --border: #e0d9d0;
-    --shadow: rgba(15,14,13,0.08);
-    --blue: #1d5fa8;
-    --blue-light: #e8f0fa;
-    --green: #2a9d5c;
-    --green-light: #e6f4ed;
+    --ink:         #0a0a0f;
+    --ink-2:       #3a3a4a;
+    --ink-3:       #7a7a8a;
+    --surface:     #ffffff;
+    --surface-2:   #f6f6f9;
+    --surface-3:   #ededf3;
+    --accent:      #5b4bea;
+    --accent-2:    #8b7df8;
+    --accent-glow: rgba(91,75,234,0.12);
+    --green:       #00c896;
+    --green-bg:    #e6faf5;
+    --green-text:  #007a5e;
+    --red:         #ff4d6d;
+    --red-bg:      #fff0f3;
+    --red-text:    #cc2444;
+    --border:      rgba(0,0,0,0.07);
+    --shadow-sm:   0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md:   0 4px 20px rgba(0,0,0,0.08);
+    --radius:      14px;
+    --radius-sm:   8px;
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; }
 
-  .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:16px; }
-  .search-bar { display:flex; align-items:center; gap:8px; background:#fff; border:1.5px solid var(--border); border-radius:10px; padding:8px 14px; width:260px; font-family:'DM Sans',sans-serif; transition:border-color 0.2s, box-shadow 0.2s; }
-  .search-bar input { border:none; outline:none; font-size:13px; color:var(--ink); background:transparent; width:100%; font-family:'DM Sans',sans-serif; }
-  .search-bar input::placeholder { color: #bbb5ae; font-weight: 300; }
-  .search-bar:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(200, 64, 26, 0.1); }
-  .school-table td,.school-table th { vertical-align:middle; }
-  .dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:5px; }
-  .dot-active { background:var(--green); }
-  .dot-suspended { background:var(--accent); }
-  .pagination { display:flex; align-items:center; gap:6px; justify-content:center; margin-top:24px; flex-wrap:wrap; }
-  .pg-btn { min-width:34px; height:34px; border-radius:8px; border:1.5px solid var(--border); background:#fff; font-size:13px; font-weight:500; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:var(--ink); font-family:'DM Sans',sans-serif; transition:background .15s,color .15s,border-color .15s; }
-  .pg-btn:hover { background:var(--blue-light); border-color:var(--blue); color:var(--blue); }
-  .pg-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); }
-  .pg-btn:disabled { opacity:.4; cursor:not-allowed; }
-  .confirm-modal { display:none; position:fixed; inset:0; background:rgba(15,14,13,.50); z-index:1000; overflow-y:auto; }
-  .confirm-box { background:#fff; border-radius:16px; max-width:420px; margin:80px auto; padding:28px; box-shadow:0 4px 24px var(--shadow); font-family:'DM Sans',sans-serif; }
-  .confirm-title { font-size:17px; font-weight:700; color:var(--accent); margin:0 0 8px; font-family:'Playfair Display',Georgia,serif; }
-  .confirm-warn { font-size:13px; color:var(--accent); background:rgba(200,64,26,0.08); border:1.5px solid rgba(200,64,26,0.2); border-radius:10px; padding:12px 16px; margin:12px 0 20px; }
-  .row-fade { animation:fadeOut .3s forwards; }
-  @keyframes fadeOut { to { opacity:0; transform:translateX(20px); } }
+  .sl-page { font-family:  sans-serif; }
+
+  /* ── Top bar ── */
+  .sl-topbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .sl-title {
+    font-family:  sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--ink);
+    letter-spacing: -0.5px;
+  }
+
+  .sl-sub {
+    font-size: 13px;
+    color: var(--ink-3);
+    margin-top: 3px;
+  }
+
+  .sl-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  /* ── Search ── */
+  .sl-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 99px;
+    padding: 8px 16px;
+    width: 240px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .sl-search:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  .sl-search input {
+    border: none;
+    outline: none;
+    font-size: 13px;
+    color: var(--ink);
+    background: transparent;
+    width: 100%;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .sl-search input::placeholder { color: var(--ink-3); }
+
+  /* ── Buttons ── */
+  .btn-sl {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: sans-serif;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--ink-2);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+  }
+
+  .btn-sl:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-glow);
+    text-decoration: none;
+  }
+
+  .btn-sl.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 4px 14px rgba(91,75,234,0.3);
+  }
+
+  .btn-sl.primary:hover {
+    background: #4a3bd4;
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(91,75,234,0.4);
+  }
+
+  /* ── Table card ── */
+  .sl-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    animation: fadeUp 0.4s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Table ── */
+  .sl-table { width: 100%; border-collapse: collapse; }
+
+  .sl-table thead {
+    background: var(--surface-2);
+    border-bottom: 1.5px solid var(--border);
+  }
+
+  .sl-table th {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-3);
+    padding: 12px 20px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .sl-table td {
+    padding: 15px 20px;
+    font-size: 13.5px;
+    color: var(--ink-2);
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .sl-table tbody tr:last-child td { border-bottom: none; }
+
+  .sl-table tbody tr {
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+
+  .sl-table tbody tr:hover td { background: var(--surface-2); }
+
+  .school-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px !important;
+    color: var(--ink) !important;
+  }
+
+  .school-addr {
+    font-size: 12px !important;
+    color: var(--ink-3) !important;
+    max-width: 200px;
+  }
+
+  /* ── Count chip ── */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-2);
+  }
+
+  /* ── Status ── */
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 11px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .status::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .status-active    { background: var(--green-bg); color: var(--green-text); }
+  .status-active::before { background: var(--green); }
+  .status-suspended { background: var(--red-bg); color: var(--red-text); }
+  .status-suspended::before { background: var(--red); }
+
+  /* ── Row actions ── */
+  .row-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  .btn-action {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 13px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Outfit', sans-serif;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--ink-2);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn-action:hover {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .btn-action.danger {
+    color: var(--red-text);
+    border-color: rgba(255,77,109,0.25);
+  }
+
+  .btn-action.danger:hover {
+    background: var(--red-bg);
+    border-color: var(--red);
+    color: var(--red-text);
+  }
+
+  .btn-action.toggle-active {
+    color: var(--red-text);
+    border-color: rgba(255,77,109,0.25);
+  }
+
+  .btn-action.toggle-active:hover {
+    background: var(--red-bg);
+    border-color: var(--red);
+  }
+
+  .btn-action.toggle-inactive {
+    color: var(--green-text);
+    border-color: rgba(0,200,150,0.25);
+  }
+
+  .btn-action.toggle-inactive:hover {
+    background: var(--green-bg);
+    border-color: var(--green);
+  }
+
+  /* ── Serial ── */
+  .serial {
+    font-size: 12px;
+    color: var(--ink-3);
+    font-weight: 500;
+    min-width: 28px;
+  }
+
+  /* ── Pagination ── */
+  .sl-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-top: 1.5px solid var(--border);
+    background: var(--surface-2);
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .sl-pagination-info {
+    font-size: 12px;
+    color: var(--ink-3);
+    font-weight: 500;
+  }
+
+  .sl-pg-btns { display: flex; gap: 5px; }
+
+  .pg-btn {
+    min-width: 32px; height: 32px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-2);
+    font-family:  sans-serif;
+    transition: all 0.15s;
+    padding: 0 8px;
+  }
+
+  .pg-btn:hover:not(:disabled) {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .pg-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .pg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* ── Empty state ── */
+  .sl-empty {
+    text-align: center;
+    padding: 56px 24px;
+    color: var(--ink-3);
+  }
+
+  .sl-empty-icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .sl-empty p { font-size: 14px; margin-bottom: 16px; }
+
+  /* ── Delete modal ── */
+  .del-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,15,0.5);
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+    align-items: center;
+    justify-content: center;
+  }
+
+  .del-overlay.show { display: flex; }
+
+  .del-box {
+    background: var(--surface);
+    border-radius: 18px;
+    max-width: 400px;
+    width: 90%;
+    padding: 32px;
+    box-shadow: var(--shadow-md);
+    font-family:  sans-serif;
+    animation: fadeUp 0.25s ease both;
+  }
+
+  .del-icon {
+    width: 48px; height: 48px;
+    background: var(--red-bg);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    margin-bottom: 16px;
+  }
+
+  .del-title {
+    font-family:  sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+
+  .del-school-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+
+  .del-warn {
+    font-size: 13px;
+    color: var(--red-text);
+    background: var(--red-bg);
+    border: 1.5px solid rgba(255,77,109,0.2);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  .del-actions { display: flex; gap: 10px; }
+
+  .btn-del-confirm {
+    flex: 1;
+    padding: 11px;
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    font-family:  sans-serif;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn-del-confirm:hover { background: #e0304e; }
+
+  .btn-del-cancel {
+    flex: 1;
+    padding: 11px;
+    background: var(--surface-2);
+    color: var(--ink-2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    font-family:  sans-serif;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn-del-cancel:hover { background: var(--surface-3); }
+
+  @keyframes rowFade { to { opacity: 0; transform: translateX(16px); } }
+  .row-removing { animation: rowFade 0.3s ease forwards; }
+
+  @media (max-width: 768px) {
+    .sl-search { width: 100%; }
+    .school-addr { display: none; }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
+<div class="sl-page">
 
-<div class="page-header">
-  <div>
-    <h1 class="page-title">All Schools</h1>
-    <p class="text-muted" style="margin-top:4px;font-size:13px;">{{ schools|length }} school{{ schools|length|pluralize }} registered</p>
-  </div>
-  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-    <div class="search-bar">
-      <span style="color:var(--text-muted);">🔍</span>
-      <input type="text" id="school-search" placeholder="Search schools…" oninput="filterAndRender()">
+  <!-- Top bar -->
+  <div class="sl-topbar">
+    <div>
+      <div class="sl-title">All Schools</div>
+      <div class="sl-sub" id="school-count">{{ schools|length }} school{{ schools|length|pluralize }} registered</div>
     </div>
-    <a href="{% url 'superadmin_create_school' %}" class="btn btn-primary">+ New School</a>
-    <a href="{% url 'superadmin_dashboard' %}" class="btn btn-ghost">← Dashboard</a>
+    <div class="sl-controls">
+      <div class="sl-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink-3);flex-shrink:0">
+          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input type="text" id="school-search" placeholder="Search schools…" oninput="filterAndRender()">
+      </div>
+      <a href="{% url 'superadmin_create_school' %}" class="btn-sl primary">+ New School</a>
+      <a href="{% url 'superadmin_dashboard' %}" class="btn-sl">← Dashboard</a>
+    </div>
   </div>
-</div>
 
-<div class="card">
-  <div class="table-wrap">
-    <table class="school-table">
+  <!-- Table card -->
+  <div class="sl-card">
+    <table class="sl-table">
       <thead>
         <tr>
           <th>#</th>
-          <th>School Name</th>
+          <th>School</th>
           <th>Address</th>
           <th>Students</th>
           <th>Teachers</th>
           <th>Status</th>
-          <th>Actions</th>
+          <th style="text-align:right">Actions</th>
         </tr>
       </thead>
       <tbody id="school-tbody"></tbody>
     </table>
+
+    <!-- Pagination -->
+    <div class="sl-pagination" id="sl-pagination" style="display:none;">
+      <div class="sl-pagination-info" id="pg-info"></div>
+      <div class="sl-pg-btns" id="pg-btns"></div>
+    </div>
   </div>
-  <div class="pagination" id="pagination"></div>
+
 </div>
 
-<!-- Confirm Delete Modal -->
-<div class="confirm-modal" id="del-modal">
-  <div class="confirm-box">
-    <p class="confirm-title">⚠️ Delete School</p>
-    <p style="font-size:14px;color:var(--text-muted);margin:0;">You are about to permanently delete:</p>
-    <p style="font-size:15px;font-weight:600;color:var(--brand-dark);margin:8px 0 0;" id="del-school-name"></p>
-    <p class="confirm-warn">All classrooms will be deleted and all users will be unlinked. This cannot be undone.</p>
-    <div style="display:flex;gap:10px;">
-      <button class="btn btn-danger" id="del-confirm-btn">Yes, Delete</button>
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+<!-- Delete Modal -->
+<div class="del-overlay" id="del-modal">
+  <div class="del-box">
+    <div class="del-icon">🗑</div>
+    <div class="del-title">Delete School</div>
+    <div class="del-school-name" id="del-school-name"></div>
+    <div class="del-warn">
+      All classrooms will be deleted and all users will be unlinked. This cannot be undone.
+    </div>
+    <div class="del-actions">
+      <button class="btn-del-confirm" id="del-confirm-btn">Yes, Delete</button>
+      <button class="btn-del-cancel" onclick="closeModal()">Cancel</button>
     </div>
   </div>
 </div>
@@ -99,22 +542,20 @@
 
 {% block extra_js %}
 <script>
-const CSRF = '{{ csrf_token }}';
+const CSRF    = '{{ csrf_token }}';
 const PER_PAGE = 10;
 let currentPage = 1;
-let deleteId = null;
-let deleteRowEl = null;
+let deleteId    = null;
 
-// Build data array from Django
 const allSchools = [
   {% for school in schools %}
   {
-    id: {{ school.pk }},
-    name: "{{ school.name|escapejs }}",
-    address: "{{ school.address|default:'—'|truncatechars:35|escapejs }}",
-    students: {{ school.total_students }},
-    teachers: {{ school.total_teachers }},
-    active: {{ school.is_active|yesno:'true,false' }},
+    id:        {{ school.pk }},
+    name:      "{{ school.name|escapejs }}",
+    address: "{{ school.address|default:'—'|truncatechars:40|escapejs }}",
+    students:  {{ school.total_students }},
+    teachers:  {{ school.total_teachers }},
+    active:    {{ school.is_active|yesno:'true,false' }},
     toggleUrl: "{% url 'superadmin_toggle_school' school.pk %}",
     detailUrl: "{% url 'superadmin_school_detail' school.pk %}",
   },
@@ -125,42 +566,57 @@ let filtered = [...allSchools];
 
 function filterAndRender() {
   const q = document.getElementById('school-search').value.toLowerCase();
-  filtered = allSchools.filter(s => s.name.toLowerCase().includes(q) || s.address.toLowerCase().includes(q));
+  filtered = allSchools.filter(s =>
+    s.name.toLowerCase().includes(q) ||
+    s.address.toLowerCase().includes(q)
+  );
   currentPage = 1;
   render();
 }
 
 function render() {
+  const tbody = document.getElementById('school-tbody');
   const start = (currentPage - 1) * PER_PAGE;
   const page  = filtered.slice(start, start + PER_PAGE);
-  const tbody = document.getElementById('school-tbody');
+
+  document.getElementById('school-count').textContent =
+    filtered.length + ' school' + (filtered.length !== 1 ? 's' : '') + ' registered';
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">
-      <div style="font-size:32px;margin-bottom:8px;">🏫</div>No schools found.</td></tr>`;
-    document.getElementById('pagination').innerHTML = '';
+    tbody.innerHTML = `
+      <tr><td colspan="7">
+        <div class="sl-empty">
+          <span class="sl-empty-icon">🏫</span>
+          <p>No schools found.</p>
+          <a href="{% url 'superadmin_create_school' %}" class="btn-sl primary" style="display:inline-flex;">+ New School</a>
+        </div>
+      </td></tr>`;
+    document.getElementById('sl-pagination').style.display = 'none';
     return;
   }
 
   tbody.innerHTML = page.map((s, i) => `
-    <tr id="row-${s.id}">
-      <td style="color:var(--text-muted);font-size:12px;">${start + i + 1}</td>
-      <td><strong>${s.name}</strong></td>
-      <td style="color:var(--text-muted);max-width:180px;">${s.address}</td>
-      <td>${s.students}</td>
-      <td>${s.teachers}</td>
+    <tr id="row-${s.id}" onclick="window.location='${s.detailUrl}'">
+      <td><span class="serial">${start + i + 1}</span></td>
+      <td class="school-name">${s.name}</td>
+      <td class="school-addr">${s.address}</td>
+      <td><span class="chip">🎓 ${s.students}</span></td>
+      <td><span class="chip">👩‍🏫 ${s.teachers}</span></td>
       <td>
-        ${s.active
-          ? '<span class="dot dot-active"></span><span style="font-size:13px;color:#1d9e75;font-weight:500;">Active</span>'
-          : '<span class="dot dot-suspended"></span><span style="font-size:13px;color:#e24b4a;font-weight:500;">Suspended</span>'}
+        <span class="status ${s.active ? 'status-active' : 'status-suspended'}">
+          ${s.active ? 'Active' : 'Suspended'}
+        </span>
       </td>
       <td>
-        <div style="display:flex;gap:6px;">
-          <a href="${s.detailUrl}" class="btn btn-ghost btn-sm">View</a>
-          <a href="${s.toggleUrl}" class="btn btn-sm ${s.active ? 'btn-outline' : 'btn-success'}" style="font-size:12px;">
+        <div class="row-actions" onclick="event.stopPropagation()">
+          <a href="${s.detailUrl}" class="btn-action">View</a>
+          <a href="${s.toggleUrl}" class="btn-action ${s.active ? 'toggle-active' : 'toggle-inactive'}">
             ${s.active ? 'Suspend' : 'Activate'}
           </a>
-          <button class="btn btn-sm btn-danger" onclick="openModal(${s.id}, '${s.name.replace(/'/g,"\\'")}')">🗑</button>
+          <button class="btn-action danger"
+            onclick="openModal(${s.id}, '${s.name.replace(/'/g,"\\'")}')">
+            Delete
+          </button>
         </div>
       </td>
     </tr>`).join('');
@@ -169,15 +625,24 @@ function render() {
 }
 
 function renderPagination() {
-  const total = Math.ceil(filtered.length / PER_PAGE);
-  if (total <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
+  const total   = Math.ceil(filtered.length / PER_PAGE);
+  const pgEl    = document.getElementById('sl-pagination');
+  const infoEl  = document.getElementById('pg-info');
+  const btnsEl  = document.getElementById('pg-btns');
+  const start   = (currentPage - 1) * PER_PAGE + 1;
+  const end     = Math.min(currentPage * PER_PAGE, filtered.length);
+
+  if (total <= 1) { pgEl.style.display = 'none'; return; }
+
+  pgEl.style.display = 'flex';
+  infoEl.textContent = `Showing ${start}–${end} of ${filtered.length}`;
+
   let html = `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
   for (let p = 1; p <= total; p++) {
     html += `<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
   }
   html += `<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===total?'disabled':''}>›</button>`;
-  html += `<span style="font-size:12px;color:var(--text-muted);margin-left:6px;">Page ${currentPage} of ${total}</span>`;
-  document.getElementById('pagination').innerHTML = html;
+  btnsEl.innerHTML = html;
 }
 
 function goPage(p) {
@@ -190,41 +655,46 @@ function goPage(p) {
 function openModal(id, name) {
   deleteId = id;
   document.getElementById('del-school-name').textContent = name;
-  document.getElementById('del-modal').style.display = 'block';
+  document.getElementById('del-modal').classList.add('show');
   document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
-  document.getElementById('del-modal').style.display = 'none';
+  document.getElementById('del-modal').classList.remove('show');
   document.body.style.overflow = '';
   deleteId = null;
 }
 
-document.getElementById('del-confirm-btn').addEventListener('click', function () {
+document.getElementById('del-confirm-btn').addEventListener('click', function() {
   if (!deleteId) return;
   fetch(`/superadmin/schools/${deleteId}/delete/`, {
     method: 'POST',
     headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
     body: '',
-  }).then(r => r.json()).then(d => {
+  })
+  .then(r => r.json())
+  .then(d => {
     if (d.success) {
-      // Remove from data array and re-render
-      const idx = allSchools.findIndex(s => s.id === deleteId);
-      if (idx > -1) allSchools.splice(idx, 1);
-      filtered = filtered.filter(s => s.id !== deleteId);
-      if ((currentPage - 1) * PER_PAGE >= filtered.length && currentPage > 1) currentPage--;
-      render();
+      const row = document.getElementById(`row-${deleteId}`);
+      if (row) {
+        row.classList.add('row-removing');
+        setTimeout(() => {
+          const idx = allSchools.findIndex(s => s.id === deleteId);
+          if (idx > -1) allSchools.splice(idx, 1);
+          filtered = filtered.filter(s => s.id !== deleteId);
+          if ((currentPage - 1) * PER_PAGE >= filtered.length && currentPage > 1) currentPage--;
+          render();
+        }, 300);
+      }
       closeModal();
     }
   });
 });
 
-// Close on backdrop click
 document.getElementById('del-modal').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
 
-// Initial render
 render();
 </script>
 {% endblock %}

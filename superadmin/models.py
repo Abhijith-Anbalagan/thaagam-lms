@@ -62,7 +62,7 @@ class GlobalCourse(models.Model):
     def __str__(self):
         return self.title
 
-
+        
 class GlobalConceptVideo(models.Model):
     concept   = models.ForeignKey('GlobalConcept', on_delete=models.CASCADE, related_name='videos')
     title     = models.CharField(max_length=200, blank=True)
