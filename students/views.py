@@ -90,6 +90,9 @@ def _student_layout_context(request, classroom=None, active_nav=None):
 def dashboard(request):
     classrooms    = request.user.joined_classrooms.select_related('teacher', 'school').all()
     classroom     = classrooms.first()
+
+    if not classroom:
+        return redirect('student_join_class')
     pending       = []
     graded_count  = 0
 
