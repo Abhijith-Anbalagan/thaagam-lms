@@ -4,26 +4,30 @@
 
 {% block title %}Chat - {{ classroom.name }}{% endblock %}
 {% block topbar_context %}{{ classroom.name }}{% endblock %}
-{% block topbar_title %}Teacher chat{% endblock %}
+{% block topbar_title %}Messages{% endblock %}
 
 {% block extra_css %}
 <style>
-    .chat-scroll { scroll-behavior: smooth; }
-    .chat-window {
-        height: 26rem;
-        overflow-y: auto;
+    .chat-layout   { display: grid; grid-template-columns: 260px 1fr; min-height: 560px; }
+    .chat-window   { height: 420px; overflow-y: auto; scroll-behavior: smooth; }
+    .teacher-item  { transition: background .15s; }
+    .teacher-item.active { background: linear-gradient(135deg,#dbeafe,#eef2ff); }
+    @media (max-width: 640px) {
+        .chat-layout { grid-template-columns: 1fr; }
+        .chat-sidebar-panel { display: none; }
+        .chat-sidebar-panel.open { display: flex; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<section class="mb-8 rounded-[2rem] bg-gradient-to-r from-blue-600 via-blue-500 to-violet-500 p-8 text-white shadow-2xl shadow-blue-500/20">
+<section class="mb-6 rounded-[2rem] bg-gradient-to-r from-blue-600 via-blue-500 to-violet-500 p-8 text-white shadow-2xl shadow-blue-500/20">
     <p class="text-sm font-semibold uppercase tracking-[0.28em] text-indigo-200">Direct messaging</p>
-    <h1 class="mt-3 text-3xl font-bold">{{ classroom.name }}</h1>
-    <p class="mt-2 text-sm text-slate-200">Ask questions, clear doubts, and stay connected with {{ teacher.get_full_name|default:teacher.username }}.</p>
+    <h1 class="mt-2 text-3xl font-bold">Messages</h1>
+    <p class="mt-1 text-sm text-slate-200">Chat with your teacher — ask questions and stay connected.</p>
 </section>
 
-<nav class="mb-8 flex flex-wrap gap-3">
+<nav class="mb-6 flex flex-wrap gap-3">
     <a href="{% url 'student_classroom_announce' classroom.id %}" class="student-tab rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200">Announcements</a>
     <a href="{% url 'student_classroom_courses' classroom.id %}" class="student-tab rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200">Courses</a>
     <a href="{% url 'student_classroom_classwork' classroom.id %}" class="student-tab rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200">Classwork</a>
@@ -32,162 +36,201 @@
     <a href="{% url 'student_classroom_chat' classroom.id %}" class="student-tab active rounded-2xl px-4 py-2.5 text-sm font-semibold">Chat</a>
 </nav>
 
-<section class="overflow-hidden rounded-[1.75rem] border border-white/70 bg-white shadow-panel">
-    <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-5">
-        <div class="flex items-center gap-4">
-            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-sm font-bold text-white">
-                {{ teacher.first_name|first|default:teacher.username|first|upper }}
+<div class="overflow-hidden rounded-[1.75rem] border border-white/70 bg-white shadow-panel">
+    <div class="chat-layout">
+
+        <!-- ── Teacher sidebar ─────────────────────────────────────────── -->
+        <aside class="chat-sidebar-panel flex flex-col border-r border-slate-200">
+            <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
+                <p class="text-xs font-bold uppercase tracking-widest text-slate-400">Teachers</p>
             </div>
-            <div>
-                <p class="font-semibold text-slate-900">{{ teacher.get_full_name|default:teacher.username }}</p>
-                <div class="mt-1 flex items-center gap-2 text-xs text-slate-500">
-                    <span id="status-dot" class="inline-block h-2.5 w-2.5 rounded-full {% if teacher_online %}bg-green-500{% else %}bg-red-500{% endif %}"></span>
-                    <span id="status-text">{% if teacher_online %}Online{% elif teacher.last_seen %}Last seen {{ teacher.last_seen|timesince }} ago{% else %}Offline{% endif %}</span>
+            <div class="flex-1 overflow-y-auto">
+                {% for entry in teachers %}
+                {% with t=entry.teacher c=entry.classroom %}
+                <a href="{% url 'student_classroom_chat' c.id %}?teacher={{ t.pk }}"
+                   class="teacher-item flex items-center gap-3 border-b border-slate-100 px-4 py-3 hover:bg-blue-50 {% if selected_teacher.pk == t.pk %}active{% endif %}">
+                    <div class="relative flex-shrink-0">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-sm font-bold text-white">
+                            {{ t.first_name|first|default:t.username|first|upper }}
+                        </div>
+                        <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white teacher-dot-{{ t.pk }} bg-slate-300"></span>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate text-sm font-semibold text-slate-900">{{ t.get_full_name|default:t.username }}</p>
+                        <p class="truncate text-xs text-slate-400">{{ c.name }}</p>
+                    </div>
+                </a>
+                {% endwith %}
+                {% empty %}
+                <p class="px-4 py-6 text-sm text-slate-400">No teachers yet.</p>
+                {% endfor %}
+            </div>
+        </aside>
+
+        <!-- ── Chat panel ──────────────────────────────────────────────── -->
+        <div class="flex flex-col">
+            <!-- Header -->
+            <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-sm font-bold text-white">
+                        {{ teacher.first_name|first|default:teacher.username|first|upper }}
+                    </div>
+                    <div>
+                        <p class="font-semibold text-slate-900">{{ teacher.get_full_name|default:teacher.username }}</p>
+                        <div class="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+                            <span id="status-dot" class="inline-block h-2 w-2 rounded-full {% if teacher_online %}bg-green-500{% else %}bg-red-500{% endif %}"></span>
+                            <span id="status-text">{% if teacher_online %}Online{% elif teacher.last_seen %}Last seen {{ teacher.last_seen|timesince }} ago{% else %}Offline{% endif %}</span>
+                        </div>
+                    </div>
                 </div>
+                <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Teacher</span>
             </div>
-        </div>
-        <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Teacher</span>
-    </div>
 
-    <div id="chat-messages" class="chat-scroll chat-window bg-slate-50 p-6">
-        {% for message in chat_messages %}
-        <div class="mb-3 flex {% if message.sender == request.user %}justify-end{% else %}justify-start{% endif %}">
-            {% if message.sender == request.user %}
-            <div class="bubble bg-blue-600 text-white max-w-[72%] rounded-2xl shadow-sm text-sm leading-relaxed">
-            {% else %}
-            <div class="bubble bg-white text-slate-900 border border-slate-200 max-w-[72%] rounded-2xl shadow-sm text-sm leading-relaxed">
-            {% endif %}
-                {% if message.attachment %}
-                    {% if message.attachment.name|lower|slice:"-4:" == ".jpg" or message.attachment.name|lower|slice:"-5:" == ".jpeg" or message.attachment.name|lower|slice:"-4:" == ".png" or message.attachment.name|lower|slice:"-4:" == ".gif" or message.attachment.name|lower|slice:"-5:" == ".webp" %}
-                        <a href="{{ message.attachment.url }}" target="_blank" class="block">
-                            <img src="{{ message.attachment.url }}" class="w-full rounded-xl object-cover" style="max-height:240px;min-width:160px;" alt="image"/>
-                        </a>
-                        {% if message.body %}<p class="px-3 pt-2 pb-1">{{ message.body }}</p>{% endif %}
-                        <div class="bubble-time px-3 pb-2 text-xs opacity-60 text-right">{{ message.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
+            <!-- Messages -->
+            <div id="chat-messages" class="chat-window bg-slate-50 p-5">
+                {% for message in chat_messages %}
+                <div class="mb-3 flex {% if message.sender == request.user %}justify-end{% else %}justify-start{% endif %}">
+                    {% if message.sender == request.user %}
+                    <div class="bubble bg-blue-600 text-white max-w-[72%] rounded-2xl shadow-sm text-sm leading-relaxed">
                     {% else %}
-                        <a href="{{ message.attachment.url }}" target="_blank" class="flex items-center gap-3 rounded-xl border {% if message.sender == request.user %}bg-blue-500 border-blue-400{% else %}bg-slate-50 border-slate-200{% endif %} px-4 py-3 no-underline hover:opacity-80 transition">
-                            <span class="text-2xl flex-shrink-0">📎</span>
-                            <div class="min-w-0 flex-1">
-                                <p class="truncate font-medium text-sm {% if message.sender == request.user %}text-white{% else %}text-slate-800{% endif %}">{{ message.attachment.name|slice:"17:" }}</p>
-                                <p class="text-xs mt-0.5 {% if message.sender == request.user %}text-blue-200{% else %}text-slate-400{% endif %}">Tap to download</p>
-                            </div>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0 {% if message.sender == request.user %}text-blue-200{% else %}text-slate-400{% endif %}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        </a>
-                        {% if message.body %}<p class="px-1 pt-2 pb-1">{{ message.body }}</p>{% endif %}
-                        <div class="bubble-time pt-1 pb-1 px-1 text-xs opacity-60 text-right">{{ message.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
+                    <div class="bubble bg-white text-slate-900 border border-slate-200 max-w-[72%] rounded-2xl shadow-sm text-sm leading-relaxed">
                     {% endif %}
-                {% else %}
-                    <p class="px-4 py-3">{{ message.body }}</p>
-                    <div class="bubble-time px-4 pb-2 text-xs opacity-60 text-right">{{ message.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
-                {% endif %}
+                        {% if message.attachment %}
+                            {% if message.attachment.name|lower|slice:"-4:" == ".jpg" or message.attachment.name|lower|slice:"-5:" == ".jpeg" or message.attachment.name|lower|slice:"-4:" == ".png" or message.attachment.name|lower|slice:"-4:" == ".gif" or message.attachment.name|lower|slice:"-5:" == ".webp" %}
+                                <a href="{{ message.attachment.url }}" target="_blank" class="block">
+                                    <img src="{{ message.attachment.url }}" class="w-full rounded-xl object-cover" style="max-height:240px;min-width:160px;" alt="image"/>
+                                </a>
+                                {% if message.body %}<p class="px-3 pt-2 pb-1">{{ message.body }}</p>{% endif %}
+                                <div class="bubble-time px-3 pb-2 text-xs opacity-60 text-right">{{ message.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
+                            {% else %}
+                                <a href="{{ message.attachment.url }}" target="_blank" class="flex items-center gap-3 rounded-xl border {% if message.sender == request.user %}bg-blue-500 border-blue-400{% else %}bg-slate-50 border-slate-200{% endif %} px-4 py-3 no-underline hover:opacity-80 transition">
+                                    <span class="text-2xl flex-shrink-0">📎</span>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate font-medium text-sm {% if message.sender == request.user %}text-white{% else %}text-slate-800{% endif %}">{{ message.attachment.name|slice:"17:" }}</p>
+                                        <p class="text-xs mt-0.5 {% if message.sender == request.user %}text-blue-200{% else %}text-slate-400{% endif %}">Tap to download</p>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0 {% if message.sender == request.user %}text-blue-200{% else %}text-slate-400{% endif %}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                </a>
+                                {% if message.body %}<p class="px-1 pt-2 pb-1">{{ message.body }}</p>{% endif %}
+                                <div class="bubble-time pt-1 pb-1 px-1 text-xs opacity-60 text-right">{{ message.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
+                            {% endif %}
+                        {% else %}
+                            <p class="px-4 py-3">{{ message.body }}</p>
+                            <div class="bubble-time px-4 pb-2 text-xs opacity-60 text-right">{{ message.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="flex h-full flex-col items-center justify-center py-16 text-center text-slate-400">
+                    <i data-lucide="message-circle" class="h-10 w-10 mb-3"></i>
+                    <p class="font-semibold text-slate-600">No messages yet</p>
+                    <p class="mt-1 text-sm">Start the conversation below.</p>
+                </div>
+                {% endfor %}
             </div>
-        </div>
-        {% empty %}
-        <div class="empty-state flex h-full flex-col items-center justify-center text-center text-slate-500">
-            <i data-lucide="message-circle" class="h-10 w-10"></i>
-            <h2 class="mt-4 text-lg font-semibold text-slate-900">No messages yet</h2>
-            <p class="mt-2 text-sm">Start the conversation by sending your teacher a message.</p>
-        </div>
-        {% endfor %}
-    </div>
 
-    <div class="border-t border-slate-200 bg-white px-6 py-5">
-        <div id="chat-file-preview" class="hidden mb-3"></div>
-        <div class="flex items-center gap-2">
-            <button id="chat-file-btn" type="button" title="Attach file" class="flex-shrink-0 rounded-2xl border border-slate-200 p-3 text-slate-500 transition hover:bg-slate-100 hover:text-blue-600">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a4 4 0 00-5.656-5.656L5.757 10.757a6 6 0 108.486 8.486L20 13"/></svg>
-            </button>
-            <input type="file" id="chat-file-input" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip">
-            <input type="text" id="chat-input" class="flex-1 rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100" placeholder="Ask your teacher something..." autocomplete="off">
-            <button id="chat-send" class="flex-shrink-0 rounded-2xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700">Send</button>
-        </div>
-        <span id="chat-status-dot" class="hidden"></span>
-        <span id="chat-status-text" class="hidden"></span>
-    </div>
-</section>
+            <!-- Input -->
+            <div class="border-t border-slate-200 bg-white px-5 py-4">
+                <div id="chat-file-preview" class="hidden mb-3"></div>
+                <div class="flex items-center gap-2">
+                    <button id="chat-file-btn" type="button" title="Attach file"
+                        class="flex-shrink-0 rounded-2xl border border-slate-200 p-2.5 text-slate-500 transition hover:bg-slate-100 hover:text-blue-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a4 4 0 00-5.656-5.656L5.757 10.757a6 6 0 108.486 8.486L20 13"/>
+                        </svg>
+                    </button>
+                    <input type="file" id="chat-file-input" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip">
+                    <input type="text" id="chat-input"
+                        class="flex-1 rounded-2xl border border-slate-300 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                        placeholder="Type a message…" autocomplete="off">
+                    <button id="chat-send"
+                        class="flex-shrink-0 rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">Send</button>
+                </div>
+                <span id="chat-status-dot" class="hidden"></span>
+                <span id="chat-status-text" class="hidden"></span>
+            </div>
+        </div><!-- end chat panel -->
+
+    </div><!-- end chat-layout -->
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
     window.CHAT_CLASSROOM_ID = {{ classroom.pk }};
-    window.CHAT_MY_ID = {{ request.user.pk }};
-    window.CHAT_RECEIVER_ID = {{ teacher.pk }};
-    window.CHAT_CSRF_TOKEN = '{{ csrf_token }}';
+    window.CHAT_MY_ID        = {{ request.user.pk }};
+    window.CHAT_RECEIVER_ID  = {{ teacher.pk }};
+    window.CHAT_CSRF_TOKEN   = '{{ csrf_token }}';
 </script>
 <script src="{% static 'js/chat.js' %}"></script>
 <script>
-    // Teacher online/offline status via PresenceConsumer.
-    // The snapshot fires immediately on connect with the full online list + last_seen map.
-    (function () {
-        const teacherId = Number(window.CHAT_RECEIVER_ID);
-        const proto     = window.location.protocol === 'https:' ? 'wss' : 'ws';
+(function () {
+    const teacherId = Number(window.CHAT_RECEIVER_ID);
+    const proto     = window.location.protocol === 'https:' ? 'wss' : 'ws';
 
-        function setDot(online, lastSeenIso) {
-            const dot  = document.getElementById('status-dot');
-            const text = document.getElementById('status-text');
-            if (!dot || !text) return;
-            if (online) {
-                dot.style.backgroundColor = '#22c55e';
-                text.textContent = 'Online';
-            } else {
-                dot.style.backgroundColor = '#ef4444';
-                text.textContent = lastSeenIso ? formatLastSeen(lastSeenIso).text : 'Offline';
-            }
+    // ── Per-teacher dot in sidebar ─────────────────────────────────────────
+    function setSidebarDot(tid, online) {
+        const dot = document.querySelector(`.teacher-dot-${tid}`);
+        if (dot) dot.style.backgroundColor = online ? '#22c55e' : '#ef4444';
+    }
+
+    // ── Header status ──────────────────────────────────────────────────────
+    function setDot(online, lastSeenIso) {
+        const dot  = document.getElementById('status-dot');
+        const text = document.getElementById('status-text');
+        if (!dot || !text) return;
+        if (online) {
+            dot.style.backgroundColor = '#22c55e';
+            text.textContent = 'Online';
+        } else {
+            dot.style.backgroundColor = '#ef4444';
+            text.textContent = lastSeenIso ? formatLastSeen(lastSeenIso) : 'Offline';
         }
+    }
 
-        function formatLastSeen(iso) {
-            const now  = new Date();
-            const seen = new Date(iso);
-            const diff = Math.floor((now - seen) / 1000);
-
-            if (diff < 60)     return { text: 'Last seen just now' };
-
-            if (diff < 3600) {
-                const m = Math.floor(diff / 60);
-                return { text: 'Last seen ' + m + ' minute' + (m === 1 ? '' : 's') + ' ago' };
-            }
-
-            // Same day — show time like "Last seen at 5:30 PM"
-            const sameDay = now.toDateString() === seen.toDateString();
-            if (sameDay) {
-                const time = seen.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
-                return { text: 'Last seen today at ' + time };
-            }
-
-            // Yesterday
-            const yesterday = new Date(now);
-            yesterday.setDate(now.getDate() - 1);
-            if (yesterday.toDateString() === seen.toDateString()) {
-                const time = seen.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
-                return { text: 'Last seen yesterday at ' + time };
-            }
-
-            // Older — show date like "Last seen 28 Mar"
-            const dateStr = seen.toLocaleDateString([], { day: 'numeric', month: 'short' });
-            return { text: 'Last seen ' + dateStr };
+    function formatLastSeen(iso) {
+        const now  = new Date(), seen = new Date(iso);
+        const diff = Math.floor((now - seen) / 1000);
+        if (diff < 60)    return 'Last seen just now';
+        if (diff < 3600)  { const m = Math.floor(diff/60);   return `Last seen ${m} minute${m===1?'':'s'} ago`; }
+        if (now.toDateString() === seen.toDateString()) {
+            return 'Last seen today at ' + seen.toLocaleTimeString([],{hour:'numeric',minute:'2-digit',hour12:true});
         }
+        const yest = new Date(now); yest.setDate(now.getDate()-1);
+        if (yest.toDateString() === seen.toDateString()) {
+            return 'Last seen yesterday at ' + seen.toLocaleTimeString([],{hour:'numeric',minute:'2-digit',hour12:true});
+        }
+        return 'Last seen ' + seen.toLocaleDateString([],{day:'numeric',month:'short'});
+    }
 
-        function connect() {
-            const ws = new WebSocket(`${proto}://${window.location.host}/ws/presence/`);
-
-            ws.onmessage = (e) => {
-                const data = JSON.parse(e.data);
-
-                if (data.type === 'presence.snapshot') {
-                    const online = Array.isArray(data.online_teachers) && data.online_teachers.includes(teacherId);
-                    const lastSeen = data.last_seen && data.last_seen[String(teacherId)];
-                    setDot(online, online ? null : lastSeen);
-                }
-
-                if (data.type === 'presence.update' && Number(data.user_id) === teacherId && data.user_role === 'teacher') {
+    function connect() {
+        const ws = new WebSocket(`${proto}://${window.location.host}/ws/presence/`);
+        ws.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            if (data.type === 'presence.snapshot') {
+                const online = Array.isArray(data.online_teachers);
+                // Update all sidebar dots
+                document.querySelectorAll('[class*="teacher-dot-"]').forEach(el => {
+                    const tid = parseInt(el.className.match(/teacher-dot-(\d+)/)[1]);
+                    setSidebarDot(tid, online && data.online_teachers.includes(tid));
+                });
+                // Update header for selected teacher
+                const isOnline = online && data.online_teachers.includes(teacherId);
+                const lastSeen = data.last_seen && data.last_seen[String(teacherId)];
+                setDot(isOnline, isOnline ? null : lastSeen);
+            }
+            if (data.type === 'presence.update' && data.user_role === 'teacher') {
+                const tid = Number(data.user_id);
+                setSidebarDot(tid, data.status === 'online');
+                if (tid === teacherId) {
                     setDot(data.status === 'online', data.status === 'online' ? null : data.last_seen);
                 }
-            };
+            }
+        };
+        ws.onclose = () => setTimeout(connect, 3000);
+    }
 
-            ws.onclose = () => setTimeout(connect, 3000);
-        }
-
-        connect();
-    })();
+    connect();
+})();
 </script>
 {% endblock %}
