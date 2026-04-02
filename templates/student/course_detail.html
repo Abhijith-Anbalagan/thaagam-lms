@@ -452,13 +452,11 @@ function setupVideoEl(videoEl, src) {
         return m + ':' + String(sec).padStart(2, '0');
     }
 
-    // Mark watched on play
+    // Mark watched only when 90%+ of the video has been watched (not just on play)
     videoEl.addEventListener('play', () => {
-        videoWatched = true;
-        checkCompletionGate();
         if (playIcon)  playIcon.classList.add('hidden');
         if (pauseIcon) pauseIcon.classList.remove('hidden');
-    }, { once: true });
+    });
 
     videoEl.addEventListener('play',  () => { if (playIcon) playIcon.classList.add('hidden');    if (pauseIcon) pauseIcon.classList.remove('hidden'); });
     videoEl.addEventListener('pause', () => { if (playIcon) playIcon.classList.remove('hidden'); if (pauseIcon) pauseIcon.classList.add('hidden'); });
@@ -470,6 +468,12 @@ function setupVideoEl(videoEl, src) {
     videoEl.addEventListener('timeupdate', () => {
         const dur = videoEl.duration || 1;
         const cur = videoEl.currentTime;
+
+        // Mark as watched when student reaches 90% of the video
+        if (!videoWatched && dur > 0 && cur / dur >= 0.9) {
+            videoWatched = true;
+            checkCompletionGate();
+        }
 
         // Enforce no-forward-skip
         if (cur > maxWatched + 0.5) {
