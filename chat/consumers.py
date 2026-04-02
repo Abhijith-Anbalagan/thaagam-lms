@@ -226,11 +226,12 @@ class PresenceConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
-        # Send full teacher online snapshot on connect.
-        online_teacher_ids, last_seen_map = await self.get_teacher_presence()
+        # Send full presence snapshot on connect (teachers + students).
+        online_ids, last_seen_map = await self.get_teacher_presence()
         await self.send(text_data=json.dumps({
             'type': 'presence.snapshot',
-            'online_teachers': online_teacher_ids,
+            'online_teachers': online_ids,   # kept for student chat backward compat
+            'online_users': online_ids,      # used by teacher chat for student status
             'last_seen': last_seen_map,
         }))
 
@@ -275,17 +276,16 @@ class PresenceConsumer(AsyncWebsocketConsumer):
 
         online_ids = []
         last_seen_map = {}
-        for t in User.objects.filter(role='teacher').only('pk', 'last_seen'):
-            cached = cache.get(f'user_online_{t.pk}')
-            # Trust cache if explicitly set; fall back to session check
-            if cached is True or (cached is None and t.pk in active_user_ids):
-                online_ids.append(t.pk)
-                # Ensure cache is warm for next time
+        # Include both teachers AND students in the snapshot
+        for u in User.objects.filter(role__in=['teacher', 'student']).only('pk', 'last_seen', 'role'):
+            cached = cache.get(f'user_online_{u.pk}')
+            if cached is True or (cached is None and u.pk in active_user_ids):
+                online_ids.append(u.pk)
                 if cached is None:
-                    cache.set(f'user_online_{t.pk}', True, timeout=None)
+                    cache.set(f'user_online_{u.pk}', True, timeout=None)
             else:
-                if t.last_seen:
-                    last_seen_map[str(t.pk)] = t.last_seen.isoformat()
+                if u.last_seen:
+                    last_seen_map[str(u.pk)] = u.last_seen.isoformat()
         return online_ids, last_seen_map
 
 

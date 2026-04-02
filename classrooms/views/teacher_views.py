@@ -266,6 +266,7 @@ def classroom_detail(request, classroom_id):
     # ── Chat ───────────────────────────────────────────────────────────────
     selected_student = None
     chat_messages    = []
+    selected_student_online = False
     student_pk = request.GET.get('student')
     if student_pk:
         try:
@@ -276,6 +277,24 @@ def classroom_detail(request, classroom_id):
             ).select_related('sender').order_by('created_at')
         except Exception:
             pass
+
+    if selected_student:
+        from django.core.cache import cache
+        from django.contrib.sessions.models import Session
+        cached = cache.get(f'user_online_{selected_student.pk}')
+        if cached is None:
+            active_ids = set()
+            for s in Session.objects.filter(expire_date__gt=timezone.now()):
+                try:
+                    uid = s.get_decoded().get('_auth_user_id')
+                    if uid: active_ids.add(int(uid))
+                except Exception:
+                    pass
+            selected_student_online = selected_student.pk in active_ids
+            if selected_student_online:
+                cache.set(f'user_online_{selected_student.pk}', True, timeout=None)
+        else:
+            selected_student_online = cached is True
 
     assigned_course_count = len(assigned_course_ids)
     assignment_count      = Assignment.objects.filter(classroom=classroom).count()
@@ -293,6 +312,7 @@ def classroom_detail(request, classroom_id):
         'assignment_count':      assignment_count,
         'chat_students':         students,
         'selected_student':      selected_student,
+        'selected_student_online': selected_student_online,
         'chat_messages':         chat_messages,
         'today':                 today,
     })
@@ -874,10 +894,31 @@ def classroom_chat(request, classroom_id):
         ).select_related('sender').order_by('created_at')
         chat_messages.filter(receiver=request.user, is_read=False).update(is_read=True)
 
+    # Check student online status
+    selected_student_online = False
+    if selected_student:
+        from django.core.cache import cache
+        from django.contrib.sessions.models import Session
+        cached = cache.get(f'user_online_{selected_student.pk}')
+        if cached is None:
+            active_ids = set()
+            for s in Session.objects.filter(expire_date__gt=timezone.now()):
+                try:
+                    uid = s.get_decoded().get('_auth_user_id')
+                    if uid: active_ids.add(int(uid))
+                except Exception:
+                    pass
+            selected_student_online = selected_student.pk in active_ids
+            if selected_student_online:
+                cache.set(f'user_online_{selected_student.pk}', True, timeout=None)
+        else:
+            selected_student_online = cached is True
+
     return render(request, 'teacher/classroom_chat.html', {
-        'classroom':        classroom,
-        'students':         students,
-        'selected_student': selected_student,
-        'chat_messages':    chat_messages,
-        'active_tab':       'chat',
+        'classroom':              classroom,
+        'students':               students,
+        'selected_student':       selected_student,
+        'selected_student_online': selected_student_online,
+        'chat_messages':          chat_messages,
+        'active_tab':             'chat',
     })
