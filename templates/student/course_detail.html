@@ -31,6 +31,8 @@
   border-bottom:1px solid #f1f5f9; transition:background .12s; }
 .mod-item:hover { background:#eff6ff; }
 .mod-item.active { background:#dbeafe; border-left:3px solid #2563eb; }
+.mod-item.locked { cursor:not-allowed; opacity:.55; }
+.mod-item.locked:hover { background:transparent; }
 .mod-num { font-size:11px; font-weight:700; color:#94a3b8; width:20px; text-align:center; flex-shrink:0; padding-top:2px; }
 .prog-bar { background:linear-gradient(90deg,#2563eb,#7c3aed); border-radius:99px; transition:width .4s; }
 
@@ -91,13 +93,54 @@
               allow="fullscreen; picture-in-picture" allowfullscreen></iframe>
     </div>
 
+    <!-- Custom video controls (shown only for uploaded/direct videos) -->
+    <div id="video-controls" class="hidden mt-2 rounded-2xl border border-slate-200 bg-slate-900 px-4 py-3 shadow-sm">
+      <div class="flex items-center gap-3">
+        <!-- Play/Pause -->
+        <button id="vc-playpause" onclick="vcTogglePlay()"
+            class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-white transition hover:bg-blue-700">
+          <svg id="vc-play-icon" viewBox="0 0 24 24" fill="white" class="h-4 w-4"><polygon points="5,3 19,12 5,21"/></svg>
+          <svg id="vc-pause-icon" viewBox="0 0 24 24" fill="white" class="h-4 w-4 hidden"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        </button>
+        <!-- Time -->
+        <span id="vc-current" class="text-xs font-mono text-slate-300 w-10 flex-shrink-0">0:00</span>
+        <!-- Progress bar -->
+        <div id="vc-bar-wrap" class="relative flex-1 h-2 cursor-pointer rounded-full bg-slate-700"
+             onclick="vcSeekClick(event)" onmousemove="vcBarHover(event)" onmouseleave="vcBarLeave()">
+          <!-- Watched (seekable) zone -->
+          <div id="vc-watched" class="absolute left-0 top-0 h-2 rounded-full bg-blue-500 pointer-events-none" style="width:0%"></div>
+          <!-- Played progress -->
+          <div id="vc-progress" class="absolute left-0 top-0 h-2 rounded-full bg-blue-400 pointer-events-none" style="width:0%"></div>
+          <!-- Hover tooltip -->
+          <div id="vc-tooltip" class="hidden absolute -top-7 rounded bg-slate-800 px-2 py-0.5 text-xs text-white pointer-events-none" style="transform:translateX(-50%)"></div>
+          <!-- Thumb -->
+          <div id="vc-thumb" class="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-white shadow pointer-events-none" style="left:0%;margin-left:-7px;"></div>
+        </div>
+        <!-- Duration -->
+        <span id="vc-duration" class="text-xs font-mono text-slate-400 w-10 flex-shrink-0 text-right">0:00</span>
+        <!-- Volume -->
+        <button onclick="vcToggleMute()" class="flex-shrink-0 text-slate-400 hover:text-white transition">
+          <svg id="vc-vol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path id="vc-vol-lines" d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          </svg>
+        </button>
+        <!-- Fullscreen -->
+        <button onclick="vcFullscreen()" class="flex-shrink-0 text-slate-400 hover:text-white transition">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+          </svg>
+        </button>
+      </div>
+      <!-- Lock hint -->
+      <p id="vc-lock-hint" class="hidden mt-1.5 text-center text-xs text-amber-400">⚠ You can only seek within the portion you've already watched</p>
+    </div>
+
     <!-- Now playing label -->
     <div id="now-playing" class="hidden mt-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
       <i data-lucide="play-circle" class="h-4 w-4 text-blue-600"></i>
       <span id="now-playing-title"></span>
     </div>
-
-    <!-- Tabs — hidden until module selected -->
     <div id="content-area" class="hidden">
       <div class="ctabs">
         <button class="ctab active" onclick="switchTab(this,'tab-notes')">Notes & PDF</button>
@@ -159,12 +202,19 @@
       {% for concept in concepts %}
       <div class="mod-item {% if concept.id in completed_ids %}bg-emerald-50{% endif %}"
            id="mod-item-{{ concept.id }}"
+           data-index="{{ forloop.counter0 }}"
            onclick="selectModule({{ concept.id }})">
-        <span class="mod-num">
-          {% if concept.id in completed_ids %}<span class="text-emerald-500 text-base">✓</span>{% else %}{{ forloop.counter }}{% endif %}
+        <span class="mod-num" id="mod-num-{{ concept.id }}">
+          {% if concept.id in completed_ids %}
+            <span class="text-emerald-500 text-base">✓</span>
+          {% elif not forloop.first %}
+            <span class="lock-icon text-slate-300">🔒</span>
+          {% else %}
+            {{ forloop.counter }}
+          {% endif %}
         </span>
         <div class="flex-1 min-w-0">
-          <p class="text-xs font-semibold text-slate-800 leading-snug">{{ concept.header }}</p>
+          <p class="text-xs font-semibold leading-snug" id="mod-title-{{ concept.id }}">{{ concept.header }}</p>
           {% if concept.h3_course %}<p class="text-xs text-slate-400 mt-0.5">{{ concept.h3_course }}</p>{% endif %}
           <p class="text-xs text-slate-400 mt-0.5">
             {% if concept.videos.all %}{{ concept.videos.count }} video{{ concept.videos.count|pluralize }}{% endif %}
@@ -178,9 +228,10 @@
 
     <div class="border-t border-slate-200 p-4">
       <button id="complete-btn" onclick="toggleComplete()"
-          class="w-full rounded-xl py-2.5 text-sm font-bold transition bg-slate-100 text-slate-500 cursor-not-allowed" disabled>
+          class="w-full rounded-xl py-2.5 text-sm font-bold transition bg-slate-200 text-slate-400 cursor-not-allowed" disabled>
         Select a module first
       </button>
+      <p id="complete-hint" class="mt-2 text-xs text-center text-slate-400"></p>
     </div>
   </div>
 
@@ -206,10 +257,78 @@
 const conceptsData = JSON.parse(document.getElementById('concepts-data').textContent);
 let activeConceptId = null;
 let pendingSrc = null, pendingType = null;
-let maxWatched = 0; // furthest second reached — no forward skip beyond this
+let maxWatched = 0;
+
+// ── Completion gate tracking ──────────────────────────────────────────────────
+let videoWatched = false;   // true once video has started playing
+let quizDone     = false;   // true once all quiz questions answered
+let hasVideo     = false;   // does current module have a video?
+let hasQuiz      = false;   // does current module have a quiz?
+
+function checkCompletionGate() {
+    const concept = conceptsData.find(c => c.id === activeConceptId);
+    if (!concept || concept.completed) return; // already done — button handled by updateCompleteBtn
+
+    const btn  = document.getElementById('complete-btn');
+    const hint = document.getElementById('complete-hint');
+
+    const videoOk = !hasVideo || videoWatched;
+    const quizOk  = !hasQuiz  || quizDone;
+    const canComplete = videoOk && quizOk;
+
+    btn.disabled = !canComplete;
+    btn.className = canComplete
+        ? 'w-full rounded-xl py-2.5 text-sm font-bold transition bg-blue-600 text-white hover:bg-blue-700'
+        : 'w-full rounded-xl py-2.5 text-sm font-bold transition bg-slate-200 text-slate-400 cursor-not-allowed';
+    btn.textContent = 'Mark as Complete';
+
+    if (hint) {
+        if (canComplete) {
+            hint.textContent = '';
+        } else {
+            const missing = [];
+            if (!videoOk) missing.push('watch the video');
+            if (!quizOk)  missing.push('answer the quiz');
+            hint.textContent = 'Please ' + missing.join(' and ') + ' first.';
+        }
+    }
+}
+
+// ── Unlock logic ──────────────────────────────────────────────────────────────
+function isModuleLocked(index) {
+    // First module always unlocked; others need previous completed
+    if (index === 0) return false;
+    return !conceptsData[index - 1].completed;
+}
+
+function refreshSidebarLocks() {
+    conceptsData.forEach((concept, index) => {
+        const item     = document.getElementById('mod-item-' + concept.id);
+        const numEl    = document.getElementById('mod-num-' + concept.id);
+        const titleEl  = document.getElementById('mod-title-' + concept.id);
+        if (!item) return;
+
+        const locked = isModuleLocked(index);
+
+        if (locked) {
+            item.classList.add('locked');
+            if (numEl) numEl.innerHTML = '<span class="lock-icon text-slate-300">🔒</span>';
+            if (titleEl) titleEl.className = 'text-xs font-semibold leading-snug text-slate-400';
+        } else {
+            item.classList.remove('locked');
+            if (numEl && !concept.completed) {
+                numEl.innerHTML = String(index + 1);
+            }
+            if (titleEl) titleEl.className = 'text-xs font-semibold leading-snug text-slate-800';
+        }
+    });
+}
 
 // ── Select module ─────────────────────────────────────────────────────────────
 function selectModule(id) {
+    const index   = conceptsData.findIndex(c => c.id === id);
+    if (isModuleLocked(index)) return; // blocked — previous not completed
+
     activeConceptId = id;
     const concept = conceptsData.find(c => c.id === id);
     if (!concept) return;
@@ -232,6 +351,14 @@ function selectModule(id) {
     videoEl.src = '';
     iframeEl.src = '';
     document.getElementById('now-playing').classList.add('hidden');
+    const ctrl = document.getElementById('video-controls');
+    if (ctrl) ctrl.classList.add('hidden');
+
+    // Reset gate for new module
+    videoWatched = false;
+    quizDone     = false;
+    hasVideo     = concept.videos.length > 0;
+    hasQuiz      = Array.isArray(concept.quiz) && concept.quiz.length > 0;
 
     if (concept.videos.length) {
         const v = concept.videos[0];
@@ -280,11 +407,16 @@ function loadPlayer(src, type, title) {
         if (ytMatch) {
             iframeEl.src = `https://www.youtube.com/embed/${ytMatch[1]}?rel=0`;
             iframeEl.classList.remove('hidden');
+            // Can't track iframe playback — mark watched when loaded
+            videoWatched = true;
+            checkCompletionGate();
         } else if (isDirect) {
             setupVideoEl(videoEl, src);
         } else {
             iframeEl.src = src;
             iframeEl.classList.remove('hidden');
+            videoWatched = true;
+            checkCompletionGate();
         }
     } else {
         setupVideoEl(videoEl, src);
@@ -298,16 +430,62 @@ function loadPlayer(src, type, title) {
 function setupVideoEl(videoEl, src) {
     videoEl.src = src;
     videoEl.classList.remove('hidden');
+    // No native controls — we use our custom bar
+    videoEl.removeAttribute('controls');
     videoEl.play().catch(() => {});
 
-    // No forward seeking — track furthest point reached
+    const controls  = document.getElementById('video-controls');
+    const barWrap   = document.getElementById('vc-bar-wrap');
+    const watched   = document.getElementById('vc-watched');
+    const progress  = document.getElementById('vc-progress');
+    const thumb     = document.getElementById('vc-thumb');
+    const curEl     = document.getElementById('vc-current');
+    const durEl     = document.getElementById('vc-duration');
+    const lockHint  = document.getElementById('vc-lock-hint');
+    const playIcon  = document.getElementById('vc-play-icon');
+    const pauseIcon = document.getElementById('vc-pause-icon');
+
+    if (controls) controls.classList.remove('hidden');
+
+    function fmt(s) {
+        const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+        return m + ':' + String(sec).padStart(2, '0');
+    }
+
+    // Mark watched on play
+    videoEl.addEventListener('play', () => {
+        videoWatched = true;
+        checkCompletionGate();
+        if (playIcon)  playIcon.classList.add('hidden');
+        if (pauseIcon) pauseIcon.classList.remove('hidden');
+    }, { once: true });
+
+    videoEl.addEventListener('play',  () => { if (playIcon) playIcon.classList.add('hidden');    if (pauseIcon) pauseIcon.classList.remove('hidden'); });
+    videoEl.addEventListener('pause', () => { if (playIcon) playIcon.classList.remove('hidden'); if (pauseIcon) pauseIcon.classList.add('hidden'); });
+
+    videoEl.addEventListener('loadedmetadata', () => {
+        if (durEl) durEl.textContent = fmt(videoEl.duration);
+    });
+
     videoEl.addEventListener('timeupdate', () => {
-        if (videoEl.currentTime > maxWatched + 1) {
-            // User tried to skip forward — snap back
+        const dur = videoEl.duration || 1;
+        const cur = videoEl.currentTime;
+
+        // Enforce no-forward-skip
+        if (cur > maxWatched + 0.5) {
             videoEl.currentTime = maxWatched;
-        } else if (videoEl.currentTime > maxWatched) {
-            maxWatched = videoEl.currentTime;
+            if (lockHint) { lockHint.classList.remove('hidden'); setTimeout(() => lockHint.classList.add('hidden'), 2500); }
+            return;
         }
+        if (cur > maxWatched) maxWatched = cur;
+
+        // Update UI
+        const pct = (cur / dur) * 100;
+        const wPct = (maxWatched / dur) * 100;
+        if (progress) progress.style.width = pct + '%';
+        if (watched)  watched.style.width  = wPct + '%';
+        if (thumb)    thumb.style.left     = pct + '%';
+        if (curEl)    curEl.textContent    = fmt(cur);
     }, { passive: true });
 
     videoEl.addEventListener('seeking', () => {
@@ -315,6 +493,48 @@ function setupVideoEl(videoEl, src) {
             videoEl.currentTime = maxWatched;
         }
     });
+
+    // Click on progress bar to seek
+    window.vcSeekClick = function(e) {
+        const rect = barWrap.getBoundingClientRect();
+        const pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const target = pct * (videoEl.duration || 0);
+        if (target > maxWatched + 0.5) {
+            if (lockHint) { lockHint.classList.remove('hidden'); setTimeout(() => lockHint.classList.add('hidden'), 2500); }
+            return;
+        }
+        videoEl.currentTime = target;
+    };
+
+    // Hover tooltip
+    window.vcBarHover = function(e) {
+        const rect    = barWrap.getBoundingClientRect();
+        const pct     = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const target  = pct * (videoEl.duration || 0);
+        const tooltip = document.getElementById('vc-tooltip');
+        if (!tooltip) return;
+        tooltip.textContent = fmt(target);
+        tooltip.style.left  = (pct * 100) + '%';
+        const isLocked = target > maxWatched + 0.5;
+        tooltip.className = `absolute -top-7 rounded px-2 py-0.5 text-xs pointer-events-none ${isLocked ? 'bg-rose-700 text-white' : 'bg-slate-800 text-white'}`;
+        tooltip.classList.remove('hidden');
+    };
+    window.vcBarLeave = function() {
+        const tooltip = document.getElementById('vc-tooltip');
+        if (tooltip) tooltip.classList.add('hidden');
+    };
+
+    window.vcTogglePlay = function() {
+        videoEl.paused ? videoEl.play() : videoEl.pause();
+    };
+    window.vcToggleMute = function() {
+        videoEl.muted = !videoEl.muted;
+        const lines = document.getElementById('vc-vol-lines');
+        if (lines) lines.style.opacity = videoEl.muted ? '0.2' : '1';
+    };
+    window.vcFullscreen = function() {
+        if (videoEl.requestFullscreen) videoEl.requestFullscreen();
+    };
 }
 
 // ── Tab switching ─────────────────────────────────────────────────────────────
@@ -331,15 +551,47 @@ function populateNotes(concept) {
     if (concept.pdf) {
         el.innerHTML = `
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Study Notes</p>
-                <a href="${concept.pdf}" target="_blank"
-                   class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-700 transition mb-4">
-                   📄 Download PDF
-                </a>
-                <div class="rounded-xl overflow-hidden border border-slate-200" style="height:580px;">
-                    <iframe src="${concept.pdf}" style="width:100%;height:580px;border:none;"></iframe>
+                <div class="mb-4 flex items-center justify-between">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Study Notes</p>
+                    <a href="${concept.pdf}" target="_blank"
+                       class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50">
+                        ↓ Download PDF
+                    </a>
+                </div>
+                <div id="pdf-viewer-wrap" class="rounded-xl overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center" style="height:660px;">
+                    <p class="text-sm text-slate-400">Loading PDF…</p>
                 </div>
             </div>`;
+
+        // Fetch as blob to bypass X-Frame-Options / embed restrictions
+        fetch(concept.pdf)
+            .then(r => {
+                if (!r.ok) throw new Error('Failed to fetch PDF');
+                return r.blob();
+            })
+            .then(blob => {
+                const blobUrl = URL.createObjectURL(blob);
+                const wrap = document.getElementById('pdf-viewer-wrap');
+                if (!wrap) return;
+                wrap.innerHTML = `<object data="${blobUrl}" type="application/pdf"
+                    style="width:100%;height:660px;border:none;display:block;">
+                    <p class="p-6 text-sm text-slate-500 text-center">
+                        Your browser cannot display PDFs inline.
+                        <a href="${concept.pdf}" target="_blank" class="text-blue-600 underline">Open PDF</a>
+                    </p>
+                </object>`;
+            })
+            .catch(() => {
+                const wrap = document.getElementById('pdf-viewer-wrap');
+                if (wrap) wrap.innerHTML = `
+                    <div class="text-center p-8">
+                        <p class="text-sm text-slate-500 mb-3">Could not load PDF preview.</p>
+                        <a href="${concept.pdf}" target="_blank"
+                           class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-700 transition">
+                            Open PDF in new tab
+                        </a>
+                    </div>`;
+            });
     } else {
         el.innerHTML = '<div class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-400">No notes or PDF for this module.</div>';
     }
@@ -404,6 +656,14 @@ function submitAnswer(btn) {
     feedback.textContent = chosen === correct ? '✓ Correct!' : `✗ Incorrect. Correct answer: ${String.fromCharCode(65+correct)}.`;
     feedback.className = `quiz-feedback mt-3 text-sm font-semibold ${chosen === correct ? 'text-emerald-600' : 'text-rose-600'}`;
     btn.remove();
+
+    // Check if all questions in this module are now answered
+    const allGroups    = document.querySelectorAll('#tab-quiz .quiz-options');
+    const allSubmitted = Array.from(allGroups).every(g => g.classList.contains('quiz-submitted'));
+    if (allSubmitted) {
+        quizDone = true;
+        checkCompletionGate();
+    }
 }
 
 // ── Assignment ────────────────────────────────────────────────────────────────
@@ -426,12 +686,17 @@ function populateAssignment(concept) {
 
 // ── Mark complete ─────────────────────────────────────────────────────────────
 function updateCompleteBtn(completed) {
-    const btn = document.getElementById('complete-btn');
-    btn.disabled = false;
-    btn.className = completed
-        ? 'w-full rounded-xl py-2.5 text-sm font-bold transition bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-        : 'w-full rounded-xl py-2.5 text-sm font-bold transition bg-blue-600 text-white hover:bg-blue-700';
-    btn.textContent = completed ? '✓ Completed' : 'Mark as Complete';
+    const btn  = document.getElementById('complete-btn');
+    const hint = document.getElementById('complete-hint');
+    if (completed) {
+        btn.disabled  = false;
+        btn.className = 'w-full rounded-xl py-2.5 text-sm font-bold transition bg-emerald-100 text-emerald-700 hover:bg-emerald-200';
+        btn.textContent = '✓ Completed';
+        if (hint) hint.textContent = '';
+    } else {
+        // Let the gate decide enabled/disabled state
+        checkCompletionGate();
+    }
 }
 
 async function toggleComplete() {
@@ -447,6 +712,10 @@ async function toggleComplete() {
         const concept = conceptsData.find(c => c.id === activeConceptId);
         if (concept) concept.completed = data.completed;
         updateCompleteBtn(data.completed);
+
+        // Refresh lock states — next module may now be unlocked
+        refreshSidebarLocks();
+
         const item = document.getElementById('mod-item-' + activeConceptId);
         if (item) {
             item.querySelector('.mod-num').innerHTML = data.completed
@@ -465,6 +734,9 @@ function escHtml(s) {
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-document.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); });
+document.addEventListener('DOMContentLoaded', () => {
+    lucide.createIcons();
+    refreshSidebarLocks();
+});
 </script>
 {% endblock %}
