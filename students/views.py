@@ -204,10 +204,27 @@ def classroom_courses(request, class_id):
         user=request.user,
         course__in=assigned_courses
     ).values_list('course_id', flat=True))
+
+    # Progress per course — build enriched list for template
+    from superadmin.models import ConceptProgress
+    courses_with_progress = []
+    for course in assigned_courses:
+        total = course.concepts.count()
+        done  = ConceptProgress.objects.filter(
+            student=request.user, concept__course=course
+        ).count()
+        courses_with_progress.append({
+            'course':        course,
+            'enrolled':      course.id in enrolled_course_ids,
+            'progress_pct':  round(done / total * 100) if total else 0,
+            'progress_done': done,
+            'progress_total': total,
+        })
     
     context = {
         'classroom': classroom, 'units': units, 'active_tab': 'courses',
         'assigned_courses': assigned_courses,
+        'courses_with_progress': courses_with_progress,
         'enrolled_course_ids': enrolled_course_ids,
         **_student_layout_context(request, classroom=classroom, active_nav='courses'),
     }
@@ -476,15 +493,31 @@ course_enroll = csrf_exempt(course_enroll)
 
 @role_required('student')
 def my_learning(request):
-    from superadmin.models import CourseEnrollment, GlobalCourse
-    
+    from superadmin.models import CourseEnrollment, ConceptProgress
+
     enrollments = CourseEnrollment.objects.filter(
         user=request.user
     ).select_related('course').prefetch_related('course__concepts')
-    
+
+    # Attach progress to each enrollment
+    enriched = []
+    for e in enrollments:
+        total = e.course.concepts.count()
+        done  = ConceptProgress.objects.filter(
+            student=request.user, concept__course=e.course
+        ).count()
+        enriched.append({
+            'enrollment':    e,
+            'course':        e.course,
+            'progress_pct':  round(done / total * 100) if total else 0,
+            'progress_done': done,
+            'total':         total,
+        })
+
     context = {
-        'enrollments': enrollments,
+        'enriched':   enriched,
         'active_tab': 'my_learning',
+        'now':        timezone.now(),
         **_student_layout_context(request, active_nav='my_learning'),
     }
     return render(request, 'student/my_learning.html', context)
@@ -492,23 +525,77 @@ def my_learning(request):
 
 @role_required('student')
 def course_detail(request, course_id):
-    from superadmin.models import GlobalCourse, CourseEnrollment
-    
-    # Check if student is enrolled in this course
-    enrollment = get_object_or_404(
-        CourseEnrollment,
-        user=request.user,
-        course_id=course_id
+    from superadmin.models import GlobalCourse, CourseEnrollment, ConceptProgress
+
+    # Verify course is assigned to one of the student's classrooms
+    classrooms = request.user.joined_classrooms.all()
+    course = get_object_or_404(
+        GlobalCourse,
+        pk=course_id,
+        classroom_assignments__classroom__in=classrooms
     )
-    
-    course = enrollment.course
+
+    # Auto-enroll on first visit
+    enrollment, _ = CourseEnrollment.objects.get_or_create(user=request.user, course=course)
+
     concepts = course.concepts.all().prefetch_related('videos')
-    
+    total    = concepts.count()
+
+    # Which concepts has this student completed?
+    completed_ids = set(
+        ConceptProgress.objects.filter(student=request.user, concept__course=course)
+        .values_list('concept_id', flat=True)
+    )
+    completed_count = len(completed_ids)
+    progress_pct    = round(completed_count / total * 100) if total else 0
+
+    # Find the classroom this course belongs to (for breadcrumb nav)
+    nav_classroom = request.user.joined_classrooms.filter(
+        course_assignments__course=course
+    ).first() or classrooms.first()
+
     context = {
-        'course': course,
-        'concepts': concepts,
-        'enrollment': enrollment,
-        'active_tab': 'my_learning',
-        **_student_layout_context(request, active_nav='my_learning'),
+        'course':           course,
+        'concepts':         concepts,
+        'enrollment':       enrollment,
+        'completed_ids':    completed_ids,
+        'completed_count':  completed_count,
+        'total_concepts':   total,
+        'progress_pct':     progress_pct,
+        'nav_classroom':    nav_classroom,
+        'active_nav':       'courses',
+        **_student_layout_context(request, classroom=nav_classroom, active_nav='courses'),
     }
     return render(request, 'student/course_detail.html', context)
+
+
+@role_required('student')
+def concept_complete(request, concept_id):
+    """Toggle concept completion for the logged-in student."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    from superadmin.models import GlobalConcept, ConceptProgress, CourseEnrollment
+
+    concept = get_object_or_404(GlobalConcept, pk=concept_id)
+
+    # Verify student is enrolled in this course
+    classrooms = request.user.joined_classrooms.all()
+    if not concept.course.classroom_assignments.filter(classroom__in=classrooms).exists():
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+
+    obj, created = ConceptProgress.objects.get_or_create(
+        student=request.user, concept=concept
+    )
+    if not created:
+        obj.delete()
+        completed = False
+    else:
+        completed = True
+
+    total     = concept.course.concepts.count()
+    done      = ConceptProgress.objects.filter(
+        student=request.user, concept__course=concept.course
+    ).count()
+    pct = round(done / total * 100) if total else 0
+
+    return JsonResponse({'completed': completed, 'progress_pct': pct, 'completed_count': done, 'total': total})

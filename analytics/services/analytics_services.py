@@ -391,30 +391,51 @@ class StudentAnalyticsService(BaseAnalyticsService):
 
     def get_personal_performance_dashboard(self):
         """Get student's overall performance metrics."""
+        from django.db.models import Sum
+        submissions = self.user.submissions.filter(score__isnull=False).select_related('assignment')
+        total_score = sum(s.score for s in submissions)
+        total_max   = sum(s.assignment.max_score for s in submissions)
+        avg_pct     = round(total_score / total_max * 100, 1) if total_max else None
         return {
             'total_assignments': Assignment.objects.filter(
                 classroom__students=self.user
             ).count(),
             'submitted_assignments': self.user.submissions.count(),
-            'graded_assignments': self.user.submissions.filter(
-                score__isnull=False
-            ).count(),
-            'avg_score': self.user.submissions.aggregate(
-                avg=Avg('score')
-            )['avg'],
+            'graded_assignments': submissions.count(),
+            'avg_score': avg_pct,
             'classroom_count': self.user.joined_classrooms.count(),
         }
 
     def get_progress_trends(self):
-        """Get student's progress over time."""
-        return self.user.submissions.filter(
+        """Get student's progress over time as percentage scores."""
+        from django.db.models.functions import TruncMonth
+        submissions = self.user.submissions.filter(
             score__isnull=False
-        ).annotate(
-            month=TruncMonth('submitted_at')
-        ).values('month').annotate(
-            avg_score=Avg('score'),
-            count=Count('id')
-        ).order_by('month')
+        ).select_related('assignment').order_by('submitted_at')
+
+        # Group by month manually to compute percentage correctly
+        from collections import defaultdict
+        monthly = defaultdict(lambda: {'scores': [], 'maxes': []})
+        for s in submissions:
+            key = s.submitted_at.strftime('%Y-%m-01')
+            monthly[key]['scores'].append(s.score)
+            monthly[key]['maxes'].append(s.assignment.max_score)
+
+        result = []
+        for month_str in sorted(monthly.keys()):
+            data = monthly[month_str]
+            total_score = sum(data['scores'])
+            total_max   = sum(data['maxes'])
+            pct = round(total_score / total_max * 100, 1) if total_max else 0
+            from django.utils.dateparse import parse_datetime
+            import datetime
+            month_dt = datetime.datetime.strptime(month_str, '%Y-%m-%d')
+            result.append({
+                'month':     month_dt,
+                'avg_score': pct,
+                'count':     len(data['scores']),
+            })
+        return result
 
     def get_assignment_tracking(self, month=None):
         """Get assignment completion status for this student only."""
@@ -466,15 +487,29 @@ class StudentAnalyticsService(BaseAnalyticsService):
         return assignments
 
     def get_strengths_and_weaknesses(self):
-        """Analyze student's performance patterns."""
-        # Group by assignment type or score ranges
-        submissions = self.user.submissions.filter(score__isnull=False)
+        """Analyze student's performance as percentages."""
+        submissions = self.user.submissions.filter(
+            score__isnull=False
+        ).select_related('assignment')
 
+        if not submissions.exists():
+            return {
+                'graded_assignments': 0,
+                'avg_score': None,
+                'highest_score': None,
+                'lowest_score': None,
+            }
+
+        pcts = [
+            round(s.score / s.assignment.max_score * 100, 1)
+            for s in submissions
+            if s.assignment.max_score > 0
+        ]
         return {
             'graded_assignments': submissions.count(),
-            'avg_score': submissions.aggregate(avg=Avg('score'))['avg'],
-            'highest_score': submissions.aggregate(max=Max('score'))['max'],
-            'lowest_score': submissions.aggregate(min=Min('score'))['min'],
+            'avg_score':     round(sum(pcts) / len(pcts), 1) if pcts else None,
+            'highest_score': max(pcts) if pcts else None,
+            'lowest_score':  min(pcts) if pcts else None,
         }
 
     def get_class_rank(self):

@@ -201,9 +201,12 @@ body{font-family:var(--font);background:var(--page-bg);color:var(--text-1);font-
 .status-dot{width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0}
 .status-dot.connected{background:#22c55e}
 .chat-messages{flex:1;padding:16px 18px;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
-.bubble{max-width:68%;padding:9px 13px;border-radius:var(--radius-lg);font-size:13.5px;line-height:1.5}
-.bubble.sent{background:var(--brand);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
-.bubble.recv{background:var(--page-bg);color:var(--text-1);align-self:flex-start;border-bottom-left-radius:4px;border:1px solid var(--border)}
+.bubble-row{display:flex;margin-bottom:4px;}
+.bubble-row.sent{justify-content:flex-end;}
+.bubble-row.recv{justify-content:flex-start;}
+.bubble{max-width:70%;padding:9px 13px;border-radius:var(--radius-lg);font-size:13.5px;line-height:1.5;word-break:break-word;overflow:hidden;}
+.bubble.sent{background:var(--brand);color:#fff;border-bottom-right-radius:4px}
+.bubble.recv{background:var(--page-bg);color:var(--text-1);border-bottom-left-radius:4px;border:1px solid var(--border)}
 .bubble-time{font-size:10px;opacity:.6;margin-top:3px;text-align:right}
 .chat-footer{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);background:var(--card-bg);flex-shrink:0}
 .chat-input{flex:1;padding:9px 13px;font-family:var(--font);font-size:13px;border:1.5px solid var(--border);border-radius:40px;outline:none;background:var(--page-bg);transition:border-color .15s}
@@ -568,8 +571,13 @@ body{font-family:var(--font);background:var(--page-bg);color:var(--text-1);font-
             <div class="chat-students">
               {% for student in chat_students %}
               <a href="?student={{ student.pk }}&tab=chat" class="chat-s-item {% if selected_student.pk == student.pk %}active{% endif %}" onclick="selectStudent(event, {{ student.pk }}, '{{ student.get_full_name|escapejs }}')">
-                <div class="chat-s-av">{{ student.get_full_name|slice:":2"|upper }}</div>
-                <span>{{ student.get_full_name|default:student.username }}</span>
+                <div class="chat-s-av" style="position:relative;">
+                  {{ student.get_full_name|slice:":2"|upper }}
+                  <span style="position:absolute;bottom:-2px;right:-2px;width:9px;height:9px;border-radius:50%;border:2px solid #fff;background:#d1d5db;" class="student-sidebar-dot-{{ student.pk }}"></span>
+                </div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:13px;font-weight:500;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ student.get_full_name|default:student.username }}</div>
+                </div>
               </a>
               {% empty %}
               <div style="padding:14px;font-size:13px;color:var(--text-3)">No students yet.</div>
@@ -580,7 +588,16 @@ body{font-family:var(--font);background:var(--page-bg);color:var(--text-1);font-
           <div class="chat-main">
             {% if selected_student %}
             <div class="chat-header">
-              💬 {{ selected_student.get_full_name|default:selected_student.username }}
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="chat-s-av">{{ selected_student.get_full_name|slice:":2"|upper }}</div>
+                <div>
+                  <div>{{ selected_student.get_full_name|default:selected_student.username }}</div>
+                  <div class="chat-status" style="margin-top:2px;">
+                    <span class="status-dot" id="chat-peer-status-dot" style="background:{% if selected_student_online %}#22c55e{% else %}#ef4444{% endif %};"></span>
+                    <span id="chat-peer-status-text" style="font-size:11px;color:var(--text-3);">{% if selected_student_online %}Online{% elif selected_student.last_seen %}Last seen {{ selected_student.last_seen|timesince }} ago{% else %}Offline{% endif %}</span>
+                  </div>
+                </div>
+              </div>
               <div class="chat-status">
                 <span class="status-dot" id="chat-status-dot"></span>
                 <span id="chat-status-text">Connecting…</span>
@@ -588,25 +605,100 @@ body{font-family:var(--font);background:var(--page-bg);color:var(--text-1);font-
             </div>
             <div class="chat-messages" id="chat-messages">
               {% for msg in chat_messages %}
-              <div class="bubble {% if msg.sender == request.user %}sent{% else %}recv{% endif %}">
-                {{ msg.body }}
-                <div class="bubble-time">{{ msg.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
+              <div class="bubble-row {% if msg.sender == request.user %}sent{% else %}recv{% endif %}">
+              <div class="bubble {% if msg.sender == request.user %}sent{% else %}recv{% endif %}" style="overflow:hidden;">
+                {% if msg.attachment %}
+                  {% if msg.attachment.name|lower|slice:"-4:" == ".jpg" or msg.attachment.name|lower|slice:"-5:" == ".jpeg" or msg.attachment.name|lower|slice:"-4:" == ".png" or msg.attachment.name|lower|slice:"-4:" == ".gif" or msg.attachment.name|lower|slice:"-5:" == ".webp" %}
+                    <a href="{{ msg.attachment.url }}" target="_blank" style="display:block;">
+                      <img src="{{ msg.attachment.url }}" style="width:100%;max-height:220px;object-fit:cover;border-radius:8px;display:block;" alt="image"/>
+                    </a>
+                    {% if msg.body %}<p style="padding:6px 4px 2px;">{{ msg.body }}</p>{% endif %}
+                    <div class="bubble-time">{{ msg.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
+                  {% else %}
+                    <a href="{{ msg.attachment.url }}" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;text-decoration:none;{% if msg.sender == request.user %}background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);{% else %}background:#f8fafc;border:1px solid #e2e8f0;{% endif %}">
+                      <span style="font-size:22px;flex-shrink:0;">📎</span>
+                      <div style="min-width:0;flex:1;">
+                        <p style="margin:0;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;{% if msg.sender == request.user %}color:#fff;{% else %}color:#1a1f36;{% endif %}">{{ msg.attachment.name|slice:"17:" }}</p>
+                        <p style="margin:2px 0 0;font-size:11px;{% if msg.sender == request.user %}color:rgba(255,255,255,.6);{% else %}color:#9496a8;{% endif %}">Tap to download</p>
+                      </div>
+                    </a>
+                    {% if msg.body %}<p style="padding:6px 4px 2px;">{{ msg.body }}</p>{% endif %}
+                    <div class="bubble-time">{{ msg.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
+                  {% endif %}
+                {% else %}
+                  {{ msg.body }}
+                  <div class="bubble-time">{{ msg.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
+                {% endif %}
+              </div>
               </div>
               {% empty %}
               <div class="empty-state"><div class="icon">💬</div><p>No messages yet. Say hello!</p></div>
               {% endfor %}
             </div>
-            <div class="chat-footer">
-              <input type="text" class="chat-input" id="chat-input" placeholder="Type a message…" autocomplete="off"/>
-              <button class="btn btn-primary" id="chat-send">Send</button>
+            <div class="chat-footer" style="flex-direction:column;gap:8px;">
+              <div id="chat-file-preview" class="hidden"></div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <button id="chat-file-btn" type="button" title="Attach file" style="flex-shrink:0;background:var(--page-bg);border:1.5px solid var(--border);border-radius:40px;padding:8px 11px;cursor:pointer;color:var(--text-2);transition:all .15s;" onmouseover="this.style.borderColor='var(--brand)'" onmouseout="this.style.borderColor='var(--border)'">
+                  <svg xmlns="http://www.w3.org/2000/svg" style="width:15px;height:15px;display:block;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a4 4 0 00-5.656-5.656L5.757 10.757a6 6 0 108.486 8.486L20 13"/></svg>
+                </button>
+                <input type="file" id="chat-file-input" style="display:none;" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip">
+                <input type="text" class="chat-input" id="chat-input" placeholder="Type a message…" autocomplete="off"/>
+                <button class="btn btn-primary" id="chat-send">Send</button>
+              </div>
             </div>
             <script>
               window.CHAT_CLASSROOM_ID = {{ classroom.pk }};
               window.CHAT_MY_ID        = {{ request.user.pk }};
               window.CHAT_RECEIVER_ID  = {{ selected_student.pk }};
+              window.CHAT_CSRF_TOKEN   = '{{ csrf_token }}';
+              window.CHAT_USE_INLINE_STYLES = true;
             </script>
             {% load static %}
             <script src="{% static 'js/chat.js' %}"></script>
+            <script>
+            (function(){
+              const studentId   = Number(window.CHAT_RECEIVER_ID);
+              const proto       = location.protocol === 'https:' ? 'wss' : 'ws';
+
+              function setStatus(online, lastSeenIso) {
+                const dot  = document.getElementById('chat-peer-status-dot');
+                const text = document.getElementById('chat-peer-status-text');
+                const sdot = document.querySelector('.student-sidebar-dot-' + studentId);
+                const color = online ? '#22c55e' : '#ef4444';
+                if (dot)  dot.style.background = color;
+                if (sdot) sdot.style.background = color;
+                if (!text) return;
+                if (online) { text.textContent = 'Online'; return; }
+                if (!lastSeenIso) { text.textContent = 'Offline'; return; }
+                const now = new Date(), seen = new Date(lastSeenIso);
+                const diff = Math.floor((now - seen) / 1000);
+                if (diff < 60)   { text.textContent = 'Last seen just now'; return; }
+                if (diff < 3600) { const m=Math.floor(diff/60); text.textContent='Last seen '+m+' minute'+(m===1?'':'s')+' ago'; return; }
+                if (now.toDateString()===seen.toDateString()) { text.textContent='Last seen today at '+seen.toLocaleTimeString([],{hour:'numeric',minute:'2-digit',hour12:true}); return; }
+                const yest=new Date(now); yest.setDate(now.getDate()-1);
+                if (yest.toDateString()===seen.toDateString()) { text.textContent='Last seen yesterday at '+seen.toLocaleTimeString([],{hour:'numeric',minute:'2-digit',hour12:true}); return; }
+                text.textContent='Last seen '+seen.toLocaleDateString([],{day:'numeric',month:'short'});
+              }
+
+              function connect() {
+                // Use PresenceConsumer — tracks login/logout for ALL users site-wide
+                const ws = new WebSocket(`${proto}://${location.host}/ws/presence/`);
+                ws.onmessage = (e) => {
+                  const d = JSON.parse(e.data);
+                  if (d.type === 'presence.snapshot') {
+                    const online = Array.isArray(d.online_users) && d.online_users.includes(studentId);
+                    const lastSeen = d.last_seen && d.last_seen[String(studentId)];
+                    setStatus(online, online ? null : lastSeen);
+                  }
+                  if (d.type === 'presence.update' && Number(d.user_id) === studentId) {
+                    setStatus(d.status === 'online', d.status === 'online' ? null : d.last_seen);
+                  }
+                };
+                ws.onclose = () => setTimeout(connect, 3000);
+              }
+              connect();
+            })();
+            </script>
             {% else %}
             <div class="chat-empty">
               <div class="icon">👈</div>

@@ -79,10 +79,6 @@
                     <i data-lucide="book-open" class="h-5 w-5"></i>
                     <span class="font-medium">My Courses</span>
                 </a>
-                <a href="{% url 'student_my_learning' %}" class="student-nav-link {% if active_nav == 'my_learning' %}active{% endif %} flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
-                    <i data-lucide="graduation-cap" class="h-5 w-5"></i>
-                    <span class="font-medium">My Learning</span>
-                </a>
                 <a href="{% url 'student_classroom_classwork' nav_classroom.id %}" class="student-nav-link {% if active_nav == 'classwork' %}active{% endif %} flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
                     <i data-lucide="clipboard-list" class="h-5 w-5"></i>
                     <span class="font-medium">Assignments</span>

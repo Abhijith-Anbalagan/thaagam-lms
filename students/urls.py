@@ -18,4 +18,5 @@ urlpatterns = [
     path('api/course-enroll/<int:course_id>/',      views.course_enroll,       name='student_course_enroll'),
     path('my-learning/',                            views.my_learning,         name='student_my_learning'),
     path('my-learning/<int:course_id>/',            views.course_detail,       name='student_course_detail'),
+    path('api/concept-complete/<int:concept_id>/',  views.concept_complete,    name='student_concept_complete'),
 ]

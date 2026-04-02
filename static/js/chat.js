@@ -89,13 +89,25 @@
     if (empty) empty.remove();
 
     const wrap = document.createElement('div');
-    wrap.className = `mb-3 flex ${isMine ? 'justify-end' : 'justify-start'}`;
+    wrap.className = `bubble-row mb-3 flex ${isMine ? 'justify-end sent' : 'justify-start recv'}`;
 
-    const sentCls = 'bubble optimistic-target bg-blue-600 text-white';
-    const recvCls = 'bubble optimistic-target bg-white text-slate-900 border border-slate-200';
-    const base    = (isMine ? sentCls : recvCls) +
-                    ' max-w-[72%] rounded-2xl shadow-sm text-sm leading-relaxed' +
-                    (optimistic ? ' optimistic' : '');
+    const useInline = window.CHAT_USE_INLINE_STYLES;
+
+    let base, bubbleStyle = '';
+    if (useInline) {
+      // Inline styles for non-Tailwind pages (teacher classroom_detail)
+      base = `bubble optimistic-target${optimistic ? ' optimistic' : ''}`;
+      bubbleStyle = isMine
+        ? 'max-width:70%;border-radius:14px;padding:9px 13px;font-size:13.5px;line-height:1.5;word-break:break-word;overflow:hidden;background:#4c68d7;color:#fff;border-bottom-right-radius:4px;'
+        : 'max-width:70%;border-radius:14px;padding:9px 13px;font-size:13.5px;line-height:1.5;word-break:break-word;overflow:hidden;background:#f4f5f9;color:#1a1f36;border:1px solid #e8e8ec;border-bottom-left-radius:4px;';
+    } else {
+      // Tailwind classes for student chat
+      const sentCls = 'bubble optimistic-target bg-blue-600 text-white';
+      const recvCls = 'bubble optimistic-target bg-white text-slate-900 border border-slate-200';
+      base = (isMine ? sentCls : recvCls) +
+             ' max-w-[72%] rounded-2xl shadow-sm text-sm leading-relaxed' +
+             (optimistic ? ' optimistic' : '');
+    }
 
     let inner = '';
 
@@ -134,12 +146,16 @@
         inner += `<div class="bubble-time pt-1 pb-1 px-1 text-xs opacity-60 text-right">${time}</div>`;
       }
     } else {
-      // ── Text-only bubble ──────────────────────────────────────────────────
-      inner = `<p class="px-4 py-3">${escapeHtml(body)}</p>
-               <div class="bubble-time px-4 pb-2 text-xs opacity-60 text-right">${time}</div>`;
+      // Text-only bubble
+      if (useInline) {
+        inner = `<span>${escapeHtml(body)}</span><div class="bubble-time" style="font-size:10px;opacity:.6;margin-top:3px;text-align:right;">${time}</div>`;
+      } else {
+        inner = `<p class="px-4 py-3">${escapeHtml(body)}</p>
+                 <div class="bubble-time px-4 pb-2 text-xs opacity-60 text-right">${time}</div>`;
+      }
     }
 
-    wrap.innerHTML = `<div class="${base}">${inner}</div>`;
+    wrap.innerHTML = `<div class="${base}"${bubbleStyle ? ` style="${bubbleStyle}"` : ''}>${inner}</div>`;
     msgContainer.appendChild(wrap);
     msgContainer.scrollTop = msgContainer.scrollHeight;
   }
