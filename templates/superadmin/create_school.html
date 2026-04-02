@@ -21,32 +21,91 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  .section-divider { display:flex; align-items:center; gap:12px; margin:24px 0 18px; }
-  .section-divider span { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); white-space:nowrap; font-family:'DM Sans',sans-serif; }
-  .section-divider::before, .section-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+  /* ── Section divider ── */
+  .section-divider { display: flex; align-items: center; gap: 12px; margin: 24px 0 18px; }
+  .section-divider span { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); white-space: nowrap; font-family: 'DM Sans', sans-serif; }
+  .section-divider::before,
+  .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-  .admin-block { background:var(--cream); border:1.5px solid var(--border); border-radius:12px; padding:16px; margin-bottom:12px; }
-  .admin-block-title { font-size:13px; font-weight:700; color:var(--ink); margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; font-family:'Playfair Display',Georgia,serif; }
-  .admin-block-title-left { display:flex; align-items:center; gap:8px; }
-  .required-badge { font-size:10px; font-weight:600; background:var(--green-light); color:var(--green); border-radius:20px; padding:2px 8px; font-family:'DM Sans',sans-serif; }
-  .optional-badge { font-size:10px; font-weight:600; background:var(--blue-light); color:var(--blue); border-radius:20px; padding:2px 8px; font-family:'DM Sans',sans-serif; }
-  .remove-admin-btn { background:none; border:none; cursor:pointer; color:var(--accent); font-size:18px; line-height:1; padding:2px 6px; border-radius:6px; transition:background .15s; }
-  .remove-admin-btn:hover { background:var(--accent-light); }
-  .add-admin-btn { display:flex; align-items:center; gap:8px; padding:10px 16px; border-radius:10px; border:1.5px dashed var(--blue); background:var(--blue-light); color:var(--blue); font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; width:100%; justify-content:center; margin-bottom:12px; font-family:'DM Sans',sans-serif; }
-  .add-admin-btn:hover { background:rgba(29,95,168,0.15); border-style:solid; }
-  .add-admin-btn:disabled { opacity:.4; cursor:not-allowed; border-style:dashed; background:var(--blue-light); }
-  .admin-count-hint { font-size:11px; color:var(--muted); text-align:center; margin-bottom:0; font-family:'DM Sans',sans-serif; }
+  /* ── Admin block ── */
+  .admin-block { background: var(--cream); border: 1.5px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; transition: opacity .2s, transform .2s; }
+  .admin-block-title { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; font-family: 'Playfair Display', Georgia, serif; }
+  .admin-block-title-left { display: flex; align-items: center; gap: 8px; }
 
-  .fields-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
-  .admin-fields-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+  /* ── Badges ── */
+  .required-badge { font-size: 10px; font-weight: 600; background: var(--green-light); color: var(--green); border-radius: 20px; padding: 2px 8px; font-family: 'DM Sans', sans-serif; }
+  .optional-badge { font-size: 10px; font-weight: 600; background: var(--blue-light); color: var(--blue); border-radius: 20px; padding: 2px 8px; font-family: 'DM Sans', sans-serif; }
 
-  @media(max-width:860px){
-    .fields-row { grid-template-columns:1fr 1fr; }
-    .admin-fields-row { grid-template-columns:1fr 1fr; }
+  /* ── Remove / Add buttons ── */
+  .remove-admin-btn { background: none; border: none; cursor: pointer; color: var(--accent); font-size: 18px; line-height: 1; padding: 2px 6px; border-radius: 6px; transition: background .15s; }
+  .remove-admin-btn:hover { background: var(--accent-light); }
+  .add-admin-btn { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 10px; border: 1.5px dashed var(--blue); background: var(--blue-light); color: var(--blue); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; width: 100%; justify-content: center; margin-bottom: 12px; font-family: 'DM Sans', sans-serif; }
+  .add-admin-btn:hover { background: rgba(29,95,168,0.15); border-style: solid; }
+  .add-admin-btn:disabled { opacity: .4; cursor: not-allowed; border-style: dashed; background: var(--blue-light); }
+  .admin-count-hint { font-size: 11px; color: var(--muted); text-align: center; margin-bottom: 0; font-family: 'DM Sans', sans-serif; }
+
+  /* ── Field grids ── */
+  .fields-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .admin-fields-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  /* ── Password input group (FIXED) ── */
+  .pwd-group { display: flex; gap: 6px; align-items: center; }
+  .pwd-group .form-control { flex: 1; min-width: 0; }
+  .pwd-icon-btn {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid var(--border);
+    background: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s;
+    color: var(--muted);
+    line-height: 1;
   }
-  @media(max-width:540px){
-    .fields-row { grid-template-columns:1fr; }
-    .admin-fields-row { grid-template-columns:1fr; }
+  .pwd-icon-btn:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-light); }
+  .pwd-icon-btn.visible { border-color: var(--blue); color: var(--blue); background: var(--blue-light); }
+  .generate-pwd-btn {
+    flex-shrink: 0;
+    height: 36px;
+    padding: 0 11px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background .15s;
+  }
+  .generate-pwd-btn:hover { background: #155aa8; }
+  .generate-pwd-btn:active { transform: scale(0.98); }
+  .generate-pwd-btn.copied { background: var(--green); }
+  .generate-pwd-btn .btn-label { display: inline; }
+
+  /* ── Strength indicator ── */
+  .pwd-strength-indicator { font-size: 11px; color: var(--green); margin-top: 4px; display: none; font-family: 'DM Sans', sans-serif; }
+
+  /* ── Responsive breakpoints ── */
+  @media (max-width: 860px) {
+    .fields-row       { grid-template-columns: 1fr 1fr; }
+    .admin-fields-row { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 540px) {
+    .fields-row       { grid-template-columns: 1fr; }
+    .admin-fields-row { grid-template-columns: 1fr; }
+    /* On very small screens hide the Generate label, keep just the icon */
+    .generate-pwd-btn .btn-label { display: none; }
+    .generate-pwd-btn { padding: 0 10px; }
   }
 </style>
 {% endblock %}
@@ -73,7 +132,7 @@
     <div class="card">
       <form method="post" id="school-form">{% csrf_token %}
 
-        <!-- School Info -->
+        <!-- ── School Info ── -->
         <div class="section-divider"><span>🏫 School Info</span></div>
         <div class="fields-row">
           <div class="form-group" style="margin-bottom:0;">
@@ -91,7 +150,7 @@
           </div>
         </div>
 
-        <!-- Admin Accounts -->
+        <!-- ── Admin Accounts ── -->
         <div class="section-divider"><span>👤 Admin Accounts</span></div>
         <div id="admin-blocks-container"></div>
 
@@ -125,6 +184,9 @@
     const block = document.createElement('div');
     block.className = 'admin-block';
     block.id = `admin-block-${index}`;
+    block.style.opacity = '0';
+    block.style.transform = 'translateY(-8px)';
+
     block.innerHTML = `
       <div class="admin-block-title">
         <div class="admin-block-title-left">
@@ -138,35 +200,67 @@
           : ''}
       </div>
       <div class="admin-fields-row">
+
+        <!-- Full Name -->
         <div class="form-group" style="margin-bottom:0;">
-          <label class="form-label">Full Name ${isRequired ? '<span style="color:#e53e3e;">*</span>' : ''}</label>
+          <label class="form-label">
+            Full Name ${isRequired ? '<span style="color:#e53e3e;">*</span>' : ''}
+          </label>
           <input type="text" name="admins[${index}][name]" class="form-control"
                  placeholder="e.g. John Smith" ${isRequired ? 'required' : ''}>
         </div>
+
+        <!-- Email -->
         <div class="form-group" style="margin-bottom:0;">
-          <label class="form-label">Email ${isRequired ? '<span style="color:#e53e3e;">*</span>' : ''}</label>
+          <label class="form-label">
+            Email ${isRequired ? '<span style="color:#e53e3e;">*</span>' : ''}
+          </label>
           <input type="email" name="admins[${index}][email]" class="form-control"
                  placeholder="admin@school.com" ${isRequired ? 'required' : ''}>
         </div>
+
+        <!-- Password — fixed flex row, no absolute positioning -->
         <div class="form-group" style="margin-bottom:0;">
-          <label class="form-label">Password ${isRequired ? '<span style="color:#e53e3e;">*</span>' : ''}</label>
-          <input type="password" name="admins[${index}][password]" class="form-control"
-                 placeholder="Min. 8 chars" ${isRequired ? 'required' : ''}>
+          <label class="form-label">
+            Password ${isRequired ? '<span style="color:#e53e3e;">*</span>' : ''}
+          </label>
+          <div class="pwd-group">
+            <input type="password"
+                   name="admins[${index}][password]"
+                   class="form-control admin-password-input"
+                   placeholder="Enter or generate"
+                   ${isRequired ? 'required' : ''}>
+            <button type="button"
+                    class="pwd-icon-btn"
+                    id="toggle-btn-${index}"
+                    onclick="togglePasswordVisibility(${index})"
+                    title="Show / hide password">👁</button>
+            <button type="button"
+                    class="generate-pwd-btn"
+                    id="gen-btn-${index}"
+                    onclick="generatePassword(${index})"
+                    title="Generate secure password">
+              🔐 <span class="btn-label">Generate</span>
+            </button>
+          </div>
+          <div class="pwd-strength-indicator" id="strength-${index}">✓ Strong password</div>
         </div>
+
       </div>
     `;
 
     container.appendChild(block);
-    block.style.opacity = '0';
-    block.style.transform = 'translateY(-8px)';
+
     requestAnimationFrame(() => {
       block.style.transition = 'opacity .2s, transform .2s';
       block.style.opacity = '1';
       block.style.transform = 'translateY(0)';
     });
+
     updateUI();
   }
 
+  /* ── Remove block ── */
   function removeAdminBlock(index) {
     const block = document.getElementById(`admin-block-${index}`);
     if (!block) return;
@@ -181,28 +275,111 @@
     }, 150);
   }
 
+  /* ── Renumber after removal ── */
   function renumberBlocks() {
     document.querySelectorAll('.admin-block').forEach((block, i) => {
       const num = i + 1;
       block.id = `admin-block-${num}`;
+
       const titleSpan = block.querySelector('.admin-block-title-left span:first-child');
       if (titleSpan) titleSpan.textContent = `Admin ${num}`;
+
       const removeBtn = block.querySelector('.remove-admin-btn');
       if (removeBtn) removeBtn.setAttribute('onclick', `removeAdminBlock(${num})`);
+
+      const toggleBtn = block.querySelector('.pwd-icon-btn');
+      if (toggleBtn) {
+        toggleBtn.id = `toggle-btn-${num}`;
+        toggleBtn.setAttribute('onclick', `togglePasswordVisibility(${num})`);
+      }
+
+      const genBtn = block.querySelector('.generate-pwd-btn');
+      if (genBtn) {
+        genBtn.id = `gen-btn-${num}`;
+        genBtn.setAttribute('onclick', `generatePassword(${num})`);
+      }
+
       block.querySelectorAll('input').forEach(input => {
         input.name = input.name.replace(/admins\[\d+\]/, `admins[${num}]`);
       });
+
+      const strengthInd = block.querySelector('.pwd-strength-indicator');
+      if (strengthInd) strengthInd.id = `strength-${num}`;
     });
   }
 
+  /* ── Update Add button / hint ── */
   function updateUI() {
     const btn  = document.getElementById('add-admin-btn');
     const hint = document.getElementById('admin-count-hint');
     hint.textContent = `${adminCount} of ${MAX_ADMINS} admin accounts added`;
     btn.disabled = adminCount >= MAX_ADMINS;
-    btn.textContent = adminCount >= MAX_ADMINS ? '✓ Maximum 3 admins reached' : '＋ Add Another Admin Account';
+    btn.textContent = adminCount >= MAX_ADMINS
+      ? '✓ Maximum 3 admins reached'
+      : '＋ Add Another Admin Account';
   }
 
+  /* ── Generate password ── */
+  function generatePassword(index) {
+    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+    const numbers   = '0123456789';
+    const symbols   = '!@#$%^&*-_+=';
+    const all       = uppercase + lowercase + numbers + symbols;
+
+    let pwd = '';
+    pwd += uppercase[Math.floor(Math.random() * uppercase.length)];
+    pwd += lowercase[Math.floor(Math.random() * lowercase.length)];
+    pwd += numbers[Math.floor(Math.random() * numbers.length)];
+    pwd += symbols[Math.floor(Math.random() * symbols.length)];
+    for (let i = pwd.length; i < 12; i++) {
+      pwd += all[Math.floor(Math.random() * all.length)];
+    }
+    pwd = pwd.split('').sort(() => Math.random() - 0.5).join('');
+
+    const inputField  = document.querySelector(`input[name="admins[${index}][password]"]`);
+    const strengthEl  = document.getElementById(`strength-${index}`);
+    const btn         = document.getElementById(`gen-btn-${index}`);
+    const toggleBtn   = document.getElementById(`toggle-btn-${index}`);
+
+    if (!inputField) return;
+
+    inputField.value = pwd;
+    inputField.type  = 'text';
+    if (toggleBtn) { toggleBtn.textContent = '🙈'; toggleBtn.classList.add('visible'); }
+    if (strengthEl) strengthEl.style.display = 'block';
+
+    btn.classList.add('copied');
+    btn.innerHTML = '✓ <span class="btn-label">Generated</span>';
+    btn.disabled  = true;
+
+    setTimeout(() => {
+      inputField.type = 'password';
+      if (toggleBtn) { toggleBtn.textContent = '👁'; toggleBtn.classList.remove('visible'); }
+      btn.classList.remove('copied');
+      btn.innerHTML = '🔐 <span class="btn-label">Regenerate</span>';
+      btn.disabled  = false;
+    }, 2000);
+  }
+
+  /* ── Toggle password visibility ── */
+  function togglePasswordVisibility(index) {
+    const inputField = document.querySelector(`input[name="admins[${index}][password]"]`);
+    const toggleBtn  = document.getElementById(`toggle-btn-${index}`);+
+    if (!inputField || !toggleBtn) return;
+
+    if (inputField.type === 'password') {
+      inputField.type = 'text';
+      toggleBtn.classList.add('visible');
+      toggleBtn.textContent = '🙈';
+    } else {
+      inputField.type = 'password';
+      toggleBtn.classList.remove('visible');
+      toggleBtn.textContent = 'fi fi-rr-eye-crossed';
+    }
+  }
+
+  /* ── Init: add first required admin block ── */
   addAdminBlock();
 </script>
 {% endblock %}
