@@ -852,6 +852,35 @@ quizData[{{ concept.pk }}] = (() => {
 })();
 {% endfor %}
 
+// ── Render quiz preview in concept card ──
+function renderQuizPreview(cid) {
+  const container = document.getElementById('quiz-rendered-' + cid);
+  if (!container) return;
+  const questions = quizData[cid];
+  if (!questions || !questions.length) {
+    container.innerHTML = '<p style="font-size:13px;color:var(--muted);">No quiz added.</p>';
+    return;
+  }
+  container.innerHTML = questions.map((q, qi) => `
+    <div class="quiz-question-card">
+      <p style="font-size:13px;font-weight:600;margin:0 0 8px;">Q${qi+1}. ${esc(q.question)}</p>
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        ${(q.options||[]).map((opt, oi) => `
+          <div class="quiz-option ${q.correct===oi?'correct':''}">
+            <span style="font-size:12px;font-weight:700;color:var(--muted);width:18px;">${String.fromCharCode(65+oi)}.</span>
+            <span>${esc(opt)}</span>
+            ${q.correct===oi ? '<span style="margin-left:auto;font-size:12px;color:var(--green);">✓ Correct</span>' : ''}
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  {% for concept in concepts %}
+  renderQuizPreview({{ concept.pk }});
+  {% endfor %}
+});
+
 function openQuizEditor(cid) {
   renderQuizEditor(cid);
   document.getElementById('quiz-modal-' + cid).style.display = 'block';
@@ -907,7 +936,7 @@ function saveQuiz(cid) {
     headers:{'X-CSRFToken':CSRF,'Content-Type':'application/x-www-form-urlencoded'},
     body: new URLSearchParams({field:'quiz', value}),
   }).then(r=>r.json()).then(d => {
-    if (d.success) { closeQuizModal(cid); location.reload(); }
+    if (d.success) { closeQuizModal(cid); renderQuizPreview(cid); }
     else alert(d.error || 'Save failed');
   });
 }
