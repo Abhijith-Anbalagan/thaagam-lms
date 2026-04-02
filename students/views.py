@@ -33,20 +33,26 @@ def _student_layout_context(request, classroom=None, active_nav=None):
         except Exception:
             return default_time
 
-    baseline = user.last_login or timezone.make_aware(datetime.min)
-    last_seen_announce = parse_session_time('student_last_seen_announcements', baseline)
-    last_seen_assignment = parse_session_time('student_last_seen_assignments', baseline)
+    baseline = timezone.make_aware(datetime.min)
+    last_seen_announce   = user.announcements_seen_at or baseline
+    last_seen_assignment = user.assignments_seen_at   or baseline
 
-    # Track graded submissions per session, not by timestamp
-    # (since we can't know exactly when teacher applied the grade)
-    seen_graded_submission_ids = request.session.get('student_seen_graded_submission_ids', [])
-    graded_submissions = Submission.objects.filter(student=user, score__isnull=False)
-    new_graded_submissions = graded_submissions.exclude(id__in=seen_graded_submission_ids)
+    # Track graded submissions using DB timestamp — persists across logins
+    grades_seen_at = user.grades_seen_at
+    if grades_seen_at:
+        new_graded_submissions = Submission.objects.filter(
+            student=user,
+            score__isnull=False,
+            submitted_at__gt=grades_seen_at
+        )
+    else:
+        new_graded_submissions = Submission.objects.filter(
+            student=user, score__isnull=False
+        )
 
     new_grades_count = new_graded_submissions.count()
     new_grades_classroom = None
     if new_graded_submissions.exists():
-        # Find the classroom of the first new graded submission
         first_new_grade = new_graded_submissions.select_related('assignment__classroom').first()
         new_grades_classroom = first_new_grade.assignment.classroom
 
@@ -178,6 +184,8 @@ def classroom_announce(request, class_id):
     classroom     = _get_classroom(request, class_id)
     announcements = Announcement.objects.filter(classroom=classroom)
     request.session['student_last_seen_announcements'] = timezone.now().isoformat()
+    from accounts.models import User as UserModel
+    UserModel.objects.filter(pk=request.user.pk).update(announcements_seen_at=timezone.now())
     context = {
         'classroom': classroom, 'announcements': announcements, 'active_tab': 'announcements',
         **_student_layout_context(request, classroom=classroom, active_nav='announcements'),
@@ -255,6 +263,8 @@ def classroom_classwork(request, class_id):
         return redirect('student_classroom_classwork', class_id=class_id)
 
     request.session['student_last_seen_assignments'] = timezone.now().isoformat()
+    from accounts.models import User as UserModel
+    UserModel.objects.filter(pk=request.user.pk).update(assignments_seen_at=timezone.now())
     assignment_data = []
     for a in classroom.assignments.all():
         try:    sub = Submission.objects.get(assignment=a, student=request.user)
@@ -282,10 +292,10 @@ def classroom_peoples(request, class_id):
 @role_required('student')
 def classroom_grade(request, class_id):
     classroom   = _get_classroom(request, class_id)
-    graded_submission_ids = list(
-        Submission.objects.filter(student=request.user, score__isnull=False).values_list('id', flat=True)
-    )
-    request.session['student_seen_graded_submission_ids'] = graded_submission_ids
+
+    # Mark all current graded submissions as seen — persists across logins
+    from accounts.models import User as UserModel
+    UserModel.objects.filter(pk=request.user.pk).update(grades_seen_at=timezone.now())
     grade_data  = []
     total_score = total_max = 0
 
@@ -412,12 +422,29 @@ def pending_count_api(request):
 
 @role_required('student')
 def graded_count_api(request):
-    """JSON endpoint — returns graded assignments count."""
+    """JSON endpoint — returns total graded assignments count (for dashboard stat card)."""
     count = Submission.objects.filter(
         student=request.user,
         score__isnull=False
     ).count()
     return JsonResponse({'graded': count})
+
+
+@role_required('student')
+def new_grades_count_api(request):
+    """JSON endpoint — returns count of grades not yet seen (persists across logins)."""
+    grades_seen_at = request.user.grades_seen_at
+    if grades_seen_at:
+        count = Submission.objects.filter(
+            student=request.user,
+            score__isnull=False,
+            submitted_at__gt=grades_seen_at
+        ).count()
+    else:
+        count = Submission.objects.filter(
+            student=request.user, score__isnull=False
+        ).count()
+    return JsonResponse({'new_grades': count})
 
 
 @role_required('student')

@@ -25,10 +25,12 @@
             <i data-lucide="book-open" class="h-4 w-4"></i>
             <span>{{ assigned_courses|length }} course{{ assigned_courses|length|pluralize }}</span>
         </div>
+        {% if units %}
         <div class="flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2 text-sm backdrop-blur-sm">
             <i data-lucide="layers" class="h-4 w-4"></i>
             <span>{{ units|length }} unit{{ units|length|pluralize }}</span>
         </div>
+        {% endif %}
         <div class="flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2 text-sm backdrop-blur-sm">
             <i data-lucide="check-circle" class="h-4 w-4"></i>
             <span>{{ enrolled_course_ids|length }} enrolled</span>

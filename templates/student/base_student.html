@@ -211,7 +211,7 @@
                                 {% endif %}
 
                                 {% if new_grades_count > 0 and new_grades_redirect_url %}
-                                <a id="gradeNotificationItem" href="{{ new_grades_redirect_url }}" class="flex items-center gap-3 px-5 py-4 transition hover:bg-blue-50" onclick="closeNotificationModal()">
+                                <a id="gradeNotificationItem" href="{{ new_grades_redirect_url }}" class="flex items-center gap-3 px-5 py-4 transition hover:bg-blue-50" onclick="clearGradeNotification(); closeNotificationModal()">
                                     <div class="rounded-2xl bg-emerald-100 p-2 text-emerald-600">
                                         <i data-lucide="award" class="h-5 w-5"></i>
                                     </div>
@@ -241,8 +241,12 @@
                         </div>
                     </div>
 
-                    <a href="{% url 'profile' %}" class="rounded-2xl border border-slate-200 bg-white p-2.5 text-slate-600 transition hover:bg-slate-50 hover:text-blue-600" aria-label="Profile settings">
-                        <i data-lucide="settings-2" class="h-5 w-5"></i>
+                    <a href="{% url 'profile' %}" class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-slate-200 bg-white transition hover:border-blue-400" aria-label="Profile settings">
+                        {% if request.user.avatar %}
+                        <img src="{{ request.user.avatar.url }}" alt="{{ request.user.get_full_name }}" class="h-full w-full object-cover">
+                        {% else %}
+                        <span class="text-xs font-bold text-slate-600">{{ request.user.first_name|first|default:request.user.username|first|upper }}{{ request.user.last_name|first|upper }}</span>
+                        {% endif %}
                     </a>
                 </div>
             </div>
@@ -310,6 +314,12 @@
 
             function pluralize(count, word) {
                 return `${count} ${word}${count === 1 ? '' : 's'}`;
+            }
+
+            function clearGradeNotification() {
+                counts.grades = 0;
+                updateItem('gradeNotificationItem', 'gradeNotificationText', 0, 'graded assignment');
+                updateBellTitle();
             }
 
             function updateBellTitle() {
@@ -408,6 +418,16 @@
                     .then(data => {
                         const gradedElement = document.getElementById('graded-count');
                         if (gradedElement && data.graded !== undefined) gradedElement.textContent = data.graded;
+                    });
+                // Poll new (unseen) grades count and update notification bell
+                fetch('{% url "student_new_grades_count" %}')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.new_grades !== undefined) {
+                            counts.grades = data.new_grades;
+                            updateItem('gradeNotificationItem', 'gradeNotificationText', counts.grades, 'graded assignment');
+                            updateBellTitle();
+                        }
                     });
                 fetch('{% url "student_course_count" %}')
                     .then(r => r.json())

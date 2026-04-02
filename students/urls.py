@@ -14,6 +14,7 @@ urlpatterns = [
     path('api/unread-count/',                       views.unread_count_api,    name='student_unread_count'),
     path('api/pending-count/',                      views.pending_count_api,   name='student_pending_count'),
     path('api/graded-count/',                       views.graded_count_api,    name='student_graded_count'),
+    path('api/new-grades-count/',                   views.new_grades_count_api, name='student_new_grades_count'),
     path('api/course-count/',                       views.course_count_api,    name='student_course_count'),
     path('api/course-enroll/<int:course_id>/',      views.course_enroll,       name='student_course_enroll'),
     path('my-learning/',                            views.my_learning,         name='student_my_learning'),

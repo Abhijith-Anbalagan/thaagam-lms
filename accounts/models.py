@@ -42,6 +42,9 @@ class User(AbstractUser):
     password_reset_expires_at = models.DateTimeField(null=True, blank=True)
 
     last_seen = models.DateTimeField(null=True, blank=True)
+    grades_seen_at        = models.DateTimeField(null=True, blank=True)
+    announcements_seen_at = models.DateTimeField(null=True, blank=True)
+    assignments_seen_at   = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         pass
