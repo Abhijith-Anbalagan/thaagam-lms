@@ -247,7 +247,7 @@
   "level":"{{ concept.get_level_display }}",
   "completed":{% if concept.id in completed_ids %}true{% else %}false{% endif %},
   "pdf":"{% if concept.pdf %}{{ concept.pdf.url }}{% endif %}",
-  "quiz":{{ concept.quiz|default:"[]"|safe }},
+  "quiz":"{{ concept.quiz|escapejs }}",
   "assignment":"{{ concept.assignment|escapejs }}",
   "videos":[{% for v in concept.videos.all %}{"title":"{{ v.title|default:'Video Lesson'|escapejs }}","url":"{% if v.video_url %}{{ v.video_url|escapejs }}{% elif v.file %}{{ v.file.url|escapejs }}{% endif %}","type":"{% if v.video_url %}url{% else %}file{% endif %}"}{% if not forloop.last %},{% endif %}{% endfor %}]
 }{% if not forloop.last %},{% endif %}{% endfor %}]
@@ -358,7 +358,12 @@ function selectModule(id) {
     videoWatched = false;
     quizDone     = false;
     hasVideo     = concept.videos.length > 0;
-    hasQuiz      = Array.isArray(concept.quiz) && concept.quiz.length > 0;
+    hasQuiz = (function() {
+        try {
+            const q = typeof concept.quiz === 'string' ? JSON.parse(concept.quiz) : concept.quiz;
+            return Array.isArray(q) && q.length > 0;
+        } catch(e) { return false; }
+    })();
 
     if (concept.videos.length) {
         const v = concept.videos[0];
@@ -604,7 +609,11 @@ function populateNotes(concept) {
 // ── Quiz ─────────────────────────────────────────────────────────────────────
 function renderQuizTab(concept) {
     const el = document.getElementById('tab-quiz');
-    const questions = Array.isArray(concept.quiz) ? concept.quiz : [];
+    let questions = [];
+    try {
+        const raw = typeof concept.quiz === 'string' ? JSON.parse(concept.quiz) : concept.quiz;
+        questions = Array.isArray(raw) ? raw : [];
+    } catch(e) { questions = []; }
     if (!questions.length) {
         el.innerHTML = '<div class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-400">No quiz for this module.</div>';
         return;
@@ -673,19 +682,41 @@ function submitAnswer(btn) {
 // ── Assignment ────────────────────────────────────────────────────────────────
 function populateAssignment(concept) {
     const el = document.getElementById('tab-assignment');
-    if (concept.assignment) {
-        el.innerHTML = `
-            <div class="rounded-2xl border border-violet-200 bg-violet-50 p-6 shadow-sm">
-                <div class="flex items-center gap-2 mb-3">
-                    <span class="text-lg">📝</span>
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Course Assignment</p>
-                    <span class="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-700">Course</span>
-                </div>
-                <div class="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">${escHtml(concept.assignment)}</div>
-            </div>`;
-    } else {
-        el.innerHTML = '<div class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-400">No assignment for this module.</div>';
+    if (!concept.assignment) {
+        el.innerHTML = '<div style="border-radius:16px;border:2px dashed #e2e8f0;background:#fff;padding:40px;text-align:center;font-size:13px;color:#94a3b8;">No assignment for this module.</div>';
+        return;
     }
+
+    // Assignment is stored as JSON: {title, instructions, score, due}
+    let data = { title:'', instructions:'', score:'', due:'' };
+    try {
+        const parsed = JSON.parse(concept.assignment);
+        if (typeof parsed === 'object' && parsed !== null) {
+            data = Object.assign(data, parsed);
+        } else {
+            // Plain text fallback
+            data.instructions = concept.assignment;
+        }
+    } catch(e) {
+        // Not JSON — treat as plain text
+        data.instructions = concept.assignment;
+    }
+
+    const rows = [];
+    if (data.score) rows.push(`<div style="display:flex;gap:8px;align-items:center;"><span style="font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;min-width:80px;">Max Score</span><span style="font-size:13px;color:#374151;">${escHtml(data.score)}</span></div>`);
+    if (data.due)   rows.push(`<div style="display:flex;gap:8px;align-items:center;"><span style="font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;min-width:80px;">Due Date</span><span style="font-size:13px;color:#374151;">${escHtml(data.due)}</span></div>`);
+
+    el.innerHTML = `
+        <div style="border-radius:16px;border:1px solid #ddd6fe;background:#f5f3ff;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.06);">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+                <span style="font-size:18px;">📝</span>
+                <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin:0;">Course Assignment</p>
+                <span style="background:#ede9fe;color:#6d28d9;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;">Course</span>
+            </div>
+            ${data.title ? `<h3 style="font-size:15px;font-weight:700;color:#1e1b4b;margin:0 0 12px;">${escHtml(data.title)}</h3>` : ''}
+            ${data.instructions ? `<p style="font-size:13px;color:#374151;line-height:1.7;margin:0 0 ${rows.length ? '16px' : '0'};">${escHtml(data.instructions).replace(/\\n/g,'<br>').replace(/\n/g,'<br>')}</p>` : ''}
+            ${rows.length ? `<div style="display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid #ddd6fe;">${rows.join('')}</div>` : ''}
+        </div>`;
 }
 
 // ── Mark complete ─────────────────────────────────────────────────────────────

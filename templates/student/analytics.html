@@ -48,42 +48,58 @@
     </div>
 </section>
 
-<section class="mb-8 rounded-[1.75rem] border border-white/70 bg-white shadow-panel">
-    <div class="border-b border-slate-200 px-6 py-5">
-        <h2 class="text-xl font-semibold text-slate-900">Assignment tracking</h2>
+<section class="mb-8 rounded-[1.75rem] border border-white/70 bg-white shadow-panel overflow-hidden">
+    <div class="border-b border-slate-200 px-6 py-5 flex items-center justify-between">
+        <h2 class="text-xl font-semibold text-slate-900">Assignment Tracking</h2>
+        <span class="text-xs text-slate-400">Click a month above to filter</span>
     </div>
-    <div id="assignment-tracking-container" class="max-h-[28rem] overflow-y-auto">
-        <table class="min-w-full divide-y divide-slate-200">
-            <thead class="sticky top-0 bg-slate-50 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+    <div id="assignment-tracking-container" style="max-height:420px;overflow-y:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+            <thead style="position:sticky;top:0;z-index:1;background:#f8fafc;">
                 <tr>
-                    <th class="px-6 py-4">Assignment</th>
-                    <th class="px-6 py-4">Due date</th>
-                    <th class="px-6 py-4">Status</th>
-                    <th class="px-6 py-4">Score</th>
-                    <th class="px-6 py-4">Submitted</th>
+                    <th style="padding:12px 24px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;border-bottom:1px solid #e2e8f0;">Assignment</th>
+                    <th style="padding:12px 24px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;border-bottom:1px solid #e2e8f0;">Due date</th>
+                    <th style="padding:12px 24px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;border-bottom:1px solid #e2e8f0;">Status</th>
+                    <th style="padding:12px 24px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;border-bottom:1px solid #e2e8f0;">Score</th>
+                    <th style="padding:12px 24px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;border-bottom:1px solid #e2e8f0;">Submitted at</th>
                 </tr>
             </thead>
-            <tbody id="assignment-tracking-body" class="divide-y divide-slate-100 bg-white text-sm text-slate-700">
+            <tbody id="assignment-tracking-body" style="background:#fff;">
                 {% for assignment in assignment_tracking %}
-                <tr>
-                    <td class="px-6 py-4 font-medium text-slate-900">{{ assignment.title }}</td>
-                    <td class="px-6 py-4">{{ assignment.due_date|date:"M d, Y" }}</td>
-                    <td class="px-6 py-4">
+                <tr style="border-bottom:1px solid #f1f5f9;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+                    <td style="padding:14px 24px;font-size:13px;font-weight:500;color:#0f172a;">{{ assignment.title }}</td>
+                    <td style="padding:14px 24px;font-size:13px;color:#64748b;">{{ assignment.due_date|date:"M d, Y" }}</td>
+                    <td style="padding:14px 24px;">
                         {% if assignment.submitted %}
                             {% if assignment.is_late %}
-                            <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">Late submission</span>
+                            <span style="display:inline-flex;align-items:center;gap:5px;background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">
+                                <span style="width:6px;height:6px;border-radius:50%;background:#f59e0b;flex-shrink:0;"></span>Late
+                            </span>
                             {% else %}
-                            <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Submitted</span>
+                            <span style="display:inline-flex;align-items:center;gap:5px;background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">
+                                <span style="width:6px;height:6px;border-radius:50%;background:#10b981;flex-shrink:0;"></span>Submitted
+                            </span>
                             {% endif %}
                         {% else %}
-                        <span class="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-800">Pending</span>
+                        <span style="display:inline-flex;align-items:center;gap:5px;background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">
+                            <span style="width:6px;height:6px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>Pending
+                        </span>
                         {% endif %}
                     </td>
-                    <td class="px-6 py-4 font-medium text-slate-900">{% if assignment.score %}{{ assignment.score }}/{{ assignment.max_score }}{% else %}-{% endif %}</td>
-                    <td class="px-6 py-4">{% if assignment.submitted_at %}{{ assignment.submitted_at|date:"M d, Y H:i" }}{% else %}-{% endif %}</td>
+                    <td style="padding:14px 24px;font-size:13px;">
+                        {% if assignment.score is not None %}
+                        <span style="font-weight:600;color:#0f172a;">{{ assignment.score }}/{{ assignment.max_score }}</span>
+                        <span style="font-size:11px;color:#94a3b8;margin-left:4px;">({% widthratio assignment.score assignment.max_score 100 %}%)</span>
+                        {% else %}
+                        <span style="color:#94a3b8;">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding:14px 24px;font-size:13px;color:#64748b;">
+                        {% if assignment.submitted_at %}{{ assignment.submitted_at|date:"M d, Y · h:i A" }}{% else %}<span style="color:#94a3b8;">—</span>{% endif %}
+                    </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="5" class="px-6 py-12 text-center text-slate-500">No assignments found.</td></tr>
+                <tr><td colspan="5" style="padding:48px 24px;text-align:center;color:#94a3b8;font-size:14px;">No assignments found.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -119,21 +135,48 @@
 {% block extra_js %}
 <script>
     function renderAssignmentTracking(assignments) {
-        const tbody = document.querySelector('#assignment-tracking-container tbody');
+        const tbody = document.querySelector('#assignment-tracking-body');
         if (!tbody) return;
 
         if (assignments.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-12 text-center text-slate-500">No assignments found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="padding:48px 24px;text-align:center;color:#94a3b8;font-size:14px;">No assignments found for this period.</td></tr>';
             return;
         }
 
+        function statusBadge(status, isLate) {
+            if (status === 'Submitted' && isLate)
+                return `<span style="display:inline-flex;align-items:center;gap:5px;background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">
+                    <span style="width:6px;height:6px;border-radius:50%;background:#f59e0b;flex-shrink:0;"></span>Late
+                </span>`;
+            if (status === 'Submitted')
+                return `<span style="display:inline-flex;align-items:center;gap:5px;background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">
+                    <span style="width:6px;height:6px;border-radius:50%;background:#10b981;flex-shrink:0;"></span>Submitted
+                </span>`;
+            return `<span style="display:inline-flex;align-items:center;gap:5px;background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>Pending
+            </span>`;
+        }
+
+        function scoreCell(score) {
+            if (!score || score === '-') return '<span style="color:#94a3b8;">—</span>';
+            const parts = score.split('/');
+            if (parts.length === 2) {
+                const pct = Math.round((parseFloat(parts[0]) / parseFloat(parts[1])) * 100);
+                return `<span style="font-weight:600;color:#0f172a;">${score}</span> <span style="font-size:11px;color:#94a3b8;margin-left:4px;">(${pct}%)</span>`;
+            }
+            return `<span style="font-weight:600;color:#0f172a;">${score}</span>`;
+        }
+
+        const tdStyle = 'padding:14px 24px;font-size:13px;color:#475569;';
+        const trStyle = 'border-bottom:1px solid #f1f5f9;transition:background .12s;';
+
         tbody.innerHTML = assignments.map(a => `
-            <tr>
-                <td class="px-6 py-4 font-medium text-slate-900">${a.title}</td>
-                <td class="px-6 py-4">${a.due_date}</td>
-                <td class="px-6 py-4">${a.status}${a.is_late ? ' <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">Late submission</span>' : ''}</td>
-                <td class="px-6 py-4 font-medium text-slate-900">${a.score}</td>
-                <td class="px-6 py-4">${a.submitted_at}</td>
+            <tr style="${trStyle}" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+                <td style="${tdStyle}font-weight:500;color:#0f172a;">${a.title}</td>
+                <td style="${tdStyle}">${a.due_date}</td>
+                <td style="${tdStyle}">${statusBadge(a.status, a.is_late)}</td>
+                <td style="${tdStyle}">${scoreCell(a.score)}</td>
+                <td style="${tdStyle}">${a.submitted_at !== '-' ? a.submitted_at : '<span style="color:#94a3b8;">—</span>'}</td>
             </tr>
         `).join('');
     }
