@@ -259,7 +259,7 @@
 
     updateUI();
   }
-
+  
   /* ── Remove block ── */
   function removeAdminBlock(index) {
     const block = document.getElementById(`admin-block-${index}`);
@@ -365,7 +365,7 @@
   /* ── Toggle password visibility ── */
   function togglePasswordVisibility(index) {
     const inputField = document.querySelector(`input[name="admins[${index}][password]"]`);
-    const toggleBtn  = document.getElementById(`toggle-btn-${index}`);+
+    const toggleBtn  = document.getElementById(`toggle-btn-${index}`);
     if (!inputField || !toggleBtn) return;
 
     if (inputField.type === 'password') {
@@ -375,7 +375,7 @@
     } else {
       inputField.type = 'password';
       toggleBtn.classList.remove('visible');
-      toggleBtn.textContent = 'fi fi-rr-eye-crossed';
+      toggleBtn.textContent = '👁';
     }
   }
 

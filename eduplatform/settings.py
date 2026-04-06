@@ -130,3 +130,7 @@ DEFAULT_FROM_EMAIL  = f'EduPlatform <{os.environ.get("EMAIL_HOST_USER", "noreply
 
 # Base URL used in emails — change to your real domain in production
 SITE_URL = os.environ.get('SITE_URL', 'http://127.0.0.1:8000')
+
+USE_TZ = True
+TIME_ZONE = 'Asia/Kolkata'   # ← you're in Tamil Nadu, this is IST
+
