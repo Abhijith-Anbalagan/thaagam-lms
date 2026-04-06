@@ -175,8 +175,11 @@ def join_class(request):
 def leave_classroom(request, class_id):
     classroom = _get_classroom(request, class_id)
     classroom.students.remove(request.user)
+    request.user.role = 'public'
+    request.user.school = None
+    request.user.save()
     messages.success(request, f'You left {classroom.name}.')
-    return redirect('student_dashboard')
+    return redirect('public_dashboard')
 
 
 @role_required('student')

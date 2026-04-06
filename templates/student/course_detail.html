@@ -75,18 +75,39 @@
     <div class="player-wrap" id="player-wrap">
       <!-- Idle state: course info -->
       <div id="player-idle" class="play-overlay" style="cursor:default;">
-        <div style="text-align:center;padding:24px;">
+        {% if course.cover_image %}
+        <img src="{{ course.cover_image.url }}" alt="{{ course.title }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:45;">
+        {% endif %}
+        <!--
+        <div style="position:relative;text-align:center;padding:24px;">
           <p style="font-size:18px;font-weight:700;margin-bottom:8px;">{{ course.title }}</p>
           <p style="font-size:13px;opacity:.65;">Select a module from the right to begin</p>
         </div>
+    -->
       </div>
       <!-- Ready state: video loaded, waiting for click -->
-      <div id="player-ready" class="play-overlay hidden" onclick="startPlay()">
-        <div class="play-btn-circle">
-          <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+      <div id="player-ready" class="play-overlay hidden" onclick="startPlay()" style="background:linear-gradient(135deg,rgba(30,27,75,.72),rgba(29,78,216,.65));">
+        <img id="ready-thumb" src="" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:55;display:none;">
+        <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;">
+          <div class="play-btn-circle">
+            <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+          </div>
+          <p id="ready-title">Click to play</p>
         </div>
-        <p id="ready-title">Click to play</p>
       </div>
+      <!-- Take Quiz overlay (shown after video fully watched, if quiz exists) -->
+      <div id="take-quiz-banner" class="play-overlay hidden" style="cursor:default;background:linear-gradient(135deg,rgba(120,53,15,.82),rgba(217,119,6,.75));">
+        <div style="position:relative;text-align:center;padding:24px;">
+          <p style="font-size:22px;margin-bottom:8px;">🎉</p>
+          <p style="font-size:16px;font-weight:700;margin-bottom:6px;">Great job! Video complete.</p>
+          <p style="font-size:13px;opacity:.8;margin-bottom:16px;">Now complete the quiz to finish this module.</p>
+          <button onclick="goToQuiz()" style="background:#fff;color:#92400e;border:none;border-radius:12px;padding:10px 24px;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+            Take Quiz →
+          </button>
+        </div>
+      </div>
+      <video id="thumb-extractor" style="display:none;" crossorigin="anonymous" preload="metadata"></video>
+      <canvas id="thumb-canvas" style="display:none;"></canvas>
       <!-- Actual players (hidden until play clicked) -->
       <video id="main-video" class="hidden" style="width:100%;height:100%;background:#000;"></video>
       <iframe id="main-iframe" class="hidden" style="width:100%;height:100%;" frameborder="0"
@@ -227,11 +248,13 @@
     </div>
 
     <div class="border-t border-slate-200 p-4">
-      <button id="complete-btn" onclick="toggleComplete()"
-          class="w-full rounded-xl py-2.5 text-sm font-bold transition bg-slate-200 text-slate-400 cursor-not-allowed" disabled>
-        Select a module first
-      </button>
-      <p id="complete-hint" class="mt-2 text-xs text-center text-slate-400"></p>
+      <div id="module-progress-wrap" class="space-y-2">
+        <p id="module-progress-label" class="text-xs text-center text-slate-400">Select a module to begin</p>
+        <div class="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+          <div id="module-progress-bar" class="h-full rounded-full transition-all duration-500" style="width:0%;background:linear-gradient(90deg,#2563eb,#7c3aed);"></div>
+        </div>
+        <div id="module-steps" class="flex justify-between text-xs text-slate-400"></div>
+      </div>
     </div>
   </div>
 
@@ -260,38 +283,93 @@ let pendingSrc = null, pendingType = null;
 let maxWatched = 0;
 
 // ── Completion gate tracking ──────────────────────────────────────────────────
-let videoWatched = false;   // true once video has started playing
-let quizDone     = false;   // true once all quiz questions answered
-let hasVideo     = false;   // does current module have a video?
-let hasQuiz      = false;   // does current module have a quiz?
+let videoWatched = false;
+let quizDone     = false;
+let hasVideo     = false;
+let hasQuiz      = false;
 
-function checkCompletionGate() {
-    const concept = conceptsData.find(c => c.id === activeConceptId);
-    if (!concept || concept.completed) return; // already done — button handled by updateCompleteBtn
+function getModuleProgress() {
+    // Returns 0, 50, or 100 based on what's done
+    if (!hasVideo && !hasQuiz) return 100;
+    if (hasVideo && hasQuiz)   return (videoWatched ? 50 : 0) + (quizDone ? 50 : 0);
+    if (hasVideo)              return videoWatched ? 100 : 0;
+    if (hasQuiz)               return quizDone    ? 100 : 0;
+    return 0;
+}
 
-    const btn  = document.getElementById('complete-btn');
-    const hint = document.getElementById('complete-hint');
+function updateModuleProgressUI() {
+    const pct   = getModuleProgress();
+    const bar   = document.getElementById('module-progress-bar');
+    const label = document.getElementById('module-progress-label');
+    const steps = document.getElementById('module-steps');
+    if (bar)   bar.style.width = pct + '%';
 
-    const videoOk = !hasVideo || videoWatched;
-    const quizOk  = !hasQuiz  || quizDone;
-    const canComplete = videoOk && quizOk;
+    // Build step indicators
+    if (steps) {
+        const parts = [];
+        if (hasVideo) parts.push(`<span class="${videoWatched ? 'text-emerald-500 font-semibold' : ''}">▶ Video${videoWatched ? ' ✓' : ''}</span>`);
+        if (hasQuiz)  parts.push(`<span class="${quizDone    ? 'text-emerald-500 font-semibold' : ''}">📝 Quiz${quizDone    ? ' ✓' : ''}</span>`);
+        steps.innerHTML = parts.join('<span class="text-slate-300">·</span>');
+    }
 
-    btn.disabled = !canComplete;
-    btn.className = canComplete
-        ? 'w-full rounded-xl py-2.5 text-sm font-bold transition bg-blue-600 text-white hover:bg-blue-700'
-        : 'w-full rounded-xl py-2.5 text-sm font-bold transition bg-slate-200 text-slate-400 cursor-not-allowed';
-    btn.textContent = 'Mark as Complete';
-
-    if (hint) {
-        if (canComplete) {
-            hint.textContent = '';
-        } else {
-            const missing = [];
-            if (!videoOk) missing.push('watch the video');
-            if (!quizOk)  missing.push('answer the quiz');
-            hint.textContent = 'Please ' + missing.join(' and ') + ' first.';
+    if (label) {
+        if (pct === 100) label.innerHTML = '<span class="text-emerald-600 font-semibold">✓ Module complete!</span>';
+        else if (pct > 0) label.textContent = pct + '% done';
+        else if (!hasVideo && !hasQuiz) label.textContent = '';
+        else {
+            const next = hasVideo && !videoWatched ? 'Watch the video' : 'Answer the quiz';
+            label.textContent = next + ' to progress';
         }
     }
+}
+
+async function autoComplete() {
+    // Called when module reaches 100% — fires the same API as before
+    if (!activeConceptId) return;
+    const concept = conceptsData.find(c => c.id === activeConceptId);
+    if (!concept || concept.completed) return;
+    try {
+        const res  = await fetch(`/student/api/concept-complete/${activeConceptId}/`, {
+            method: 'POST', headers: { 'X-CSRFToken': CSRF }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        concept.completed = true;
+        refreshSidebarLocks();
+        const item = document.getElementById('mod-item-' + activeConceptId);
+        if (item) {
+            item.querySelector('.mod-num').innerHTML = '<span class="text-emerald-500 text-base">✓</span>';
+            item.classList.add('bg-emerald-50');
+        }
+        document.getElementById('sidebar-progress-bar').style.width = data.progress_pct + '%';
+        document.getElementById('sidebar-done').textContent = data.completed_count;
+        document.getElementById('pct-label').textContent = data.progress_pct + '%';
+    } catch(e) { console.error(e); }
+}
+
+function checkAutoComplete() {
+    updateModuleProgressUI();
+    // Show Take Quiz banner if video just finished and quiz exists
+    const banner = document.getElementById('take-quiz-banner');
+    if (banner) {
+        if (videoWatched && hasQuiz && !quizDone) {
+            banner.classList.remove('hidden');
+        } else {
+            banner.classList.add('hidden');
+        }
+    }
+    if (getModuleProgress() === 100) autoComplete();
+}
+
+function goToQuiz() {
+    // Switch to Quiz tab
+    const quizTabBtn = Array.from(document.querySelectorAll('.ctab')).find(b => b.textContent.trim() === 'Quiz');
+    if (quizTabBtn) switchTab(quizTabBtn, 'tab-quiz');
+    // Scroll to the quiz tab content
+    const quizPane = document.getElementById('tab-quiz');
+    if (quizPane) quizPane.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Hide the banner
+    document.getElementById('take-quiz-banner').classList.add('hidden');
 }
 
 // ── Unlock logic ──────────────────────────────────────────────────────────────
@@ -365,6 +443,27 @@ function selectModule(id) {
         } catch(e) { return false; }
     })();
 
+    // Reset module progress UI
+    const mpBar = document.getElementById('module-progress-bar');
+    if (mpBar) mpBar.style.width = '0%';
+    const mpSteps = document.getElementById('module-steps');
+    if (mpSteps) mpSteps.innerHTML = '';
+    const mpLabel = document.getElementById('module-progress-label');
+    if (mpLabel) mpLabel.textContent = '';
+    const banner = document.getElementById('take-quiz-banner');
+    if (banner) banner.classList.add('hidden');
+
+    // If already completed, show completed state
+    if (concept.completed) {
+        if (mpBar)   mpBar.style.width = '100%';
+        if (mpLabel) mpLabel.innerHTML = '<span class="text-emerald-600 font-semibold">✓ Module complete!</span>';
+    } else if (!hasVideo && !hasQuiz) {
+        // No video, no quiz — auto-complete immediately
+        checkAutoComplete();
+    } else {
+        updateModuleProgressUI();
+    }
+
     if (concept.videos.length) {
         const v = concept.videos[0];
         pendingSrc  = v.url;
@@ -372,6 +471,7 @@ function selectModule(id) {
         document.getElementById('ready-title').textContent = v.title;
         document.getElementById('player-idle').classList.add('hidden');
         document.getElementById('player-ready').classList.remove('hidden');
+        setReadyThumbnail(v.url, v.type);
     } else {
         pendingSrc = null;
         document.getElementById('player-ready').classList.add('hidden');
@@ -394,6 +494,37 @@ function selectModule(id) {
     lucide.createIcons();
 }
 
+// ── Ready thumbnail ──────────────────────────────────────────────────────────
+function setReadyThumbnail(src, type) {
+    const thumb = document.getElementById('ready-thumb');
+    thumb.style.display = 'none';
+    thumb.src = '';
+
+    // YouTube — use their thumbnail API directly
+    const ytMatch = src.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    if (ytMatch) {
+        thumb.src = `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
+        thumb.style.display = 'block';
+        return;
+    }
+
+    // Uploaded/direct video — seek to 1s and capture a frame
+    const extractor = document.getElementById('thumb-extractor');
+    const canvas    = document.getElementById('thumb-canvas');
+    extractor.src = src;
+    extractor.currentTime = 1;
+    extractor.onseeked = function() {
+        try {
+            canvas.width  = extractor.videoWidth  || 640;
+            canvas.height = extractor.videoHeight || 360;
+            canvas.getContext('2d').drawImage(extractor, 0, 0, canvas.width, canvas.height);
+            thumb.src = canvas.toDataURL('image/jpeg', 0.8);
+            thumb.style.display = 'block';
+        } catch(e) { /* cross-origin or decode error — just leave no thumbnail */ }
+        extractor.src = '';
+    };
+}
+
 // ── Start play (user clicked overlay) ────────────────────────────────────────
 function startPlay() {
     if (!pendingSrc) return;
@@ -412,16 +543,15 @@ function loadPlayer(src, type, title) {
         if (ytMatch) {
             iframeEl.src = `https://www.youtube.com/embed/${ytMatch[1]}?rel=0`;
             iframeEl.classList.remove('hidden');
-            // Can't track iframe playback — mark watched when loaded
             videoWatched = true;
-            checkCompletionGate();
+            checkAutoComplete();
         } else if (isDirect) {
             setupVideoEl(videoEl, src);
         } else {
             iframeEl.src = src;
             iframeEl.classList.remove('hidden');
             videoWatched = true;
-            checkCompletionGate();
+            checkAutoComplete();
         }
     } else {
         setupVideoEl(videoEl, src);
@@ -474,10 +604,10 @@ function setupVideoEl(videoEl, src) {
         const dur = videoEl.duration || 1;
         const cur = videoEl.currentTime;
 
-        // Mark as watched when student reaches 90% of the video
-        if (!videoWatched && dur > 0 && cur / dur >= 0.9) {
+        // Mark as watched only when video is fully complete
+        if (!videoWatched && dur > 0 && cur / dur >= 0.99) {
             videoWatched = true;
-            checkCompletionGate();
+            checkAutoComplete();
         }
 
         // Enforce no-forward-skip
@@ -675,7 +805,7 @@ function submitAnswer(btn) {
     const allSubmitted = Array.from(allGroups).every(g => g.classList.contains('quiz-submitted'));
     if (allSubmitted) {
         quizDone = true;
-        checkCompletionGate();
+        checkAutoComplete();
     }
 }
 
@@ -719,50 +849,15 @@ function populateAssignment(concept) {
         </div>`;
 }
 
-// ── Mark complete ─────────────────────────────────────────────────────────────
+// ── Mark complete (auto — no manual button) ──────────────────────────────────
 function updateCompleteBtn(completed) {
-    const btn  = document.getElementById('complete-btn');
-    const hint = document.getElementById('complete-hint');
+    // kept for sidebar lock refresh compatibility — updates progress UI instead
+    const mpBar   = document.getElementById('module-progress-bar');
+    const mpLabel = document.getElementById('module-progress-label');
     if (completed) {
-        btn.disabled  = false;
-        btn.className = 'w-full rounded-xl py-2.5 text-sm font-bold transition bg-emerald-100 text-emerald-700 hover:bg-emerald-200';
-        btn.textContent = '✓ Completed';
-        if (hint) hint.textContent = '';
-    } else {
-        // Let the gate decide enabled/disabled state
-        checkCompletionGate();
+        if (mpBar)   mpBar.style.width = '100%';
+        if (mpLabel) mpLabel.innerHTML = '<span class="text-emerald-600 font-semibold">✓ Module complete!</span>';
     }
-}
-
-async function toggleComplete() {
-    if (!activeConceptId) return;
-    const btn = document.getElementById('complete-btn');
-    btn.disabled = true;
-    try {
-        const res  = await fetch(`/student/api/concept-complete/${activeConceptId}/`, {
-            method:'POST', headers:{'X-CSRFToken':CSRF}
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
-        const concept = conceptsData.find(c => c.id === activeConceptId);
-        if (concept) concept.completed = data.completed;
-        updateCompleteBtn(data.completed);
-
-        // Refresh lock states — next module may now be unlocked
-        refreshSidebarLocks();
-
-        const item = document.getElementById('mod-item-' + activeConceptId);
-        if (item) {
-            item.querySelector('.mod-num').innerHTML = data.completed
-                ? '<span class="text-emerald-500 text-base">✓</span>'
-                : String(conceptsData.findIndex(c=>c.id===activeConceptId)+1);
-            data.completed ? item.classList.add('bg-emerald-50') : item.classList.remove('bg-emerald-50');
-        }
-        document.getElementById('sidebar-progress-bar').style.width = data.progress_pct + '%';
-        document.getElementById('sidebar-done').textContent = data.completed_count;
-        document.getElementById('pct-label').textContent = data.progress_pct + '%';
-    } catch(e) { console.error(e); }
-    finally { btn.disabled = false; }
 }
 
 function escHtml(s) {
