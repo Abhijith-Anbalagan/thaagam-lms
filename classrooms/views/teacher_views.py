@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.db.models import Avg, Max
 from django.contrib import messages
 from accounts.decorators import role_required
-from classrooms.models import Classroom, CourseContent
+from classrooms.models import Classroom
 from classrooms.forms import ClassroomForm
 from assignments.models import Assignment, Submission
 from chat.realtime import notify_students
@@ -24,18 +24,181 @@ def _get_classroom(request, classroom_id):
 
 def _grade_letter(pct):
     if pct is None: return '—'
-    if pct >= 90: return 'A'
-    if pct >= 75: return 'B'
-    if pct >= 60: return 'C'
-    if pct >= 40: return 'D'
+    if pct >= 90:   return 'A'
+    if pct >= 75:   return 'B'
+    if pct >= 60:   return 'C'
+    if pct >= 40:   return 'D'
     return 'F'
+
+
+def _build_classroom_context(request, classroom):
+    """
+    Single place that builds the full context for classroom_detail.html.
+    Called by classroom_detail (GET) only.
+    """
+    today    = timezone.localdate()
+    students = classroom.students.all()
+
+    # ── Student stats (Home + People tabs) ────────────────────────────────
+    total_assignments = Assignment.objects.filter(classroom=classroom).count()
+    student_data = []
+    for student in students:
+        submitted    = Submission.objects.filter(
+            assignment__classroom=classroom, student=student
+        ).count()
+        graded_subs  = Submission.objects.filter(
+            assignment__classroom=classroom, student=student, score__isnull=False
+        )
+        graded_count = graded_subs.count()
+        total_score  = sum(s.score for s in graded_subs)
+        avg = round((total_score / (graded_count * 20)) * 100) if graded_count else 0
+        student_data.append({
+            'user':              student,
+            'submitted':         submitted,
+            'total_assignments': total_assignments,
+            'avg_pct':           avg,
+            'grade_letter':      _grade_letter(avg),
+        })
+
+    # ── Avg score for hero banner ──────────────────────────────────────────
+    graded_qs = Submission.objects.filter(
+        assignment__classroom=classroom, score__isnull=False
+    )
+    avg_score = 0
+    if graded_qs.exists():
+        agg = graded_qs.aggregate(avg=Avg('score'))
+        avg_score = round((agg['avg'] / 20) * 100) if agg['avg'] else 0
+
+    # ── Announcements ──────────────────────────────────────────────────────
+    try:
+        from announcements.models import Announcement
+        announcements = Announcement.objects.filter(
+            school=request.user.school, classroom=classroom
+        ).order_by('-is_pinned', '-created_at')
+    except Exception:
+        announcements = []
+
+    # ── Assignments (Classwork tab) ────────────────────────────────────────
+    assignments = Assignment.objects.filter(classroom=classroom).order_by('-due_date')
+    for a in assignments:
+        a.submission_count = Submission.objects.filter(assignment=a).count()
+        a.ungraded_count   = Submission.objects.filter(assignment=a, score__isnull=True).count()
+        a.total_students   = classroom.students.count()
+        a.due_date_only    = a.due_date.date() if a.due_date else None
+
+    # ── Progress data (Progress tab) ──────────────────────────────────────
+    ordered_assignments = Assignment.objects.filter(classroom=classroom).order_by('due_date')
+    student_progress = []
+    for student in students:
+        rows = []
+        total_earned = total_possible = 0
+        for assignment in ordered_assignments:
+            sub       = Submission.objects.filter(
+                assignment=assignment, student=student
+            ).first()
+            score_val = sub.score if sub and sub.score is not None else None
+            max_score = assignment.max_score
+            pct       = round((score_val / max_score) * 100) if score_val is not None else None
+            late      = bool(
+                sub and assignment.due_date
+                and sub.submitted_at.date() > assignment.due_date.date()
+            )
+            if score_val is not None:
+                total_earned   += score_val
+                total_possible += max_score
+            rows.append({
+                'assignment':   assignment,
+                'submission':   sub,
+                'score':        score_val,
+                'max_score':    max_score,
+                'pct':          pct,
+                'grade_letter': _grade_letter(pct),
+                'is_late':      late,
+            })
+        overall_pct = round((total_earned / total_possible) * 100) if total_possible else 0
+        student_progress.append({
+            'student':        student,
+            'rows':           rows,
+            'overall_pct':    overall_pct,
+            'overall_grade':  _grade_letter(overall_pct),
+            'total_earned':   total_earned,
+            'total_possible': total_possible,
+        })
+
+    # ── Courses (Courses tab) ─────────────────────────────────────────────
+    try:
+        from superadmin.models import GlobalCourse, ClassroomCourseAssignment
+        all_courses = GlobalCourse.objects.filter(
+            schools=request.user.school, status='published'
+        ).prefetch_related('concepts')
+        assigned_course_ids = set(
+            ClassroomCourseAssignment.objects.filter(
+                classroom=classroom
+            ).values_list('course_id', flat=True)
+        )
+    except Exception:
+        all_courses         = []
+        assigned_course_ids = set()
+
+    # ── Chat (Chat tab) ────────────────────────────────────────────────────
+    selected_student        = None
+    chat_messages           = []
+    selected_student_online = False
+    student_pk = request.GET.get('student')
+    if student_pk:
+        try:
+            selected_student = classroom.students.get(pk=student_pk)
+            from chat.models import Message
+            chat_messages = Message.objects.filter(
+                classroom=classroom
+            ).select_related('sender').order_by('created_at')
+        except Exception:
+            pass
+
+    if selected_student:
+        from django.core.cache import cache
+        from django.contrib.sessions.models import Session
+        cached = cache.get(f'user_online_{selected_student.pk}')
+        if cached is None:
+            active_ids = set()
+            for s in Session.objects.filter(expire_date__gt=timezone.now()):
+                try:
+                    uid = s.get_decoded().get('_auth_user_id')
+                    if uid: active_ids.add(int(uid))
+                except Exception:
+                    pass
+            selected_student_online = selected_student.pk in active_ids
+            if selected_student_online:
+                cache.set(f'user_online_{selected_student.pk}', True, timeout=None)
+        else:
+            selected_student_online = cached is True
+
+    assigned_course_count = len(assigned_course_ids)
+    assignment_count      = Assignment.objects.filter(classroom=classroom).count()
+
+    return {
+        'classroom':               classroom,
+        'student_data':            student_data,
+        'avg_score':               avg_score,
+        'announcements':           announcements,
+        'assignments':             assignments,
+        'student_progress':        student_progress,
+        'all_courses':             all_courses,
+        'assigned_course_ids':     assigned_course_ids,
+        'assigned_course_count':   assigned_course_count,
+        'assignment_count':        assignment_count,
+        'chat_students':           students,
+        'selected_student':        selected_student,
+        'selected_student_online': selected_student_online,
+        'chat_messages':           chat_messages,
+        'today':                   today,
+    }
 
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
 
 @role_required('teacher')
 def teacher_dashboard(request):
-    now   = timezone.now()
     today = timezone.localdate()
 
     classrooms = Classroom.objects.filter(
@@ -124,207 +287,160 @@ def teacher_dashboard(request):
     })
 
 
-# ── Classroom Detail ──────────────────────────────────────────────────────────
+# ── Classroom Detail  (the ONE view that renders classroom_detail.html) ───────
+
 @role_required('teacher')
 def classroom_detail(request, classroom_id):
     """
-    Unified classroom page — all tabs render inline on the same URL.
-    Handles POST for announce, classwork grading, people removal, and grade saving.
+    Unified classroom page.
+    GET  → renders classroom_detail.html (all tabs live here).
+    POST → handles every inline form (announce / create-assignment /
+           grade-save / remove-student), then redirects back with ?tab=.
     """
-    from django.utils import timezone as tz
-
     classroom = _get_classroom(request, classroom_id)
 
-    # ── Handle POSTs from inline forms ───────────────────────────────────────
     if request.method == 'POST':
-        action = request.POST.get('_action', '')
+        # ── Which tab sent this form? ──────────────────────────────────────
+        tab = request.POST.get('_tab', '')
 
-        # Announce post
-        if action == 'announce' or request.POST.get('title') and request.POST.get('body') and not request.POST.get('submission_id') and not request.POST.get('remove_student'):
+        # ── 1. Save / update a grade ───────────────────────────────────────
+        if request.POST.get('submission_id'):
+            sub_id   = request.POST.get('submission_id')
+            score    = request.POST.get('score')
+            feedback = request.POST.get('feedback', '')
+            sub = get_object_or_404(
+                Submission, id=sub_id, assignment__classroom=classroom
+            )
+            was_ungraded = sub.score is None
+            sub.score    = score
+            sub.feedback = feedback
+            sub.save()
+            if was_ungraded and sub.score is not None:
+                notify_students(
+                    [sub.student_id],
+                    {
+                        'type':         'grade',
+                        'classroom_id': classroom.id,
+                        'redirect_url': f'/student/classroom/{classroom.id}/grades/',
+                        'title':        sub.assignment.title,
+                    },
+                )
+            messages.success(request, 'Grade saved.')
+            tab = tab or 'classwork'
+
+        # ── 2. Remove a student ────────────────────────────────────────────
+        elif request.POST.get('remove_student'):
+            student_id = request.POST.get('remove_student')
+            classroom.students.remove(student_id)
+            notify_students(
+                [student_id],
+                {'type': 'forced_redirect', 'url': '/student/join/'}
+            )
+            messages.success(request, 'Student removed.')
+            tab = tab or 'people'
+
+        # ── 3. Post an announcement ────────────────────────────────────────
+        elif request.POST.get('title') and request.POST.get('body'):
             from announcements.models import Announcement
             title     = request.POST.get('title', '').strip()
             body      = request.POST.get('body', '').strip()
             meet_link = request.POST.get('meet_link', '').strip()
             is_pinned = bool(request.POST.get('is_pinned'))
             if title and body:
-                Announcement.objects.create(
-                    posted_by=request.user, school=request.user.school,
-                    classroom=classroom, title=title, body=body,
-                    meet_link=meet_link, is_pinned=is_pinned, target='students',
+                announcement = Announcement.objects.create(
+                    posted_by=request.user,
+                    school=request.user.school,
+                    classroom=classroom,
+                    title=title,
+                    body=body,
+                    meet_link=meet_link,
+                    is_pinned=is_pinned,
+                    target='students',
+                )
+                notify_students(
+                    classroom.students.values_list('id', flat=True),
+                    {
+                        'type':         'announcement',
+                        'classroom_id': classroom.id,
+                        'redirect_url': f'/student/classroom/{classroom.id}/announce/',
+                        'title':        announcement.title,
+                    },
                 )
                 messages.success(request, 'Announcement posted.')
+            else:
+                messages.error(request, 'Title and message are required.')
+            tab = tab or 'announce'
 
-        # Grade save
-        elif request.POST.get('submission_id') and request.POST.get('score'):
-            sub_id   = request.POST.get('submission_id')
-            score    = request.POST.get('score')
-            feedback = request.POST.get('feedback', '')
-            sub = get_object_or_404(Submission, id=sub_id, assignment__classroom=classroom)
-            sub.score = score; sub.feedback = feedback; sub.save()
-            messages.success(request, 'Grade saved.')
-
-        # Remove student
-        elif request.POST.get('remove_student'):
-            student_id = request.POST.get('remove_student')
-            classroom.students.remove(student_id)
-            notify_students([student_id], {'type': 'forced_redirect', 'url': '/student/join/'})
-            messages.success(request, 'Student removed.')
-
-        # Create assignment
+        # ── 4. Create an assignment ────────────────────────────────────────
         elif request.POST.get('title') and not request.POST.get('body'):
             from assignments.forms import AssignmentForm
             form = AssignmentForm(request.POST, request.FILES)
             if form.is_valid():
-                a = form.save(commit=False); a.classroom = classroom; a.save()
+                a            = form.save(commit=False)
+                a.classroom  = classroom
+                a.save()
+                notify_students(
+                    classroom.students.values_list('id', flat=True),
+                    {
+                        'type':         'assignment',
+                        'classroom_id': classroom.id,
+                        'redirect_url': f'/student/classroom/{classroom.id}/classwork/',
+                        'title':        a.title,
+                    },
+                )
                 messages.success(request, f'Assignment "{a.title}" created.')
+            else:
+                messages.error(request, 'Please correct the errors below.')
+            tab = tab or 'classwork'
 
-        tab = request.POST.get('_tab', '')
+        # Redirect back to the same page, opening the correct tab
         redirect_url = f"{request.path}?tab={tab}" if tab else request.path
         return redirect(redirect_url)
 
-    today    = tz.localdate()
-    students = classroom.students.all()
+    # ── GET: build context and render ─────────────────────────────────────
+    context = _build_classroom_context(request, classroom)
+    return render(request, 'teacher/classroom_detail.html', context)
 
-    # ── Student stats (shared by Home + People tabs) ───────────────────────
-    total_assignments = Assignment.objects.filter(classroom=classroom).count()
-    student_data = []
-    for student in students:
-        submitted    = Submission.objects.filter(assignment__classroom=classroom, student=student).count()
-        graded_subs  = Submission.objects.filter(assignment__classroom=classroom, student=student, score__isnull=False)
-        graded_count = graded_subs.count()
-        total_score  = sum(s.score for s in graded_subs)
-        avg = round((total_score / (graded_count * 20)) * 100) if graded_count else 0
-        student_data.append({
-            'user': student, 'submitted': submitted,
-            'total_assignments': total_assignments,
-            'avg_pct': avg, 'grade_letter': _grade_letter(avg),
-        })
 
-    # ── Avg score for hero ─────────────────────────────────────────────────
-    graded    = Submission.objects.filter(assignment__classroom=classroom, score__isnull=False)
-    avg_score = 0
-    if graded.exists():
-        from django.db.models import Avg
-        agg = graded.aggregate(avg=Avg('score'))
-        avg_score = round((agg['avg'] / 20) * 100) if agg['avg'] else 0
+# ── Tab redirect helpers ───────────────────────────────────────────────────────
+#
+# These views keep the old URLs alive (forms/links in other templates that
+# still point to /announce/, /classwork/, etc.) but simply redirect to
+# classroom_detail with the right ?tab= query param.
+#
+# For POST requests they forward the POST data by re-posting it to
+# classroom_detail through an internal function call so no data is lost.
 
-    # ── Announcements ──────────────────────────────────────────────────────
-    try:
-        from announcements.models import Announcement
-        announcements = Announcement.objects.filter(
-            school=request.user.school, classroom=classroom
-        ).order_by('-is_pinned', '-created_at')
-    except Exception:
-        announcements = []
-
-    # ── Assignments (classwork tab) ────────────────────────────────────────
-    assignments = Assignment.objects.filter(classroom=classroom).order_by('-due_date')
-    for a in assignments:
-        a.submission_count = Submission.objects.filter(assignment=a).count()
-        a.ungraded_count   = Submission.objects.filter(assignment=a, score__isnull=True).count()
-        a.total_students   = classroom.students.count()
-        a.due_date_only    = a.due_date.date() if a.due_date else None
-
-    # ── Progress data ──────────────────────────────────────────────────────
-    ordered_assignments = Assignment.objects.filter(classroom=classroom).order_by('due_date')
-    student_progress = []
-    for student in students:
-        rows = []
-        total_earned = total_possible = 0
-        for assignment in ordered_assignments:
-            sub       = Submission.objects.filter(assignment=assignment, student=student).first()
-            score_val = sub.score if sub and sub.score is not None else None
-            max_score = assignment.max_score
-            pct       = round((score_val / max_score) * 100) if score_val is not None else None
-            late      = bool(sub and assignment.due_date and sub.submitted_at.date() > assignment.due_date.date())
-            if score_val is not None:
-                total_earned += score_val; total_possible += max_score
-            rows.append({
-                'assignment': assignment, 'submission': sub,
-                'score': score_val, 'max_score': max_score,
-                'pct': pct, 'grade_letter': _grade_letter(pct), 'is_late': late,
-            })
-        overall_pct = round((total_earned / total_possible) * 100) if total_possible else 0
-        student_progress.append({
-            'student': student, 'rows': rows,
-            'overall_pct': overall_pct, 'overall_grade': _grade_letter(overall_pct),
-            'total_earned': total_earned, 'total_possible': total_possible,
-        })
-
-    # ── Courses ────────────────────────────────────────────────────────────
-    try:
-        from superadmin.models import GlobalCourse, ClassroomCourseAssignment
-        all_courses = GlobalCourse.objects.filter(
-            schools=request.user.school, status='published'
-        ).prefetch_related('concepts')
-        assigned_course_ids = set(
-            ClassroomCourseAssignment.objects.filter(classroom=classroom).values_list('course_id', flat=True)
+def _tab_redirect(tab):
+    """
+    Returns a view function that:
+      - On GET  → redirects to classroom_detail?tab=<tab>
+      - On POST → calls classroom_detail directly (preserves POST data)
+    """
+    @role_required('teacher')
+    def view(request, classroom_id):
+        if request.method == 'POST':
+            # Inject the tab so classroom_detail redirects back correctly
+            request.POST = request.POST.copy()
+            request.POST['_tab'] = tab
+            return classroom_detail(request, classroom_id)
+        return redirect(
+            f"/teacher/classroom/{classroom_id}/?tab={tab}"
         )
-    except Exception:
-        all_courses = []; assigned_course_ids = set()
+    view.__name__ = f'classroom_{tab}'
+    return view
 
-    # ── Chat ───────────────────────────────────────────────────────────────
-    selected_student = None
-    chat_messages    = []
-    selected_student_online = False
-    student_pk = request.GET.get('student')
-    if student_pk:
-        try:
-            selected_student = classroom.students.get(pk=student_pk)
-            from chat.models import Message
-            chat_messages = Message.objects.filter(
-                classroom=classroom
-            ).select_related('sender').order_by('created_at')
-        except Exception:
-            pass
 
-    if selected_student:
-        from django.core.cache import cache
-        from django.contrib.sessions.models import Session
-        cached = cache.get(f'user_online_{selected_student.pk}')
-        if cached is None:
-            active_ids = set()
-            for s in Session.objects.filter(expire_date__gt=timezone.now()):
-                try:
-                    uid = s.get_decoded().get('_auth_user_id')
-                    if uid: active_ids.add(int(uid))
-                except Exception:
-                    pass
-            selected_student_online = selected_student.pk in active_ids
-            if selected_student_online:
-                cache.set(f'user_online_{selected_student.pk}', True, timeout=None)
-        else:
-            selected_student_online = cached is True
+classroom_announce  = _tab_redirect('announce')
+classroom_classwork = _tab_redirect('classwork')
+classroom_peoples   = _tab_redirect('people')
+classroom_grade     = _tab_redirect('progress')
 
-    assigned_course_count = len(assigned_course_ids)
-    assignment_count      = Assignment.objects.filter(classroom=classroom).count()
 
-    return render(request, 'teacher/classroom_detail.html', {
-        'classroom':             classroom,
-        'student_data':          student_data,
-        'avg_score':             avg_score,
-        'announcements':         announcements,
-        'assignments':           assignments,
-        'student_progress':      student_progress,
-        'all_courses':           all_courses,
-        'assigned_course_ids':   assigned_course_ids,
-        'assigned_course_count': assigned_course_count,
-        'assignment_count':      assignment_count,
-        'chat_students':         students,
-        'selected_student':      selected_student,
-        'selected_student_online': selected_student_online,
-        'chat_messages':         chat_messages,
-        'today':                 today,
-    })
-
-# ── Assign / Unassign Course to Classroom (AJAX) ─────────────────────────────
+# ── Assign / Unassign Course to Classroom (AJAX) ──────────────────────────────
 
 @role_required('teacher')
 def assign_course_to_classroom(request, classroom_id, course_id):
-    """
-    POST  → toggle a GlobalCourse assignment on a classroom.
-    Returns JSON: { assigned: true/false }
-    """
     from django.http import JsonResponse
     from superadmin.models import GlobalCourse, ClassroomCourseAssignment
 
@@ -348,6 +464,31 @@ def assign_course_to_classroom(request, classroom_id, course_id):
         return JsonResponse({'assigned': False})
 
     return JsonResponse({'assigned': True})
+
+
+# ── Courses tab (GET only — redirects to detail) ──────────────────────────────
+
+@role_required('teacher')
+def classroom_courses(request, classroom_id):
+    """
+    Kept for backwards compatibility with any links to /courses/.
+    POSTs are not expected here (course toggling uses AJAX via assign_course_to_classroom).
+    """
+    return redirect(f"/teacher/classroom/{classroom_id}/?tab=courses")
+
+
+# ── Chat tab ──────────────────────────────────────────────────────────────────
+
+@role_required('teacher')
+def classroom_chat(request, classroom_id):
+    """
+    /classroom/<id>/chat/ → redirect to classroom_detail?tab=chat
+    Preserves ?student= query param if present.
+    """
+    student_param = request.GET.get('student', '')
+    base = f"/teacher/classroom/{classroom_id}/?tab=chat"
+    url  = f"{base}&student={student_param}" if student_param else base
+    return redirect(url)
 
 
 # ── Create Classroom ──────────────────────────────────────────────────────────
@@ -374,7 +515,7 @@ def create_classroom(request):
     })
 
 
-# ── All Announcements ────────────────────────────────────────────────────────
+# ── All Announcements (standalone page) ───────────────────────────────────────
 
 @role_required('teacher')
 def teacher_announcements(request):
@@ -385,7 +526,7 @@ def teacher_announcements(request):
     return render(request, 'teacher/announcements.html', {'announcements': announcements})
 
 
-# ── Post Announcement (dashboard button) ─────────────────────────────────────
+# ── Post Announcement (dashboard button) ──────────────────────────────────────
 
 @role_required('teacher')
 def post_announcement(request):
@@ -394,10 +535,10 @@ def post_announcement(request):
         teacher=request.user, school=request.user.school
     )
     if request.method == 'POST':
-        title      = request.POST.get('title', '').strip()
-        body       = request.POST.get('body', '').strip()
-        meet_link  = request.POST.get('meet_link', '').strip()
-        is_pinned  = bool(request.POST.get('is_pinned'))
+        title         = request.POST.get('title', '').strip()
+        body          = request.POST.get('body', '').strip()
+        meet_link     = request.POST.get('meet_link', '').strip()
+        is_pinned     = bool(request.POST.get('is_pinned'))
         classroom_ids = request.POST.getlist('classrooms')
         if title and body and classroom_ids:
             for cid in classroom_ids:
@@ -415,10 +556,10 @@ def post_announcement(request):
                 notify_students(
                     classroom.students.values_list('id', flat=True),
                     {
-                        'type': 'announcement',
+                        'type':         'announcement',
                         'classroom_id': classroom.id,
                         'redirect_url': f'/student/classroom/{classroom.id}/announce/',
-                        'title': announcement.title,
+                        'title':        announcement.title,
                     },
                 )
             messages.success(request, 'Announcement posted successfully.')
@@ -428,302 +569,7 @@ def post_announcement(request):
     return render(request, 'teacher/post_announcement.html', {'classrooms': classrooms})
 
 
-# ── Announce ──────────────────────────────────────────────────────────────────
-
-@role_required('teacher')
-def classroom_announce(request, classroom_id):
-    classroom = _get_classroom(request, classroom_id)
-    from announcements.models import Announcement
-
-    if request.method == 'POST':
-        title     = request.POST.get('title', '').strip()
-        body      = request.POST.get('body', '').strip()
-        meet_link = request.POST.get('meet_link', '').strip()
-        is_pinned = bool(request.POST.get('is_pinned'))
-        if title and body:
-            announcement = Announcement.objects.create(
-                posted_by=request.user,
-                school=request.user.school,
-                classroom=classroom,
-                title=title,
-                body=body,
-                meet_link=meet_link,
-                is_pinned=is_pinned,
-                target='students',
-            )
-            notify_students(
-                classroom.students.values_list('id', flat=True),
-                {
-                    'type': 'announcement',
-                    'classroom_id': classroom.id,
-                    'redirect_url': f'/student/classroom/{classroom.id}/announce/',
-                    'title': announcement.title,
-                },
-            )
-            messages.success(request, 'Announcement posted.')
-        else:
-            messages.error(request, 'Title and message are required.')
-        return redirect('teacher_classroom_announce', classroom_id=classroom_id)
-
-    announcements = Announcement.objects.filter(
-        school=request.user.school, classroom=classroom
-    ).order_by('-is_pinned', '-created_at')
-
-    return render(request, 'teacher/classroom_announce.html', {
-        'classroom':     classroom,
-        'announcements': announcements,
-        'active_tab':    'announce',
-    })
-
-
-# ── Courses ───────────────────────────────────────────────────────────────────
-# Replace the existing classroom_courses view in classrooms/views/teacher_views.py
-
-@role_required('teacher')
-def classroom_courses(request, classroom_id):
-    classroom = _get_classroom(request, classroom_id)
-
-    try:
-        from superadmin.models import GlobalCourse, ClassroomCourseAssignment
-
-        # All published courses for the school
-        all_courses = GlobalCourse.objects.filter(
-            schools=request.user.school,
-            status='published'
-        ).prefetch_related('concepts')
-
-        # IDs already assigned to THIS classroom
-        assigned_course_ids = set(
-            ClassroomCourseAssignment.objects.filter(
-                classroom=classroom
-            ).values_list('course_id', flat=True)
-        )
-
-        # Courses actually assigned to this classroom
-        assigned_courses = [c for c in all_courses if c.pk in assigned_course_ids]
-
-    except Exception:
-        all_courses         = []
-        assigned_course_ids = set()
-        assigned_courses    = []
-
-    return render(request, 'teacher/classroom_courses.html', {
-        'classroom':            classroom,
-        'all_courses':          all_courses,
-        'assigned_courses':     assigned_courses,
-        'assigned_course_ids':  assigned_course_ids,
-        'active_tab':           'courses',
-    })# ── Courses ───────────────────────────────────────────────────────────────────
-
-@role_required('teacher')
-def classroom_courses(request, classroom_id):
-    classroom = _get_classroom(request, classroom_id)
-
-    try:
-        from superadmin.models import GlobalCourse, ClassroomCourseAssignment
-
-        # All published courses for the school
-        all_courses = GlobalCourse.objects.filter(
-            schools=request.user.school,
-            status='published'
-        ).prefetch_related('concepts')
-
-        # IDs already assigned to THIS classroom
-        assigned_course_ids = set(
-            ClassroomCourseAssignment.objects.filter(
-                classroom=classroom
-            ).values_list('course_id', flat=True)
-        )
-
-        # Courses actually assigned to this classroom
-        assigned_courses = [c for c in all_courses if c.pk in assigned_course_ids]
-
-    except Exception:
-        all_courses         = []
-        assigned_course_ids = set()
-        assigned_courses    = []
-
-    return render(request, 'teacher/classroom_courses.html', {
-        'classroom':            classroom,
-        'all_courses':          all_courses,
-        'assigned_courses':     assigned_courses,
-        'assigned_course_ids':  assigned_course_ids,
-        'active_tab':           'courses',
-    })
-
-# ── Classwork ─────────────────────────────────────────────────────────────────
-
-@role_required('teacher')
-def classroom_classwork(request, classroom_id):
-    classroom   = _get_classroom(request, classroom_id)
-    assignments = Assignment.objects.filter(
-        classroom=classroom
-    ).order_by('-due_date')
-
-    for a in assignments:
-        a.submission_count = Submission.objects.filter(assignment=a).count()
-        a.ungraded_count   = Submission.objects.filter(assignment=a, score__isnull=True).count()
-        a.total_students   = classroom.students.count()
-
-    from assignments.forms import AssignmentForm
-    form = AssignmentForm(request.POST or None, request.FILES or None)
-    if request.method == 'POST' and form.is_valid():
-        assignment           = form.save(commit=False)
-        assignment.classroom = classroom
-        assignment.save()
-        notify_students(
-            classroom.students.values_list('id', flat=True),
-            {
-                'type': 'assignment',
-                'classroom_id': classroom.id,
-                'redirect_url': f'/student/classroom/{classroom.id}/classwork/',
-                'title': assignment.title,
-            },
-        )
-        messages.success(request, f'Assignment "{assignment.title}" created.')
-        return redirect('teacher_classroom_classwork', classroom_id=classroom_id)
-
-    return render(request, 'teacher/classroom_classwork.html', {
-        'classroom':   classroom,
-        'assignments': assignments,
-        'form':        form,
-        'active_tab':  'classwork',
-        'today':       timezone.localdate(),
-    })
-
-
-# ── Peoples ───────────────────────────────────────────────────────────────────
-
-@role_required('teacher')
-def classroom_peoples(request, classroom_id):
-    classroom = _get_classroom(request, classroom_id)
-
-    if request.method == 'POST':
-        student_id = request.POST.get('remove_student')
-        if student_id:
-            classroom.students.remove(student_id)
-            notify_students([student_id], {'type': 'forced_redirect', 'url': '/student/join/'})
-            messages.success(request, 'Student removed.')
-            return redirect('teacher_classroom_peoples', classroom_id=classroom_id)
-
-    students          = classroom.students.all()
-    total_assignments = Assignment.objects.filter(classroom=classroom).count()
-
-    student_data = []
-    for student in students:
-        submitted    = Submission.objects.filter(
-            assignment__classroom=classroom, student=student
-        ).count()
-        graded_subs  = Submission.objects.filter(
-            assignment__classroom=classroom, student=student, score__isnull=False
-        )
-        graded_count = graded_subs.count()
-        total_score  = sum(s.score for s in graded_subs)
-        avg = round((total_score / (graded_count * 20)) * 100) if graded_count else 0
-
-        student_data.append({
-            'user':              student,
-            'submitted':         submitted,
-            'total_assignments': total_assignments,
-            'avg_pct':           avg,
-            'grade_letter':      _grade_letter(avg),
-        })
-
-    return render(request, 'teacher/classroom_peoples.html', {
-        'classroom':    classroom,
-        'student_data': student_data,
-        'active_tab':   'peoples',
-    })
-
-
-# ── Grades ────────────────────────────────────────────────────────────────────
-
-@role_required('teacher')
-def classroom_grade(request, classroom_id):
-    classroom   = _get_classroom(request, classroom_id)
-    students    = classroom.students.all()
-    assignments = Assignment.objects.filter(
-        classroom=classroom
-    ).order_by('due_date')
-
-    if request.method == 'POST':
-        sub_id   = request.POST.get('submission_id')
-        score    = request.POST.get('score')
-        feedback = request.POST.get('feedback', '')
-        if sub_id and score:
-            sub          = get_object_or_404(
-                Submission, id=sub_id, assignment__classroom=classroom
-            )
-            was_ungraded = sub.score is None
-            sub.score    = score
-            sub.feedback = feedback
-            sub.save()
-            if was_ungraded and sub.score is not None:
-                notify_students(
-                    [sub.student_id],
-                    {
-                        'type': 'grade',
-                        'classroom_id': classroom.id,
-                        'redirect_url': f'/student/classroom/{classroom.id}/grades/',
-                        'title': sub.assignment.title,
-                    },
-                )
-            messages.success(request, 'Grade saved.')
-            return redirect('teacher_classroom_grade', classroom_id=classroom_id)
-
-    today = timezone.localdate()
-
-    student_progress = []
-    for student in students:
-        rows = []
-        total_earned = total_possible = 0
-        for assignment in assignments:
-            sub       = Submission.objects.filter(
-                assignment=assignment, student=student
-            ).first()
-            score_val = sub.score if sub and sub.score is not None else None
-            max_score = assignment.max_score
-            pct       = round((score_val / max_score) * 100) if score_val is not None else None
-            late = bool(
-                sub and assignment.due_date
-                and sub.submitted_at.date() > assignment.due_date.date()
-            )
-
-            if score_val is not None:
-                total_earned   += score_val
-                total_possible += max_score
-
-            rows.append({
-                'assignment':   assignment,
-                'submission':   sub,
-                'score':        score_val,
-                'max_score':    max_score,
-                'pct':          pct,
-                'grade_letter': _grade_letter(pct),
-                'is_late':      late,
-            })
-
-        overall_pct = round(
-            (total_earned / total_possible) * 100
-        ) if total_possible else 0
-        student_progress.append({
-            'student':        student,
-            'rows':           rows,
-            'overall_pct':    overall_pct,
-            'overall_grade':  _grade_letter(overall_pct),
-            'total_earned':   total_earned,
-            'total_possible': total_possible,
-        })
-
-    return render(request, 'teacher/classroom_grade.html', {
-        'classroom':        classroom,
-        'assignments':      assignments,
-        'student_progress': student_progress,
-        'active_tab':       'grades',
-    })
-
-
-# ── My Classrooms ───────────────────────────────────────────────────────────
+# ── My Classrooms ─────────────────────────────────────────────────────────────
 
 @role_required('teacher')
 def my_classrooms(request):
@@ -750,12 +596,14 @@ def my_learning(request):
     ).prefetch_related('concepts', 'enrollments')
 
     enrollments = {
-        enrollment.course_id: enrollment
-        for enrollment in CourseEnrollment.objects.filter(user=request.user).select_related('course')
+        e.course_id: e
+        for e in CourseEnrollment.objects.filter(
+            user=request.user
+        ).select_related('course')
     }
     enrolled_ids = set(enrollments.keys())
 
-    enrolled_courses = []
+    enrolled_courses   = []
     unenrolled_courses = []
     for course in available_courses:
         course.enrollment = enrollments.get(course.pk)
@@ -783,21 +631,17 @@ def teacher_course_detail(request, course_id):
         course__schools=request.user.school,
         course__status='published',
     )
-    course = enrollment.course
+    course   = enrollment.course
     concepts = course.concepts.prefetch_related('videos').all()
 
-    beginner_concepts = concepts.filter(level='beginner')
-    intermediate_concepts = concepts.filter(level='intermediate')
-    advanced_concepts = concepts.filter(level='advanced')
-
     return render(request, 'teacher/course_detail.html', {
-        'course': course,
-        'concepts': concepts,
-        'beginner_concepts': beginner_concepts,
-        'intermediate_concepts': intermediate_concepts,
-        'advanced_concepts': advanced_concepts,
-        'enrollment': enrollment,
-        'total_concepts': concepts.count(),
+        'course':                course,
+        'concepts':              concepts,
+        'beginner_concepts':     concepts.filter(level='beginner'),
+        'intermediate_concepts': concepts.filter(level='intermediate'),
+        'advanced_concepts':     concepts.filter(level='advanced'),
+        'enrollment':            enrollment,
+        'total_concepts':        concepts.count(),
     })
 
 
@@ -824,13 +668,13 @@ def course_enroll(request, course_id):
         return JsonResponse({'enrolled': False})
 
     return JsonResponse({
-        'enrolled': True,
-        'deadline': timezone.localtime(enrollment.deadline_at).strftime('%b %d, %Y'),
+        'enrolled':   True,
+        'deadline':   timezone.localtime(enrollment.deadline_at).strftime('%b %d, %Y'),
         'course_url': f'/teacher/my-learning/{course.pk}/',
     })
 
 
-# ── Messages ─────────────────────────────────────────────────────────────────
+# ── Messages ──────────────────────────────────────────────────────────────────
 
 @role_required('teacher')
 def teacher_messages(request):
@@ -858,67 +702,19 @@ def teacher_messages(request):
                 'unread_count': unread_count,
             })
         classroom_chats.sort(
-            key=lambda x: x['latest_msg'].created_at if x['latest_msg'] else timezone.datetime.min.replace(tzinfo=timezone.utc),
+            key=lambda x: (
+                x['latest_msg'].created_at
+                if x['latest_msg']
+                else timezone.datetime.min.replace(tzinfo=timezone.utc)
+            ),
             reverse=True
         )
     except Exception:
-        classroom_chats = [{'classroom': c, 'latest_msg': None, 'unread_count': 0} for c in classrooms]
+        classroom_chats = [
+            {'classroom': c, 'latest_msg': None, 'unread_count': 0}
+            for c in classrooms
+        ]
 
     return render(request, 'teacher/messages.html', {
         'classroom_chats': classroom_chats,
-    })
-
-
-# ── Chat ──────────────────────────────────────────────────────────────────────
-
-@role_required('teacher')
-def classroom_chat(request, classroom_id):
-    classroom = _get_classroom(request, classroom_id)
-    from chat.models import Message
-
-    students = classroom.students.all().order_by('first_name', 'username', 'email')
-    student_id = request.GET.get('student')
-    selected_student = None
-    chat_messages = []
-
-    if student_id:
-        selected_student = get_object_or_404(students, pk=student_id)
-    elif students.exists():
-        selected_student = students.first()
-
-    if selected_student:
-        chat_messages = Message.objects.filter(
-            classroom=classroom,
-            sender__in=[request.user, selected_student],
-            receiver__in=[request.user, selected_student],
-        ).select_related('sender').order_by('created_at')
-        chat_messages.filter(receiver=request.user, is_read=False).update(is_read=True)
-
-    # Check student online status
-    selected_student_online = False
-    if selected_student:
-        from django.core.cache import cache
-        from django.contrib.sessions.models import Session
-        cached = cache.get(f'user_online_{selected_student.pk}')
-        if cached is None:
-            active_ids = set()
-            for s in Session.objects.filter(expire_date__gt=timezone.now()):
-                try:
-                    uid = s.get_decoded().get('_auth_user_id')
-                    if uid: active_ids.add(int(uid))
-                except Exception:
-                    pass
-            selected_student_online = selected_student.pk in active_ids
-            if selected_student_online:
-                cache.set(f'user_online_{selected_student.pk}', True, timeout=None)
-        else:
-            selected_student_online = cached is True
-
-    return render(request, 'teacher/classroom_chat.html', {
-        'classroom':              classroom,
-        'students':               students,
-        'selected_student':       selected_student,
-        'selected_student_online': selected_student_online,
-        'chat_messages':          chat_messages,
-        'active_tab':             'chat',
     })
