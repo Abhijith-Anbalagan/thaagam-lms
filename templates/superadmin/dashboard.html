@@ -577,6 +577,13 @@
           {% if course.status == 'published' %}Published{% else %}Unpublished{% endif %}
         </span>
       </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="sa-empty">No courses yet.</p>
+  {% endif %}
+</div>
 
     <!-- LEFT: Schools -->
     <div class="dash-card">
@@ -631,34 +638,6 @@
         </a>
       </div>
       {% endif %}
-    </div>
-
-    <!-- RIGHT: Courses -->
-    <div class="courses-col">
-      <div class="dash-card" style="animation-delay:0.2s;">
-        <div class="dash-card-head">
-          <div class="dash-card-title">
-            <span class="dash-card-title-dot" style="background:var(--green);"></span>
-            Recent Courses
-          </div>
-          <a href="{% url 'superadmin_all_courses' %}" class="dash-view-all">View all →</a>
-        </div>
-
-        <div class="gc-actions" onclick="event.stopPropagation()">
-          {% if course.is_free %}
-            <a href="{% url 'superadmin_course_detail' course.pk %}" class="btn-primary-sm">▶ Learn Free</a>
-          {% else %}
-            <a href="{% url 'superadmin_course_detail' course.pk %}" class="btn-primary-sm">▶ Open</a>
-          {% endif %}
-          {% if course.has_certificate %}
-            <button class="btn-cert-sm"
-              onclick="window.location='{% url 'superadmin_course_detail' course.pk %}'">
-              🏅 Certificate
-            </button>
-          {% endif %}
-        </div>
-        {% endif %}
-      </div>
     </div>
 
   </div><!-- end dash-body -->
