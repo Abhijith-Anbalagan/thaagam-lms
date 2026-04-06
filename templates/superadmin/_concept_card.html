@@ -46,6 +46,7 @@
     <div class="tab-pane active" id="videos-{{ concept.pk }}">
       {% for video in concept.videos.all %}
       <div class="video-item" id="video-{{ video.pk }}">
+        {% if video.file %}
         <div class="video-item-thumb" onclick="playVideo('{{ video.file.url }}','{{ video.title|default:'Untitled'|escapejs }}')">
           <video muted preload="metadata">
             <source src="{{ video.file.url }}#t=0.5" type="video/mp4">
@@ -55,6 +56,18 @@
           {{ video.title|default:"Untitled Video" }}
           <div style="font-size:11px;color:var(--muted);margin-top:2px;">Click to play ▶</div>
         </div>
+        {% elif video.video_url %}
+        <div class="video-item-thumb" style="background:#1a1a2e;font-size:24px;">▶</div>
+        <div class="video-play-btn">
+          <a href="{{ video.video_url }}" target="_blank">{{ video.title|default:"Untitled Video" }}</a>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">External link ↗</div>
+        </div>
+        {% else %}
+        <div class="video-item-thumb" style="background:#1a1a2e;font-size:24px;">▶</div>
+        <div class="video-play-btn">{{ video.title|default:"Untitled Video" }}
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">No file attached</div>
+        </div>
+        {% endif %}
         <button class="delete-btn" onclick="deleteVideo({{ video.pk }}, this)">🗑</button>
       </div>
       {% empty %}
@@ -97,7 +110,7 @@
     <div class="tab-pane" id="quiz-{{ concept.pk }}">
       <div id="quiz-rendered-{{ concept.pk }}">
         {% if concept.quiz %}
-          <p style="font-size:13px;color:var(--muted);">Loading quiz…</p>
+          {# rendered by JS on DOMContentLoaded #}
         {% else %}
           <p style="font-size:13px;color:var(--muted);">No quiz added.</p>
         {% endif %}

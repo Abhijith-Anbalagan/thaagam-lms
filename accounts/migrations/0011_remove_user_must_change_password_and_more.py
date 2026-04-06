@@ -10,10 +10,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='user',
-            name='must_change_password',
-        ),
         migrations.AlterField(
             model_name='testimonial',
             name='email',
