@@ -17,6 +17,8 @@ from classrooms.views.teacher_views import (
     classroom_chat,
     classroom_detail,
     assign_course_to_classroom,
+    teacher_course_concept,
+    teacher_mark_concept_complete,
 )
 
 urlpatterns = [
@@ -40,4 +42,10 @@ urlpatterns = [
     path('classroom/<int:classroom_id>/peoples/',                           classroom_peoples,           name='teacher_classroom_peoples'),
     path('classroom/<int:classroom_id>/grades/',                            classroom_grade,             name='teacher_classroom_grade'),
     path('classroom/<int:classroom_id>/chat/',                              classroom_chat,              name='teacher_classroom_chat'),
+    
+    path('my-learning/<int:course_id>/',                                    teacher_course_detail,   name='teacher_course_detail'),
+    path('my-learning/<int:course_id>/concept/<int:concept_id>/',           teacher_course_concept,         name='teacher_course_concept'),
+    path('my-learning/<int:course_id>/concept/<int:concept_id>/complete/',   teacher_mark_concept_complete,  name='teacher_mark_concept_complete'),
+    path('my-learning/<int:course_id>/enroll/',                             course_enroll,           name='teacher_course_enroll'),
+    
 ]

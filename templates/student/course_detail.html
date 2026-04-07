@@ -555,47 +555,14 @@ function populateNotes(concept) {
     if (concept.pdf) {
         el.innerHTML = `
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div class="mb-4 flex items-center justify-between">
+                <div class="mb-2 flex items-center justify-between">
                     <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Study Notes</p>
-                    <a href="${concept.pdf}" target="_blank"
-                       class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50">
-                        ↓ Download PDF
-                    </a>
                 </div>
-                <div id="pdf-viewer-wrap" class="rounded-xl overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center" style="height:660px;">
-                    <p class="text-sm text-slate-400">Loading PDF…</p>
-                </div>
+                <a href="${concept.pdf}" target="_blank"
+                   class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-700 transition">
+                    ↓ Download PDF
+                </a>
             </div>`;
-
-        // Fetch as blob to bypass X-Frame-Options / embed restrictions
-        fetch(concept.pdf)
-            .then(r => {
-                if (!r.ok) throw new Error('Failed to fetch PDF');
-                return r.blob();
-            })
-            .then(blob => {
-                const blobUrl = URL.createObjectURL(blob);
-                const wrap = document.getElementById('pdf-viewer-wrap');
-                if (!wrap) return;
-                wrap.innerHTML = `<object data="${blobUrl}" type="application/pdf"
-                    style="width:100%;height:660px;border:none;display:block;">
-                    <p class="p-6 text-sm text-slate-500 text-center">
-                        Your browser cannot display PDFs inline.
-                        <a href="${concept.pdf}" target="_blank" class="text-blue-600 underline">Open PDF</a>
-                    </p>
-                </object>`;
-            })
-            .catch(() => {
-                const wrap = document.getElementById('pdf-viewer-wrap');
-                if (wrap) wrap.innerHTML = `
-                    <div class="text-center p-8">
-                        <p class="text-sm text-slate-500 mb-3">Could not load PDF preview.</p>
-                        <a href="${concept.pdf}" target="_blank"
-                           class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-700 transition">
-                            Open PDF in new tab
-                        </a>
-                    </div>`;
-            });
     } else {
         el.innerHTML = '<div class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-400">No notes or PDF for this module.</div>';
     }
