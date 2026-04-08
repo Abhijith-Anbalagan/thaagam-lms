@@ -3,141 +3,248 @@
 
 {% block extra_css %}
 <style>
+  :root {
+    --primary: #667eea;
+    --primary-dark: #764ba2;
+    --success: #15803d;
+    --success-light: #f0fdf4;
+    --border: #e5e7eb;
+    --bg-light: #f9fafb;
+    --bg-lighter: #f3f4f6;
+    --text-dark: #111827;
+    --text-muted: #6b7280;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    min-height: 100vh;
+  }
+
+  /* ── Main Container ── */
+  .management-container {
+    padding: 32px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
   /* ── Page Header ── */
   .page-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 24px;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 2px solid var(--border);
   }
   .page-header h1 {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--brand-dark);
-    letter-spacing: -0.4px;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--text-dark);
+    letter-spacing: -0.5px;
     margin: 0;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   .btn-invite {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    gap: 7px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: #fff;
     font-size: 13px;
     font-weight: 700;
-    padding: 9px 18px;
-    border-radius: 50px;
+    padding: 11px 22px;
+    border-radius: 10px;
     text-decoration: none;
-    transition: opacity 0.2s, transform 0.15s;
-    box-shadow: 0 4px 12px rgba(102,126,234,0.35);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+    border: none;
+    cursor: pointer;
   }
   .btn-invite:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+  }
+  .btn-invite:active {
+    transform: translateY(0);
   }
 
   /* ── Summary Bar ── */
   .summary-bar {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
   }
   .summary-chip {
     display: flex;
     align-items: center;
-    gap: 8px;
-    background: var(--card-bg, #fff);
-    border: 1px solid var(--border, #e8eaed);
-    border-radius: 10px;
-    padding: 10px 16px;
+    gap: 16px;
+    background: #ffffff;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 24px;
     font-size: 13px;
     font-weight: 600;
-    color: var(--brand-dark);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    color: var(--text-dark);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.25s ease;
+  }
+  .summary-chip:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
   }
   .summary-chip span {
-    font-size: 18px;
-    font-weight: 800;
-    color: #667eea;
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--primary);
+    min-width: 50px;
+    text-align: center;
+  }
+  .summary-chip > div {
+    flex: 1;
+  }
+  .summary-chip > div > div:first-child {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-dark);
   }
   .summary-chip .chip-label {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--text-muted);
+    margin-top: 4px;
   }
 
   /* ── Management Card ── */
   .mgmt-card {
-    background: var(--card-bg, #fff);
-    border: 1px solid var(--border, #e8eaed);
-    border-radius: 14px;
+    background: #ffffff;
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.25s ease;
   }
+  .mgmt-card:hover {
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+  }
+
   .mgmt-card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border, #e8eaed);
-    background: var(--page-bg, #f8f9fa);
+    padding: 20px 28px;
+    border-bottom: 1.5px solid var(--border);
+    background: linear-gradient(135deg, #fafbfc 0%, #f3f4f6 100%);
   }
   .mgmt-card-header h3 {
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.7px;
+    letter-spacing: 0.8px;
     color: var(--text-muted);
     margin: 0;
   }
   .total-count {
     font-size: 12px;
-    font-weight: 600;
-    color: var(--text-muted);
-    background: var(--border, #e8eaed);
-    padding: 2px 10px;
-    border-radius: 50px;
+    font-weight: 700;
+    color: var(--primary);
+    background: rgba(102, 126, 234, 0.1);
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(102, 126, 234, 0.2);
   }
 
   /* ── Member Row ── */
   .mgmt-row {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 14px 20px;
-    border-bottom: 1px solid var(--border, #f0f0f0);
-    transition: background 0.15s;
+    gap: 18px;
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--bg-lighter);
+    transition: all 0.2s ease;
+    position: relative;
+  }
+  .mgmt-row::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
   }
   .mgmt-row:last-child { border-bottom: none; }
-  .mgmt-row:hover { background: var(--page-bg, #f8f9fa); }
+  .mgmt-row {
+    cursor: pointer;
+  }
+  .mgmt-row:hover {
+    background: var(--bg-light);
+  }
+  .mgmt-row:hover::before {
+    opacity: 1;
+  }
+
+  .mgmt-actions {
+    display: flex;
+    justify-content: flex-end;
+    min-width: 120px;
+  }
+  .mgmt-delete-btn {
+    border: 1px solid #f1f5f9;
+    background: #ffffff;
+    color: #b91c1c;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+  .mgmt-delete-btn:hover {
+    background: #fee2e2;
+  }
+  .mgmt-delete-btn:active {
+    transform: translateY(1px);
+  }
 
   .mgmt-avatar {
-    width: 42px;
-    height: 42px;
+    width: 48px;
+    height: 48px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: #fff;
-    font-size: 15px;
-    font-weight: 700;
+    font-size: 18px;
+    font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(102,126,234,0.3);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
   }
 
-  .mgmt-info { flex: 1; min-width: 0; }
+  .mgmt-info {
+    flex: 1;
+    min-width: 0;
+  }
   .mgmt-name {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
-    color: var(--brand-dark);
-    margin-bottom: 2px;
+    color: var(--text-dark);
+    margin-bottom: 4px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .mgmt-email {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
@@ -148,155 +255,227 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: #f0ebff;
-    border-radius: 10px;
-    padding: 8px 16px;
-    min-width: 80px;
+    background: linear-gradient(135deg, #f0ebff 0%, #ede9fe 100%);
+    border-radius: 12px;
+    padding: 10px 18px;
+    min-width: 90px;
   }
   .mgmt-stat-value {
-    font-size: 18px;
-    font-weight: 800;
-    color: #667eea;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--primary);
     line-height: 1;
   }
   .mgmt-stat-label {
-    font-size: 10px;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #764ba2;
-    margin-top: 2px;
+    letter-spacing: 0.6px;
+    color: var(--primary-dark);
+    margin-top: 4px;
   }
 
   .mgmt-badge {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 50px;
-    background: #dcfce7;
-    color: #16a34a;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: var(--success-light);
+    color: var(--success);
+    flex-shrink: 0;
   }
 
   /* ── Empty State ── */
   .empty-state {
     text-align: center;
-    padding: 48px 20px;
+    padding: 60px 40px;
   }
   .empty-icon {
-    font-size: 40px;
-    margin-bottom: 12px;
+    font-size: 56px;
+    margin-bottom: 16px;
+    display: inline-block;
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
   }
   .empty-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--brand-dark);
-    margin-bottom: 6px;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin-bottom: 8px;
   }
   .empty-sub {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--text-muted);
-    margin-bottom: 18px;
+    margin-bottom: 24px;
+    line-height: 1.6;
   }
   .btn-invite-empty {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    gap: 7px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: #fff;
     font-size: 13px;
     font-weight: 700;
-    padding: 10px 22px;
-    border-radius: 50px;
+    padding: 12px 28px;
+    border-radius: 10px;
     text-decoration: none;
-    box-shadow: 0 4px 12px rgba(102,126,234,0.35);
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+    transition: all 0.25s ease;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-invite-empty:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
   }
 
-  @media (max-width: 600px) {
-    .summary-bar { flex-wrap: wrap; }
-    .mgmt-stat   { display: none; }
+  /* ── Responsive ── */
+  @media (max-width: 1024px) {
+    .management-container { padding: 24px 32px; }
+    .page-header h1 { font-size: 1.6rem; }
   }
+
+  @media (max-width: 768px) {
+    .management-container { padding: 20px 24px; }
+    .page-header {
+      flex-direction: column;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .summary-bar { grid-template-columns: 1fr; }
+    .mgmt-stat { display: none; }
+    .mgmt-row { gap: 12px; padding: 16px 20px; }
+    .mgmt-card-header, .mgmt-row { padding-left: 20px; padding-right: 20px; }
+  }
+
+  @media (max-width: 480px) {
+    .management-container { padding: 16px; }
+    .page-header h1 { font-size: 1.3rem; }
+    .mgmt-avatar { width: 40px; height: 40px; font-size: 16px; }
+    .mgmt-name { font-size: 13px; }
+    .mgmt-email { font-size: 11px; }
+  }
+#manage{
+  font-family: sans-serif;
+  color: black;
+  font-size: 2em;
+  font-weight: 700 ;
+}
 </style>
 {% endblock %}
 
 {% block content %}
 
-<!-- Header -->
-<div class="page-header">
-  <h1>👥 Management Users</h1>
-  <a href="{% url 'school_admin_invite_management' %}" class="btn-invite">
-    ➕ Invite Management
-  </a>
-</div>
+<div class="management-container">
 
-<!-- Summary Bar -->
-<div class="summary-bar">
-  <div class="summary-chip">
-    <span>{{ management|length }}</span>
-    <div>
-      <div>Total Members</div>
-      <div class="chip-label">Management users</div>
-    </div>
-  </div>
-  <div class="summary-chip">
-    <span>✅</span>
-    <div>
-      <div>All Active</div>
-      <div class="chip-label">Currently active</div>
-    </div>
-  </div>
-</div>
-
-<!-- Management List -->
-<div class="mgmt-card">
-  <div class="mgmt-card-header">
-    <h3>Members</h3>
-    <span class="total-count">{{ management|length }} total</span>
-  </div>
-
-  {% for m in management %}
-  <div class="mgmt-row">
-
-    <!-- Avatar -->
-    <div class="mgmt-avatar">
-      {{ m.get_full_name|default:m.username|first|upper }}
-    </div>
-
-    <!-- Info -->
-    <div class="mgmt-info">
-      <div class="mgmt-name">{{ m.get_full_name|default:m.username }}</div>
-      <div class="mgmt-email">{{ m.email }}</div>
-    </div>
-
-    {% comment %} <!-- Teachers Managed -->
-    <div class="mgmt-stat">
-      <div class="mgmt-stat-value">{{ m.invite_count }}</div> 
-      <div class="mgmt-stat-label">Teachers</div>
-    </div> {% endcomment %}
-
-    <!-- Status Badge -->
-    <div class="mgmt-badge">
-      ● Active
-    </div>
-
-  </div>
-
-  {% empty %}
-
-  <!-- Empty State -->
-  <div class="empty-state">
-    <div class="empty-icon">👥</div>
-    <div class="empty-title">No management users yet</div>
-    <div class="empty-sub">Invite your first management member to get started.</div>
-    <a href="{% url 'school_admin_invite_management' %}" class="btn-invite-empty">
-      ➕ Invite Management
+  <!-- Header -->
+  <div class="page-header">
+    <h2 id="manage"> Management Users</h2>
+    <a href="{% url 'school_admin_invite_management' %}" class="btn-invite">
+      Invite Management
     </a>
   </div>
 
-  {% endfor %}
+  <!-- Summary Bar -->
+  <div class="summary-bar">
+    <div class="summary-chip">
+      <span>{{ management|length }}</span>
+      <div>
+        <div>Total Members</div>
+        <div class="chip-label">Management users</div>
+      </div>
+    </div>
+  </div>
 
-</div>
+  <!-- Management List -->
+  <div class="mgmt-card">
+    <div class="mgmt-card-header">
+      <h3>Members</h3>
+      <span class="total-count">{{ management|length }} total</span>
+    </div>
+
+    {% for m in management %}
+    <div class="mgmt-row" id="member-row-{{ m.id }}"
+         onclick="window.location.href='{% url 'school_admin_management_detail' m.id %}'">
+
+      <!-- Avatar -->
+      <div class="mgmt-avatar">
+        {{ m.get_full_name|default:m.username|first|upper }}
+      </div>
+
+      <!-- Info -->
+      <div class="mgmt-info">
+        <div class="mgmt-name">{{ m.get_full_name|default:m.username }}</div>
+        <div class="mgmt-email">{{ m.email }}</div>
+      </div>
+
+      {% comment %} <!-- Teachers Managed -->
+      <div class="mgmt-stat">
+        <div class="mgmt-stat-value">{{ m.invite_count }}</div> 
+        <div class="mgmt-stat-label">Teachers</div>
+      </div> {% endcomment %}
+
+      <!-- Status Badge 
+      <div class="mgmt-badge">
+        ● Active
+      </div>-->
+
+    </div>
+
+    {% empty %}
+
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-icon">👥</div>
+      <div class="empty-title">No management users yet</div>
+      <div class="empty-sub">Invite your first management member to get started.</div>
+      <a href="{% url 'school_admin_invite_management' %}" class="btn-invite-empty">
+        ➕ Invite Management
+      </a>
+    </div>
+
+    {% endfor %}
+
+  </div>
+
+</div><!-- /management-container -->
+
+<script>
+function getCSRFToken() {
+  const name = 'csrftoken=';
+  const cookies = document.cookie.split('; ');
+  const cookie = cookies.find(item => item.startsWith(name));
+  return cookie ? cookie.split('=')[1] : '';
+}
+
+function deleteManagement(id) {
+  if (!confirm('Remove this management user?')) return;
+
+  fetch(`/school-admin/management/${id}/delete/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': getCSRFToken(),
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      const row = document.getElementById('member-row-' + id);
+      if (row) row.remove();
+    } else {
+      alert(data.error || 'Could not delete user.');
+    }
+  })
+  .catch(() => alert('Network error. Please try again.'));
+}
+</script>
 
 {% endblock %}

@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% block title %}Management Member — {{ member.get_full_name|default:member.username }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .member-detail-container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 24px;
+    background: #ffffff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 22px;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+
+  }
+  .detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .detail-header h1 {
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: #111827;
+    margin: 0;
+  }
+  .btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    padding: 10px 16px;
+    border-radius: 12px;
+    text-decoration: none;
+  }
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+  }
+  .detail-card {
+    background: #f8fafc;
+    padding: 24px;
+    border-radius: 18px;
+    border: 1px solid #e2e8f0;
+  }
+  .detail-card h2 {
+    margin: 0 0 12px;
+    font-size: 1rem;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .detail-card p {
+    margin: 8px 0;
+    font-size: 15px;
+    color: #0f172a;
+    line-height: 1.7;
+  }
+  .detail-card p span {
+    display: block;
+    color: #475569;
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  .detail-section {
+    grid-column: span 2;
+  }
+  .mgmt-actions {
+    grid-column: span 2;
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .mgmt-delete-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border: 1.5px solid #fca5a5;
+    background: #fff;
+    color: #b91c1c;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    font-size: 13px;
+  }
+  .mgmt-delete-btn:hover {
+    background: #fee2e2;
+    border-color: #dc2626;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+  }
+  .mgmt-delete-btn:active {
+    transform: scale(0.98);
+  }
+  @media (max-width: 768px) {
+    .detail-grid {
+      grid-template-columns: 1fr;
+    }
+    .mgmt-actions {
+      grid-column: span 1;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="member-detail-container">
+  <div class="detail-header">
+    <div>
+      <h1>{{ member.get_full_name|default:member.username }}</h1>
+      <p style="margin:8px 0 0;color:#64748b;">Management member details</p>
+    </div>
+    <a href="{% url 'school_admin_management_list' %}" class="btn-back">← Back to list</a>
+    
+  </div>
+ 
+  <div class="detail-grid">
+    <div class="detail-card">
+      <h2>Basic Information</h2>
+      <p><span>Username</span>{{ member.username }}</p>
+      <p><span>Email</span>{{ member.email }}</p>
+      <p><span>Role</span>{{ member.get_role_display }}</p>
+    </div>
+
+    <div class="detail-card">
+      <h2>Account status</h2>
+      <p><span>Email verified</span>{{ member.email_verified|yesno:'Yes,No' }}</p>
+      <p><span>Last seen</span>{{ member.last_seen|date:'M d, Y H:i'|default:'Never' }}</p>
+      <p><span>Date joined</span>{{ member.date_joined|date:'M d, Y' }}</p>
+    </div>
+    
+      <div class="mgmt-actions">
+        <button type="button" class="mgmt-delete-btn"
+                onclick="event.stopPropagation(); deleteManagement({{ member.id }});">
+          🗑 Delete
+        </button>
+      </div>    
+
+  <!-- <div class="detail-card detail-section">
+      <h2>Additional details</h2>
+      <p><span>User ID</span>{{ member.id }}</p>
+      <p><span>School</span>{{ member.school.name|default:'—' }}</p>
+      <p><span>Active status</span>{% if member.is_active %}Active{% else %}Inactive{% endif %}</p>
+      <p><span>Staff status</span>{% if member.is_staff %}Staff{% else %}Regular user{% endif %}</p>
+    </div> -->
+  </div>
+</div>
+
+<script>
+function getCookie(name) {
+  let value = `; ${document.cookie}`;
+  let parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+function deleteManagement(id) {
+  if (!confirm('Are you sure you want to remove this management user? This action cannot be undone.')) return;
+
+  fetch(`/school-admin/management/${id}/delete/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': getCookie('csrftoken'),
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      window.location.href = '{% url 'school_admin_management_list' %}';
+    } else {
+      alert(data.error || 'Could not delete user.');
+    }
+  })
+  .catch(() => alert('Network error. Please try again.'));
+}
+</script>
+{% endblock %}

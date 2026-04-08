@@ -257,6 +257,13 @@ def management_list(request):
 
 
 @role_required('school_admin')
+def management_detail(request, user_id):
+    school = request.user.school
+    member = get_object_or_404(User, id=user_id, school=school, role='management')
+    return render(request, 'school_admin/management_detail.html', {'member': member})
+
+
+@role_required('school_admin')
 def poll_management(request):
     school     = request.user.school
     management = User.objects.filter(school=school, role='management').values(
