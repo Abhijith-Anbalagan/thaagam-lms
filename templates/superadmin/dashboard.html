@@ -43,7 +43,7 @@
   .sa-stat:nth-child(4)::before { background:linear-gradient(90deg,#ff4d6d,#fb7185); }
   .sa-stat:nth-child(5)::before { background:linear-gradient(90deg,#0ea5e9,#38bdf8); }
   .sa-stat:hover { transform:translateY(-3px); box-shadow:var(--shadow-md); text-decoration:none; }
-  .sa-stat-icon { font-size:22px; margin-bottom:10px; display:block; }
+  .sa-stat-icon { display:block; margin-bottom:10px; line-height:1; }
   .sa-stat-val { font-size:32px; font-weight:800; color:var(--ink); line-height:1; letter-spacing:-1px; }
   .sa-stat-lbl { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-3); margin-top:6px; }
 
@@ -60,7 +60,7 @@
   .school-table td { padding:14px 22px; font-size:13.5px; color:var(--ink-2); border-bottom:1px solid var(--border); vertical-align:middle; }
   .school-table tbody tr:last-child td { border-bottom:none; }
   .school-table tbody tr:hover td { background:var(--surface-2); }
-  .school-name { font-weight:600; color:var(--accent) !important; text-decoration:none; }
+  .school-name { font-weight:600; color: black; text-decoration:none; }
   .school-name:hover { text-decoration:underline !important; }
   .col-action { text-align:right; }
 
@@ -119,27 +119,59 @@
   <!-- Stats -->
   <div class="sa-stat-grid">
     <a href="{% url 'superadmin_schools_list' %}" class="sa-stat">
-      <span class="sa-stat-icon">🏫</span>
+      <span class="sa-stat-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5b4bea" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9.5L12 4l9 5.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+          <path d="M9 21V12h6v9"/>
+          <path d="M12 4v3"/>
+        </svg>
+      </span>
       <div class="sa-stat-val">{{ total_schools }}</div>
       <div class="sa-stat-lbl">Schools</div>
     </a>
     <a href="{% url 'superadmin_all_admins' %}" class="sa-stat">
-      <span class="sa-stat-icon">👔</span>
+      <span class="sa-stat-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00c896" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2"/>
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+          <line x1="12" y1="12" x2="12" y2="16"/>
+          <line x1="10" y1="14" x2="14" y2="14"/>
+        </svg>
+      </span>
       <div class="sa-stat-val">{{ total_management }}</div>
       <div class="sa-stat-lbl">Management</div>
     </a>
     <a href="#" class="sa-stat">
-      <span class="sa-stat-icon">👩‍🏫</span>
+      <span class="sa-stat-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </span>
       <div class="sa-stat-val">{{ total_teachers }}</div>
       <div class="sa-stat-lbl">Teachers</div>
     </a>
     <a href="#" class="sa-stat">
-      <span class="sa-stat-icon">🎓</span>
+      <span class="sa-stat-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ff4d6d" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+          <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+        </svg>
+      </span>
       <div class="sa-stat-val">{{ total_students }}</div>
       <div class="sa-stat-lbl">Students</div>
     </a>
     <a href="#" class="sa-stat">
-      <span class="sa-stat-icon">🏛</span>
+      <span class="sa-stat-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+      </span>
       <div class="sa-stat-val">{{ total_classrooms }}</div>
       <div class="sa-stat-lbl">Classrooms</div>
     </a>

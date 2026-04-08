@@ -1,3 +1,6 @@
+import re
+import json
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse
@@ -71,6 +74,12 @@ def dashboard(request):
 def schools_list(request):
     schools = School.objects.all().order_by('-created_at')
     return render(request, 'superadmin/schools_list.html', {'schools': schools})
+
+
+def extract_video_src(raw):
+    """Delegates to the model-level parser — always returns a clean embed URL."""
+    from .models import parse_to_embed_url
+    return parse_to_embed_url(raw)
 
 
 @role_required('super_admin')
@@ -458,6 +467,7 @@ def all_courses(request):
         'courses':         courses,
         'draft_count':     draft_count,
         'published_count': published_count,
+        'all_schools':     School.objects.filter(is_active=True).order_by('name'),
     })
 
 
@@ -490,7 +500,6 @@ def course_detail(request, course_id):
             status_display = 'Published' if course.status == 'published' else 'Unpublished'
             messages.success(request, f'Course Marked As {status_display}')
             return redirect('superadmin_course_detail', course_id=course.pk)
-        # NEW: handle course meta update (cover, language, hours, summary)
         if action == 'update_meta':
             form = GlobalCourseForm(request.POST, request.FILES, instance=course)
             if form.is_valid():
@@ -498,14 +507,24 @@ def course_detail(request, course_id):
                 messages.success(request, 'Course updated.')
             return redirect('superadmin_course_detail', course_id=course.pk)
 
-    # Group concepts by level for GUVI-style sidebar
+    # Build video map as proper JSON — no template escaping issues
+    video_map = {}
+    for concept in concepts:
+        video_map[str(concept.pk)] = [
+            {
+                'id':    v.pk,
+                'title': v.title or 'Untitled',
+                'url':   v.file.url if v.file else (v.video_url or ''),
+                'type':  'file' if v.file else 'external',
+            }
+            for v in concept.videos.all()
+        ]
+
     beginner_concepts     = concepts.filter(level='beginner')
     intermediate_concepts = concepts.filter(level='intermediate')
     advanced_concepts     = concepts.filter(level='advanced')
 
-    # Total videos & completion (basic count — extend later with UserProgress model)
-    total_concepts = concepts.count()
-    # Placeholder progress — replace with real user progress later
+    total_concepts  = concepts.count()
     completed_count = 0
     progress_pct    = int((completed_count / total_concepts * 100)) if total_concepts else 0
     teacher_enrollments = CourseEnrollment.objects.filter(
@@ -513,7 +532,7 @@ def course_detail(request, course_id):
         user__role='teacher',
     ).select_related('user', 'user__school').order_by('-enrolled_at')
 
-    return render(request, 'superadmin/course_detail.html', {
+    response = render(request, 'superadmin/course_detail.html', {
         'course':                 course,
         'concepts':               concepts,
         'beginner_concepts':      beginner_concepts,
@@ -523,7 +542,12 @@ def course_detail(request, course_id):
         'progress_pct':           progress_pct,
         'all_schools':            School.objects.filter(is_active=True),
         'teacher_enrollments':    teacher_enrollments,
+        'video_map_json':         json.dumps(video_map),
     })
+    response['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Referrer-Policy'] = 'no-referrer'
+    return response
 
 
 @role_required('super_admin')
@@ -533,7 +557,7 @@ def concept_edit(request, concept_id):
     concept = get_object_or_404(GlobalConcept, pk=concept_id)
     field   = request.POST.get('field')
     value   = request.POST.get('value', '').strip()
-    if field in ('header', 'h3_course', 'quiz', 'assignment'):
+    if field in ('header', 'h3_course', 'quiz', 'assignment', 'pdf_url'):
         setattr(concept, field, value)
         concept.save()
         return JsonResponse({'success': True})
@@ -564,12 +588,25 @@ def video_add(request, concept_id):
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     concept = get_object_or_404(GlobalConcept, pk=concept_id)
     vfile   = request.FILES.get('video_files')
-    if not vfile:
-        return JsonResponse({'error': 'No file provided'}, status=400)
-    title = request.POST.get('video_titles', '').strip()
-    order = concept.videos.count()
-    GlobalConceptVideo.objects.create(concept=concept, file=vfile, title=title, order=order)
-    return JsonResponse({'success': True})
+    vurl    = request.POST.get('video_urls', '').strip()
+    title   = request.POST.get('video_titles', '').strip()
+    order   = concept.videos.count()
+    
+    if vfile:
+        GlobalConceptVideo.objects.create(concept=concept, file=vfile, title=title, order=order)
+        return JsonResponse({'success': True})
+    elif vurl:
+        clean_url = extract_video_src(vurl)
+        GlobalConceptVideo.objects.create(
+            concept=concept, video_url=clean_url, title=title, order=order
+        )
+        is_instagram = 'instagram.com' in clean_url
+        return JsonResponse({
+            'success': True,
+            'warning': 'Instagram videos cannot be embedded.' if is_instagram else None
+        })
+    else:
+        return JsonResponse({'error': 'No file or URL provided'}, status=400)
 
 
 @role_required('super_admin')
@@ -581,15 +618,29 @@ def concept_add(request, course_id):
         concept.course = course
         concept.level  = request.POST.get('level', 'beginner')
         concept.order  = course.concepts.count()
+        # Save pdf_url if provided and no file uploaded
+        pdf_url = request.POST.get('pdf_url', '').strip()
+        if pdf_url and not request.FILES.get('pdf'):
+            concept.pdf_url = pdf_url
         concept.save()
         # Save multiple videos
         video_files  = request.FILES.getlist('video_files')
         video_titles = request.POST.getlist('video_titles')
-        for i, vfile in enumerate(video_files):
+        video_urls   = request.POST.getlist('video_urls')
+        # zip titles with files; also handle URL-only rows
+        max_rows = max(len(video_files), len(video_urls))
+        order = 0
+        for i in range(max_rows):
+            vfile = video_files[i] if i < len(video_files) else None
+            vurl  = video_urls[i].strip() if i < len(video_urls) else ''
             title = video_titles[i] if i < len(video_titles) else ''
-            GlobalConceptVideo.objects.create(
-                concept=concept, file=vfile, title=title, order=i
-            )
+            if vfile:
+                GlobalConceptVideo.objects.create(concept=concept, file=vfile, title=title, order=order)
+                order += 1
+            elif vurl:
+                vurl = extract_video_src(vurl)
+                GlobalConceptVideo.objects.create(concept=concept, video_url=vurl, title=title, order=order)
+                order += 1
         messages.success(request, f'Concept "{concept.header}" added.')
         return redirect('superadmin_course_detail', course_id=course.pk)
     return render(request, 'superadmin/concept_add.html', {'form': form, 'course': course})
@@ -755,6 +806,27 @@ def api_school_edit(request, school_id):
         })
     
     return JsonResponse({'success': False, 'error': 'Invalid section'})
+
+
+@role_required('super_admin')
+def course_assign_school(request, course_id):
+    """AJAX: assign or unassign one or multiple schools from a course."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    course = get_object_or_404(GlobalCourse, pk=course_id)
+    # bulk: school_ids is comma-separated list, action is 'assign' or 'unassign'
+    school_ids_raw = request.POST.get('school_ids', '')
+    action         = request.POST.get('action')
+    if not school_ids_raw or action not in ('assign', 'unassign'):
+        return JsonResponse({'error': 'Invalid parameters'}, status=400)
+    ids = [int(i) for i in school_ids_raw.split(',') if i.strip().isdigit()]
+    schools = School.objects.filter(pk__in=ids)
+    if action == 'assign':
+        course.schools.add(*schools)
+    else:
+        course.schools.remove(*schools)
+    assigned_ids = list(course.schools.values_list('pk', flat=True))
+    return JsonResponse({'success': True, 'assigned_ids': assigned_ids})
 
 
 def api_profile_sync(request):

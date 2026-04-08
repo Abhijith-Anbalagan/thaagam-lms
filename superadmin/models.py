@@ -1,7 +1,55 @@
+import re
 from datetime import timedelta
 
 from django.db import models
 from django.utils import timezone
+
+
+# ─── shared URL normaliser ────────────────────────────────────────────────────
+_YT_RE    = re.compile(
+    r'(?:https?://)?(?:www\.)?'
+    r'(?:youtube\.com/(?:watch\?(?:.*&)?v=|shorts/|embed/|v/)|youtu\.be/)'
+    r'([A-Za-z0-9_-]{11})'
+)
+_VIMEO_RE = re.compile(r'vimeo\.com/(?:video/)?(\d+)')
+_IFRAME_SRC_RE = re.compile(r'src=["\']([^"\']+)["\']')
+
+
+def parse_to_embed_url(raw: str) -> str:
+    """
+    Accept any of:
+      • YouTube watch URL   https://www.youtube.com/watch?v=ID
+      • YouTube short URL   https://youtu.be/ID
+      • YouTube Shorts      https://www.youtube.com/shorts/ID
+      • YouTube <iframe>    <iframe src="https://www.youtube.com/embed/ID?...">
+      • Vimeo URL / iframe
+    Returns a clean embed URL ready for <iframe src="...">.
+    Falls back to the original string if nothing matches.
+    """
+    if not raw:
+        return raw
+
+    # decode HTML entities that browsers / copy-paste may introduce
+    raw = (raw.replace('&amp;', '&').replace('&quot;', '"')
+              .replace('&lt;', '<').replace('&gt;', '>'))
+
+    # if someone pasted a full <iframe> snippet, pull out the src
+    m = _IFRAME_SRC_RE.search(raw)
+    if m:
+        raw = m.group(1).replace('&amp;', '&')
+
+    # YouTube → embed
+    yt = _YT_RE.search(raw)
+    if yt:
+        return f'https://www.youtube.com/embed/{yt.group(1)}'
+
+    # Vimeo → embed
+    vimeo = _VIMEO_RE.search(raw)
+    if vimeo:
+        return f'https://player.vimeo.com/video/{vimeo.group(1)}'
+
+    # already an embed URL or unknown — return as-is
+    return raw
 
 
 class School(models.Model):
@@ -67,12 +115,30 @@ class GlobalConceptVideo(models.Model):
     concept   = models.ForeignKey('GlobalConcept', on_delete=models.CASCADE, related_name='videos')
     title     = models.CharField(max_length=200, blank=True)
     file      = models.FileField(upload_to='global_concepts/videos/', blank=True, null=True)
-    video_url = models.URLField(blank=True)
+    video_url = models.URLField(max_length=500, blank=True)
     order     = models.PositiveIntegerField(default=0)
 
     class Meta:
         db_table = 'superadmin_globalconceptvideo'
         ordering = ['order']
+
+    def save(self, *args, **kwargs):
+        # Auto-convert any YouTube/Vimeo input to a clean embed URL before saving
+        if self.video_url:
+            self.video_url = parse_to_embed_url(self.video_url)
+        super().save(*args, **kwargs)
+
+    @property
+    def is_youtube(self):
+        return 'youtube.com/embed/' in (self.video_url or '')
+
+    @property
+    def is_vimeo(self):
+        return 'player.vimeo.com' in (self.video_url or '')
+
+    @property
+    def is_external(self):
+        return bool(self.video_url) and not self.file
 
     def __str__(self):
         return f'{self.concept.header} — video {self.order}'
@@ -86,6 +152,7 @@ class GlobalConcept(models.Model):
     h3_course  = models.CharField(max_length=200, blank=True)
     level      = models.CharField(max_length=20, choices=LEVEL, default='beginner')
     pdf        = models.FileField(upload_to='global_concepts/pdfs/', blank=True, null=True)
+    pdf_url    = models.URLField(blank=True, max_length=500)
     quiz       = models.TextField(blank=True)
     assignment = models.TextField(blank=True)
     order      = models.PositiveIntegerField(default=0)
