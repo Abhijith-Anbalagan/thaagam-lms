@@ -146,6 +146,26 @@ def dashboard(request):
 
 
 @role_required('student')
+def upcoming_deadlines_fragment(request):
+    classrooms = request.user.joined_classrooms.all()
+    pending = []
+    for c in classrooms:
+        for a in c.assignments.filter(due_date__gte=timezone.now()):
+            if not Submission.objects.filter(assignment=a, student=request.user).exists():
+                pending.append(a)
+    return render(request, 'student/partials/upcoming_deadlines.html', {'pending_assignments': pending})
+
+
+@role_required('student')
+def recent_activity_fragment(request):
+    classrooms = request.user.joined_classrooms.all()
+    recent_announcements = Announcement.objects.filter(
+        classroom__in=classrooms
+    ).order_by('-created_at')[:6]
+    return render(request, 'student/partials/recent_activity.html', {'recent_announcements': recent_announcements})
+
+
+@role_required('student')
 def join_class(request):
     error = None
     if request.method == 'POST':
@@ -187,8 +207,8 @@ def classroom_announce(request, class_id):
     classroom     = _get_classroom(request, class_id)
     announcements = Announcement.objects.filter(classroom=classroom)
     request.session['student_last_seen_announcements'] = timezone.now().isoformat()
-    from accounts.models import User as UserModel
-    UserModel.objects.filter(pk=request.user.pk).update(announcements_seen_at=timezone.now())
+    request.user.announcements_seen_at = timezone.now()
+    request.user.save(update_fields=['announcements_seen_at'])
     context = {
         'classroom': classroom, 'announcements': announcements, 'active_tab': 'announcements',
         **_student_layout_context(request, classroom=classroom, active_nav='announcements'),
@@ -266,8 +286,8 @@ def classroom_classwork(request, class_id):
         return redirect('student_classroom_classwork', class_id=class_id)
 
     request.session['student_last_seen_assignments'] = timezone.now().isoformat()
-    from accounts.models import User as UserModel
-    UserModel.objects.filter(pk=request.user.pk).update(assignments_seen_at=timezone.now())
+    request.user.assignments_seen_at = timezone.now()
+    request.user.save(update_fields=['assignments_seen_at'])
     assignment_data = []
     for a in classroom.assignments.all():
         try:    sub = Submission.objects.get(assignment=a, student=request.user)
@@ -297,8 +317,8 @@ def classroom_grade(request, class_id):
     classroom   = _get_classroom(request, class_id)
 
     # Mark all current graded submissions as seen — persists across logins
-    from accounts.models import User as UserModel
-    UserModel.objects.filter(pk=request.user.pk).update(grades_seen_at=timezone.now())
+    request.user.grades_seen_at = timezone.now()
+    request.user.save(update_fields=['grades_seen_at'])
     grade_data  = []
     total_score = total_max = 0
 
@@ -465,6 +485,36 @@ def course_count_api(request):
     count += enrolled_count
     
     return JsonResponse({'courses': count})
+
+
+@role_required('student')
+def new_announcements_count_api(request):
+    """JSON endpoint — returns count of unseen announcements."""
+    last_seen = request.user.announcements_seen_at
+    if not last_seen:
+        from datetime import datetime
+        last_seen = timezone.make_aware(datetime.min)
+    
+    count = Announcement.objects.filter(
+        classroom__in=request.user.joined_classrooms.all(),
+        created_at__gt=last_seen
+    ).count()
+    return JsonResponse({'new_announcements': count})
+
+
+@role_required('student')
+def new_assignments_count_api(request):
+    """JSON endpoint — returns count of unseen assignments."""
+    last_seen = request.user.assignments_seen_at
+    if not last_seen:
+        from datetime import datetime
+        last_seen = timezone.make_aware(datetime.min)
+    
+    count = Assignment.objects.filter(
+        classroom__in=request.user.joined_classrooms.all(),
+        created_at__gt=last_seen
+    ).count()
+    return JsonResponse({'new_assignments': count})
 
 
 @role_required('student')

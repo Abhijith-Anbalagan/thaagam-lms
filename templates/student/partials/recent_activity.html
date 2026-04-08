@@ -1,0 +1,14 @@
+{% for announcement in recent_announcements|slice:":4" %}
+<div class="flex gap-3 rounded-2xl bg-slate-50 p-4">
+    <div class="mt-1 rounded-2xl bg-blue-100 p-2 text-blue-600">
+        <i data-lucide="megaphone" class="h-4 w-4"></i>
+    </div>
+    <div>
+        <p class="font-medium text-slate-900">{{ announcement.title }}</p>
+        <p class="mt-1 text-sm text-slate-500">{{ announcement.created_at|date:"M j, H:i" }}</p>
+    </div>
+</div>
+{% empty %}
+<div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">No recent announcements yet.</div>
+{% endfor %}
+<script>lucide.createIcons();</script>

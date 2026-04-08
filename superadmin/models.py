@@ -109,6 +109,7 @@ class CourseEnrollment(models.Model):
     )
     enrolled_at = models.DateTimeField(auto_now_add=True)
     deadline_at = models.DateTimeField(blank=True, null=True)
+    is_completed = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'superadmin_courseenrollment'

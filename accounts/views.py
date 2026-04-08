@@ -352,10 +352,22 @@ def profile_view(request):
     else:
         form = ProfileForm(instance=request.user)
 
-    return render(request, 'shared/profile_settings.html', {
+    base_template = 'base.html'
+    context = {
         'form'   : form,
         'pw_form': PasswordChangeCustomForm(request.user),
-    })
+    }
+
+    if request.user.role == 'student':
+        base_template = 'student/base_student.html'
+        try:
+            from students.views import _student_layout_context
+            context.update(_student_layout_context(request))
+        except ImportError:
+            pass
+
+    context['base_template'] = base_template
+    return render(request, 'shared/profile_settings.html', context)
 
 @login_required
 def password_change_view(request):
@@ -365,11 +377,24 @@ def password_change_view(request):
         update_session_auth_hash(request, user)
         messages.success(request, 'Password changed successfully.')
         return redirect('profile')
-    return render(request, 'shared/profile_settings.html', {
+    
+    base_template = 'base.html'
+    context = {
         'form':    request.user,
         'pw_form': form,
         'show_pw': True,
-    })
+    }
+
+    if request.user.role == 'student':
+        base_template = 'student/base_student.html'
+        try:
+            from students.views import _student_layout_context
+            context.update(_student_layout_context(request))
+        except ImportError:
+            pass
+
+    context['base_template'] = base_template
+    return render(request, 'shared/profile_settings.html', context)
         
 def landing(request):
     testimonials = Testimonial.objects.filter(status='approved').order_by('-created_at')

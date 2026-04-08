@@ -3,6 +3,8 @@ from . import views
 
 urlpatterns = [
     path('dashboard/',                              views.dashboard,           name='student_dashboard'),
+    path('api/dashboard/deadlines/',                views.upcoming_deadlines_fragment, name='student_deadlines_fragment'),
+    path('api/dashboard/activity/',                 views.recent_activity_fragment,    name='student_activity_fragment'),
     path('join/',                                   views.join_class,          name='student_join_class'),
     path('leave/<int:class_id>/',                   views.leave_classroom,     name='student_leave_classroom'),
     path('classroom/<int:class_id>/announce/',      views.classroom_announce,  name='student_classroom_announce'),
@@ -15,6 +17,8 @@ urlpatterns = [
     path('api/pending-count/',                      views.pending_count_api,   name='student_pending_count'),
     path('api/graded-count/',                       views.graded_count_api,    name='student_graded_count'),
     path('api/new-grades-count/',                   views.new_grades_count_api, name='student_new_grades_count'),
+    path('api/new-announcements-count/',            views.new_announcements_count_api, name='student_new_announcements_count'),
+    path('api/new-assignments-count/',              views.new_assignments_count_api, name='student_new_assignments_count'),
     path('api/course-count/',                       views.course_count_api,    name='student_course_count'),
     path('api/course-enroll/<int:course_id>/',      views.course_enroll,       name='student_course_enroll'),
     path('my-learning/',                            views.my_learning,         name='student_my_learning'),
