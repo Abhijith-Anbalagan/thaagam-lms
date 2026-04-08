@@ -55,6 +55,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+WHITENOISE_AUTOREFRESH = True
+WHITENOISE_USE_FINDERS = True
+# Exclude media from WhiteNoise — served by Django's static() helper in dev
+WHITENOISE_ROOT = None
+
 ROOT_URLCONF = 'eduplatform.urls'
 
 TEMPLATES = [
@@ -134,5 +139,4 @@ DEFAULT_FROM_EMAIL  = f'EduPlatform <{os.environ.get("EMAIL_HOST_USER", "noreply
 SITE_URL = os.environ.get('SITE_URL', 'http://127.0.0.1:8000')
 
 USE_TZ = True
-TIME_ZONE = 'Asia/Kolkata'   # ← you're in Tamil Nadu, this is IST
-
+TIME_ZONE = 'Asia/Kolkata'   # ← you're in Tamil Nadu, this is IST  

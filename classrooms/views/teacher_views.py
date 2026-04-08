@@ -771,11 +771,10 @@ def my_learning(request):
         'enrollments':        enrollments,
     })
 
-
 @role_required('teacher')
 def teacher_course_detail(request, course_id):
-    from superadmin.models import CourseEnrollment
-
+    from superadmin.models import CourseEnrollment, ConceptProgress
+ 
     enrollment = get_object_or_404(
         CourseEnrollment.objects.select_related('course'),
         user=request.user,
@@ -783,23 +782,132 @@ def teacher_course_detail(request, course_id):
         course__schools=request.user.school,
         course__status='published',
     )
-    course = enrollment.course
+    course   = enrollment.course
     concepts = course.concepts.prefetch_related('videos').all()
-
-    beginner_concepts = concepts.filter(level='beginner')
+ 
+    beginner_concepts     = concepts.filter(level='beginner')
     intermediate_concepts = concepts.filter(level='intermediate')
-    advanced_concepts = concepts.filter(level='advanced')
-
+    advanced_concepts     = concepts.filter(level='advanced')
+ 
+    # ── Progress ──────────────────────────────────────────────────────────────
+    completed_ids   = set(
+        ConceptProgress.objects.filter(student=request.user, concept__course=course)
+        .values_list('concept_id', flat=True)
+    )
+    total_concepts  = concepts.count()
+    completed_count = len(completed_ids)
+    progress_pct    = round((completed_count / total_concepts) * 100) if total_concepts else 0
+ 
     return render(request, 'teacher/course_detail.html', {
-        'course': course,
-        'concepts': concepts,
-        'beginner_concepts': beginner_concepts,
-        'intermediate_concepts': intermediate_concepts,
-        'advanced_concepts': advanced_concepts,
-        'enrollment': enrollment,
-        'total_concepts': concepts.count(),
+        'course':                 course,
+        'concepts':               concepts,
+        'beginner_concepts':      beginner_concepts,
+        'intermediate_concepts':  intermediate_concepts,
+        'advanced_concepts':      advanced_concepts,
+        'enrollment':             enrollment,
+        'total_concepts':         total_concepts,
+        'completed_ids':          completed_ids,
+        'completed_count':        completed_count,
+        'progress_pct':           progress_pct,
+    })
+ 
+
+
+@role_required('teacher')
+def teacher_course_concept(request, course_id, concept_id):
+    import json
+    from superadmin.models import CourseEnrollment, GlobalConcept, ConceptProgress
+
+    enrollment = get_object_or_404(
+        CourseEnrollment.objects.select_related('course'),
+        user=request.user, course_id=course_id,
+        course__schools=request.user.school, course__status='published',
+    )
+    course   = enrollment.course
+    concept  = get_object_or_404(GlobalConcept, pk=concept_id, course=course)
+    concepts = list(course.concepts.prefetch_related('videos').order_by('order', 'created_at'))
+
+    completed_ids = set(
+        ConceptProgress.objects.filter(student=request.user, concept__course=course)
+        .values_list('concept_id', flat=True)
+    )
+
+    # Enforce sequential access — redirect to first incomplete if trying to skip
+    idx = next((i for i, c in enumerate(concepts) if c.pk == concept.pk), 0)
+    if idx > 0 and concepts[idx - 1].pk not in completed_ids:
+        first_incomplete = next((c for c in concepts if c.pk not in completed_ids), concepts[0])
+        return redirect('teacher_course_concept', course_id=course.pk, concept_id=first_incomplete.pk)
+
+    prev_concept = concepts[idx - 1] if idx > 0 else None
+    # Next is only accessible after current is completed
+    next_concept = concepts[idx + 1] if (idx < len(concepts) - 1 and concept.pk in completed_ids) else None
+
+    total_concepts  = len(concepts)
+    completed_count = len(completed_ids)
+    progress_pct    = round((completed_count / total_concepts) * 100) if total_concepts else 0
+
+    raw_quiz = concept.quiz
+    if isinstance(raw_quiz, str) and raw_quiz.strip():
+        try:
+            quiz_data = json.loads(raw_quiz)
+        except (json.JSONDecodeError, ValueError):
+            quiz_data = []
+    elif isinstance(raw_quiz, list):
+        quiz_data = raw_quiz
+    else:
+        quiz_data = []
+
+    return render(request, 'teacher/course_concept.html', {
+        'course':                course,
+        'concept':               concept,
+        'quiz_data':             quiz_data,
+        'enrollment':            enrollment,
+        'prev_concept':          prev_concept,
+        'next_concept':          next_concept,
+        'total_concepts':        total_concepts,
+        'completed_count':       completed_count,
+        'completed_ids':         completed_ids,
+        'progress_pct':          progress_pct,
+        'beginner_concepts':     [c for c in concepts if c.level == 'beginner'],
+        'intermediate_concepts': [c for c in concepts if c.level == 'intermediate'],
+        'advanced_concepts':     [c for c in concepts if c.level == 'advanced'],
+        'all_concepts':          concepts,
     })
 
+
+@role_required('teacher')
+def teacher_mark_concept_complete(request, course_id, concept_id):
+    from superadmin.models import CourseEnrollment, GlobalConcept, ConceptProgress
+    from django.http import HttpResponseNotAllowed
+
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    enrollment = get_object_or_404(
+        CourseEnrollment,
+        user=request.user, course_id=course_id,
+        course__schools=request.user.school, course__status='published',
+    )
+    course   = enrollment.course
+    concept  = get_object_or_404(GlobalConcept, pk=concept_id, course=course)
+    concepts = list(course.concepts.order_by('order', 'created_at'))
+
+    # Enforce sequential — only allow if previous is done
+    idx = next((i for i, c in enumerate(concepts) if c.pk == concept.pk), 0)
+    completed_ids = set(
+        ConceptProgress.objects.filter(student=request.user, concept__course=course)
+        .values_list('concept_id', flat=True)
+    )
+    if idx > 0 and concepts[idx - 1].pk not in completed_ids:
+        return redirect('teacher_course_concept', course_id=course.pk, concept_id=concept.pk)
+
+    ConceptProgress.objects.get_or_create(student=request.user, concept=concept)
+
+    # Redirect to next concept if available
+    next_concept = concepts[idx + 1] if idx < len(concepts) - 1 else None
+    if next_concept:
+        return redirect('teacher_course_concept', course_id=course.pk, concept_id=next_concept.pk)
+    return redirect('teacher_course_detail', course_id=course.pk)
 
 @role_required('teacher')
 def course_enroll(request, course_id):
