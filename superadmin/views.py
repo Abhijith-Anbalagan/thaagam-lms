@@ -546,7 +546,7 @@ def course_detail(request, course_id):
     })
     response['Cache-Control'] = 'no-store, no-cache, must-revalidate'
     response['Pragma'] = 'no-cache'
-    response['Referrer-Policy'] = 'no-referrer'
+    response['Referrer-Policy'] = 'strict-origin-when-cross-origin' 
     return response
 
 
@@ -586,6 +586,7 @@ def video_delete(request, video_id):
 def video_add(request, concept_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
     concept = get_object_or_404(GlobalConcept, pk=concept_id)
     vfile   = request.FILES.get('video_files')
     vurl    = request.POST.get('video_urls', '').strip()
@@ -593,20 +594,51 @@ def video_add(request, concept_id):
     order   = concept.videos.count()
     
     if vfile:
-        GlobalConceptVideo.objects.create(concept=concept, file=vfile, title=title, order=order)
-        return JsonResponse({'success': True})
+        video = GlobalConceptVideo.objects.create(
+            concept=concept, 
+            file=vfile, 
+            title=title, 
+            order=order
+        )
+        return JsonResponse({
+            'success':   True,
+            'video_id':  video.pk,
+            'title':     video.title or 'Untitled',
+            'url':       video.file.url,
+            'type':      'file',
+        })
+    
     elif vurl:
         clean_url = extract_video_src(vurl)
-        GlobalConceptVideo.objects.create(
-            concept=concept, video_url=clean_url, title=title, order=order
-        )
+        
+        # Reject if the URL couldn't be parsed into a valid embed URL
+        if not clean_url:
+            return JsonResponse({'error': 'Invalid or unsupported video URL.'}, status=400)
+        
         is_instagram = 'instagram.com' in clean_url
-        return JsonResponse({
-            'success': True,
-            'warning': 'Instagram videos cannot be embedded.' if is_instagram else None
-        })
+        
+        # Warn but still allow non-embeddable URLs to be saved
+        video = GlobalConceptVideo.objects.create(
+            concept=concept, 
+            video_url=clean_url, 
+            title=title, 
+            order=order
+        )
+        
+        response = {
+            'success':   True,
+            'video_id':  video.pk,
+            'title':     video.title or 'Untitled',
+            'embed_url': clean_url,
+            'type':      'external',
+        }
+        if is_instagram:
+            response['warning'] = 'Instagram videos cannot be embedded. The link is saved but may not play inline.'
+        
+        return JsonResponse(response)
+    
     else:
-        return JsonResponse({'error': 'No file or URL provided'}, status=400)
+        return JsonResponse({'error': 'No file or URL provided.'}, status=400)
 
 
 @role_required('super_admin')

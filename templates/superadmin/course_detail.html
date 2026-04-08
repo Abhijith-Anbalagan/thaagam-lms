@@ -224,14 +224,14 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Playfair Display', serif; }
       <!-- Pre-rendered YouTube/Vimeo iframes — hidden until selected -->
       {% for concept in concepts %}{% for video in concept.videos.all %}{% if video.video_url %}
       <iframe
-        id="yt-frame-{{ video.pk }}"
-        src="{{ video.video_url }}"
-        style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;border:none;"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen
-        referrerpolicy="no-referrer"
-        loading="lazy">
-      </iframe>
+     id="yt-frame-{{ video.pk }}"
+     src="about:blank"
+     data-src="{{ video.video_url }}"
+     style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;border:none;"
+     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+     allowfullscreen
+     referrerpolicy="strict-origin-when-cross-origin">
+     </iframe>
       {% endif %}{% endfor %}{% endfor %}
     </div>
 
@@ -687,88 +687,87 @@ const videoMap = JSON.parse(document.getElementById('video-map-data').textConten
 let videoLastTime = 0;
 
 function getEmbedUrl(url) {
-    if (!url) return null;
+  if (!url) return null;
+  url = url.trim();
 
-    url = url.trim();
+  // Already a valid embed URL — return as-is
+  if (url.includes('youtube.com/embed/') || url.includes('player.vimeo.com')) {
+      return url;
+  }
 
-    // YouTube watch → embed
-    let ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{11})/);
-    if (ytMatch) {
-        return 'https://www.youtube.com/embed/' + ytMatch[1];
-    }
+  // YouTube watch/short/youtu.be → embed
+  var ytMatch = url.match(
+      /(?:youtube\.com\/watch\?(?:.*&)?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{11})/
+  );
+  if (ytMatch) {
+      return 'https://www.youtube.com/embed/' + ytMatch[1];
+  }
 
-    // Vimeo
-    let vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-    if (vimeoMatch) {
-        return 'https://player.vimeo.com/video/' + vimeoMatch[1];
-    }
+  // Vimeo
+  var vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vimeoMatch) {
+      return 'https://player.vimeo.com/video/' + vimeoMatch[1];
+  }
 
-    // Already embed
-    if (url.includes('embed') || url.includes('player.')) {
-        return url;
-    }
-
-    return null;
+  // Unknown URL — return as-is and let the iframe try
+  return url;
 }
 
 function playVideo(url, title, type, videoId) {
-    var wrap        = document.getElementById('main-video-wrap');
-    var player      = document.getElementById('main-video-player');
-    var src         = document.getElementById('main-video-src');
-    var placeholder = document.getElementById('video-placeholder');
-    var nowPlaying  = document.getElementById('now-playing');
-    var npTitle     = document.getElementById('now-playing-title');
+  var wrap        = document.getElementById('main-video-wrap');
+  var player      = document.getElementById('main-video-player');
+  var src         = document.getElementById('main-video-src');
+  var placeholder = document.getElementById('video-placeholder');
+  var nowPlaying  = document.getElementById('now-playing');
+  var npTitle     = document.getElementById('now-playing-title');
 
-    // Hide everything first
-    placeholder.style.display = 'none';
-    player.style.display      = 'none';
+  placeholder.style.display = 'none';
+  player.style.display      = 'none';
+  try { player.pause(); } catch(e) {}
 
-    try { player.pause(); } catch(e) {}
+  // Stop all iframes
+  wrap.querySelectorAll('iframe').forEach(function(f){
+      f.style.display = 'none';
+      f.src = 'about:blank';
+  });
 
-    // Hide all iframes
-    wrap.querySelectorAll('iframe').forEach(function(f){
-        f.style.display = 'none';
+  wrap.querySelectorAll('.embed-fallback').forEach(function(f){ f.remove(); });
 
-        // 🔥 IMPORTANT: stop previous video playback
-        try {
-            f.src = f.src.replace('&autoplay=1','').replace('?autoplay=1','');
-        } catch(e){}
-    });
+  nowPlaying.style.display = 'block';
+  npTitle.textContent      = title;
+  videoLastTime = 0;
 
-    // Remove fallback if exists
-    wrap.querySelectorAll('.embed-fallback').forEach(function(f){ f.remove(); });
+  if (type === 'external') {
+      var embedUrl = getEmbedUrl(url) || url;
 
-    nowPlaying.style.display = 'block';
-    npTitle.textContent      = title;
-    videoLastTime = 0;
+      if (!embedUrl) {
+          showEmbedFallback(wrap, url, 'Invalid video URL.');
+          return;
+      }
 
-    if (type === 'external') {
-        var frame = videoId ? document.getElementById('yt-frame-' + videoId) : null;
+      var frame = videoId ? document.getElementById('yt-frame-' + videoId) : null;
 
-        if (frame) {
-           let cleanUrl = getEmbedUrl(url);
+      if (!frame) {
+          // Create iframe dynamically if pre-rendered one not found
+          frame = document.createElement('iframe');
+          frame.id = 'yt-frame-dyn-' + Date.now();
+          frame.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;';
+          frame.setAttribute('allowfullscreen', '');
+          frame.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+          frame.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+          wrap.appendChild(frame);
+      }
 
+      // Set src fresh every time to trigger load
+      frame.src = embedUrl;
+      frame.style.display = 'block';
 
-           if (!cleanUrl) {
-    showEmbedFallback(wrap, url, 'Invalid video URL');
-    return;
-}
-
-            // 🔥 FORCE reload iframe every time
-            frame.src = cleanUrl;
-
-            // Show iframe
-            frame.style.display = 'block';
-        } else {
-            showEmbedFallback(wrap, url, 'Video frame not found.');
-        }
-    } else {
-        // Native video
-        player.style.display = 'block';
-        src.src = url;
-        player.load();
-        player.play().catch(function(){});
-    }
+  } else {
+      player.style.display = 'block';
+      src.src = url;
+      player.load();
+      player.play().catch(function(){});
+  }
 }
 
 function showEmbedFallback(wrap, url, reason) {
