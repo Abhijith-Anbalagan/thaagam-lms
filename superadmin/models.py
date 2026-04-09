@@ -28,7 +28,7 @@ def parse_to_embed_url(raw: str) -> str:
     """
     if not raw:
         return raw
-
+    
     # decode HTML entities that browsers / copy-paste may introduce
     raw = (raw.replace('&amp;', '&').replace('&quot;', '"')
               .replace('&lt;', '<').replace('&gt;', '>'))
