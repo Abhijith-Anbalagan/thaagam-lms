@@ -47,12 +47,12 @@
       {% for video in concept.videos.all %}
       <div class="video-item" id="video-{{ video.pk }}">
         {% if video.file %}
-        <div class="video-item-thumb" onclick="playVideo('{{ video.file.url }}','{{ video.title|default:'Untitled'|escapejs }}','file')">
+        <div class="video-item-thumb" onclick="playVideo('{{ video.file.url }}','{{ video.title|default:'Untitled'|escapejs }}','file'); scrollToPlayer();">
           <video muted preload="metadata">
             <source src="{{ video.file.url }}#t=0.5" type="video/mp4">
           </video>
         </div>
-        <div class="video-play-btn" onclick="playVideo('{{ video.file.url }}','{{ video.title|default:'Untitled'|escapejs }}','file')">
+        <div class="video-play-btn" onclick="playVideo('{{ video.file.url }}','{{ video.title|default:'Untitled'|escapejs }}','file'); scrollToPlayer();">
           {{ video.title|default:"Untitled Video" }}
           <div style="font-size:11px;color:var(--muted);margin-top:2px;">Click to play ▶</div>
         </div>
