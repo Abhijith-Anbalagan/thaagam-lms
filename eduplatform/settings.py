@@ -5,7 +5,9 @@ load_dotenv()
 
 
 
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 # Load .env file
 _env_path = BASE_DIR / '.env'
@@ -52,6 +54,11 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+WHITENOISE_AUTOREFRESH = True
+WHITENOISE_USE_FINDERS = True
+# Exclude media from WhiteNoise — served by Django's static() helper in dev
+WHITENOISE_ROOT = None
 
 ROOT_URLCONF = 'eduplatform.urls'
 
@@ -130,3 +137,6 @@ DEFAULT_FROM_EMAIL  = f'EduPlatform <{os.environ.get("EMAIL_HOST_USER", "noreply
 
 # Base URL used in emails — change to your real domain in production
 SITE_URL = os.environ.get('SITE_URL', 'http://127.0.0.1:8000')
+
+USE_TZ = True
+TIME_ZONE = 'Asia/Kolkata'   # ← you're in Tamil Nadu, this is IST  

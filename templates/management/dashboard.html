@@ -457,71 +457,181 @@ a.bstat:hover { opacity: .75; }
     </div>
 
   </div>
-  <!-- TAB: ANNOUNCEMENTS -->
-  <div class="tab-pane" id="tab-announcements">
-    <div class="card">
-      <div class="card-head"><span class="card-title">Post Announcement</span></div>
-      <div style="padding:20px">
-        <form method="post" class="ann-form">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="announce">
-          <div style="margin-bottom:10px;"><input type="text" name="title" class="form-control" placeholder="Announcement title…" required></div>
-          <div style="margin-bottom:10px;"><textarea name="body" class="form-control" rows="3" placeholder="Write your message…" required></textarea></div>
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;">
-            <select name="target" class="form-control" style="width:auto;flex:1;min-width:160px;">
-              <option value="all">📢 To Everyone</option>
-              <option value="teachers">👩‍🏫 To All Teachers</option>
-              <option value="students">🎓 To All Students</option>
-            </select>
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;white-space:nowrap;">
-              <input type="checkbox" name="is_pinned" value="1" style="accent-color:var(--brand);width:15px;height:15px;">
-              📌 Mark as Important
-            </label>
-            <button type="submit" class="btn btn-primary">Post</button>
-          </div>
-        </form>
-      </div>
-    </div>
-    <div class="two-col">
-      <div class="card">
-        <div class="card-head"><span class="card-title">👩‍🏫 To Teachers</span><span class="badge badge-green">{{ ann_teachers|length }}</span></div>
-        <div style="padding:0 22px">
-          {% for a in ann_teachers %}
-          <div class="ann-item">
-            <div class="ann-title">{% if a.is_pinned %}<span class="pin">📌 Pinned</span> {% endif %}{{ a.title }}</div>
-            <div class="ann-meta"><span>{{ a.created_at|date:"M d, Y" }}</span><span class="tbadge tbadge-teachers">Teachers</span></div>
-            <div class="ann-body">{{ a.body|truncatechars:120 }}</div>
-          </div>
-          {% empty %}<div class="empty-state">No teacher announcements yet.</div>{% endfor %}
+ <!-- TAB: ANNOUNCEMENTS -->
+<div class="tab-pane" id="tab-announcements">
+  <div class="card">
+    <div class="card-head"><span class="card-title">Post Announcement</span></div>
+    <div style="padding:20px">
+      <form method="post" class="ann-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="announce">
+        <div style="margin-bottom:10px;"><input type="text" name="title" class="form-control" placeholder="Announcement title…" required></div>
+        <div style="margin-bottom:10px;"><textarea name="body" class="form-control" rows="3" placeholder="Write your message…" required></textarea></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;">
+          <select name="target" class="form-control" style="width:auto;flex:1;min-width:160px;">
+            <option value="all">📢 To Everyone</option>
+            <option value="teachers">👩‍🏫 To All Teachers</option>
+            <option value="students">🎓 To All Students</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;white-space:nowrap;">
+            <input type="checkbox" name="is_pinned" value="1" style="accent-color:var(--brand);width:15px;height:15px;">
+            📌 Mark as Important
+          </label>
+          <button type="submit" class="btn btn-primary">Post</button>
         </div>
-      </div>
-      <div class="card">
-        <div class="card-head"><span class="card-title">🎓 To Students</span><span class="badge badge-amber">{{ ann_students|length }}</span></div>
-        <div style="padding:0 22px">
-          {% for a in ann_students %}
-          <div class="ann-item">
-            <div class="ann-title">{% if a.is_pinned %}<span class="pin">📌 Pinned</span> {% endif %}{{ a.title }}</div>
-            <div class="ann-meta"><span>{{ a.created_at|date:"M d, Y" }}</span><span class="tbadge tbadge-students">Students</span></div>
-            <div class="ann-body">{{ a.body|truncatechars:120 }}</div>
-          </div>
-          {% empty %}<div class="empty-state">No student announcements yet.</div>{% endfor %}
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-head"><span class="card-title">📌 Important Notices</span><span class="badge badge-red">{{ ann_pinned|length }}</span></div>
-      <div style="padding:0 22px">
-        {% for a in ann_pinned %}
-        <div class="ann-item">
-          <div class="ann-title" style="color:#b91c1c;">📌 {{ a.title }}</div>
-          <div class="ann-meta"><span>{{ a.created_at|date:"M d, Y" }}</span><span class="tbadge tbadge-important">Important</span><span class="tbadge tbadge-{{ a.target }}">{{ a.get_target_display }}</span></div>
-          <div class="ann-body">{{ a.body|truncatechars:160 }}</div>
-        </div>
-        {% empty %}<div class="empty-state">No important notices yet.</div>{% endfor %}
-      </div>
+      </form>
     </div>
   </div>
 
+    <!-- Important Notices (unchanged) -->
+  <div class="card">
+    <div class="card-head"><span class="card-title">📌 Important Notices</span><span class="badge badge-red">{{ ann_pinned|length }}</span></div>
+    <div style="padding:0 22px">
+      {% for a in ann_pinned %}
+      <div class="ann-item">
+        <div class="ann-title" style="color:#b91c1c;">📌 {{ a.title }}</div>
+        <div class="ann-meta"><span>{{ a.created_at|date:"M d, Y" }}</span><span class="tbadge tbadge-important">Important</span><span class="tbadge tbadge-{{ a.target }}">{{ a.get_target_display }}</span></div>
+        <div class="ann-body">{{ a.body|truncatechars:160 }}</div>
+      </div>
+      {% empty %}<div class="empty-state">No important notices yet.</div>{% endfor %}
+    </div>
+  </div>
+
+  <!-- Teachers Announcements Table -->
+  <div class="card">
+    <div class="card-head">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:18px;">👩‍🏫</span>
+        <span class="card-title">Announcements to Teachers</span>
+        <span class="badge badge-green">{{ ann_teachers|length }}</span>
+      </div>
+    </div>
+    {% if ann_teachers %}
+    <div style="overflow-x:auto">
+      <table class="dt">
+        <thead>
+          <tr>
+            <th style="width:36px;">#</th>
+            <th>Title &amp; Message</th>
+            <th style="width:110px;">Date</th>
+            <th style="width:90px;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in ann_teachers %}
+          <tr>
+            <td style="color:var(--text-3);font-size:12px;font-family:var(--mono);">{{ forloop.counter }}</td>
+            <td>
+              <div style="display:flex;align-items:flex-start;gap:10px;">
+                <div style="width:36px;height:36px;border-radius:10px;background:var(--teacher-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;margin-top:1px;">📣</div>
+                <div>
+                  <div style="font-weight:700;font-size:13.5px;color:var(--text-1);margin-bottom:3px;">
+                    {% if a.is_pinned %}<span class="pin">📌 Pinned</span> {% endif %}{{ a.title }}
+                  </div>
+                  <div style="font-size:12.5px;color:var(--text-2);line-height:1.55;max-width:520px;">{{ a.body|truncatechars:120 }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div style="font-size:12.5px;color:var(--text-2);white-space:nowrap;">{{ a.created_at|date:"M d, Y" }}</div>
+              <div style="font-size:11px;color:var(--text-3);">{{ a.created_at|date:"h:i A" }}</div>
+            </td>
+            <td>
+              {% if a.is_pinned %}
+                <span class="badge badge-red">📌 Important</span>
+              {% else %}
+                <span class="badge badge-green">Active</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div style="font-size:38px;margin-bottom:10px;">👩‍🏫</div>
+      <p style="font-size:14px;font-weight:600;color:var(--text-2);margin-bottom:4px;">No teacher announcements yet</p>
+      <p>Post an announcement above targeted to teachers.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Students Announcements Table -->
+  <div class="card">
+    <div class="card-head">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:18px;">🎓</span>
+        <span class="card-title">Announcements to Students</span>
+        <span class="badge badge-amber">{{ ann_students|length }}</span>
+      </div>
+    </div>
+    {% if ann_students %}
+    <div style="overflow-x:auto">
+      <table class="dt">
+        <thead>
+          <tr>
+            <th style="width:36px;">#</th>
+            <th>Title &amp; Message</th>
+            <th style="width:110px;">Date</th>
+            <th style="width:90px;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in ann_students %}
+          <tr>
+            <td style="color:var(--text-3);font-size:12px;font-family:var(--mono);">{{ forloop.counter }}</td>
+            <td>
+              <div style="display:flex;align-items:flex-start;gap:10px;">
+                <div style="width:36px;height:36px;border-radius:10px;background:#fef9ec;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;margin-top:1px;">📣</div>
+                <div>
+                  <div style="font-weight:700;font-size:13.5px;color:var(--text-1);margin-bottom:3px;">
+                    {% if a.is_pinned %}<span class="pin">📌 Pinned</span> {% endif %}{{ a.title }}
+                  </div>
+                  <div style="font-size:12.5px;color:var(--text-2);line-height:1.55;max-width:520px;">{{ a.body|truncatechars:120 }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div style="font-size:12.5px;color:var(--text-2);white-space:nowrap;">{{ a.created_at|date:"M d, Y" }}</div>
+              <div style="font-size:11px;color:var(--text-3);">{{ a.created_at|date:"h:i A" }}</div>
+            </td>
+            <td>
+              {% if a.is_pinned %}
+                <span class="badge badge-red">📌 Important</span>
+              {% else %}
+                <span class="badge badge-blue">Active</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div style="font-size:38px;margin-bottom:10px;">🎓</div>
+      <p style="font-size:14px;font-weight:600;color:var(--text-2);margin-bottom:4px;">No student announcements yet</p>
+      <p>Post an announcement above targeted to students.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Important Notices (unchanged) -->
+  {% comment %} <div class="card">
+    <div class="card-head"><span class="card-title">📌 Important Notices</span><span class="badge badge-red">{{ ann_pinned|length }}</span></div>
+    <div style="padding:0 22px">
+      {% for a in ann_pinned %}
+      <div class="ann-item">
+        <div class="ann-title" style="color:#b91c1c;">📌 {{ a.title }}</div>
+        <div class="ann-meta"><span>{{ a.created_at|date:"M d, Y" }}</span><span class="tbadge tbadge-important">Important</span><span class="tbadge tbadge-{{ a.target }}">{{ a.get_target_display }}</span></div>
+        <div class="ann-body">{{ a.body|truncatechars:160 }}</div>
+      </div>
+      {% empty %}<div class="empty-state">No important notices yet.</div>{% endfor %}
+    </div>
+  </div> {% endcomment %}
+
+</div>
 </div>
 
 <script>
@@ -594,7 +704,6 @@ if (document.readyState === 'loading') {
 }
 </script>
 {% endblock %}
-
 
 
 

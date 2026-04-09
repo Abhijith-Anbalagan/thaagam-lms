@@ -90,7 +90,7 @@
       <!-- Actual players (hidden until play clicked) -->
       <video id="main-video" class="hidden" style="width:100%;height:100%;background:#000;"></video>
       <iframe id="main-iframe" class="hidden" style="width:100%;height:100%;" frameborder="0"
-              allow="fullscreen; picture-in-picture" allowfullscreen></iframe>
+              allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
     </div>
 
     <!-- Custom video controls (shown only for uploaded/direct videos) -->
@@ -238,6 +238,7 @@
 </div>
 {% endblock %}
 
+<script src="https://www.youtube.com/iframe_api"></script>
 {% block extra_js %}
 <script id="concepts-data" type="application/json">
 [{% for concept in concepts %}{
@@ -396,27 +397,30 @@ function startPlay() {
     loadPlayer(pendingSrc, pendingType, document.getElementById('ready-title').textContent);
 }
 
-function loadPlayer(src, type, title) {
-    const videoEl  = document.getElementById('main-video');
-    const iframeEl = document.getElementById('main-iframe');
-    maxWatched = 0;
+)/);
+    if (ytMatch) {
+        return 'https://www.youtube-nocookie.com/embed/' + ytMatch[1]
+             + '?autoplay=1&rel=0&origin=' + encodeURIComponent(window.location.origin);
+    }
+    // 4. Vimeo
+    var vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    if (vimeoMatch) return 'https://player.vimeo.com/video/' + vimeoMatch[1] + '?autoplay=1';
+    // 5. Unknown - caller shows fallback
+    return null;
+}
 
-    if (type === 'url') {
-        const ytMatch = src.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
-        const isDirect = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(src);
-        if (ytMatch) {
-            iframeEl.src = `https://www.youtube.com/embed/${ytMatch[1]}?rel=0`;
-            iframeEl.classList.remove('hidden');
-            // Can't track iframe playback — mark watched when loaded
-            videoWatched = true;
-            checkCompletionGate();
+
+
+
+
+, 4000);
+            iframeEl.addEventListener('load', () => clearTimeout(fbTimer), { once: true });
+            iframeEl.addEventListener('error', () => { clearTimeout(fbTimer); showEmbedFallback(src); }, { once: true });
         } else if (isDirect) {
             setupVideoEl(videoEl, src);
         } else {
-            iframeEl.src = src;
-            iframeEl.classList.remove('hidden');
-            videoWatched = true;
-            checkCompletionGate();
+            // Unknown URL — try as direct video source
+            setupVideoEl(videoEl, src);
         }
     } else {
         setupVideoEl(videoEl, src);
@@ -425,6 +429,123 @@ function loadPlayer(src, type, title) {
     document.getElementById('now-playing-title').textContent = title;
     document.getElementById('now-playing').classList.remove('hidden');
     lucide.createIcons();
+}
+
+
+function getEmbedUrl(src) {
+    src = src.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'");
+    var iframeMatch = src.match(/src=["']([^"']+)["']/);
+    if (iframeMatch) src = iframeMatch[1].replace(/&amp;/g,'&');
+    var ytMatch = src.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    if (ytMatch) return ytMatch[1];
+    return null;
+}
+
+function getVimeoId(src) {
+    src = src.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&quot;/g,'"');
+    var iframeMatch = src.match(/src=["']([^"']+)["']/);
+    if (iframeMatch) src = iframeMatch[1];
+    var m = src.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    return m ? m[1] : null;
+}
+
+var ytPlayer = null;
+var ytApiReady = false;
+var pendingYtVideoId = null;
+
+function onYouTubeIframeAPIReady() {
+    ytApiReady = true;
+    if (pendingYtVideoId) {
+        _createYTPlayer(pendingYtVideoId);
+        pendingYtVideoId = null;
+    }
+}
+
+function _createYTPlayer(videoId) {
+    var iframeEl = document.getElementById('main-iframe');
+    iframeEl.classList.remove('hidden');
+    iframeEl.id = 'yt-player-frame';
+    if (ytPlayer) {
+        try { ytPlayer.destroy(); } catch(e) {}
+    }
+    ytPlayer = new YT.Player('yt-player-frame', {
+        videoId: videoId,
+        playerVars: { autoplay: 1, rel: 0, origin: window.location.origin },
+        events: {
+            onReady: function(e) { e.target.playVideo(); videoWatched = true; checkCompletionGate(); },
+            onError: function(e) {
+                var wrap = document.getElementById('player-wrap');
+                var codes = { 2:'Invalid video ID', 5:'HTML5 error', 100:'Video not found', 101:'Embedding disabled', 150:'Embedding disabled' };
+                showEmbedFallback('https://www.youtube.com/watch?v=' + videoId, codes[e.data] || 'Playback error');
+            }
+        }
+    });
+}
+
+function loadPlayer(src, type, title) {
+    var videoEl  = document.getElementById('main-video');
+    var iframeEl = document.getElementById('main-iframe');
+    maxWatched = 0;
+
+    // Reset iframe id in case it was changed
+    iframeEl.id = 'main-iframe';
+
+    var wrap = document.getElementById('player-wrap');
+    wrap.querySelector('.embed-fallback') && wrap.querySelector('.embed-fallback').remove();
+
+    if (type === 'url') {
+        var ytId = getEmbedUrl(src);
+        var vimeoId = getVimeoId(src);
+        if (ytId) {
+            videoEl.classList.add('hidden');
+            videoEl.pause && videoEl.pause();
+            videoEl.src = '';
+            var ctrl = document.getElementById('video-controls');
+            if (ctrl) ctrl.classList.add('hidden');
+            if (ytApiReady) {
+                _createYTPlayer(ytId);
+            } else {
+                pendingYtVideoId = ytId;
+                iframeEl.classList.remove('hidden');
+            }
+        } else if (vimeoId) {
+            videoEl.classList.add('hidden');
+            iframeEl.id = 'main-iframe';
+            iframeEl.src = 'https://player.vimeo.com/video/' + vimeoId + '?autoplay=1';
+            iframeEl.classList.remove('hidden');
+            videoWatched = true; checkCompletionGate();
+        } else {
+            setupVideoEl(videoEl, src);
+        }
+    } else {
+        iframeEl.classList.add('hidden');
+        iframeEl.src = '';
+        setupVideoEl(videoEl, src);
+    }
+
+    document.getElementById('now-playing-title').textContent = title;
+    document.getElementById('now-playing').classList.remove('hidden');
+    lucide.createIcons();
+}
+
+function showEmbedFallback(url, reason) {
+    var wrap = document.getElementById('player-wrap');
+    if (wrap.querySelector('.embed-fallback')) return;
+    var iframeEl = document.getElementById('main-iframe');
+    iframeEl.classList.add('hidden');
+    iframeEl.src = '';
+    var div = document.createElement('div');
+    div.className = 'embed-fallback play-overlay';
+    div.style.cursor = 'default';
+    var icon = document.createElement('div'); icon.style.fontSize='40px'; icon.textContent=String.fromCodePoint(9888);
+    var p1 = document.createElement('p'); p1.style.cssText='font-size:14px;font-weight:700;margin:0;'; p1.textContent='Cannot play this video here';
+    var p2 = document.createElement('p'); p2.style.cssText='font-size:12px;opacity:.7;margin:0;'; p2.textContent=reason||'The video owner has disabled embedding.';
+    var a = document.createElement('a');
+    a.href=url; a.target='_blank'; a.rel='noopener';
+    a.style.cssText='background:#ff0000;color:#fff;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;';
+    a.textContent=String.fromCodePoint(9654)+' Watch on YouTube';
+    div.append(icon,p1,p2,a);
+    wrap.appendChild(div);
 }
 
 function setupVideoEl(videoEl, src) {
@@ -555,47 +676,14 @@ function populateNotes(concept) {
     if (concept.pdf) {
         el.innerHTML = `
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div class="mb-4 flex items-center justify-between">
+                <div class="mb-2 flex items-center justify-between">
                     <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Study Notes</p>
-                    <a href="${concept.pdf}" target="_blank"
-                       class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50">
-                        ↓ Download PDF
-                    </a>
                 </div>
-                <div id="pdf-viewer-wrap" class="rounded-xl overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center" style="height:660px;">
-                    <p class="text-sm text-slate-400">Loading PDF…</p>
-                </div>
+                <a href="${concept.pdf}" target="_blank"
+                   class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-700 transition">
+                    ↓ Download PDF
+                </a>
             </div>`;
-
-        // Fetch as blob to bypass X-Frame-Options / embed restrictions
-        fetch(concept.pdf)
-            .then(r => {
-                if (!r.ok) throw new Error('Failed to fetch PDF');
-                return r.blob();
-            })
-            .then(blob => {
-                const blobUrl = URL.createObjectURL(blob);
-                const wrap = document.getElementById('pdf-viewer-wrap');
-                if (!wrap) return;
-                wrap.innerHTML = `<object data="${blobUrl}" type="application/pdf"
-                    style="width:100%;height:660px;border:none;display:block;">
-                    <p class="p-6 text-sm text-slate-500 text-center">
-                        Your browser cannot display PDFs inline.
-                        <a href="${concept.pdf}" target="_blank" class="text-blue-600 underline">Open PDF</a>
-                    </p>
-                </object>`;
-            })
-            .catch(() => {
-                const wrap = document.getElementById('pdf-viewer-wrap');
-                if (wrap) wrap.innerHTML = `
-                    <div class="text-center p-8">
-                        <p class="text-sm text-slate-500 mb-3">Could not load PDF preview.</p>
-                        <a href="${concept.pdf}" target="_blank"
-                           class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-700 transition">
-                            Open PDF in new tab
-                        </a>
-                    </div>`;
-            });
     } else {
         el.innerHTML = '<div class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-400">No notes or PDF for this module.</div>';
     }

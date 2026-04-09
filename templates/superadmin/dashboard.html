@@ -2,645 +2,307 @@
 {% block title %}Super Admin — EduPlatform{% endblock %}
 {% block extra_css %}
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600&display=swap');
-
   :root {
-    --ink:          #0a0a0f;
-    --ink-2:        #3a3a4a;
-    --ink-3:        #7a7a8a;
-    --surface:      #ffffff;
-    --surface-2:    #f6f6f9;
-    --surface-3:    #ededf3;
-    --accent:       #5b4bea;
-    --accent-2:     #8b7df8;
-    --accent-glow:  rgba(91,75,234,0.15);
-    --green:        #00c896;
-    --green-bg:     #e6faf5;
-    --red:          #ff4d6d;
-    --red-bg:       #fff0f3;
-    --amber:        #f59e0b;
-    --amber-bg:     #fffbeb;
-    --border:       rgba(0,0,0,0.07);
-    --shadow-sm:    0 1px 3px rgba(0,0,0,0.06);
-    --shadow-md:    0 4px 20px rgba(0,0,0,0.08);
-    --shadow-lg:    0 12px 40px rgba(0,0,0,0.12);
-    --radius:       14px;
-    --radius-sm:    8px;
+    --ink:         #0a0a0f;
+    --ink-2:       #3a3a4a;
+    --ink-3:       #7a7a8a;
+    --surface:     #ffffff;
+    --surface-2:   #f6f6f9;
+    --border:      rgba(0,0,0,0.07);
+    --accent:      #5b4bea;
+    --accent-2:    #8b7df8;
+    --accent-glow: rgba(91,75,234,0.15);
+    --green:       #00c896;
+    --green-bg:    #e6faf5;
+    --red:         #ff4d6d;
+    --red-bg:      #fff0f3;
+    --amber:       #f59e0b;
+    --amber-bg:    #fffbeb;
+    --radius:      14px;
+    --radius-sm:   8px;
+    --shadow-sm:   0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md:   0 4px 20px rgba(0,0,0,0.08);
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  .dash {
-    font-family:  sans-serif;
-    background: var(--surface-2);
-    min-height: 100vh;
-    padding: 32px 36px 60px;
-    color: var(--ink);
-  }
+  .dash { background: var(--surface-2); min-height: 100vh; padding: 32px 36px 60px; color: var(--ink); }
 
-  /* ── Top bar ── */
-  .dash-topbar {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 36px;
-    gap: 20px;
-    flex-wrap: wrap;
-  }
+  /* Header */
+  .sa-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:12px; }
+  .sa-header h1 { font-size:24px; font-weight:800; color:var(--ink); }
+  .pill-bar { display:flex; gap:8px; flex-wrap:wrap; }
+  .pill { display:inline-flex; align-items:center; padding:8px 16px; border-radius:99px; font-size:13px; font-weight:600; border:1.5px solid var(--border); background:var(--surface); color:var(--ink-2); text-decoration:none; transition:all .15s; }
+  .pill:hover, .pill.active { background:var(--accent); color:#fff; border-color:var(--accent); text-decoration:none; }
 
-  .dash-greeting {
-    font-family:  sans-serif;
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--ink);
-    letter-spacing: -0.5px;
-    line-height: 1.15;
-  }
+  /* Stats */
+  .sa-stat-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:28px; }
+  .sa-stat { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius); padding:18px 20px; text-decoration:none; color:inherit; display:block; transition:all .15s; position:relative; overflow:hidden; }
+  .sa-stat::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--accent),var(--accent-2)); border-radius:3px 3px 0 0; }
+  .sa-stat:nth-child(2)::before { background:linear-gradient(90deg,#00c896,#34d399); }
+  .sa-stat:nth-child(3)::before { background:linear-gradient(90deg,#f59e0b,#fbbf24); }
+  .sa-stat:nth-child(4)::before { background:linear-gradient(90deg,#ff4d6d,#fb7185); }
+  .sa-stat:nth-child(5)::before { background:linear-gradient(90deg,#0ea5e9,#38bdf8); }
+  .sa-stat:hover { transform:translateY(-3px); box-shadow:var(--shadow-md); text-decoration:none; }
+  .sa-stat-icon { display:block; margin-bottom:10px; line-height:1; }
+  .sa-stat-val { font-size:32px; font-weight:800; color:var(--ink); line-height:1; letter-spacing:-1px; }
+  .sa-stat-lbl { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-3); margin-top:6px; }
 
-  .dash-greeting span {
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+  /* Cards */
+  .sa-card { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:20px; }
+  .sa-section-head { display:flex; align-items:center; justify-content:space-between; padding:16px 22px; border-bottom:1.5px solid var(--border); }
+  .sa-section-head h2 { font-size:15px; font-weight:700; color:var(--ink); }
+  .sa-view-link { font-size:12px; font-weight:600; color:var(--accent); text-decoration:none; padding:5px 12px; border-radius:99px; transition:background .15s; }
+  .sa-view-link:hover { background:var(--accent-glow); text-decoration:none; }
 
-  .dash-sub {
-    font-size: 13px;
-    color: var(--ink-3);
-    margin-top: 4px;
-    font-weight: 400;
-  }
+  /* School table */
+  .school-table { width:100%; border-collapse:collapse; }
+  .school-table th { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-3); padding:10px 22px; text-align:left; border-bottom:1.5px solid var(--border); background:var(--surface-2); }
+  .school-table td { padding:14px 22px; font-size:13.5px; color:var(--ink-2); border-bottom:1px solid var(--border); vertical-align:middle; }
+  .school-table tbody tr:last-child td { border-bottom:none; }
+  .school-table tbody tr:hover td { background:var(--surface-2); }
+  .school-name { font-weight:600; color: black; text-decoration:none; }
+  .school-name:hover { text-decoration:underline !important; }
+  .col-action { text-align:right; }
 
-  .dash-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .btn-dash {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 9px 18px;
-    border-radius: 99px;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: 'Outfit', sans-serif;
-    border: 1.5px solid var(--border);
-    background: var(--surface);
-    color: var(--ink-2);
-    text-decoration: none;
-    cursor: pointer;
-    transition: all 0.18s ease;
-    white-space: nowrap;
-  }
-
-  .btn-dash:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-    background: var(--accent-glow);
-    text-decoration: none;
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-sm);
-  }
-
-  .btn-dash.primary {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
-    box-shadow: 0 4px 14px rgba(91,75,234,0.35);
-  }
-
-  .btn-dash.primary:hover {
-    background: #4a3bd4;
-    color: #fff;
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(91,75,234,0.45);
-  }
-
-  /* ── Stat grid ── */
-  .stat-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 14px;
-    margin-bottom: 28px;
-  }
-
-  .stat-card {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 18px 20px;
-    font-family:'DM Sans',sans-serif;
-    cursor: pointer;
-    transition: all .15s;
-    text-decoration: none;
-    display: block;
-    color: inherit;
-  }
-  .sa-stat:hover {
-    border-color: var(--blue);
-    box-shadow: 0 2px 12px var(--shadow);
-    transform: translateY(-2px);
-  }
-
-  .stat-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-md);
-  }
-
-  .stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--accent), var(--accent-2));
-    border-radius: 3px 3px 0 0;
-  }
-
-  .stat-card:nth-child(2)::before { background: linear-gradient(90deg, #00c896, #34d399); }
-  .stat-card:nth-child(3)::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-  .stat-card:nth-child(4)::before { background: linear-gradient(90deg, #ff4d6d, #fb7185); }
-  .stat-card:nth-child(5)::before { background: linear-gradient(90deg, #0ea5e9, #38bdf8); }
-
-  .stat-emoji {
-    font-size: 22px;
-    margin-bottom: 12px;
-    display: block;
-  }
-
-  .stat-val {
-    font-family:  sans-serif;
-    font-size: 32px;
-    font-weight: 800;
-    color: var(--ink);
-    line-height: 1;
-    letter-spacing: -1px;
-  }
-
-  .stat-lbl {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--ink-3);
-    margin-top: 6px;
-  }
-
-  /* ── Section layout ── */
-  .dash-body {
-    display: grid;
-    grid-template-columns: 1fr 360px;
-    gap: 20px;
-    align-items: start;
-  }
-
-  /* ── Card ── */
-  .dash-card {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    animation: fadeUp 0.5s ease both;
-    animation-delay: 0.1s;
-  }
-
-  .dash-card-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 18px 22px;
-    border-bottom: 1.5px solid var(--border);
-  }
-
-  .dash-card-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--ink);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .dash-card-title-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--accent);
-    flex-shrink: 0;
-  }
-
-  .dash-view-all {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--accent);
-    text-decoration: none;
-    padding: 5px 12px;
-    border-radius: 99px;
-    transition: background 0.15s;
-    font-family: 'Outfit', sans-serif;
-  }
-
-  .dash-view-all:hover {
-    background: var(--accent-glow);
-    text-decoration: none;
-  }
-
-  /* ── Schools table ── */
-  .schools-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .schools-table th {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--ink-3);
-    padding: 10px 22px;
-    text-align: left;
-    border-bottom: 1.5px solid var(--border);
-    background: var(--surface-2);
-  }
-
-  .schools-table td {
-    padding: 14px 22px;
-    font-size: 13.5px;
-    color: var(--ink-2);
-    border-bottom: 1px solid var(--border);
-    vertical-align: middle;
-  }
-  .school-table tbody tr:last-child td { border-bottom: none; }
-  .school-table tbody tr:hover td { background: var(--cream); }
-  .school-name { font-weight: 600; color: var(--blue) !important; font-family:'Playfair Display',Georgia,serif; }
-  .school-name:hover { text-decoration: underline !important; }
-  .school-table .col-action { text-align: right; }
-
-  .dash-pagination { display:flex; align-items:center; gap:6px; justify-content:center; margin-top:14px; flex-wrap:wrap; }
-  .dash-pg-btn { min-width:30px; height:30px; border-radius:7px; border:1.5px solid var(--border); background:#fff; font-size:12px; font-weight:500; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:var(--ink); font-family:'DM Sans',sans-serif; transition:background .15s,color .15s,border-color .15s; }
-  .dash-pg-btn:hover { background:var(--blue-light); border-color:var(--blue); color:var(--blue); }
-  .dash-pg-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); }
+  /* Pagination */
+  .dash-pagination { display:flex; align-items:center; gap:6px; justify-content:center; padding:14px; flex-wrap:wrap; }
+  .dash-pg-btn { min-width:30px; height:30px; border-radius:7px; border:1.5px solid var(--border); background:#fff; font-size:12px; font-weight:500; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:var(--ink); transition:all .15s; }
+  .dash-pg-btn:hover { background:var(--accent-glow); border-color:var(--accent); color:var(--accent); }
+  .dash-pg-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
   .dash-pg-btn:disabled { opacity:.4; cursor:not-allowed; }
 
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
-    border-radius: 99px;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-  }
+  /* Status badges */
+  .badge { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:99px; font-size:11px; font-weight:600; }
+  .badge-success { background:var(--green-bg); color:#007a5e; }
+  .badge-danger  { background:var(--red-bg);   color:#cc2444; }
 
-  .status::before {
-    content: '';
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
+  /* Courses grid */
+  .course-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; padding:18px 22px; }
+  .gc-card { border:1.5px solid var(--border); border-radius:var(--radius); overflow:hidden; cursor:pointer; transition:all .2s; background:var(--surface); }
+  .gc-card:hover { box-shadow:var(--shadow-md); transform:translateY(-2px); }
+  .gc-cover { position:relative; height:100px; background:linear-gradient(135deg,var(--accent),var(--accent-2)); display:flex; align-items:center; justify-content:center; }
+  .gc-cover[data-lang="python"]     { background:linear-gradient(135deg,#1c3557,#0ea5e9); }
+  .gc-cover[data-lang="javascript"] { background:linear-gradient(135deg,#3b2f00,#ca8a04); }
+  .gc-cover[data-lang="tamil"]      { background:linear-gradient(135deg,#2d0a3e,#9333ea); }
+  .gc-cover[data-lang="hindi"]      { background:linear-gradient(135deg,#1a0a00,#ea580c); }
+  .gc-cover-mono { font-size:22px; font-weight:800; color:rgba(255,255,255,.85); }
+  .status-badge { position:absolute; top:8px; right:8px; font-size:10px; font-weight:700; padding:3px 8px; border-radius:99px; }
+  .status-published { background:var(--green-bg); color:#007a5e; }
+  .status-draft     { background:var(--amber-bg); color:#92610a; }
+  .gc-body { padding:12px 14px; }
+  .gc-title { font-size:13px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:4px; }
+  .gc-meta  { font-size:11px; color:var(--ink-3); }
 
-  .status-active  { background: var(--green-bg); color: #007a5e; }
-  .status-active::before { background: var(--green); }
-  .status-suspended { background: var(--red-bg); color: #cc2444; }
-  .status-suspended::before { background: var(--red); }
-  .status-draft { background: var(--amber-bg); color: #92610a; }
-  .status-draft::before { background: var(--amber); }
-  .status-published { background: var(--green-bg); color: #007a5e; }
-  .status-published::before { background: var(--green); }
+  /* Empty state */
+  .empty-state { text-align:center; padding:40px 24px; color:var(--ink-3); font-size:13px; }
 
-  .btn-view {
-    display: inline-flex;
-    align-items: center;
-    padding: 6px 14px;
-    background: var(--surface-2);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-sm);
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--ink-2);
-    text-decoration: none;
-    transition: all 0.15s;
-    font-family: 'Outfit', sans-serif;
-  }
-
-  .btn-view:hover {
-    background: var(--accent-glow);
-    border-color: var(--accent);
-    color: var(--accent);
-    text-decoration: none;
-  }
-
-  /* ── Courses grid (right column) ── */
-  .courses-col { display: flex; flex-direction: column; gap: 20px; }
-
-  .course-mini {
-    display: flex;
-    flex-direction: column;
-    transition: box-shadow .2s, transform .2s;
-    cursor: pointer;
-  }
-  .gc-card:hover {
-    box-shadow: 0 4px 24px var(--shadow);
-    transform: translateY(-2px);
-  }
-
-  .course-mini:last-child { border-bottom: none; }
-  .course-mini:hover { background: var(--surface-2); text-decoration: none; }
-
-  .course-mini-cover {
-    width: 44px; height: 44px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    font-weight: 800;
-    color: rgba(255,255,255,0.9);
-    flex-shrink: 0;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  }
-
-  .course-mini-cover[data-lang="python"]     { background: linear-gradient(135deg,#1c3557,#0ea5e9); }
-  .course-mini-cover[data-lang="javascript"] { background: linear-gradient(135deg,#3b2f00,#ca8a04); }
-  .course-mini-cover[data-lang="react"]      { background: linear-gradient(135deg,#0c1a35,#38bdf8); }
-  .course-mini-cover[data-lang="html"]       { background: linear-gradient(135deg,#3b0a00,#ea580c); }
-  .course-mini-cover[data-lang="css"]        { background: linear-gradient(135deg,#0b1f3a,#6366f1); }
-  .course-mini-cover[data-lang="sql"]        { background: linear-gradient(135deg,#0a2318,#10b981); }
-
-  .course-mini-info { flex: 1; min-width: 0; }
-
-  .course-mini-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .course-mini-meta {
-    font-size: 11px;
-    color: var(--ink-3);
-    margin-top: 3px;
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 40px 24px;
-    color: var(--ink-3);
-    font-size: 13px;
-  }
-
-  /* ── Animations ── */
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .stat-card:nth-child(1) { animation-delay: 0.05s; }
-  .stat-card:nth-child(2) { animation-delay: 0.10s; }
-  .stat-card:nth-child(3) { animation-delay: 0.15s; }
-  .stat-card:nth-child(4) { animation-delay: 0.20s; }
-  .stat-card:nth-child(5) { animation-delay: 0.25s; }
-
-  /* ── Responsive ── */
-  @media (max-width: 1100px) {
-    .stat-grid { grid-template-columns: repeat(3, 1fr); }
-    .dash-body { grid-template-columns: 1fr; }
-  }
-
-  @media (max-width: 640px) {
-    .dash { padding: 20px 16px 48px; }
-    .stat-grid { grid-template-columns: repeat(2, 1fr); }
-    .dash-greeting { font-size: 22px; }
-  }
+  /* Responsive */
+  @media(max-width:1100px) { .sa-stat-grid { grid-template-columns:repeat(3,1fr); } }
+  @media(max-width:640px)  { .dash { padding:20px 16px 48px; } .sa-stat-grid { grid-template-columns:repeat(2,1fr); } }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="dash">
 
-<!-- ── Header ── -->
-<div class="sa-header">
-  <div>
+  <!-- Header -->
+  <div class="sa-header">
     <h1>Dashboard</h1>
-    <p>Platform overview — all schools &amp; courses</p>
-  </div>
-  <div class="pill-bar">
-    <a href="{% url 'superadmin_create_school' %}"  class="pill active">+ New School</a>
-    <a href="{% url 'superadmin_course_list' %}"    class="pill">Course</a>
-    <a href="{% url 'superadmin_all_admins' %}"     class="pill">Admins</a>
-    <a href="{% url 'superadmin_analytics' %}"      class="pill">Analytics</a>
-  </div>
-</div>
-
-<!-- ── Stats ── -->
-<div class="sa-stat-grid">
-  <a href="{% url 'superadmin_schools_list' %}" class="sa-stat">
-    <div class="sa-stat-icon">🏫</div>
-    <div class="sa-stat-val">{{ total_schools }}</div>
-    <div class="sa-stat-lbl">Schools</div>
-  </a>
-  <a href="{% url 'superadmin_all_admins' %}" class="sa-stat">
-    <div class="sa-stat-icon">👔</div>
-    <div class="sa-stat-val">{{ total_management }}</div>
-    <div class="sa-stat-lbl">Management</div>
-  </a>
-  <a href="{% url 'superadmin_schools_list' %}" class="sa-stat">
-    <div class="sa-stat-icon">👩‍🏫</div>
-    <div class="sa-stat-val">{{ total_teachers }}</div>
-    <div class="sa-stat-lbl">Teachers</div>
-  </a>
-  <a href="{% url 'superadmin_schools_list' %}" class="sa-stat">
-    <div class="sa-stat-icon">🎓</div>
-    <div class="sa-stat-val">{{ total_students }}</div>
-    <div class="sa-stat-lbl">Students</div>
-  </a>
-  <a href="{% url 'superadmin_schools_list' %}" class="sa-stat">
-    <div class="sa-stat-icon">🏛</div>
-    <div class="sa-stat-val">{{ total_classrooms }}</div>
-    <div class="sa-stat-lbl">Classrooms</div>
-  </a>
-</div>
-
-<!-- ── Schools ── -->
-<div class="sa-card">
-  <div class="sa-section-head">
-    <h2>Schools</h2>
-    <a href="{% url 'superadmin_schools_list' %}" class="sa-view-link">View all →</a>
+    <div class="pill-bar">
+      <a href="{% url 'superadmin_create_school' %}" class="pill active">+ New School</a>
+      <a href="{% url 'superadmin_course_list' %}"   class="pill">Courses</a>
+      <a href="{% url 'superadmin_all_admins' %}"    class="pill">Admins</a>
+      <a href="{% url 'superadmin_analytics' %}"     class="pill">Analytics</a>
+    </div>
   </div>
 
-  {% if schools %}
-  <table class="school-table">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Students</th>
-        <th>Teachers</th>
-        <th>Status</th>
-        <th class="col-action"></th>
-      </tr>
-    </thead>
-    <tbody id="dash-school-tbody"></tbody>
-  </table>
-  <div class="dash-pagination" id="dash-pagination"></div>
+  <!-- Stats -->
+  <div class="sa-stat-grid">
+    <a href="{% url 'superadmin_schools_list' %}" class="sa-stat">
+      <span class="sa-stat-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5b4bea" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9.5L12 4l9 5.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+          <path d="M9 21V12h6v9"/>
+          <path d="M12 4v3"/>
+        </svg>
+      </span>
+      <div class="sa-stat-val">{{ total_schools }}</div>
+      <div class="sa-stat-lbl">Schools</div>
+    </a>
+    <a href="{% url 'superadmin_all_admins' %}" class="sa-stat">
+      <span class="sa-stat-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00c896" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2"/>
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+          <line x1="12" y1="12" x2="12" y2="16"/>
+          <line x1="10" y1="14" x2="14" y2="14"/>
+        </svg>
+      </span>
+      <div class="sa-stat-val">{{ total_management }}</div>
+      <div class="sa-stat-lbl">Management</div>
+    </a>
+    <a href="#" class="sa-stat">
+      <span class="sa-stat-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </span>
+      <div class="sa-stat-val">{{ total_teachers }}</div>
+      <div class="sa-stat-lbl">Teachers</div>
+    </a>
+    <a href="#" class="sa-stat">
+      <span class="sa-stat-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ff4d6d" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+          <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+        </svg>
+      </span>
+      <div class="sa-stat-val">{{ total_students }}</div>
+      <div class="sa-stat-lbl">Students</div>
+    </a>
+    <a href="#" class="sa-stat">
+      <span class="sa-stat-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+      </span>
+      <div class="sa-stat-val">{{ total_classrooms }}</div>
+      <div class="sa-stat-lbl">Classrooms</div>
+    </a>
+  </div>
 
-  <script>
-  const DASH_PER_PAGE = 5;
-  let dashPage = 1;
-  const dashSchools = [
-    {% for school in schools %}
-    {
-      pk:       {{ school.pk }},
-      name:     "{{ school.name|escapejs }}",
-      students: {{ school.student_count }},
-      teachers: {{ school.teacher_count }},
-      active:   {{ school.is_active|yesno:'true,false' }},
-      url:      "{% url 'superadmin_school_detail' school.pk %}",
-    },
-    {% endfor %}
-  ];
+  <!-- Schools table -->
+  <div class="sa-card">
+    <div class="sa-section-head">
+      <h2>Schools</h2>
+      <a href="{% url 'superadmin_schools_list' %}" class="sa-view-link">View all →</a>
+    </div>
 
-  function dashRender() {
-    const start = (dashPage - 1) * DASH_PER_PAGE;
-    const page  = dashSchools.slice(start, start + DASH_PER_PAGE);
-    document.getElementById('dash-school-tbody').innerHTML = page.map(s => `
-      <tr>
-        <td><a href="${s.url}" class="school-name" style="text-decoration:none;">${s.name}</a></td>
-        <td>${s.students}</td>
-        <td>${s.teachers}</td>
-        <td>${s.active
-          ? '<span class="badge badge-success">Active</span>'
-          : '<span class="badge badge-danger">Suspended</span>'}
-        </td>
-        <td class="col-action"><a href="${s.url}" class="btn-ghost">View</a></td>
-      </tr>`).join('');
-    dashRenderPagination();
-  }
+    {% if schools %}
+    <table class="school-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Students</th>
+          <th>Teachers</th>
+          <th>Status</th>
+          <th class="col-action"></th>
+        </tr>
+      </thead>
+      <tbody id="dash-school-tbody"></tbody>
+    </table>
+    <div class="dash-pagination" id="dash-pagination"></div>
 
-  function dashRenderPagination() {
-    const total = Math.ceil(dashSchools.length / DASH_PER_PAGE);
-    const pg = document.getElementById('dash-pagination');
-    if (total <= 1) { pg.innerHTML = ''; return; }
-    let html = `<button class="dash-pg-btn" onclick="dashGoPage(${dashPage-1})" ${dashPage===1?'disabled':''}>&lsaquo;</button>`;
-    for (let p = 1; p <= total; p++) {
-      html += `<button class="dash-pg-btn ${p===dashPage?'active':''}" onclick="dashGoPage(${p})">${p}</button>`;
+    <script>
+    const DASH_PER_PAGE = 5;
+    let dashPage = 1;
+    const dashSchools = [
+      {% for school in schools %}
+      {
+        pk:       {{ school.pk }},
+        name:     "{{ school.name|escapejs }}",
+        students: {{ school.student_count }},
+        teachers: {{ school.teacher_count }},
+        active:   {{ school.is_active|yesno:'true,false' }},
+        url:      "{% url 'superadmin_school_detail' school.pk %}",
+      },
+      {% endfor %}
+    ];
+
+    function dashRender() {
+      const start = (dashPage - 1) * DASH_PER_PAGE;
+      const page  = dashSchools.slice(start, start + DASH_PER_PAGE);
+      const total = Math.ceil(dashSchools.length / DASH_PER_PAGE);
+      document.getElementById('dash-school-tbody').innerHTML = page.map(s => `
+        <tr>
+          <td><a href="${s.url}" class="school-name">${s.name}</a></td>
+          <td>${s.students}</td>
+          <td>${s.teachers}</td>
+          <td>${s.active
+            ? '<span class="badge badge-success">Active</span>'
+            : '<span class="badge badge-danger">Suspended</span>'}
+          </td>
+          <td class="col-action"><a href="${s.url}" class="pill" style="font-size:12px;padding:5px 12px;">View →</a></td>
+        </tr>`).join('');
+      dashRenderPagination(total);
     }
-    html += `<button class="dash-pg-btn" onclick="dashGoPage(${dashPage+1})" ${dashPage===total?'disabled':''}>&rsaquo;</button>`;
-    html += `<span style="font-size:11px;color:var(--muted);margin-left:4px;">${dashPage}/${total}</span>`;
-    pg.innerHTML = html;
-  }
 
-  function dashGoPage(p) {
-    const total = Math.ceil(dashSchools.length / DASH_PER_PAGE);
-    if (p < 1 || p > total) return;
-    dashPage = p;
+    function dashRenderPagination(total) {
+      const pg = document.getElementById('dash-pagination');
+      if (total <= 1) { pg.innerHTML = ''; return; }
+      let html = `<button class="dash-pg-btn" onclick="dashGoPage(${dashPage-1})" ${dashPage===1?'disabled':''}>‹</button>`;
+      for (let p = 1; p <= total; p++) {
+        html += `<button class="dash-pg-btn ${p===dashPage?'active':''}" onclick="dashGoPage(${p})">${p}</button>`;
+      }
+      html += `<button class="dash-pg-btn" onclick="dashGoPage(${dashPage+1})" ${dashPage===total?'disabled':''}>›</button>`;
+      pg.innerHTML = html;
+    }
+  
+    function dashGoPage(p) {
+      const total = Math.ceil(dashSchools.length / DASH_PER_PAGE);
+      if (p < 1 || p > total) return;
+      dashPage = p;
+      dashRender();
+    }
     dashRender();
-  }
-
-  dashRender();
-  </script>
-
-  {% else %}
-  <p class="sa-empty">No schools yet.</p>
-  {% endif %}
-</div>
-
-<!-- ── Courses ── -->
-<div class="sa-card">
-  <div class="sa-section-head">
-    <h2>
-      Recent Courses
-      <span style="font-weight:400; color:var(--ink-4); font-size:12px;">({{ courses|length }} latest)</span>
-    </h2>
-    <a href="{% url 'superadmin_all_courses' %}" class="sa-view-link">View all →</a>
-  </div>
-
-  {% if courses %}
-  <div class="course-grid">
-    {% for course in courses %}
-    <div class="gc-card" onclick="window.location='{% url 'superadmin_course_detail' course.pk %}'">
-
-      <!-- Cover — image if uploaded, else CSS gradient fallback -->
-      <div class="gc-cover" data-lang="{{ course.language|default:'english'|lower }}">
-        {% if course.cover_image %}
-          <img src="{{ course.cover_image.url }}" alt="{{ course.title }}" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;">
-        {% else %}
-          <span class="gc-cover-mono">{{ course.title|slice:":2"|upper }}</span>
-        {% endif %}
-        <span class="status-badge {% if course.status == 'published' %}status-published{% else %}status-draft{% endif %}">
-          {% if course.status == 'published' %}Published{% else %}Unpublished{% endif %}
-        </span>
-      </div>
+    </script>
+    
+    {% else %}
+    <div class="empty-state">
+      <div style="font-size:36px;margin-bottom:10px;">🏫</div>
+      <p>No schools yet.</p>
+      <a href="{% url 'superadmin_create_school' %}" class="pill active" style="margin-top:12px;display:inline-flex;">+ Create First School</a>
     </div>
-    {% endfor %}
+    {% endif %}
   </div>
-  {% else %}
-  <p class="sa-empty">No courses yet.</p>
-  {% endif %}
-</div>
+  
 
-    <!-- LEFT: Schools -->
-    <div class="dash-card">
-      <div class="dash-card-head">
-        <div class="dash-card-title">
-          <span class="dash-card-title-dot"></span>
-          Schools
+  <!-- Courses -->
+  <div class="sa-card">
+    <div class="sa-section-head">
+      <h2>Recent Courses <span style="font-weight:400;color:var(--ink-3);font-size:12px;">({{ courses|length }} latest)</span></h2>
+      <a href="{% url 'superadmin_all_courses' %}" class="sa-view-link">View all →</a>
+    </div>
+
+    {% if courses %}
+    <div class="course-grid">
+      {% for course in courses %}
+      <div class="gc-card" onclick="window.location='{% url 'superadmin_course_detail' course.pk %}'">
+        <div class="gc-cover" data-lang="{{ course.language|default:'english'|lower }}">
+          {% if course.cover_image %}
+            <img src="{{ course.cover_image.url }}" alt="{{ course.title }}" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;">
+          {% else %}
+            <span class="gc-cover-mono">{{ course.title|slice:":2"|upper }}</span>
+          {% endif %}
+          <span class="status-badge {% if course.status == 'published' %}status-published{% else %}status-draft{% endif %}">
+            {% if course.status == 'published' %}Published{% else %}Draft{% endif %}
+          </span>
         </div>
-        <a href="{% url 'superadmin_schools_list' %}" class="dash-view-all">View all →</a>
+        <div class="gc-body">
+          <div class="gc-title">{{ course.title }}</div>
+          <div class="gc-meta">{{ course.concepts.count }} concept{{ course.concepts.count|pluralize }} · {{ course.language|capfirst }}</div>
+        </div>
       </div>
-
-      {% if schools %}
-      <table class="schools-table">
-        <thead>
-          <tr>
-            <th>School</th>
-            <th>Students</th>
-            <th>Teachers</th>
-            <th>Status</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for school in schools %}
-          <tr onclick="window.location='{% url 'superadmin_school_detail' school.pk %}'">
-            <td class="school-name-cell">{{ school.name }}</td>
-            <td><span class="count-chip">🎓 {{ school.student_count }}</span></td>
-            <td><span class="count-chip">👩‍🏫 {{ school.teacher_count }}</span></td>
-            <td>
-              {% if school.is_active %}
-                <span class="status status-active">Active</span>
-              {% else %}
-                <span class="status status-suspended">Suspended</span>
-              {% endif %}
-            </td>
-            <td>
-              <a href="{% url 'superadmin_school_detail' school.pk %}" 
-                 class="btn-view"
-                 onclick="event.stopPropagation()">
-                View →
-              </a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      {% else %}
-      <div class="empty-state">
-        No schools yet.<br>
-        <a href="{% url 'superadmin_create_school' %}" style="color:var(--accent); font-weight:600;">
-          Create your first school →
-        </a>
-      </div>
-      {% endif %}
+      {% endfor %}
     </div>
+    {% else %}
+    <div class="empty-state">
+      <div style="font-size:36px;margin-bottom:10px;">📚</div>
+      <p>No courses yet.</p>
+      <a href="{% url 'superadmin_course_list' %}" class="pill active" style="margin-top:12px;display:inline-flex;">+ Create First Course</a>
+    </div>
+    {% endif %}
+  </div>
 
-  </div><!-- end dash-body -->
-
-</div><!-- end dash -->
+</div>
 {% endblock %}
+
+
+
+

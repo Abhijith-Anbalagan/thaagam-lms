@@ -64,7 +64,7 @@
   </div>
   <div style="display:flex;gap:10px;align-items:center;">
     <div class="search-bar">
-      <span style="color:var(--text-muted);">🔍</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
       <input type="text" id="admin-search" placeholder="Search admins…" oninput="filterAndRender()">
     </div>
     <a href="{% url 'superadmin_dashboard' %}" class="btn btn-ghost">← Dashboard</a>
@@ -93,7 +93,7 @@
 <div class="modal-wrap" id="del-modal">
   <div class="modal-box">
     <div class="modal-hd">
-      <h3 style="color:#e24b4a;">⚠️ Delete Admin</h3>
+      <h3 style="color:#e24b4a;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:6px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Delete Admin</h3>
       <button class="modal-close" onclick="closeDelModal()">✕</button>
     </div>
     <p style="font-size:14px;color:var(--text-muted);margin:0;">You are about to permanently delete:</p>
@@ -162,8 +162,8 @@ function render() {
       </td>
       <td style="font-size:13px;">
         ${a.schoolUrl
-          ? `<a href="${a.schoolUrl}" style="color:var(--blue);font-weight:500;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">🏫 ${a.school}</a>`
-          : `<span style="color:var(--muted);">🏫 ${a.school}</span>`
+          ? `<a href="${a.schoolUrl}" style="color:var(--blue);font-weight:500;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"><svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:middle;margin-right:4px'><path d='M3 9.5L12 4l9 5.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z'/><path d='M9 21V12h6v9'/></svg>${a.school}</a>`
+          : `<span style="color:var(--muted);"><svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:middle;margin-right:4px'><path d='M3 9.5L12 4l9 5.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z'/><path d='M9 21V12h6v9'/></svg>${a.school}</span>`
         }
       </td>
       <td>
@@ -176,7 +176,7 @@ function render() {
           <button id="toggle-btn-${a.id}" class="btn btn-sm ${a.active ? 'btn-outline' : 'btn-success'}" onclick="toggleAdmin(${a.id})">
             ${a.active ? 'Suspend' : 'Activate'}
           </button>
-          <button class="btn btn-sm btn-danger" onclick="openDelModal(${a.id}, '${a.name.replace(/'/g,"\\'")}')">🗑</button>
+          <button class="btn btn-sm btn-danger" onclick="openDelModal(${a.id}, '${a.name.replace(/'/g,"\\'")}')"><svg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6'/><path d='M10 11v6M14 11v6'/><path d='M9 6V4h6v2'/></svg></button>
         </div>
       </td>
     </tr>`).join('');

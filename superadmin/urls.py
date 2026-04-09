@@ -1,6 +1,5 @@
 from django.urls import path
 from . import views
-
 urlpatterns = [
     path('dashboard/',                              views.dashboard,      name='superadmin_dashboard'),
     path('schools/',                                views.schools_list,   name='superadmin_schools_list'),
@@ -26,5 +25,5 @@ urlpatterns = [
     path('profile/', views.profile_settings, name='superadmin_profile'),
     path('api/profile/',                             views.api_profile_sync, name='api_profile_sync'),
     path('api/schools/<int:school_id>/edit/', views.api_school_edit, name='api_school_edit'),
-    
+    path('courses/<int:course_id>/assign-school/', views.course_assign_school, name='superadmin_course_assign_school'),
 ]

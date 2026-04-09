@@ -96,7 +96,7 @@
   </div>
   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
     <div class="search-bar">
-      <span style="color:var(--text-muted);">🔍</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
       <input type="text" id="course-search" placeholder="Search courses…" oninput="filterAndRender()">
     </div>
     <a href="{% url 'superadmin_course_list' %}" class="btn btn-primary">+ Create Course</a>
@@ -125,13 +125,51 @@
 <!-- Delete Modal -->
 <div class="modal-wrap" id="del-modal">
   <div class="modal-box">
-    <h3 style="margin:0 0 8px;font-size:17px;font-weight:700;color:#e24b4a;">⚠️ Delete Course</h3>
+    <h3 style="margin:0 0 8px;font-size:17px;font-weight:700;color:#e24b4a;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:6px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Delete Course</h3>
     <p style="font-size:14px;color:var(--text-muted);margin:0;">Permanently delete:</p>
     <p style="font-size:15px;font-weight:600;color:var(--brand-dark);margin:8px 0 0;" id="del-course-name"></p>
     <p class="confirm-warn">All concepts and videos will also be deleted. This cannot be undone.</p>
     <div style="display:flex;gap:10px;">
       <button class="btn btn-danger" id="del-confirm-btn">Yes, Delete</button>
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Assign to School Modal -->
+<div class="modal-wrap" id="assign-modal">
+  <div class="modal-box" style="max-width:500px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <h3 style="margin:0;font-size:16px;font-weight:700;"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:6px"><path d="M3 9.5L12 4l9 5.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg> Assign to Schools</h3>
+      <button onclick="closeAssignModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;">✕</button>
+    </div>
+    <p style="font-size:13px;color:#888;margin-bottom:12px;" id="assign-course-name"></p>
+    <!-- Search -->
+    <div style="position:relative;margin-bottom:10px;">
+      <input type="text" id="assign-school-search" placeholder="Search schools…"
+        oninput="filterAssignSchools()"
+        style="width:100%;padding:8px 10px 8px 32px;border:1.5px solid #e0d9d0;border-radius:8px;font-size:13px;outline:none;font-family:'DM Sans',sans-serif;">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#aaa;"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></span>
+    </div>
+    <!-- Select all -->
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;font-weight:600;color:var(--blue);cursor:pointer;border-bottom:1.5px solid #e0d9d0;margin-bottom:8px;">
+      <input type="checkbox" id="assign-select-all" onchange="assignSelectAll(this.checked)"
+        style="width:15px;height:15px;accent-color:var(--blue);cursor:pointer;">
+      Select All
+    </label>
+    <!-- List -->
+    <div id="assign-school-list" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;"></div>
+    <!-- Footer -->
+    <div style="display:flex;align-items:center;gap:10px;margin-top:14px;padding-top:14px;border-top:1.5px solid #e0d9d0;">
+      <button onclick="applyAssignModal()"
+        style="flex:1;background:var(--blue);color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">
+        Apply Changes
+      </button>
+      <button onclick="closeAssignModal()"
+        style="padding:10px 18px;border:1.5px solid #e0d9d0;border-radius:8px;background:#fff;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">
+        Cancel
+      </button>
+      <span id="assign-modal-status" style="font-size:12px;color:#2a9d5c;display:none;">✓ Saved</span>
     </div>
   </div>
 </div>
@@ -209,7 +247,7 @@ function render() {
       <div class="gc-cover">
         ${c.cover
           ? `<img src="${c.cover}" alt="${c.title}">`
-          : `<div class="gc-cover-placeholder">📘</div>`}
+          : `<div class="gc-cover-placeholder"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>`}
         <span class="gc-status-badge ${c.status === 'published' ? 'gc-status-published' : 'gc-status-draft'}">
           ${c.status === 'published' ? 'Published' : 'Unpublished'}
         </span>
@@ -221,8 +259,8 @@ function render() {
         <div class="gc-lang-hours">
           <span class="gc-lang" style="background:${c.status === 'published' ? 'var(--green)' : '#f8d4cc'};color:${c.status === 'published' ? '#fff' : 'var(--accent)'}">${c.status === 'published' ? 'Published' : 'Unpublished'}</span>
           <span class="gc-lang">${c.language}</span>
-          <span class="gc-hours">🎬 ${c.hours}h</span>
-          <span class="gc-hours">📚 ${c.concepts} concept${c.concepts !== 1 ? 's' : ''}</span>
+          <span class="gc-hours"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:2px"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg> ${c.hours}h</span>
+          <span class="gc-hours"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:2px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> ${c.concepts} concept${c.concepts !== 1 ? 's' : ''}</span>
         </div>
 
         <!-- Title -->
@@ -233,8 +271,8 @@ function render() {
 
         <!-- Meta -->
         <div class="gc-meta">
-          <span>🏫 ${c.schools} school${c.schools !== 1 ? 's' : ''}</span>
-          <span>🗓 ${c.date}</span>
+          <span><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px"><path d="M3 9.5L12 4l9 5.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg> ${c.schools} school${c.schools !== 1 ? 's' : ''}</span>
+          <span><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${c.date}</span>
         </div>
 
         <!-- Action Buttons -->
@@ -245,7 +283,12 @@ function render() {
           ${c.hasCert
             ? `<button class="btn-cert" onclick="window.location='${c.detailUrl}'">🏅 Free Certificate</button>`
             : ''}
-          <button class="btn-delete-sm" onclick="event.stopPropagation();openModal(${c.id},'${c.title.replace(/'/g,"\\'")}')">🗑</button>
+          <button class="btn-cert" style="border-color:var(--blue);color:var(--blue);" onclick="event.stopPropagation();openAssignModal(${c.id},'${c.title.replace(/'/g,"\\'")}')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px"><path d="M3 9.5L12 4l9 5.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg> Assign
+          </button>
+          <button class="btn-delete-sm" onclick="event.stopPropagation();openModal(${c.id},'${c.title.replace(/'/g,"\\'")}')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          </button>
         </div>
       </div>
 
@@ -301,5 +344,106 @@ document.getElementById('del-confirm-btn').addEventListener('click', function ()
 
 document.getElementById('del-modal').addEventListener('click', e => { if (e.target===document.getElementById('del-modal')) closeModal(); });
 render();
+
+// ── Assign to School ──
+const allSchools = [
+  {% for school in all_schools %}
+  { id: {{ school.pk }}, name: "{{ school.name|escapejs }}", students: {{ school.total_students }} },
+  {% endfor %}
+];
+
+let assignCourseId = null;
+let assignedSchoolIds = {};
+
+{% for course in courses %}
+assignedSchoolIds[{{ course.pk }}] = [{% for s in course.schools.all %}{{ s.pk }},{% endfor %}];
+{% endfor %}
+
+function openAssignModal(courseId, courseTitle) {
+  assignCourseId = courseId;
+  document.getElementById('assign-course-name').textContent = courseTitle;
+  document.getElementById('assign-school-search').value = '';
+  renderAssignList();
+  document.getElementById('assign-modal').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  document.getElementById('assign-school-search').focus();
+}
+
+function renderAssignList(filter) {
+  const q        = (filter || '').toLowerCase();
+  const assigned = assignedSchoolIds[assignCourseId] || [];
+  const list     = document.getElementById('assign-school-list');
+  const visible  = allSchools.filter(s => !q || s.name.toLowerCase().includes(q));
+
+  list.innerHTML = visible.map(s => {
+    const checked = assigned.includes(s.id);
+    return `<label class="assign-row" data-id="${s.id}"
+      style="display:flex;align-items:center;gap:10px;padding:9px 10px;border:1.5px solid ${checked ? '#00c896' : '#e0d9d0'};border-radius:9px;background:${checked ? '#e6faf5' : '#fafaf8'};cursor:pointer;transition:all .12s;"
+      onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='${checked ? '#00c896' : '#e0d9d0'}'">
+      <input type="checkbox" class="assign-cb" value="${s.id}" ${checked ? 'checked' : ''}
+        style="width:15px;height:15px;accent-color:var(--blue);cursor:pointer;flex-shrink:0;"
+        onchange="updateAssignSelectAll()">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.name}</div>
+        <div style="font-size:11px;color:#999;">${s.students} students</div>
+      </div>
+      ${checked ? '<span style="font-size:10px;background:#e6faf5;color:#007a5e;border-radius:20px;padding:2px 8px;font-weight:700;flex-shrink:0;">✓ Assigned</span>' : ''}
+    </label>`;
+  }).join('') || '<p style="text-align:center;color:#999;padding:20px 0;">No schools found.</p>';
+
+  updateAssignSelectAll();
+}
+
+function filterAssignSchools() {
+  renderAssignList(document.getElementById('assign-school-search').value);
+}
+
+function assignSelectAll(checked) {
+  document.querySelectorAll('.assign-cb').forEach(cb => cb.checked = checked);
+  updateAssignSelectAll();
+}
+
+function updateAssignSelectAll() {
+  const cbs = [...document.querySelectorAll('.assign-cb')];
+  const allChecked = cbs.length > 0 && cbs.every(cb => cb.checked);
+  const sa = document.getElementById('assign-select-all');
+  sa.checked = allChecked;
+  sa.indeterminate = !allChecked && cbs.some(cb => cb.checked);
+}
+
+function applyAssignModal() {
+  const checked   = [...document.querySelectorAll('.assign-cb:checked')].map(cb => parseInt(cb.value));
+  const unchecked = [...document.querySelectorAll('.assign-cb:not(:checked)')].map(cb => parseInt(cb.value));
+  const btn    = document.querySelector('[onclick="applyAssignModal()"]');
+  const status = document.getElementById('assign-modal-status');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const reqs = [];
+  if (checked.length)   reqs.push(fetch(`/superadmin/courses/${assignCourseId}/assign-school/`, { method:'POST', credentials:'same-origin', headers:{'X-CSRFToken':CSRF,'Content-Type':'application/x-www-form-urlencoded'}, body: new URLSearchParams({school_ids: checked.join(','),   action:'assign'}) }).then(r=>r.json()));
+  if (unchecked.length) reqs.push(fetch(`/superadmin/courses/${assignCourseId}/assign-school/`, { method:'POST', credentials:'same-origin', headers:{'X-CSRFToken':CSRF,'Content-Type':'application/x-www-form-urlencoded'}, body: new URLSearchParams({school_ids: unchecked.join(','), action:'unassign'}) }).then(r=>r.json()));
+
+  Promise.all(reqs).then(results => {
+    // update local state from last response
+    const last = results[results.length - 1];
+    if (last && last.assigned_ids) {
+      assignedSchoolIds[assignCourseId] = last.assigned_ids;
+      const c = allCourses.find(x => x.id === assignCourseId);
+      if (c) c.schools = last.assigned_ids.length;
+    }
+    btn.disabled = false; btn.textContent = 'Apply Changes';
+    status.style.display = 'inline'; setTimeout(() => status.style.display = 'none', 2500);
+    renderAssignList(document.getElementById('assign-school-search').value);
+  });
+}
+
+function closeAssignModal() {
+  document.getElementById('assign-modal').style.display = 'none';
+  document.body.style.overflow = '';
+  assignCourseId = null;
+}
+
+document.getElementById('assign-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('assign-modal')) closeAssignModal();
+});
 </script>
 {% endblock %}

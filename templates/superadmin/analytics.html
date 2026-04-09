@@ -23,11 +23,10 @@
 
   .sa-stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); gap:16px; margin-bottom:28px; }
   .sa-stat { background:#fff; border:1.5px solid var(--border); border-radius:12px; padding:20px 22px; font-family:'DM Sans',sans-serif; }
-  .sa-stat-icon { font-size:22px; margin-bottom:8px; }
+  .sa-stat-icon { margin-bottom:10px; display:block; line-height:1; }
   .sa-stat-val { font-size:28px; font-weight:700; color:var(--ink); font-family:'Playfair Display',Georgia,serif; }
   .sa-stat-lbl { font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-top:3px; font-family:'DM Sans',sans-serif; }
 
-  /* Search + Sort bar */
   .toolbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
   .search-bar { display:flex; align-items:center; gap:8px; background:#fff; border:1.5px solid var(--border); border-radius:10px; padding:8px 14px; width:230px; font-family:'DM Sans',sans-serif; transition:border-color 0.2s, box-shadow 0.2s; }
   .search-bar input { border:none; outline:none; font-size:13px; color:var(--ink); background:transparent; width:100%; font-family:'DM Sans',sans-serif; }
@@ -36,24 +35,20 @@
   .sort-select { border:1.5px solid var(--border); border-radius:8px; padding:7px 12px; font-size:13px; color:var(--ink); background:#fff; outline:none; cursor:pointer; font-family:'DM Sans',sans-serif; transition:border-color 0.2s; }
   .sort-select:focus{border-color:var(--accent);}
 
-  /* Progress bar */
   .bar-wrap { width:100px; background:var(--border); border-radius:4px; height:6px; display:inline-block; vertical-align:middle; margin-left:6px; }
   .bar-fill { height:6px; border-radius:4px; transition:width .4s; }
   .bar-blue { background:var(--blue); }
   .bar-green { background:var(--green); }
 
-  /* Export button */
   .btn-export { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:8px; border:1.5px solid var(--border); background:#fff; font-size:13px; font-weight:500; color:var(--ink); cursor:pointer; font-family:'DM Sans',sans-serif; transition:background .15s,border-color .15s; }
   .btn-export:hover { background:var(--blue-light); border-color:var(--blue); color:var(--blue); }
 
-  /* Pagination */
   .pagination { display:flex; align-items:center; gap:6px; justify-content:center; margin-top:24px; flex-wrap:wrap; }
   .pg-btn { min-width:34px; height:34px; border-radius:8px; border:1.5px solid var(--border); background:#fff; font-size:13px; font-weight:500; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:var(--ink); font-family:'DM Sans',sans-serif; transition:background .15s,color .15s,border-color .15s; }
   .pg-btn:hover { background:var(--blue-light); border-color:var(--blue); color:var(--blue); }
   .pg-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); }
   .pg-btn:disabled { opacity:.4; cursor:not-allowed; }
 
-  /* Sortable column headers */
   th.sortable { cursor:pointer; user-select:none; white-space:nowrap; font-family:'DM Sans',sans-serif; }
   th.sortable:hover { color:var(--blue); }
   th.sortable .sort-icon { font-size:10px; margin-left:3px; color:var(--muted); }
@@ -73,44 +68,54 @@
   <a href="{% url 'superadmin_dashboard' %}" class="btn btn-ghost">← Dashboard</a>
 </div>
 
-<!-- ── Stat Cards ── -->
+<!-- Stat Cards -->
 <div class="sa-stat-grid">
   <div class="sa-stat">
-    <div class="sa-stat-icon">🏫</div>
+    <div class="sa-stat-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5b4bea" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 4l9 5.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+    </div>
     <div class="sa-stat-val">{{ schools }}</div>
     <div class="sa-stat-lbl">Total Schools</div>
   </div>
   <div class="sa-stat">
-    <div class="sa-stat-icon">✅</div>
+    <div class="sa-stat-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1d9e75" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+    </div>
     <div class="sa-stat-val" style="color:#1d9e75;">{{ active_schools }}</div>
     <div class="sa-stat-lbl">Active Schools</div>
   </div>
   <div class="sa-stat">
-    <div class="sa-stat-icon">🚫</div>
+    <div class="sa-stat-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e24b4a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+    </div>
     <div class="sa-stat-val" style="color:#e24b4a;">{{ suspended_schools }}</div>
     <div class="sa-stat-lbl">Suspended</div>
   </div>
   <div class="sa-stat">
-    <div class="sa-stat-icon">🎓</div>
+    <div class="sa-stat-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+    </div>
     <div class="sa-stat-val">{{ total_students }}</div>
     <div class="sa-stat-lbl">Students</div>
   </div>
   <div class="sa-stat">
-    <div class="sa-stat-icon">👩‍🏫</div>
+    <div class="sa-stat-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+    </div>
     <div class="sa-stat-val">{{ total_teachers }}</div>
     <div class="sa-stat-lbl">Teachers</div>
   </div>
   <div class="sa-stat">
-    <div class="sa-stat-icon">🏛</div>
+    <div class="sa-stat-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    </div>
     <div class="sa-stat-val">{{ total_classrooms }}</div>
     <div class="sa-stat-lbl">Classrooms</div>
   </div>
 </div>
 
-<!-- ── School Breakdown ── -->
+<!-- School Breakdown -->
 <div class="card">
-
-  <!-- Card header -->
   <div class="flex-between mb-16">
     <h2 style="font-size:16px;font-weight:600;color:var(--brand-dark);margin:0;">
       School Breakdown
@@ -118,14 +123,15 @@
         {{ school_breakdown|length }} school{{ school_breakdown|length|pluralize }}
       </span>
     </h2>
-    <!-- Export CSV button -->
-    <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+    <button class="btn-export" onclick="exportCSV()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export CSV
+    </button>
   </div>
 
-  <!-- Toolbar: Search + Sort -->
   <div class="toolbar">
     <div class="search-bar">
-      <span style="color:var(--text-muted);font-size:13px;">🔍</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
       <input type="text" id="school-search" placeholder="Search schools…" oninput="filterAndRender()">
     </div>
     <select class="sort-select" id="sort-select" onchange="filterAndRender()">
@@ -141,25 +147,16 @@
     <span id="result-count" style="font-size:12px;color:var(--text-muted);"></span>
   </div>
 
-  <!-- Table -->
   <div class="table-wrap">
     <table>
       <thead>
         <tr>
           <th>#</th>
-          <th class="sortable" data-col="name" onclick="columnSort('name')">
-            School <span class="sort-icon"></span>
-          </th>
+          <th class="sortable" data-col="name" onclick="columnSort('name')">School <span class="sort-icon"></span></th>
           <th>Status</th>
-          <th class="sortable" data-col="sc" onclick="columnSort('sc')">
-            Students <span class="sort-icon"></span>
-          </th>
-          <th class="sortable" data-col="tc" onclick="columnSort('tc')">
-            Teachers <span class="sort-icon"></span>
-          </th>
-          <th class="sortable" data-col="cc" onclick="columnSort('cc')">
-            Classrooms <span class="sort-icon"></span>
-          </th>
+          <th class="sortable" data-col="sc" onclick="columnSort('sc')">Students <span class="sort-icon"></span></th>
+          <th class="sortable" data-col="tc" onclick="columnSort('tc')">Teachers <span class="sort-icon"></span></th>
+          <th class="sortable" data-col="cc" onclick="columnSort('cc')">Classrooms <span class="sort-icon"></span></th>
           <th>Performance</th>
         </tr>
       </thead>
@@ -167,9 +164,7 @@
     </table>
   </div>
 
-  <!-- Summary row -->
   <div id="summary-row" style="font-size:12px;color:var(--text-muted);margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;gap:20px;flex-wrap:wrap;"></div>
-
   <div class="pagination" id="pagination"></div>
 </div>
 
@@ -184,7 +179,6 @@ let sortDir = 'desc';
 const MAX_SC = {{ max_students }};
 const MAX_TC = {{ max_teachers }};
 
-// Build full data array from Django
 const allRows = [
   {% for s in school_breakdown %}
   {
@@ -199,35 +193,23 @@ const allRows = [
   {% endfor %}
 ];
 
-// Calculate performance score based on student engagement metrics
 function calculatePerformance(students, teachers, classrooms) {
   if (students === 0 || teachers === 0 || classrooms === 0) return 0;
-  // Performance formula: (students per teacher) × (students per classroom) × engagement factor
-  const studentTeacherRatio = students / teachers;
-  const studentClassroomRatio = students / classrooms;
-  const performanceScore = (studentTeacherRatio * 0.5) + (studentClassroomRatio * 0.5);
-  return performanceScore;
+  return (students / teachers * 0.5) + (students / classrooms * 0.5);
 }
 
 let filtered = [...allRows];
 
-// ── Filter + Sort + Render ──────────────────────────────
 function filterAndRender() {
   const q   = document.getElementById('school-search').value.toLowerCase();
   const srt = document.getElementById('sort-select').value;
-
-  // Filter by search
   filtered = allRows.filter(r => r.name.toLowerCase().includes(q));
-
-  // Apply performance filter if selected
   if (srt.startsWith('performance_')) {
-    const avgPerformance = allRows.reduce((sum, r) => sum + r.performance, 0) / allRows.length;
+    const avg = allRows.reduce((s, r) => s + r.performance, 0) / allRows.length;
     const isHigh = srt === 'performance_high';
-    filtered = filtered.filter(r => isHigh ? r.performance >= avgPerformance : r.performance < avgPerformance);
-    // Sort by performance
+    filtered = filtered.filter(r => isHigh ? r.performance >= avg : r.performance < avg);
     filtered.sort((a, b) => b.performance - a.performance);
   } else {
-    // Regular sort
     const [col, dir] = srt.split('_');
     filtered.sort((a, b) => {
       let va = col === 'name' ? a.name : a[col === 'students' ? 'sc' : col === 'teachers' ? 'tc' : col === 'classrooms' ? 'cc' : col];
@@ -236,93 +218,47 @@ function filterAndRender() {
       return dir === 'asc' ? va - vb : vb - va;
     });
   }
-
   currentPage = 1;
   render();
 }
 
 function columnSort(col) {
-  // Toggle direction if same column clicked
-  if (sortCol === col) {
-    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-  } else {
-    sortCol = col;
-    sortDir = col === 'name' ? 'asc' : 'desc';
-  }
-
-  // Update header arrow classes
-  document.querySelectorAll('th.sortable').forEach(th => {
-    th.classList.remove('asc', 'desc');
-    if (th.dataset.col === col) th.classList.add(sortDir);
-  });
-
-  // Sort filtered data
-  filtered.sort((a, b) => {
-    let va = a[col], vb = b[col];
-    if (typeof va === 'string') return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
-    return sortDir === 'asc' ? va - vb : vb - va;
-  });
-
+  if (sortCol === col) { sortDir = sortDir === 'asc' ? 'desc' : 'asc'; } else { sortCol = col; sortDir = col === 'name' ? 'asc' : 'desc'; }
+  document.querySelectorAll('th.sortable').forEach(th => { th.classList.remove('asc','desc'); if (th.dataset.col === col) th.classList.add(sortDir); });
+  filtered.sort((a, b) => { let va = a[col], vb = b[col]; if (typeof va === 'string') return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va); return sortDir === 'asc' ? va - vb : vb - va; });
   currentPage = 1;
   renderTable();
 }
 
-// ── Render ──────────────────────────────────────────────
-function render() {
-  renderTable();
-  renderSummary();
-}
+function render() { renderTable(); renderSummary(); }
 
 function renderTable() {
   const start = (currentPage - 1) * PER_PAGE;
   const page  = filtered.slice(start, start + PER_PAGE);
   const tbody = document.getElementById('breakdown-tbody');
-
-  // Result count
-  document.getElementById('result-count').textContent =
-    filtered.length !== allRows.length
-      ? `${filtered.length} of ${allRows.length} schools`
-      : '';
-
+  document.getElementById('result-count').textContent = filtered.length !== allRows.length ? `${filtered.length} of ${allRows.length} schools` : '';
   if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted);">No schools found.</td></tr>`;
     document.getElementById('pagination').innerHTML = '';
     return;
   }
-
+  const avg = allRows.reduce((s, r) => s + r.performance, 0) / allRows.length;
   tbody.innerHTML = page.map((r, i) => {
     const scPct = MAX_SC > 0 ? Math.round((r.sc / MAX_SC) * 100) : 0;
     const tcPct = MAX_TC > 0 ? Math.round((r.tc / MAX_TC) * 100) : 0;
-    const avgPerformance = allRows.reduce((sum, row) => sum + row.performance, 0) / allRows.length;
-    const performanceLevel = r.performance >= avgPerformance ? '🟢 High' : '🔴 Low';
-
+    const perfHigh = r.performance >= avg;
+    const perfDot = `<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:${perfHigh ? '#1d9e75' : '#e24b4a'}"><svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="${perfHigh ? '#1d9e75' : '#e24b4a'}"/></svg>${perfHigh ? 'High' : 'Low'}</span>`;
     return `
     <tr>
       <td style="color:var(--text-muted);font-size:12px;">${start + i + 1}</td>
-      <td>
-        ${r.id
-          ? `<a href="/superadmin/schools/${r.id}/" style="font-weight:600;color:var(--blue);text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${r.name}</a>`
-          : `<strong>${r.name}</strong>`
-        }
-      </td>
-      <td>
-        ${r.active
-          ? '<span class="badge badge-success">Active</span>'
-          : '<span class="badge badge-danger">Suspended</span>'}
-      </td>
-      <td>
-        <span style="font-weight:500;">${r.sc}</span>
-        <span class="bar-wrap"><span class="bar-fill bar-blue" style="width:${scPct}%"></span></span>
-      </td>
-      <td>
-        <span style="font-weight:500;">${r.tc}</span>
-        <span class="bar-wrap"><span class="bar-fill bar-green" style="width:${tcPct}%"></span></span>
-      </td>
+      <td>${r.id ? `<a href="/superadmin/schools/${r.id}/" style="font-weight:600;color:var(--blue);text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${r.name}</a>` : `<strong>${r.name}</strong>`}</td>
+      <td>${r.active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Suspended</span>'}</td>
+      <td><span style="font-weight:500;">${r.sc}</span><span class="bar-wrap"><span class="bar-fill bar-blue" style="width:${scPct}%"></span></span></td>
+      <td><span style="font-weight:500;">${r.tc}</span><span class="bar-wrap"><span class="bar-fill bar-green" style="width:${tcPct}%"></span></span></td>
       <td>${r.cc}</td>
-      <td><span style="font-weight:500;font-size:12px;">${performanceLevel}</span></td>
+      <td>${perfDot}</td>
     </tr>`;
   }).join('');
-
   renderPagination();
 }
 
@@ -331,25 +267,21 @@ function renderSummary() {
   const totalTc = filtered.reduce((s, r) => s + r.tc, 0);
   const totalCc = filtered.reduce((s, r) => s + r.cc, 0);
   const active  = filtered.filter(r => r.active).length;
-
   document.getElementById('summary-row').innerHTML = `
     <span>Showing <strong>${filtered.length}</strong> schools</span>
     <span>Active: <strong style="color:#1d9e75;">${active}</strong></span>
     <span>Suspended: <strong style="color:#e24b4a;">${filtered.length - active}</strong></span>
     <span>Total Students: <strong>${totalSc}</strong></span>
     <span>Total Teachers: <strong>${totalTc}</strong></span>
-    <span>Total Classrooms: <strong>${totalCc}</strong></span>
-  `;
+    <span>Total Classrooms: <strong>${totalCc}</strong></span>`;
 }
 
 function renderPagination() {
   const total = Math.ceil(filtered.length / PER_PAGE);
   if (total <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
-  let html = `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
-  for (let p = 1; p <= total; p++) {
-    html += `<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
-  }
-  html += `<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===total?'disabled':''}>›</button>`;
+  let html = `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>&#8249;</button>`;
+  for (let p = 1; p <= total; p++) html += `<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+  html += `<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===total?'disabled':''}>&#8250;</button>`;
   html += `<span style="font-size:12px;color:var(--text-muted);margin-left:6px;">Page ${currentPage} of ${total}</span>`;
   document.getElementById('pagination').innerHTML = html;
 }
@@ -357,37 +289,23 @@ function renderPagination() {
 function goPage(p) {
   const total = Math.ceil(filtered.length / PER_PAGE);
   if (p < 1 || p > total) return;
-  currentPage = p;
-  renderTable();
+  currentPage = p; renderTable();
 }
 
-// ── Export CSV ──────────────────────────────────────────
 function exportCSV() {
-  const headers = ['#', 'School Name', 'Status', 'Students', 'Teachers', 'Classrooms', 'Performance'];
+  const headers = ['#','School Name','Status','Students','Teachers','Classrooms','Performance'];
   const csvRows = [headers.join(',')];
-  const avgPerformance = allRows.reduce((sum, r) => sum + r.performance, 0) / allRows.length;
+  const avg = allRows.reduce((s, r) => s + r.performance, 0) / allRows.length;
   filtered.forEach((r, i) => {
-    const perfLevel = r.performance >= avgPerformance ? 'High' : 'Low';
-    csvRows.push([
-      i + 1,
-      `"${r.name.replace(/"/g, '""')}"`,
-      r.active ? 'Active' : 'Suspended',
-      r.sc,
-      r.tc,
-      r.cc,
-      perfLevel,
-    ].join(','));
+    csvRows.push([i+1, `"${r.name.replace(/"/g,'""')}"`, r.active?'Active':'Suspended', r.sc, r.tc, r.cc, r.performance>=avg?'High':'Low'].join(','));
   });
   const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
-  a.href     = url;
-  a.download = 'school_breakdown.csv';
-  a.click();
+  a.href = url; a.download = 'school_breakdown.csv'; a.click();
   URL.revokeObjectURL(url);
 }
 
-// Init
 render();
 </script>
 {% endblock %}

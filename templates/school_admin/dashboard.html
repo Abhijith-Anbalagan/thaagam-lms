@@ -2,164 +2,286 @@
 {% block title %}Dashboard — {{ school.name }}{% endblock %}
 
 {% block extra_css %}
-<style>
-  .dash-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 28px;
-  }
-  .dash-header h1 {
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: var(--brand-dark);
-    letter-spacing: -0.5px;
-  }
-  .dash-school-badge {
-    font-size: 12px;
-    font-weight: 600;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: #fff;
-    padding: 5px 14px;
-    border-radius: 50px;
-    letter-spacing: 0.4px;
-  }
+<style>/* ── Reset & Variables ────────────────────────────────── */
+:root {
+  --brand-dark: #111827;
+  --brand-blue: #4f46e5;
+  --text-muted: #6b7280;
+  --border: #a5cdf556;
+  --card-bg: #ffffff;
+  --page-bg: #c4dff841;
+}
 
-  .stat-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-  .stat-card {
-    border-radius: 14px;
-    padding: 22px 20px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-    transition: transform 0.2s, box-shadow 0.2s;
-    text-decoration: none;
-    color: inherit;
-    display: block;
-    cursor: pointer;
-  }
-  .stat-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.16);
-    text-decoration: none;
-    color: inherit;
-  }
-  .stat-card::before {
-    content: '';
-    position: absolute;
-    top: -20px; right: -20px;
-    width: 80px; height: 80px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.12);
-  }
-  .stat-card::after {
-    content: '';
-    position: absolute;
-    bottom: -30px; right: 20px;
-    width: 60px; height: 60px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.08);
-  }
-  .stat-card-1 { background: linear-gradient(135deg, #e5e7f1 0%, #eedeff 100%); }
-  .stat-card-2 { background: linear-gradient(135deg, #eff5f4 0%, #e3f8eb 100%); }
-  .stat-card-3 { background: linear-gradient(135deg, #ffffff 0%, #fae5e8 100%); }
-  .stat-card-4 { background: linear-gradient(135deg, #fdfdfd 0%, #eefcfd 100%); }
+/* ── Dashboard Header ─────────────────────────────────── */
+.dash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+.dash-header h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--brand-dark);
+  letter-spacing: -0.5px;
+}
+.dash-school-badge {
+  font-size: 11px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #1233c4, #659ff7);
+  color: #fff;
+  padding: 5px 16px;
+  border-radius: 50px;
+  letter-spacing: 0.4px;
+}
 
-  .stat-icon  { font-size: 22px; margin-bottom: 10px; display: block; }
-  .stat-value { font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: 4px; color: var(--brand-dark); }
-  .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); }
+/* ── Stat Grid ────────────────────────────────────────── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  border-radius: 14px;
+  padding: 20px 18px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  cursor: pointer;
+}
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  text-decoration: none;
+  color: inherit;
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: -20px; right: -20px;
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+}
+.stat-card::after {
+  content: '';
+  position: absolute;
+  bottom: -28px; right: 16px;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+}
+.stat-card-1 { background: linear-gradient(135deg, #0f2ab6, #a665eb); }
+.stat-card-2 { background: linear-gradient(135deg, #027764, #88e9ad); }
+.stat-card-3 { background: linear-gradient(135deg, #d60404, #e77284); }
+.stat-card-4 { background: linear-gradient(135deg, #ce039b, #d685cb); }
 
-  .dash-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-bottom: 20px;
-  }
-  .dash-card {
-    background: var(--card-bg, #fff);
-    border: 1px solid var(--border, #e8eaed);
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  }
-  .dash-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 18px 20px 14px;
-    border-bottom: 1px solid var(--border, #e8eaed);
-  }
-  .dash-card-header h3 { font-size: 14px; font-weight: 700; color: var(--brand-dark); margin: 0; }
-  .live-pill {
-    display: flex; align-items: center; gap: 5px;
-    font-size: 11px; font-weight: 600; color: #16a34a;
-    background: #dcfce7; padding: 3px 10px; border-radius: 50px;
-  }
-  .pulse-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: #16a34a; animation: pulse 1.5s ease infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.5; transform: scale(1.3); }
-  }
-  .dash-card-body { padding: 16px 20px; }
+.stat-icon  { font-size: 20px; margin-bottom: 10px; display: block; }
+.stat-value { font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: 4px; color: #fff; }
+.stat-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.9px; color: rgba(255,255,255,0.8); }
 
-  .member-row {
-    display: flex; align-items: center; gap: 12px;
-    padding: 10px 0; border-bottom: 1px solid var(--border, #f0f0f0);
-  }
-  .member-row:last-child { border-bottom: none; }
-  .m-avatar {
-    width: 36px; height: 36px; border-radius: 50%;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: #fff; font-size: 13px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  }
-  .member-name  { font-size: 13px; font-weight: 600; color: var(--brand-dark); }
-  .member-email { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+/* ── Dash Grid ────────────────────────────────────────── */
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
 
-  .pending-label {
-    font-size: 10px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.8px; color: var(--text-muted); margin: 14px 0 8px;
-  }
-  .invite-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px; background: #fffbeb;
-    border: 1px solid #fde68a; border-radius: 8px; margin-bottom: 6px;
-  }
-  .invite-email { font-size: 13px; font-weight: 500; color: var(--brand-dark); flex: 1; }
-  .invite-meta  { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+/* ── Dash Card ────────────────────────────────────────── */
+.dash-card {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.18s ease;
+}
+.dash-card:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
 
-  .empty-state { text-align: center; padding: 28px 20px; color: var(--text-muted); font-size: 13px; }
-  .empty-state a { color: var(--brand-blue); font-weight: 600; text-decoration: none; }
+/* ── Card Header ──────────────────────────────────────── */
+.dash-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  background: #fafafa;
+}
+.dash-card-header h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--brand-dark);
+  margin: 0;
+  letter-spacing: -0.1px;
+}
 
-  .dash-table-wrap { overflow-x: auto; }
-  .dash-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .dash-table th {
-    text-align: left; padding: 10px 14px; font-size: 10px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.7px; color: var(--text-muted);
-    background: var(--page-bg, #f8f9fa); border-bottom: 1px solid var(--border);
-  }
-  .dash-table td { padding: 11px 14px; border-bottom: 1px solid var(--border, #f0f0f0); color: var(--brand-dark); }
-  .dash-table tr:last-child td { border-bottom: none; }
-  .dash-table tr:hover td { background: var(--page-bg, #f8f9fa); }
-  .dash-table .no-data { text-align: center; color: var(--text-muted); padding: 24px; }
+/* ── Live Pill ────────────────────────────────────────── */
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #15803d;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 3px 9px;
+  border-radius: 50px;
+}
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16a34a;
+  animation: pulse 1.5s ease infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.45; transform: scale(1.3); }
+}
 
-  .btn-xs { font-size: 11px; padding: 4px 10px; border-radius: 6px; font-weight: 600; border: none; cursor: pointer; transition: opacity 0.2s; }
-  .btn-xs:hover { opacity: 0.8; }
-  .btn-activate { background: #667eea; color: #fff; }
-  .btn-delete   { background: #fee2e2; color: #dc2626; }
+/* ── Card Body ────────────────────────────────────────── */
+.dash-card-body { padding: 6px 0; }
 
-  @media (max-width: 900px) {
-    .stat-grid { grid-template-columns: repeat(2, 1fr); }
-    .dash-grid { grid-template-columns: 1fr; }
-  }
+/* ── Member Row ───────────────────────────────────────── */
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.13s ease;
+}
+.member-row:last-child { border-bottom: none; }
+.member-row:hover { background: #f8f9fb; }
+
+/* ── Avatar ───────────────────────────────────────────── */
+.m-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0;
+}
+
+/* ── Member Info ──────────────────────────────────────── */
+.member-name  { font-size: 13px; font-weight: 600; color: var(--brand-dark); line-height: 1.3; }
+.member-email { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+/* ── Pending Invites ──────────────────────────────────── */
+.pending-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  padding: 12px 18px 6px;
+}
+.invite-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background: #fffbeb;
+  border-top: 1px solid #fde68a;
+  border-bottom: 1px solid #fde68a;
+  margin-bottom: 1px;
+}
+.invite-email { font-size: 13px; font-weight: 500; color: var(--brand-dark); flex: 1; }
+.invite-meta  { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* ── Empty State ──────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 30px 20px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.empty-state a {
+  color: var(--brand-blue);
+  font-weight: 600;
+  text-decoration: none;
+}
+.empty-state a:hover { text-decoration: underline; }
+
+/* ── Table ────────────────────────────────────────────── */
+.dash-table-wrap { overflow-x: auto; }
+.dash-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dash-table th {
+  text-align: left;
+  padding: 9px 16px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--text-muted);
+  background: #fafafa;
+  border-bottom: 1px solid var(--border);
+}
+.dash-table td {
+  padding: 11px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  color: var(--brand-dark);
+}
+.dash-table tr:last-child td { border-bottom: none; }
+.dash-table tr:hover td { background: #f8f9fb; }
+.dash-table .no-data { text-align: center; color: var(--text-muted); padding: 24px; }
+
+/* ── Buttons ──────────────────────────────────────────── */
+.btn-xs {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease, background 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-activate {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+.btn-activate:hover { background: #ddd6fe; }
+.btn-delete {
+  background: transparent;
+  color: #dc2626;
+  border: 1px solid transparent;
+}
+.btn-delete:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+/* ── Dashboard font ───────────────────────────────────── */
+.dash{
+  color: black;
+  font-size: 2em;
+  font-family: sans-serif;
+  
+}
+/* ── Responsive ───────────────────────────────────────── */
+@media (max-width: 900px) {
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .dash-grid  { grid-template-columns: 1fr; }
+}
 </style>
 {% endblock %}
 
@@ -167,29 +289,29 @@
 
 <!-- Header -->
 <div class="dash-header">
-  <h1>Dashboard</h1>
-  <span class="dash-school-badge">🏫 {{ school.name }}</span>
+  <h2 class="dash">Dashboard</h2>
+  <span class="dash-school-badge"> {{ school.name }}</span>
 </div>
 
 <!-- Stat Cards -->
 <div class="stat-grid">
   <a href="{% url 'school_admin_management_list' %}" class="stat-card stat-card-4">
-    <span class="stat-icon">👥</span>
+    <span class="stat-icon"></span>
     <div class="stat-value">{{ total_management }}</div>
     <div class="stat-label">Management</div>
   </a>
   <a href="{% url 'school_admin_teachers_list' %}" class="stat-card stat-card-2">
-    <span class="stat-icon">👩🏫</span>
+    <span class="stat-icon"></span>
     <div class="stat-value">{{ total_teachers }}</div>
     <div class="stat-label">Teachers</div>
   </a>
   <a href="{% url 'school_admin_students_list' %}" class="stat-card stat-card-1">
-    <span class="stat-icon">🎓</span>
+    <span class="stat-icon"></span>
     <div class="stat-value">{{ total_students }}</div>
     <div class="stat-label">Students</div>
   </a>
   <a href="{% url 'school_admin_reports' %}" class="stat-card stat-card-3">
-    <span class="stat-icon">🏛</span>
+    <span class="stat-icon"></span>
     <div class="stat-value">{{ total_classrooms }}</div>
     <div class="stat-label">Classrooms</div>
   </a>
@@ -202,7 +324,7 @@
   <!-- Management Team -->
   <div class="dash-card">
     <div class="dash-card-header">
-      <h3>👥 Management Team</h3>
+      <h3> Management Team</h3>
       <span class="live-pill"><span class="pulse-dot"></span> Live</span>
     </div>
     <div class="dash-card-body">
@@ -214,19 +336,19 @@
             <div class="member-name">{{ m.get_full_name|default:m.username }}</div>
             <div class="member-email">{{ m.email }}</div>
           </div>
-          <button class="btn-xs btn-delete" onclick="deleteMember({{ m.id }})">🗑 Remove</button>
+        <!--  <button class="btn-xs btn-delete" onclick="deleteMember({{ m.id }})">🗑 Remove</button>-->
         </div>
         {% empty %}
         <div class="empty-state" id="no-management">
           No management users yet.<br>
-          <a href="{% url 'school_admin_invite_management' %}">➕ Invite one now</a>
+          <a href="{% url 'school_admin_invite_management' %}">Invite one now</a>
         </div>
         {% endfor %}
       </div>
 
       <!-- Pending Invitations -->
       <div id="pending-section" {% if not pending_invites %}style="display:none;"{% endif %}>
-        <div class="pending-label">⏳ Pending Invitations</div>
+        <div class="pending-label"> Pending Invitations</div>
         <div id="pending-list">
           {% for inv in pending_invites %}
           <div class="invite-row" id="invite-row-{{ inv.id }}">
@@ -250,7 +372,7 @@
   <!-- Recent Announcements -->
   <div class="dash-card">
     <div class="dash-card-header">
-      <h3>📢 Recent Announcements</h3>
+      <h3> Recent Announcements</h3>
     </div>
     <div class="dash-table-wrap">
       <table class="dash-table">
@@ -276,7 +398,7 @@
 <!-- Recent Teachers -->
 <div class="dash-card" style="margin-bottom:20px;">
   <div class="dash-card-header">
-    <h3>👩🏫 Recent Teachers</h3>
+    <h3> Recent Teachers</h3>
     <a href="{% url 'school_admin_teachers_list' %}"
        style="font-size:12px; color:var(--brand-blue); font-weight:600; text-decoration:none;">
       View all →
