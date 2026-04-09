@@ -5,7 +5,9 @@ load_dotenv()
 
 
 
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 # Load .env file
 _env_path = BASE_DIR / '.env'

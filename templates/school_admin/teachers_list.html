@@ -1,60 +1,220 @@
 {% extends 'base.html' %}
 {% block title %}Teachers — {{ school.name }}{% endblock %}
+
 {% block extra_css %}
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
-  :root {
-    --ink:#0f0e0d; --paper:#faf8f5; --cream:#f2ede6; --accent:#c8401a;
-    --accent-light:#f5e8e3; --muted:#7a7470; --border:#e0d9d0;
-    --shadow:rgba(15,14,13,0.08); --blue:#1d5fa8; --blue-light:#e8f0fa;
-    --green:#2a9d5c; --green-light:#e6f4ed;
-  }
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'DM Sans',sans-serif; background:var(--paper); }
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap');
 
-  .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
-  .page-title  { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:900; color:var(--ink); }
-  .page-sub    { font-size:13px; color:var(--muted); margin-top:3px; }
+:root {
+  --ink:#0f0e0d;
+  --paper:#faf8f5;
+  --cream:#f2ede6;
+  --muted:#7a7470;
+  --border:#e0d9d0;
+}
 
-  .stat-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:14px; margin-bottom:24px; }
-  .stat-box { background:#fff; border:1.5px solid var(--border); border-radius:12px; padding:18px 20px; }
-  .stat-box-val { font-family:'Playfair Display',serif; font-size:2rem; font-weight:700; color:var(--ink); }
-  .stat-box-lbl { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-top:4px; }
+/* RESET */
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--paper);}
 
-  .card { background:#fff; border:1.5px solid var(--border); border-radius:14px; overflow:hidden; margin-bottom:20px; }
-  .card-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1.5px solid var(--border); background:var(--cream); flex-wrap:wrap; gap:10px; }
-  .card-title  { font-family:'Playfair Display',serif; font-size:15px; font-weight:700; color:var(--ink); }
+/* HEADER */
+.page-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:24px;
+}
+.page-title{
+  font-family:sans-serif;
+  font-size:2em;
+  font-weight:700;
+  color: #0f0e0d;
+}
+.page-sub{
+  font-size:13px;
+  color:var(--muted);
+}
 
-  .search-bar { display:flex; align-items:center; gap:8px; background:#fff; border:1.5px solid var(--border); border-radius:8px; padding:7px 12px; width:220px; transition:border-color .2s; }
-  .search-bar input { border:none; outline:none; font-size:13px; color:var(--ink); background:transparent; width:100%; font-family:'DM Sans',sans-serif; }
-  .search-bar:focus-within { border-color:var(--accent); }
+/* BUTTON */
+.btn-ghost{
+  padding:8px 16px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  text-decoration:none;
+  color:var(--muted);
+  transition:.2s;
+}
+.btn-ghost:hover{
+  background:#eef3ff;
+  color:#4a6cf7;
+  border-color:#4a6cf7;
+}
 
-  .table-wrap { overflow-x:auto; }
-  table { width:100%; border-collapse:collapse; font-size:13.5px; }
-  thead tr { background:var(--cream); }
-  th { padding:11px 16px; text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); border-bottom:1.5px solid var(--border); white-space:nowrap; }
-  td { padding:13px 16px; border-bottom:1px solid var(--border); color:var(--ink); vertical-align:middle; }
-  tbody tr:last-child td { border-bottom:none; }
-  tbody tr:hover td { background:var(--paper); }
+/* STAT CARDS */
+.stat-row{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:16px;
+  margin-bottom:24px;
+}
 
-  .avatar { width:34px; height:34px; border-radius:50%; background:var(--green-light); color:var(--green); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; font-family:'Playfair Display',serif; }
-  .u-cell  { display:flex; align-items:center; gap:10px; }
-  .u-name  { font-weight:600; color:var(--ink); }
-  .u-sub   { font-size:11px; color:var(--muted); margin-top:2px; }
+.stat-box{
+  padding:22px;
+  border-radius:16px;
+  color:#fff;
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 10px 25px rgba(0,0,0,0.08);
+  transition:.25s;
+}
+.stat-box:hover{
+  transform:translateY(-5px);
+}
 
-  .badge-active   { background:var(--green-light); color:var(--green); font-size:11px; font-weight:600; padding:3px 10px; border-radius:99px; }
-  .badge-inactive { background:var(--accent-light); color:var(--accent); font-size:11px; font-weight:600; padding:3px 10px; border-radius:99px; }
+/* Different colors */
+.stat-box:nth-child(1){
+  background:linear-gradient(135deg,#667eea,#764ba2);
+}
+.stat-box:nth-child(2){
+  background:linear-gradient(135deg,#43cea2,#185a9d);
+}
+.stat-box:nth-child(3){
+  background:linear-gradient(135deg,#f7971e,#ffd200);
+}
 
-  .cls-list { display:flex; flex-wrap:wrap; gap:4px; }
-  .cls-pill { background:var(--blue-light); color:var(--blue); font-size:11px; font-weight:500; padding:2px 8px; border-radius:6px; }
-  .cls-none { color:var(--muted); font-style:italic; font-size:12px; }
+.stat-box::after{
+  content:'';
+  position:absolute;
+  width:120px;
+  height:120px;
+  background:rgba(255,255,255,0.15);
+  border-radius:50%;
+  top:-30px;
+  right:-30px;
+}
 
-  .num-pill { background:var(--cream); color:var(--muted); font-size:12px; font-weight:600; padding:3px 10px; border-radius:99px; }
+.stat-box-val{
+  font-size:2.2rem;
+  font-weight:800;
+}
+.stat-box-lbl{
+  font-size:11px;
+  letter-spacing:.08em;
+}
 
-  tr.hidden { display:none; }
+/* CARD */
+.card{
+  background:#fff;
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 8px 24px rgba(0,0,0,0.06);
+}
+.card-header{
+  display:flex;
+  justify-content:space-between;
+  padding:16px 20px;
+  background:var(--cream);
+  flex-wrap:wrap;
+}
+.card-title{
+  font-family:'Playfair Display',serif;
+  font-weight:700;
+}
 
-  .btn-ghost { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; font-weight:500; color:var(--muted); text-decoration:none; background:transparent; transition:all .15s; }
-  .btn-ghost:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-light); text-decoration:none; }
+/* SEARCH */
+.search-bar{
+  display:flex;
+  gap:8px;
+  background:#fff;
+  padding:8px 14px;
+  border-radius:10px;
+  border:1px solid var(--border);
+}
+.search-bar input{
+  border:none;
+  outline:none;
+  background:transparent;
+}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;}
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th{
+  padding:12px;
+  font-size:11px;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+td{
+  padding:14px;
+  border-top:1px solid var(--border);
+}
+tbody tr{
+  transition:.2s;
+}
+tbody tr:hover{
+  transform:scale(1.01);
+  background:#f9fafc;
+}
+
+/* USER CELL */
+.u-cell{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+/* AVATAR */
+.avatar{
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#6a11cb,#2575fc);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+}
+
+/* BADGES */
+.badge-active{
+  background:#e6f9f0;
+  color:#1aa36f;
+  padding:4px 10px;
+  border-radius:50px;
+}
+.badge-inactive{
+  background:#ffeaea;
+  color:#e74c3c;
+  padding:4px 10px;
+  border-radius:50px;
+}
+
+/* CLASS PILLS */
+.cls-pill{
+  background:#eef3ff;
+  color:#4a6cf7;
+  padding:3px 8px;
+  border-radius:6px;
+  font-size:11px;
+}
+
+/* NUMBER */
+.num-pill{
+  background:#f3f3f3;
+  padding:4px 10px;
+  border-radius:50px;
+}
+
+/* HIDDEN */
+.hidden{display:none;}
+
 </style>
 {% endblock %}
 
@@ -62,87 +222,59 @@
 
 <div class="page-header">
   <div>
-    <div class="page-title">👩🏫 Teachers</div>
-    <div class="page-sub">{{ school.name }} · {{ teachers|length }} teacher{{ teachers|length|pluralize }} on staff</div>
+    <div class="page-title">Teachers</div>
+    <div class="page-sub">{{ school.name }} · {{ teachers|length }} teacher{{ teachers|length|pluralize }}</div>
   </div>
-  <a href="{% url 'school_admin_dashboard' %}" class="btn-ghost">← Dashboard</a>
+ <!-- <a href="{% url 'school_admin_dashboard' %}" class="btn-ghost">← Dashboard</a> -->
 </div>
 
-<!-- Stats -->
+<!-- STATS -->
 <div class="stat-row">
   <div class="stat-box">
     <div class="stat-box-val">{{ teachers|length }}</div>
     <div class="stat-box-lbl">Total Teachers</div>
   </div>
-  <div class="stat-box">
-    <div class="stat-box-val">{{ active_teachers }}</div>
-    <div class="stat-box-lbl">Active</div>
-  </div>
+  
   <div class="stat-box">
     <div class="stat-box-val">{{ total_classrooms }}</div>
     <div class="stat-box-lbl">Classrooms</div>
   </div>
 </div>
 
-<!-- Table -->
+<!-- TABLE -->
 <div class="card">
   <div class="card-header">
     <span class="card-title">All Teachers</span>
     <div class="search-bar">
-      <span style="color:var(--muted);">🔍</span>
-      <input type="text" id="tch-search" placeholder="Search by name or email…">
+      🔍 <input type="text" id="tch-search" placeholder="Search...">
     </div>
   </div>
+
   <div class="table-wrap">
     <table id="tch-table">
       <thead>
         <tr>
           <th>Teacher</th>
           <th>Email</th>
-          <th>Status</th>
-          <th>Classrooms</th>
+        
           <th>Students</th>
-          <th>Submissions</th>
-          <th>Joined</th>
+          <th>Date Joined</th>
         </tr>
       </thead>
       <tbody>
         {% for t in teachers %}
-        <tr data-name="{{ t.get_full_name|default:t.username|lower }}" data-email="{{ t.email|lower }}">
+        <tr data-name="{{ t.username|lower }}" data-email="{{ t.email|lower }}">
           <td>
             <div class="u-cell">
-              <div class="avatar">{{ t.get_full_name|default:t.username|slice:":1"|upper }}</div>
-              <div>
-                <div class="u-name">{{ t.get_full_name|default:t.username }}</div>
-                <div class="u-sub">@{{ t.username }}</div>
-              </div>
+              <div class="avatar">{{ t.username|slice:":1"|upper }}</div>
+              <div>{{ t.username }}</div>
             </div>
           </td>
-          <td style="color:var(--muted);">{{ t.email }}</td>
-          <td>
-            {% if t.is_active %}
-              <span class="badge-active">Active</span>
-            {% else %}
-              <span class="badge-inactive">Inactive</span>
-            {% endif %}
-          </td>
-          <td>
-            {% if t.classrooms.all %}
-              <div class="cls-list">
-                {% for cls in t.classrooms.all %}
-                  <span class="cls-pill">{{ cls.name }}</span>
-                {% endfor %}
-              </div>
-            {% else %}
-              <span class="cls-none">None assigned</span>
-            {% endif %}
-          </td>
+          <td>{{ t.email }}</td>
+          
           <td><span class="num-pill">{{ t.num_students }}</span></td>
-          <td><span class="num-pill">{{ t.submission_count }}</span></td>
-          <td style="color:var(--muted);font-size:12px;">{{ t.date_joined|date:"M d, Y" }}</td>
+          <td><span class="num-pill">{{ t.date_joined|date:"M d, Y" }}</span></td>
         </tr>
-        {% empty %}
-        <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted);">No teachers yet.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -150,11 +282,15 @@
 </div>
 
 <script>
-  document.getElementById('tch-search').addEventListener('input', function() {
-    const q = this.value.toLowerCase();
-    document.querySelectorAll('#tch-table tbody tr[data-name]').forEach(r => {
-      r.classList.toggle('hidden', !r.dataset.name.includes(q) && !r.dataset.email.includes(q));
-    });
+document.getElementById('tch-search').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('#tch-table tbody tr').forEach(r => {
+    r.classList.toggle('hidden',
+      !r.dataset.name.includes(q) &&
+      !r.dataset.email.includes(q)
+    );
   });
+});
 </script>
+
 {% endblock %}

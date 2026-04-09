@@ -51,34 +51,25 @@
       <div class="sidebar-divider"></div>
       <nav class="sidebar-nav">
   {% if user.role == 'super_admin' %}
-  <a href="{% url 'superadmin_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}">
-    <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 4l9 5.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg></span> Dashboard</a>
-  <a href="{% url 'superadmin_schools_list' %}" class="sidebar-link {% if request.resolver_match.url_name in 'superadmin_schools_list,superadmin_school_detail,superadmin_school_edit,superadmin_create_school' %}active{% endif %}">
-    <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 4l9 5.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/><line x1="12" y1="4" x2="12" y2="7"/></svg></span> Schools</a>
-  <a href="{% url 'superadmin_all_admins' %}" class="sidebar-link {% if request.resolver_match.url_name == 'superadmin_all_admins' %}active{% endif %}">
-    <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span> Admins</a>
-  <a href="{% url 'superadmin_all_courses' %}" class="sidebar-link {% if request.resolver_match.url_name in 'superadmin_all_courses,superadmin_course_list,superadmin_course_detail,superadmin_concept_add,superadmin_concept_edit,superadmin_video_add' %}active{% endif %}">
-    <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span> Courses</a>
-  <a href="{% url 'superadmin_analytics' %}" class="sidebar-link {% if request.resolver_match.url_name == 'superadmin_analytics' %}active{% endif %}">
-    <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> Analytics</a>
-  <a href="{% url 'manage_testimonials' %}" class="sidebar-link {% if request.resolver_match.url_name == 'manage_testimonials' %}active{% endif %}">
-    <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span> Manage Testimonials</a>
+  <a href="{% url 'superadmin_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}"><span class="sl-icon">🏠</span> Dashboard</a>
+  <a href="{% url 'superadmin_schools_list' %}" class="sidebar-link {% if request.resolver_match.url_name in 'superadmin_schools_list,superadmin_school_detail,superadmin_school_edit,superadmin_create_school' %}active{% endif %}"><span class="sl-icon">🏫</span> Schools</a>
+  <a href="{% url 'superadmin_all_admins' %}" class="sidebar-link {% if request.resolver_match.url_name == 'superadmin_all_admins' %}active{% endif %}"><span class="sl-icon">👤</span> Admins</a>
+  <a href="{% url 'superadmin_all_courses' %}" class="sidebar-link {% if request.resolver_match.url_name in 'superadmin_all_courses,superadmin_course_list,superadmin_course_detail,superadmin_concept_add,superadmin_concept_edit,superadmin_video_add' %}active{% endif %}"><span class="sl-icon">📘</span> Courses</a>
+  <a href="{% url 'superadmin_analytics' %}" class="sidebar-link {% if request.resolver_match.url_name == 'superadmin_analytics' %}active{% endif %}"><span class="sl-icon">📊</span> Analytics</a>
+  
+  <a href="{% url 'manage_testimonials' %}" 
+   class="sidebar-link {% if request.resolver_match.url_name == 'manage_testimonials' %}active{% endif %}">
+  <span class="sl-icon">📝</span> Manage Testimonials
+</a>
 
   {% elif user.role == 'school_admin' %}
-  <a href="{% url 'school_admin_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_dashboard' %}active{% endif %}">
-    <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 4l9 5.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg></span> Dashboard</a>
-  <a href="{% url 'school_admin_invite_management' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_invite_management' %}active{% endif %}">
-    <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg></span> Invite Management</a>
-  <a href="{% url 'school_admin_management_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_management_list' %}active{% endif %}">
-    <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Management</a>
-  <a href="{% url 'school_admin_teachers_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_teachers_list' %}active{% endif %}">
-    <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span> Teachers</a>
-  <a href="{% url 'school_admin_students_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_students_list' %}active{% endif %}">
-    <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span> Students</a>
-  <a href="{% url 'school_admin_create_announcement' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_create_announcement' %}active{% endif %}">
-    <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3z"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span> Announcement</a>
-  <a href="{% url 'school_admin_reports' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_reports' %}active{% endif %}">
-    <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> Reports</a>
+  <a href="{% url 'school_admin_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_dashboard' %}active{% endif %}"><span class="sl-icon"></span> Dashboard</a>
+  <a href="{% url 'school_admin_invite_management' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_invite_management' %}active{% endif %}"><span class="sl-icon"></span> Invite Management</a>
+  <a href="{% url 'school_admin_management_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_management_list' %}active{% endif %}"><span class="sl-icon"></span> Management</a>
+  <a href="{% url 'school_admin_teachers_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_teachers_list' %}active{% endif %}"><span class="sl-icon"></span> Teachers</a>
+  <a href="{% url 'school_admin_students_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_students_list' %}active{% endif %}"><span class="sl-icon"></span> Students</a>
+  <a href="{% url 'school_admin_create_announcement' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_create_announcement' %}active{% endif %}"><span class="sl-icon"></span> Announcement</a>
+  <a href="{% url 'school_admin_reports' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_reports' %}active{% endif %}"><span class="sl-icon"></span> Reports</a>
 
   {% elif user.role == 'management' %}
   <a href="{% url 'management_dashboard' %}#teachers" class="sidebar-link mgmt-nav-link" data-tab="teachers" onclick="switchMgmtTab('teachers');return false;">

@@ -7,6 +7,7 @@ urlpatterns = [
     path('invite-management/<int:invite_id>/activate/',     views.activate_invite,   name='school_admin_activate_invite'),
     path('invite-management/<int:invite_id>/delete/',       views.delete_invite,     name='school_admin_delete_invite'),
     path('management/<int:user_id>/delete/',                views.delete_management, name='school_admin_delete_management'),
+    path('management/<int:user_id>/',                      views.management_detail, name='school_admin_management_detail'),
     path('management/',                                     views.management_list,   name='school_admin_management_list'),
     path('management/poll/',                                views.poll_management,   name='school_admin_poll_management'),
     path('reports/',                                        views.reports,           name='school_admin_reports'),

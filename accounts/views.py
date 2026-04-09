@@ -64,22 +64,298 @@ def landing_view(request):
 
 # ─── Email Helpers ────────────────────────────────────────────────────────────
 
+# ─── Email Helpers ────────────────────────────────────────────────────────────
+
 def send_verification_email(user, verification_url):
-    send_mail(
-        subject        = 'Verify your EduPlatform email',
-        message        = f'Hi {user.username},\n\nClick to verify your account:\n{verification_url}\n\nExpires in 24 hours.',
-        from_email     = 'noreply@eduplatform.com',
-        recipient_list = [user.email],
+    subject = 'Verify your EduPlatform email'
+
+    plain = (
+        f'Hi {user.username},\n\n'
+        f'Click to verify your account:\n{verification_url}\n\n'
+        f'Expires in 24 hours.'
     )
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head>
+<body style="margin:0;padding:0;background-color:#f7f6f2;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0"
+         style="background-color:#f7f6f2;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table width="560" cellpadding="0" cellspacing="0" border="0"
+               style="max-width:560px;width:100%;background-color:#ffffff;
+                      border-radius:12px;border:1px solid #e8e6e0;
+                      box-shadow:0 4px 16px rgba(0,0,0,0.08);">
+
+          <!-- Accent stripe -->
+          <tr>
+            <td style="height:5px;
+                       background:linear-gradient(90deg,#c8401a 0%,#e8642e 55%,#f5a623 100%);
+                       border-radius:12px 12px 0 0;font-size:0;line-height:0;">&nbsp;</td>
+          </tr>
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#1a1f36;padding:24px 36px;border-radius:0;">
+              <span style="color:#ffffff;font-size:18px;font-weight:700;
+                           font-family:'Segoe UI',Arial,sans-serif;">
+                Edu<span style="color:#c8401a;">Platform</span>
+              </span>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:36px;">
+              <h2 style="margin:0 0 8px;font-size:22px;font-weight:700;
+                         color:#1a1f36;font-family:'Segoe UI',Arial,sans-serif;">
+                Verify your email address
+              </h2>
+              <p style="margin:0 0 20px;font-size:14px;color:#7a7470;
+                        font-family:'Segoe UI',Arial,sans-serif;">
+                Hi <strong style="color:#0f0e0d;">{user.username}</strong>,
+                thanks for signing up!
+              </p>
+              <p style="margin:0 0 28px;font-size:15px;color:#3d3d3a;
+                        line-height:1.7;font-family:'Segoe UI',Arial,sans-serif;">
+                Click the button below to verify your email address and
+                activate your EduPlatform account.
+              </p>
+
+              <!-- Button -->
+              <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td align="center" style="padding:4px 0 32px;">
+                    <a href="{verification_url}"
+                       style="display:inline-block;background-color:#c8401a;
+                              color:#ffffff;text-decoration:none;
+                              padding:14px 36px;border-radius:10px;
+                              font-size:15px;font-weight:600;
+                              font-family:'Segoe UI',Arial,sans-serif;">
+                      &#10003;&nbsp; Verify Email Address
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Fallback URL -->
+              <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td style="background-color:#f7f6f2;border-radius:10px;
+                             padding:14px 18px;border:1px solid #e8e6e0;">
+                    <p style="margin:0 0 5px;font-size:12px;font-weight:600;
+                               color:#7a7470;text-transform:uppercase;
+                               letter-spacing:0.08em;
+                               font-family:'Segoe UI',Arial,sans-serif;">
+                      Button not working?
+                    </p>
+                    <p style="margin:0;font-size:12px;color:#7a7470;
+                              font-family:'Segoe UI',Arial,sans-serif;line-height:1.5;">
+                      Copy and paste this link into your browser:<br>
+                      <a href="{verification_url}"
+                         style="color:#c8401a;word-break:break-all;font-size:11px;">
+                        {verification_url}
+                      </a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Expiry -->
+              <table cellpadding="0" cellspacing="0" border="0" width="100%"
+                     style="margin-top:20px;">
+                <tr>
+                  <td style="border-top:1px solid #e8e6e0;padding-top:18px;">
+                    <p style="margin:0;font-size:13px;color:#7a7470;line-height:1.6;
+                              font-family:'Segoe UI',Arial,sans-serif;">
+                      &#9203;&nbsp; This link expires in
+                      <strong style="color:#0f0e0d;">24 hours</strong>.<br>
+                      If you didn&#39;t create an account, you can safely ignore this email.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#f7f6f2;padding:18px 36px;
+                       border-top:1px solid #e8e6e0;border-radius:0 0 12px 12px;">
+              <p style="margin:0;font-size:12px;color:#9e9c95;
+                        font-family:'Segoe UI',Arial,sans-serif;">
+                &copy; EduPlatform &nbsp;&middot;&nbsp;
+                You&#39;re receiving this because you signed up at EduPlatform.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=plain,
+        from_email='noreply@eduplatform.com',
+        to=[user.email],
+    )
+    email.attach_alternative(html, "text/html")
+    email.send(fail_silently=False)
 
 
 def send_password_reset_email(user, reset_url):
-    send_mail(
-        subject        = 'Reset your EduPlatform password',
-        message        = f'Hi {user.username},\n\nClick to reset your password:\n{reset_url}\n\nExpires in 2 hours.\n\nIf you did not request this, ignore this email.',
-        from_email     = 'noreply@eduplatform.com',
-        recipient_list = [user.email],
+    subject = 'Reset your EduPlatform password'
+
+    plain = (
+        f'Hi {user.username},\n\n'
+        f'Click to reset your password:\n{reset_url}\n\n'
+        f'Expires in 2 hours.\n\n'
+        f'If you did not request this, ignore this email.'
     )
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head>
+<body style="margin:0;padding:0;background-color:#f7f6f2;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0"
+         style="background-color:#f7f6f2;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table width="560" cellpadding="0" cellspacing="0" border="0"
+               style="max-width:560px;width:100%;background-color:#ffffff;
+                      border-radius:12px;border:1px solid #e8e6e0;
+                      box-shadow:0 4px 16px rgba(0,0,0,0.08);">
+
+          <!-- Accent stripe -->
+          <tr>
+            <td style="height:5px;
+                       background:linear-gradient(90deg,#1d5fa8 0%,#3b82f6 55%,#60a5fa 100%);
+                       border-radius:12px 12px 0 0;font-size:0;line-height:0;">&nbsp;</td>
+          </tr>
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#1a1f36;padding:24px 36px;">
+              <span style="color:#ffffff;font-size:18px;font-weight:700;
+                           font-family:'Segoe UI',Arial,sans-serif;">
+                Edu<span style="color:#c8401a;">Platform</span>
+              </span>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:36px;">
+              <h2 style="margin:0 0 8px;font-size:22px;font-weight:700;
+                         color:#1a1f36;font-family:'Segoe UI',Arial,sans-serif;">
+                Reset your password
+              </h2>
+              <p style="margin:0 0 20px;font-size:14px;color:#7a7470;
+                        font-family:'Segoe UI',Arial,sans-serif;">
+                Hi <strong style="color:#0f0e0d;">{user.username}</strong>
+              </p>
+              <p style="margin:0 0 28px;font-size:15px;color:#3d3d3a;
+                        line-height:1.7;font-family:'Segoe UI',Arial,sans-serif;">
+                We received a request to reset your EduPlatform password.
+                Click the button below to choose a new one.
+              </p>
+
+              <!-- Button -->
+              <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td align="center" style="padding:4px 0 32px;">
+                    <a href="{reset_url}"
+                       style="display:inline-block;background-color:#1d5fa8;
+                              color:#ffffff;text-decoration:none;
+                              padding:14px 36px;border-radius:10px;
+                              font-size:15px;font-weight:600;
+                              font-family:'Segoe UI',Arial,sans-serif;">
+                      &#128274;&nbsp; Reset Password
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Fallback URL -->
+              <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td style="background-color:#f7f6f2;border-radius:10px;
+                             padding:14px 18px;border:1px solid #e8e6e0;">
+                    <p style="margin:0 0 5px;font-size:12px;font-weight:600;
+                               color:#7a7470;text-transform:uppercase;
+                               letter-spacing:0.08em;
+                               font-family:'Segoe UI',Arial,sans-serif;">
+                      Button not working?
+                    </p>
+                    <p style="margin:0;font-size:12px;color:#7a7470;
+                              font-family:'Segoe UI',Arial,sans-serif;line-height:1.5;">
+                      Copy and paste this link into your browser:<br>
+                      <a href="{reset_url}"
+                         style="color:#1d5fa8;word-break:break-all;font-size:11px;">
+                        {reset_url}
+                      </a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Expiry -->
+              <table cellpadding="0" cellspacing="0" border="0" width="100%"
+                     style="margin-top:20px;">
+                <tr>
+                  <td style="border-top:1px solid #e8e6e0;padding-top:18px;">
+                    <p style="margin:0;font-size:13px;color:#7a7470;line-height:1.6;
+                              font-family:'Segoe UI',Arial,sans-serif;">
+                      &#9203;&nbsp; This link expires in
+                      <strong style="color:#0f0e0d;">2 hours</strong>.<br>
+                      If you didn&#39;t request this, your password will not be changed.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#f7f6f2;padding:18px 36px;
+                       border-top:1px solid #e8e6e0;border-radius:0 0 12px 12px;">
+              <p style="margin:0;font-size:12px;color:#9e9c95;
+                        font-family:'Segoe UI',Arial,sans-serif;">
+                &copy; EduPlatform &nbsp;&middot;&nbsp;
+                You&#39;re receiving this because a reset was requested for your account.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=plain,
+        from_email='noreply@eduplatform.com',
+        to=[user.email],
+    )
+    email.attach_alternative(html, "text/html")
+    email.send(fail_silently=False)
 
 
 # ─── Signup ───────────────────────────────────────────────────────────────────
