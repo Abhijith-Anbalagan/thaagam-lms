@@ -75,18 +75,39 @@
     <div class="player-wrap" id="player-wrap">
       <!-- Idle state: course info -->
       <div id="player-idle" class="play-overlay" style="cursor:default;">
-        <div style="text-align:center;padding:24px;">
+        {% if course.cover_image %}
+        <img src="{{ course.cover_image.url }}" alt="{{ course.title }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:45;">
+        {% endif %}
+        <!--
+        <div style="position:relative;text-align:center;padding:24px;">
           <p style="font-size:18px;font-weight:700;margin-bottom:8px;">{{ course.title }}</p>
           <p style="font-size:13px;opacity:.65;">Select a module from the right to begin</p>
         </div>
+    -->
       </div>
       <!-- Ready state: video loaded, waiting for click -->
-      <div id="player-ready" class="play-overlay hidden" onclick="startPlay()">
-        <div class="play-btn-circle">
-          <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+      <div id="player-ready" class="play-overlay hidden" onclick="startPlay()" style="background:linear-gradient(135deg,rgba(30,27,75,.72),rgba(29,78,216,.65));">
+        <img id="ready-thumb" src="" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:55;display:none;">
+        <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;">
+          <div class="play-btn-circle">
+            <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+          </div>
+          <p id="ready-title">Click to play</p>
         </div>
-        <p id="ready-title">Click to play</p>
       </div>
+      <!-- Take Quiz overlay (shown after video fully watched, if quiz exists) -->
+      <div id="take-quiz-banner" class="play-overlay hidden" style="cursor:default;background:linear-gradient(135deg,rgba(120,53,15,.82),rgba(217,119,6,.75));">
+        <div style="position:relative;text-align:center;padding:24px;">
+          <p style="font-size:22px;margin-bottom:8px;">🎉</p>
+          <p style="font-size:16px;font-weight:700;margin-bottom:6px;">Great job! Video complete.</p>
+          <p style="font-size:13px;opacity:.8;margin-bottom:16px;">Now complete the quiz to finish this module.</p>
+          <button onclick="goToQuiz()" style="background:#fff;color:#92400e;border:none;border-radius:12px;padding:10px 24px;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+            Take Quiz →
+          </button>
+        </div>
+      </div>
+      <video id="thumb-extractor" style="display:none;" crossorigin="anonymous" preload="metadata"></video>
+      <canvas id="thumb-canvas" style="display:none;"></canvas>
       <!-- Actual players (hidden until play clicked) -->
       <video id="main-video" class="hidden" style="width:100%;height:100%;background:#000;"></video>
       <iframe id="main-iframe" class="hidden" style="width:100%;height:100%;" frameborder="0"
@@ -227,14 +248,52 @@
     </div>
 
     <div class="border-t border-slate-200 p-4">
-      <button id="complete-btn" onclick="toggleComplete()"
-          class="w-full rounded-xl py-2.5 text-sm font-bold transition bg-slate-200 text-slate-400 cursor-not-allowed" disabled>
-        Select a module first
-      </button>
-      <p id="complete-hint" class="mt-2 text-xs text-center text-slate-400"></p>
+    <div id="module-progress-wrap" class="space-y-2">
+        <p id="module-progress-label" class="text-xs text-center text-slate-400">Select a module to begin</p>
+        <div class="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+          <div id="module-progress-bar" class="h-full rounded-full transition-all duration-500" style="width:0%;background:linear-gradient(90deg,#2563eb,#7c3aed);"></div>
+        </div>
+        <div id="module-steps" class="flex justify-between text-xs text-slate-400"></div>
+        <div id="next-module-container" class="hidden pt-2">
+          <button onclick="goToNextModule()" class="w-full rounded-xl bg-blue-600 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition flex items-center justify-center gap-2 transform hover:scale-[1.02] active:scale-95">
+            Next Module <i data-lucide="arrow-right" class="h-4 w-4"></i>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
+</div>
+<!-- Course Completion Modal -->
+<div id="course-complete-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+  <div class="w-full max-w-md transform overflow-hidden rounded-[2rem] bg-white p-8 text-center shadow-2xl transition-all scale-95 opacity-0 duration-300" id="cc-modal-content">
+    <div class="mb-6 flex justify-center">
+      <div class="relative">
+        <div class="h-24 w-24 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 animate-bounce">
+          <i data-lucide="award" class="h-12 w-12"></i>
+        </div>
+        <div class="absolute -top-1 -right-1 h-8 w-8 rounded-full bg-amber-400 border-4 border-white flex items-center justify-center text-white scale-110">
+          <i data-lucide="star" class="h-4 w-4 fill-current"></i>
+        </div>
+      </div>
+    </div>
+    <h2 class="text-2xl font-bold text-slate-900">Course Completed!</h2>
+    <p class="mt-2 text-slate-600">Congratulations on finishing your journey through <span class="font-bold text-blue-600">{{ course.title }}</span>.</p>
+    
+    <div class="mt-8 space-y-3">
+      {% if course.has_certificate %}
+      <div class="rounded-2xl bg-amber-50 p-4 border border-amber-100 text-sm text-amber-700">
+        <p class="font-bold flex items-center justify-center gap-2">
+          <i data-lucide="info" class="h-4 w-4"></i> Certificate Soon
+        </p>
+        <p class="mt-1">The system is being updated. Your certificate will be available to download shortly.</p>
+      </div>
+      {% endif %}
+      <a href="{% if nav_classroom %}{% url 'student_classroom_courses' nav_classroom.id %}{% else %}{% url 'student_my_learning' %}{% endif %}" class="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-4 text-sm font-bold text-white transition hover:bg-slate-700 active:scale-95 shadow-xl shadow-slate-900/20">
+        <i data-lucide="home" class="h-5 w-5"></i> Back to My Courses
+      </a>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
@@ -248,7 +307,7 @@
   "level":"{{ concept.get_level_display }}",
   "completed":{% if concept.id in completed_ids %}true{% else %}false{% endif %},
   "pdf":"{% if concept.pdf %}{{ concept.pdf.url }}{% endif %}",
-  "quiz":{{ concept.quiz|default:"[]"|safe }},
+  "quiz":"{{ concept.quiz|escapejs }}",
   "assignment":"{{ concept.assignment|escapejs }}",
   "videos":[{% for v in concept.videos.all %}{"title":"{{ v.title|default:'Video Lesson'|escapejs }}","url":"{% if v.video_url %}{{ v.video_url|escapejs }}{% elif v.file %}{{ v.file.url|escapejs }}{% endif %}","type":"{% if v.video_url %}url{% else %}file{% endif %}"}{% if not forloop.last %},{% endif %}{% endfor %}]
 }{% if not forloop.last %},{% endif %}{% endfor %}]
@@ -256,42 +315,277 @@
 
 <script>
 const conceptsData = JSON.parse(document.getElementById('concepts-data').textContent);
+const HAS_CERTIFICATE = {{ course.has_certificate|yesno:"true,false" }};
 let activeConceptId = null;
 let pendingSrc = null, pendingType = null;
 let maxWatched = 0;
 
+// ── Quiz Wizard State ─────────────────────────────────────────────────────────
+let currentQuizIndex = 0;
+let currentQuizQuestions = [];
+
 // ── Completion gate tracking ──────────────────────────────────────────────────
-let videoWatched = false;   // true once video has started playing
-let quizDone     = false;   // true once all quiz questions answered
-let hasVideo     = false;   // does current module have a video?
-let hasQuiz      = false;   // does current module have a quiz?
+let videoWatched = false;
+let quizDone     = false;
+let hasVideo     = false;
+let hasQuiz      = false;
+let currentConceptCompleted = false;
 
-function checkCompletionGate() {
-    const concept = conceptsData.find(c => c.id === activeConceptId);
-    if (!concept || concept.completed) return; // already done — button handled by updateCompleteBtn
+// ── YouTube IFrame API ────────────────────────────────────────────────────────
+let ytPlayer = null;
+let ytCheckInterval = null;
 
-    const btn  = document.getElementById('complete-btn');
-    const hint = document.getElementById('complete-hint');
+// Load YouTube IFrame API script once
+(function() {
+    if (!document.getElementById('yt-iframe-api')) {
+        const tag = document.createElement('script');
+        tag.id  = 'yt-iframe-api';
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(tag);
+    }
+})();
 
-    const videoOk = !hasVideo || videoWatched;
-    const quizOk  = !hasQuiz  || quizDone;
-    const canComplete = videoOk && quizOk;
+function setupYouTubePlayer(videoId) {
+    const iframeEl = document.getElementById('main-iframe');
+    const videoEl  = document.getElementById('main-video');
+    const ctrl = document.getElementById('video-controls');
+    if (ctrl) ctrl.classList.add('hidden'); // hide custom controls for YouTube
 
-    btn.disabled = !canComplete;
-    btn.className = canComplete
-        ? 'w-full rounded-xl py-2.5 text-sm font-bold transition bg-blue-600 text-white hover:bg-blue-700'
-        : 'w-full rounded-xl py-2.5 text-sm font-bold transition bg-slate-200 text-slate-400 cursor-not-allowed';
-    btn.textContent = 'Mark as Complete';
+    // Clean up previous YT player if any
+    if (ytPlayer) { try { ytPlayer.destroy(); } catch(e) {} ytPlayer = null; }
+    clearInterval(ytCheckInterval);
 
-    if (hint) {
-        if (canComplete) {
-            hint.textContent = '';
-        } else {
-            const missing = [];
-            if (!videoOk) missing.push('watch the video');
-            if (!quizOk)  missing.push('answer the quiz');
-            hint.textContent = 'Please ' + missing.join(' and ') + ' first.';
+    // Replace iframe content with a div for the API to attach to
+    iframeEl.classList.add('hidden');
+    videoEl.classList.add('hidden'); // Also hide native video player
+    
+    const wrap = document.getElementById('player-wrap');
+    let ytDiv = document.getElementById('yt-api-player');
+    if (ytDiv) ytDiv.remove();
+    ytDiv = document.createElement('div');
+    ytDiv.id = 'yt-api-player';
+    // Ensure it fills the relative wrap absolutely
+    ytDiv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:5;background:#000;';
+    wrap.appendChild(ytDiv);
+
+    function createPlayer() {
+        ytPlayer = new YT.Player('yt-api-player', {
+            height: '100%',
+            width: '100%',
+            videoId: videoId,
+            playerVars: { 
+                rel: 0, 
+                modestbranding: 1,
+                autoplay: 1,
+                origin: window.location.origin
+            },
+            events: {
+                onReady: function(e) {
+                    e.target.playVideo();
+                    // Reset maxWatched for this new video
+                    maxWatched = 0;
+                    
+                    // Poll Every 500ms to enforce completion AND restrictions
+                    ytCheckInterval = setInterval(function() {
+                        if (!ytPlayer || !ytPlayer.getCurrentTime) { clearInterval(ytCheckInterval); return; }
+                        try {
+                            const dur = ytPlayer.getDuration();
+                            const cur = ytPlayer.getCurrentTime();
+                            
+                            if (dur <= 0) return;
+
+                            // 1. Enforce No-Forward-Skip (Only if NOT completed)
+                            if (!currentConceptCompleted && cur > maxWatched + 2) {
+                                ytPlayer.seekTo(maxWatched, true);
+                                const lockHint = document.getElementById('vc-lock-hint');
+                                if (lockHint) { 
+                                    lockHint.classList.remove('hidden'); 
+                                    setTimeout(() => lockHint.classList.add('hidden'), 2500); 
+                                }
+                                return;
+                            }
+
+                            // 2. Track Max Watched
+                            if (cur > maxWatched) maxWatched = cur;
+
+                            // 3. Check Auto-Completion (90%)
+                            if (!videoWatched && cur / dur >= 0.90) {
+                                videoWatched = true;
+                                updateTabLockUI();
+                                checkAutoComplete();
+                            }
+                        } catch(ex) { console.error('YT Poll Error:', ex); }
+                    }, 500);
+                },
+                onStateChange: function(e) {
+                    // YT.PlayerState.ENDED = 0
+                    if (e.data === 0 && !videoWatched) {
+                        videoWatched = true;
+                        updateTabLockUI();
+                        checkAutoComplete();
+                    }
+                },
+                onError: function(e) {
+                    console.error('YouTube Player Error:', e.data);
+                    alert('YouTube video failed to load. Please check the URL.');
+                }
+            }
+        });
+    }
+
+    if (typeof YT !== 'undefined' && YT.Player) {
+        createPlayer();
+    } else {
+        // API not ready yet — attach to callback
+        // Use a more robust check in case it's already assigned
+        const oldOnReady = window.onYouTubeIframeAPIReady;
+        window.onYouTubeIframeAPIReady = function() {
+            if (oldOnReady) oldOnReady();
+            createPlayer();
+        };
+    }
+}
+
+function getModuleProgress() {
+    // Returns 0, 50, or 100 based on what's done
+    if (!hasVideo && !hasQuiz) return 100;
+    if (hasVideo && hasQuiz)   return (videoWatched ? 50 : 0) + (quizDone ? 50 : 0);
+    if (hasVideo)              return videoWatched ? 100 : 0;
+    if (hasQuiz)               return quizDone    ? 100 : 0;
+    return 0;
+}
+
+function updateModuleProgressUI() {
+    const pct   = getModuleProgress();
+    const bar   = document.getElementById('module-progress-bar');
+    const label = document.getElementById('module-progress-label');
+    const steps = document.getElementById('module-steps');
+    const nextBtn = document.getElementById('next-module-container');
+    if (bar)   bar.style.width = pct + '%';
+
+    // Build step indicators
+    if (steps) {
+        const parts = [];
+        if (hasVideo) parts.push(`<span class="${videoWatched ? 'text-emerald-500 font-semibold' : ''}">▶ Video${videoWatched ? ' ✓' : ''}</span>`);
+        if (hasQuiz)  parts.push(`<span class="${quizDone    ? 'text-emerald-500 font-semibold' : ''}">📝 Quiz${quizDone    ? ' ✓' : ''}</span>`);
+        steps.innerHTML = parts.join('<span class="text-slate-300">·</span>');
+    }
+
+    if (label) {
+        if (pct === 100) {
+            label.innerHTML = '<span class="text-emerald-600 font-semibold">✓ Module complete!</span>';
+            const currentIndex = conceptsData.findIndex(c => c.id === activeConceptId);
+            if (nextBtn && currentIndex !== -1 && currentIndex < conceptsData.length - 1) {
+                nextBtn.classList.remove('hidden');
+            }
         }
+        else if (pct > 0) {
+            label.textContent = pct + '% done';
+            if (nextBtn) nextBtn.classList.add('hidden');
+        }
+        else if (!hasVideo && !hasQuiz) label.textContent = '';
+        else {
+            const next = hasVideo && !videoWatched ? 'Watch the video' : 'Answer the quiz';
+            label.textContent = next + ' to progress';
+            if (nextBtn) nextBtn.classList.add('hidden');
+            
+            // Highlight the next step in the tabs if needed
+            updateTabLockUI();
+        }
+    }
+}
+
+function updateTabLockUI() {
+    const quizTabBtn = Array.from(document.querySelectorAll('.ctab')).find(b => b.textContent.trim() === 'Quiz');
+    if (!quizTabBtn) return;
+
+    if (!videoWatched && hasVideo && !currentConceptCompleted) {
+        quizTabBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        quizTabBtn.setAttribute('title', 'Watch the video to unlock the quiz');
+        quizTabBtn.innerHTML = 'Quiz <i data-lucide="lock" class="inline-block h-3 w-3 ml-1"></i>';
+    } else {
+        quizTabBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        quizTabBtn.removeAttribute('title');
+        quizTabBtn.innerHTML = 'Quiz';
+    }
+    lucide.createIcons();
+}
+
+async function autoComplete() {
+    // Called when module reaches 100% — fires the same API as before
+    if (!activeConceptId) return;
+    const concept = conceptsData.find(c => c.id === activeConceptId);
+    if (!concept || concept.completed) return;
+    try {
+        const res  = await fetch(`/student/api/concept-complete/${activeConceptId}/`, {
+            method: 'POST', headers: { 'X-CSRFToken': CSRF }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        concept.completed = true;
+        currentConceptCompleted = true; // Unlock video seeking immediately
+        refreshSidebarLocks();
+        const item = document.getElementById('mod-item-' + activeConceptId);
+        if (item) {
+            item.querySelector('.mod-num').innerHTML = '<span class="text-emerald-500 text-base">✓</span>';
+            item.classList.add('bg-emerald-50');
+        }
+        document.getElementById('sidebar-progress-bar').style.width = data.progress_pct + '%';
+        document.getElementById('sidebar-done').textContent = data.completed_count;
+        document.getElementById('pct-label').textContent = data.progress_pct + '%';
+
+        if (data.progress_pct === 100) {
+            showCourseCompleteModal();
+        }
+    } catch(e) { console.error(e); }
+}
+
+function showCourseCompleteModal() {
+    const modal = document.getElementById('course-complete-modal');
+    const content = document.getElementById('cc-modal-content');
+    if (!modal || !content) return;
+    
+    modal.classList.remove('hidden');
+    // Force reflow
+    modal.offsetHeight;
+    content.classList.remove('scale-95', 'opacity-0');
+    content.classList.add('scale-100', 'opacity-100');
+    lucide.createIcons();
+}
+
+function checkAutoComplete() {
+    updateModuleProgressUI();
+    // Show Take Quiz banner if video just finished and quiz exists
+    const banner = document.getElementById('take-quiz-banner');
+    if (banner) {
+        if (videoWatched && hasQuiz && !quizDone) {
+            banner.classList.remove('hidden');
+        } else {
+            banner.classList.add('hidden');
+        }
+    }
+    if (getModuleProgress() === 100) autoComplete();
+}
+
+function goToQuiz() {
+    // Switch to Quiz tab
+    const quizTabBtn = Array.from(document.querySelectorAll('.ctab')).find(b => b.textContent.trim() === 'Quiz');
+    if (quizTabBtn) switchTab(quizTabBtn, 'tab-quiz');
+    // Scroll to the quiz tab content
+    const quizPane = document.getElementById('tab-quiz');
+    if (quizPane) quizPane.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Hide the banner
+    document.getElementById('take-quiz-banner').classList.add('hidden');
+}
+
+function goToNextModule() {
+    if (!activeConceptId) return;
+    const currentIndex = conceptsData.findIndex(c => c.id === activeConceptId);
+    if (currentIndex !== -1 && currentIndex < conceptsData.length - 1) {
+        const nextConcept = conceptsData[currentIndex + 1];
+        selectModule(nextConcept.id);
+        // Smooth scroll back to top of content
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
 
@@ -355,11 +649,52 @@ function selectModule(id) {
     const ctrl = document.getElementById('video-controls');
     if (ctrl) ctrl.classList.add('hidden');
 
+    // Clean up YouTube player if active
+    if (typeof ytPlayer !== 'undefined' && ytPlayer) {
+        clearInterval(ytCheckInterval);
+        try { ytPlayer.destroy(); } catch(e) {}
+        ytPlayer = null;
+    }
+    const ytDiv = document.getElementById('yt-api-player');
+    if (ytDiv) ytDiv.remove();
+
     // Reset gate for new module
     videoWatched = false;
     quizDone     = false;
     hasVideo     = concept.videos.length > 0;
-    hasQuiz      = Array.isArray(concept.quiz) && concept.quiz.length > 0;
+    hasQuiz = (function() {
+        try {
+            const q = typeof concept.quiz === 'string' ? JSON.parse(concept.quiz) : concept.quiz;
+            return Array.isArray(q) && q.length > 0;
+        } catch(e) { return false; }
+    })();
+
+    // Reset module progress UI
+    const mpBar = document.getElementById('module-progress-bar');
+    if (mpBar) mpBar.style.width = '0%';
+    const mpSteps = document.getElementById('module-steps');
+    if (mpSteps) mpSteps.innerHTML = '';
+    const mpLabel = document.getElementById('module-progress-label');
+    if (mpLabel) mpLabel.textContent = '';
+    const banner = document.getElementById('take-quiz-banner');
+    if (banner) banner.classList.add('hidden');
+    const nextBtn = document.getElementById('next-module-container');
+    if (nextBtn) nextBtn.classList.add('hidden');
+
+    currentConceptCompleted = concept.completed;
+
+    // If already completed, show completed state and unlock everything
+    if (concept.completed) {
+        videoWatched = true;  // So quiz tab shows as unlocked
+        quizDone = true;
+        if (mpBar)   mpBar.style.width = '100%';
+        if (mpLabel) mpLabel.innerHTML = '<span class="text-emerald-600 font-semibold">✓ Module complete!</span>';
+    } else if (!hasVideo && !hasQuiz) {
+        // No video, no quiz — auto-complete immediately
+        checkAutoComplete();
+    } else {
+        updateModuleProgressUI();
+    }
 
     if (concept.videos.length) {
         const v = concept.videos[0];
@@ -368,6 +703,7 @@ function selectModule(id) {
         document.getElementById('ready-title').textContent = v.title;
         document.getElementById('player-idle').classList.add('hidden');
         document.getElementById('player-ready').classList.remove('hidden');
+        setReadyThumbnail(v.url, v.type);
     } else {
         pendingSrc = null;
         document.getElementById('player-ready').classList.add('hidden');
@@ -390,6 +726,37 @@ function selectModule(id) {
     lucide.createIcons();
 }
 
+// ── Ready thumbnail ──────────────────────────────────────────────────────────
+function setReadyThumbnail(src, type) {
+    const thumb = document.getElementById('ready-thumb');
+    thumb.style.display = 'none';
+    thumb.src = '';
+
+    // YouTube — use their thumbnail API directly
+    const ytMatch = src.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    if (ytMatch) {
+        thumb.src = `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
+        thumb.style.display = 'block';
+        return;
+    }
+
+    // Uploaded/direct video — seek to 1s and capture a frame
+    const extractor = document.getElementById('thumb-extractor');
+    const canvas    = document.getElementById('thumb-canvas');
+    extractor.src = src;
+    extractor.currentTime = 1;
+    extractor.onseeked = function() {
+        try {
+            canvas.width  = extractor.videoWidth  || 640;
+            canvas.height = extractor.videoHeight || 360;
+            canvas.getContext('2d').drawImage(extractor, 0, 0, canvas.width, canvas.height);
+            thumb.src = canvas.toDataURL('image/jpeg', 0.8);
+            thumb.style.display = 'block';
+        } catch(e) { /* cross-origin or decode error — just leave no thumbnail */ }
+        extractor.src = '';
+    };
+}
+
 // ── Start play (user clicked overlay) ────────────────────────────────────────
 function startPlay() {
     if (!pendingSrc) return;
@@ -409,18 +776,18 @@ function startPlay() {
     return null;
 }
 
-
-
-
-
-, 4000);
-            iframeEl.addEventListener('load', () => clearTimeout(fbTimer), { once: true });
-            iframeEl.addEventListener('error', () => { clearTimeout(fbTimer); showEmbedFallback(src); }, { once: true });
+    if (type === 'url') {
+        const ytMatch = src.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+        const isDirect = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(src);
+        if (ytMatch) {
+            setupYouTubePlayer(ytMatch[1]);
         } else if (isDirect) {
             setupVideoEl(videoEl, src);
         } else {
-            // Unknown URL — try as direct video source
-            setupVideoEl(videoEl, src);
+            iframeEl.src = src;
+            iframeEl.classList.remove('hidden');
+            videoWatched = true;
+            checkAutoComplete();
         }
     } else {
         setupVideoEl(videoEl, src);
@@ -590,14 +957,15 @@ function setupVideoEl(videoEl, src) {
         const dur = videoEl.duration || 1;
         const cur = videoEl.currentTime;
 
-        // Mark as watched when student reaches 90% of the video
-        if (!videoWatched && dur > 0 && cur / dur >= 0.9) {
+        // Mark as watched only when video is fully complete
+        if (!videoWatched && dur > 0 && cur / dur >= 0.99) {
             videoWatched = true;
-            checkCompletionGate();
+            updateTabLockUI();
+            checkAutoComplete();
         }
 
-        // Enforce no-forward-skip
-        if (cur > maxWatched + 0.5) {
+        // Enforce no-forward-skip only if not already completed
+        if (!currentConceptCompleted && cur > maxWatched + 0.5) {
             videoEl.currentTime = maxWatched;
             if (lockHint) { lockHint.classList.remove('hidden'); setTimeout(() => lockHint.classList.add('hidden'), 2500); }
             return;
@@ -614,7 +982,8 @@ function setupVideoEl(videoEl, src) {
     }, { passive: true });
 
     videoEl.addEventListener('seeking', () => {
-        if (videoEl.currentTime > maxWatched + 0.5) {
+        // Only restrict seeking if module not completed
+        if (!currentConceptCompleted && videoEl.currentTime > maxWatched + 0.5) {
             videoEl.currentTime = maxWatched;
         }
     });
@@ -624,7 +993,7 @@ function setupVideoEl(videoEl, src) {
         const rect = barWrap.getBoundingClientRect();
         const pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
         const target = pct * (videoEl.duration || 0);
-        if (target > maxWatched + 0.5) {
+        if (!currentConceptCompleted && target > maxWatched + 0.5) {
             if (lockHint) { lockHint.classList.remove('hidden'); setTimeout(() => lockHint.classList.add('hidden'), 2500); }
             return;
         }
@@ -640,7 +1009,7 @@ function setupVideoEl(videoEl, src) {
         if (!tooltip) return;
         tooltip.textContent = fmt(target);
         tooltip.style.left  = (pct * 100) + '%';
-        const isLocked = target > maxWatched + 0.5;
+        const isLocked = !currentConceptCompleted && target > maxWatched + 0.5;
         tooltip.className = `absolute -top-7 rounded px-2 py-0.5 text-xs pointer-events-none ${isLocked ? 'bg-rose-700 text-white' : 'bg-slate-800 text-white'}`;
         tooltip.classList.remove('hidden');
     };
@@ -664,6 +1033,15 @@ function setupVideoEl(videoEl, src) {
 
 // ── Tab switching ─────────────────────────────────────────────────────────────
 function switchTab(btn, paneId) {
+    if (paneId === 'tab-quiz' && !videoWatched && hasVideo && !currentConceptCompleted) {
+        // Flash the module-progress-label or show an alert
+        const label = document.getElementById('module-progress-label');
+        if (label) {
+            label.classList.add('text-rose-500', 'font-bold', 'scale-110');
+            setTimeout(() => label.classList.remove('text-rose-500', 'font-bold', 'scale-110'), 1500);
+        }
+        return;
+    }
     document.querySelectorAll('.ctab').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.ctab-pane').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
@@ -689,137 +1067,234 @@ function populateNotes(concept) {
     }
 }
 
-// ── Quiz ─────────────────────────────────────────────────────────────────────
+// ── Quiz Wizard ──────────────────────────────────────────────────────────────
 function renderQuizTab(concept) {
     const el = document.getElementById('tab-quiz');
-    const questions = Array.isArray(concept.quiz) ? concept.quiz : [];
-    if (!questions.length) {
+    try {
+        const raw = typeof concept.quiz === 'string' ? JSON.parse(concept.quiz) : concept.quiz;
+        currentQuizQuestions = Array.isArray(raw) ? raw : [];
+    } catch(e) { currentQuizQuestions = []; }
+
+    if (!currentQuizQuestions.length) {
         el.innerHTML = '<div class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-400">No quiz for this module.</div>';
         return;
     }
-    el.innerHTML = '';
-    questions.forEach((q, qi) => {
-        const card = document.createElement('div');
-        card.className = 'mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-5';
-        card.innerHTML = `
-            <p class="mb-3 font-semibold text-slate-800 text-sm flex items-start gap-2">
-                <span class="inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-amber-400 text-xs font-bold text-white">${qi+1}</span>
-                ${escHtml(q.question)}
-            </p>
-            <div class="space-y-2 quiz-options" data-correct="${q.correct}">
-                ${(q.options||[]).map((opt,oi)=>`
-                    <div class="quiz-option flex items-center gap-3 rounded-xl border border-amber-200 bg-white px-4 py-2.5 text-sm text-slate-700"
-                         data-index="${oi}" onclick="selectOption(this)">
-                        <span class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 border-slate-300 text-xs font-bold">${String.fromCharCode(65+oi)}</span>
-                        <span>${escHtml(opt)}</span>
-                    </div>`).join('')}
+
+    currentQuizIndex = 0;
+    renderCurrentQuestion();
+}
+
+function renderCurrentQuestion() {
+    const el = document.getElementById('tab-quiz');
+    const q = currentQuizQuestions[currentQuizIndex];
+    if (!q) return;
+
+    const total = currentQuizQuestions.length;
+    const progress = Math.round(((currentQuizIndex) / total) * 100);
+
+    el.innerHTML = `
+        <div class="quiz-wizard-card overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-sm transition-all duration-300">
+            <!-- Header/Progress -->
+            <div class="border-b border-amber-100 bg-amber-50/50 px-6 py-4">
+                <div class="mb-2 flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Question ${currentQuizIndex + 1} of ${total}</span>
+                    <span class="text-xs font-semibold text-slate-400">${progress}% Complete</span>
+                </div>
+                <div class="h-1.5 w-full overflow-hidden rounded-full bg-amber-100">
+                    <div class="h-full bg-amber-400 transition-all duration-500" style="width: ${progress}%"></div>
+                </div>
             </div>
-            <div class="quiz-feedback mt-3 hidden text-sm font-semibold"></div>
-            <button onclick="submitAnswer(this)" class="mt-3 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-white hover:bg-amber-600 transition">Check Answer</button>`;
-        el.appendChild(card);
-    });
+
+            <!-- Question Body -->
+            <div class="p-6">
+                <h3 class="mb-5 text-lg font-bold text-slate-800 leading-tight">${escHtml(q.question)}</h3>
+                <div class="space-y-3 quiz-options" data-correct="${q.correct}">
+                    ${(q.options || []).map((opt, oi) => `
+                        <div class="quiz-option group flex items-center gap-3 rounded-xl border-2 border-slate-100 bg-white px-5 py-4 text-sm text-slate-700 transition-all hover:border-amber-200 hover:bg-amber-50/30 active:scale-[0.99]"
+                             data-index="${oi}" onclick="selectOption(this)">
+                            <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 border-slate-200 text-xs font-bold group-[.selected]:border-amber-500 group-[.selected]:bg-amber-500 group-[.selected]:text-white transition-colors">${String.fromCharCode(65 + oi)}</span>
+                            <span class="font-medium">${escHtml(opt)}</span>
+                        </div>`).join('')}
+                </div>
+
+                <div class="quiz-feedback mt-6 hidden rounded-xl p-4 text-sm font-semibold"></div>
+
+                <div class="mt-8 flex items-center justify-end gap-3">
+                    <button id="quiz-submit-btn" onclick="submitAnswer(this)" 
+                            class="rounded-xl bg-amber-500 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-amber-500/20 hover:bg-amber-600 transition transform hover:scale-105 active:scale-95">
+                        Check Answer
+                    </button>
+                    <button id="quiz-retry-btn" onclick="retryQuestion()" 
+                            class="hidden rounded-xl bg-rose-500 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition transform hover:scale-105 active:scale-95 flex items-center gap-2">
+                        <i data-lucide="rotate-ccw" class="h-4 w-4"></i> Retry Question
+                    </button>
+                    <button id="quiz-next-btn" onclick="goToNextQuestion()" 
+                            class="hidden rounded-xl bg-slate-900 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800 transition transform hover:scale-105 active:scale-95 flex items-center gap-2">
+                        Next Question <i data-lucide="arrow-right" class="h-4 w-4"></i>
+                    </button>
+                    <button id="quiz-finish-btn" onclick="goToNextModule()" 
+                            class="hidden rounded-xl bg-blue-600 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition transform hover:scale-105 active:scale-95 flex items-center gap-2">
+                        Next Module <i data-lucide="arrow-right" class="h-4 w-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    lucide.createIcons();
 }
 
 function selectOption(el) {
     const group = el.closest('.quiz-options');
     if (!group || group.classList.contains('quiz-submitted')) return;
-    group.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+    group.querySelectorAll('.quiz-option').forEach(o => {
+        o.classList.remove('selected');
+        o.classList.remove('border-amber-400');
+        o.classList.remove('bg-amber-50');
+    });
     el.classList.add('selected');
+    el.classList.add('border-amber-400');
+    el.classList.add('bg-amber-50');
 }
 
 function submitAnswer(btn) {
-    const card     = btn.closest('div.rounded-2xl');
+    const card     = btn.closest('.quiz-wizard-card');
     const group    = card.querySelector('.quiz-options');
     const feedback = card.querySelector('.quiz-feedback');
     const selected = group.querySelector('.quiz-option.selected');
+    
     if (!selected) {
         feedback.textContent = 'Please select an answer first.';
-        feedback.className = 'quiz-feedback mt-3 text-sm font-semibold text-slate-500';
-        feedback.classList.remove('hidden'); return;
+        feedback.className = 'quiz-feedback mt-6 block rounded-xl bg-slate-100 p-4 text-sm font-semibold text-slate-600';
+        feedback.classList.remove('hidden');
+        return;
     }
+
     const correct = parseInt(group.dataset.correct);
     const chosen  = parseInt(selected.dataset.index);
     group.classList.add('quiz-submitted');
-    group.querySelectorAll('.quiz-option').forEach((o,i) => {
-        if (i === correct) o.classList.add('correct');
-        else if (i === chosen && chosen !== correct) o.classList.add('wrong');
+    
+    group.querySelectorAll('.quiz-option').forEach((o, i) => {
+        o.classList.add('pointer-events-none');
+        if (i === correct) {
+            o.classList.remove('border-slate-100', 'border-amber-400', 'bg-amber-50');
+            o.classList.add('border-emerald-500', 'bg-emerald-50');
+            o.querySelector('span:first-child').classList.add('border-emerald-500', 'bg-emerald-500', 'text-white');
+        } else if (i === chosen && chosen !== correct) {
+            o.classList.remove('border-slate-100', 'border-amber-400', 'bg-amber-50');
+            o.classList.add('border-rose-500', 'bg-rose-50');
+            o.querySelector('span:first-child').classList.add('border-rose-500', 'bg-rose-500', 'text-white');
+        }
     });
-    feedback.classList.remove('hidden');
-    feedback.textContent = chosen === correct ? '✓ Correct!' : `✗ Incorrect. Correct answer: ${String.fromCharCode(65+correct)}.`;
-    feedback.className = `quiz-feedback mt-3 text-sm font-semibold ${chosen === correct ? 'text-emerald-600' : 'text-rose-600'}`;
-    btn.remove();
 
-    // Check if all questions in this module are now answered
-    const allGroups    = document.querySelectorAll('#tab-quiz .quiz-options');
-    const allSubmitted = Array.from(allGroups).every(g => g.classList.contains('quiz-submitted'));
-    if (allSubmitted) {
-        quizDone = true;
-        checkCompletionGate();
+    feedback.classList.remove('hidden');
+    if (chosen === correct) {
+        feedback.innerHTML = '<div class="flex items-center gap-2"><i data-lucide="check-circle" class="h-5 w-5"></i> Awesome! That is correct.</div>';
+        feedback.className = 'quiz-feedback mt-6 block rounded-xl bg-emerald-100 p-4 text-sm font-semibold text-emerald-700';
+        
+        // Handle navigation to next step
+        btn.classList.add('hidden');
+        if (currentQuizIndex < currentQuizQuestions.length - 1) {
+            document.getElementById('quiz-next-btn').classList.remove('hidden');
+        } else {
+            // It's the last question
+            quizDone = true;
+            checkAutoComplete();
+            
+            // Show "Next Module" button directly in the quiz if not the very last module of course
+            const currentIndex = conceptsData.findIndex(c => c.id === activeConceptId);
+            if (currentIndex !== -1 && currentIndex < conceptsData.length - 1) {
+                document.getElementById('quiz-finish-btn').classList.remove('hidden');
+            } else {
+                feedback.innerHTML += '<div class="mt-2 text-blue-700">Course completed! Great job.</div>';
+            }
+        }
+    } else {
+        feedback.innerHTML = `<div class="flex items-center gap-2"><i data-lucide="x-circle" class="h-5 w-5"></i> Not quite. The correct answer was ${String.fromCharCode(65 + correct)}.</div>`;
+        feedback.className = 'quiz-feedback mt-6 block rounded-xl bg-rose-100 p-4 text-sm font-semibold text-rose-700';
+        
+        // Show retry button
+        btn.classList.add('hidden');
+        document.getElementById('quiz-retry-btn').classList.remove('hidden');
+        
+        /* 
+        Original logic: move forward anyway
+        if (currentQuizIndex < currentQuizQuestions.length - 1) {
+            document.getElementById('quiz-next-btn').classList.remove('hidden');
+        } else {
+            quizDone = true;
+            checkAutoComplete();
+            const currentIndex = conceptsData.findIndex(c => c.id === activeConceptId);
+            if (currentIndex !== -1 && currentIndex < conceptsData.length - 1) {
+                document.getElementById('quiz-finish-btn').classList.remove('hidden');
+            }
+        }
+        */
     }
+    lucide.createIcons();
 }
+
+function retryQuestion() {
+    renderCurrentQuestion();
+}
+
+function goToNextQuestion() {
+    currentQuizIndex++;
+    renderCurrentQuestion();
+    // Smooth scroll within the tab content
+    document.getElementById('tab-quiz').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Assignment ────────────────────────────────────────────────────────────────
 
 // ── Assignment ────────────────────────────────────────────────────────────────
 function populateAssignment(concept) {
     const el = document.getElementById('tab-assignment');
-    if (concept.assignment) {
-        el.innerHTML = `
-            <div class="rounded-2xl border border-violet-200 bg-violet-50 p-6 shadow-sm">
-                <div class="flex items-center gap-2 mb-3">
-                    <span class="text-lg">📝</span>
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Course Assignment</p>
-                    <span class="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-700">Course</span>
-                </div>
-                <div class="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">${escHtml(concept.assignment)}</div>
-            </div>`;
-    } else {
-        el.innerHTML = '<div class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-400">No assignment for this module.</div>';
+    if (!concept.assignment) {
+        el.innerHTML = '<div style="border-radius:16px;border:2px dashed #e2e8f0;background:#fff;padding:40px;text-align:center;font-size:13px;color:#94a3b8;">No assignment for this module.</div>';
+        return;
     }
-}
 
-// ── Mark complete ─────────────────────────────────────────────────────────────
-function updateCompleteBtn(completed) {
-    const btn  = document.getElementById('complete-btn');
-    const hint = document.getElementById('complete-hint');
-    if (completed) {
-        btn.disabled  = false;
-        btn.className = 'w-full rounded-xl py-2.5 text-sm font-bold transition bg-emerald-100 text-emerald-700 hover:bg-emerald-200';
-        btn.textContent = '✓ Completed';
-        if (hint) hint.textContent = '';
-    } else {
-        // Let the gate decide enabled/disabled state
-        checkCompletionGate();
-    }
-}
-
-async function toggleComplete() {
-    if (!activeConceptId) return;
-    const btn = document.getElementById('complete-btn');
-    btn.disabled = true;
+    // Assignment is stored as JSON: {title, instructions, score, due}
+    let data = { title:'', instructions:'', score:'', due:'' };
     try {
-        const res  = await fetch(`/student/api/concept-complete/${activeConceptId}/`, {
-            method:'POST', headers:{'X-CSRFToken':CSRF}
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
-        const concept = conceptsData.find(c => c.id === activeConceptId);
-        if (concept) concept.completed = data.completed;
-        updateCompleteBtn(data.completed);
-
-        // Refresh lock states — next module may now be unlocked
-        refreshSidebarLocks();
-
-        const item = document.getElementById('mod-item-' + activeConceptId);
-        if (item) {
-            item.querySelector('.mod-num').innerHTML = data.completed
-                ? '<span class="text-emerald-500 text-base">✓</span>'
-                : String(conceptsData.findIndex(c=>c.id===activeConceptId)+1);
-            data.completed ? item.classList.add('bg-emerald-50') : item.classList.remove('bg-emerald-50');
+        const parsed = JSON.parse(concept.assignment);
+        if (typeof parsed === 'object' && parsed !== null) {
+            data = Object.assign(data, parsed);
+        } else {
+            // Plain text fallback
+            data.instructions = concept.assignment;
         }
-        document.getElementById('sidebar-progress-bar').style.width = data.progress_pct + '%';
-        document.getElementById('sidebar-done').textContent = data.completed_count;
-        document.getElementById('pct-label').textContent = data.progress_pct + '%';
-    } catch(e) { console.error(e); }
-    finally { btn.disabled = false; }
+    } catch(e) {
+        // Not JSON — treat as plain text
+        data.instructions = concept.assignment;
+    }
+
+    const rows = [];
+    if (data.score) rows.push(`<div style="display:flex;gap:8px;align-items:center;"><span style="font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;min-width:80px;">Max Score</span><span style="font-size:13px;color:#374151;">${escHtml(data.score)}</span></div>`);
+    if (data.due)   rows.push(`<div style="display:flex;gap:8px;align-items:center;"><span style="font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;min-width:80px;">Due Date</span><span style="font-size:13px;color:#374151;">${escHtml(data.due)}</span></div>`);
+
+    el.innerHTML = `
+        <div style="border-radius:16px;border:1px solid #ddd6fe;background:#f5f3ff;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.06);">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+                <span style="font-size:18px;">📝</span>
+                <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin:0;">Course Assignment</p>
+                <span style="background:#ede9fe;color:#6d28d9;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;">Course</span>
+            </div>
+            ${data.title ? `<h3 style="font-size:15px;font-weight:700;color:#1e1b4b;margin:0 0 12px;">${escHtml(data.title)}</h3>` : ''}
+            ${data.instructions ? `<p style="font-size:13px;color:#374151;line-height:1.7;margin:0 0 ${rows.length ? '16px' : '0'};">${escHtml(data.instructions).replace(/\\n/g,'<br>').replace(/\n/g,'<br>')}</p>` : ''}
+            ${rows.length ? `<div style="display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid #ddd6fe;">${rows.join('')}</div>` : ''}
+        </div>`;
+}
+
+// ── Mark complete (auto — no manual button) ──────────────────────────────────
+function updateCompleteBtn(completed) {
+    // kept for sidebar lock refresh compatibility — updates progress UI instead
+    const mpBar   = document.getElementById('module-progress-bar');
+    const mpLabel = document.getElementById('module-progress-label');
+    if (completed) {
+        if (mpBar)   mpBar.style.width = '100%';
+        if (mpLabel) mpLabel.innerHTML = '<span class="text-emerald-600 font-semibold">✓ Module complete!</span>';
+    }
 }
 
 function escHtml(s) {

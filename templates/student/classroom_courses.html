@@ -25,10 +25,12 @@
             <i data-lucide="book-open" class="h-4 w-4"></i>
             <span>{{ assigned_courses|length }} course{{ assigned_courses|length|pluralize }}</span>
         </div>
+        {% if units %}
         <div class="flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2 text-sm backdrop-blur-sm">
             <i data-lucide="layers" class="h-4 w-4"></i>
             <span>{{ units|length }} unit{{ units|length|pluralize }}</span>
         </div>
+        {% endif %}
         <div class="flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2 text-sm backdrop-blur-sm">
             <i data-lucide="check-circle" class="h-4 w-4"></i>
             <span>{{ enrolled_course_ids|length }} enrolled</span>
@@ -137,10 +139,22 @@
                              style="width:{{ item.progress_pct }}%"></div>
                     </div>
                 </div>
+                {% if item.progress_pct == 100 %}
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-center justify-center gap-2 rounded-2xl bg-emerald-100 py-2 text-sm font-bold text-emerald-700">
+                        <i data-lucide="check-circle" class="h-4 w-4"></i> Course Completed
+                    </div>
+                    <a href="{% url 'student_course_detail' course.id %}"
+                       class="block w-full rounded-2xl bg-slate-100 py-2.5 text-center text-sm font-bold text-slate-700 transition hover:bg-slate-200">
+                        Review Course
+                    </a>
+                </div>
+                {% else %}
                 <a href="{% url 'student_course_detail' course.id %}"
                    class="block w-full rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 py-2.5 text-center text-sm font-bold text-white shadow-sm transition hover:opacity-90">
                     Continue Learning →
                 </a>
+                {% endif %}
                 {% else %}
                 <a href="{% url 'student_course_detail' course.id %}"
                    class="block w-full rounded-2xl bg-gradient-to-r from-blue-600 to-violet-600 py-2.5 text-center text-sm font-bold text-white shadow-sm transition hover:opacity-90">
