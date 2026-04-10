@@ -72,18 +72,15 @@
   <a href="{% url 'school_admin_reports' %}" class="sidebar-link {% if request.resolver_match.url_name == 'school_admin_reports' %}active{% endif %}"><span class="sl-icon"></span> Reports</a>
 
   {% elif user.role == 'management' %}
-  <a href="{% url 'management_dashboard' %}#teachers" class="sidebar-link mgmt-nav-link" data-tab="teachers" onclick="switchMgmtTab('teachers');return false;">
+  <a href="{% url 'management_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'management_dashboard' %}active{% endif %}">
+    <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg></span> Dashboard</a>
+  <a href="{% url 'management_teachers_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'management_teachers_list' %}active{% endif %}">
     <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span> Teachers</a>
-  <a href="{% url 'management_dashboard' %}#classrooms" class="sidebar-link mgmt-nav-link" data-tab="classrooms" onclick="switchMgmtTab('classrooms');return false;">
-    <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Classrooms</a>
-  <a href="{% url 'management_dashboard' %}#students" class="sidebar-link mgmt-nav-link" data-tab="students" onclick="switchMgmtTab('students');return false;">
-    <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span> Students</a>
-  <a href="{% url 'management_dashboard' %}#analytics" class="sidebar-link mgmt-nav-link" data-tab="analytics" onclick="switchMgmtTab('analytics');return false;">
+  <a href="{% url 'management_analytics' %}" class="sidebar-link {% if request.resolver_match.url_name == 'management_analytics' %}active{% endif %}">
     <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> Analytics</a>
-  <a href="{% url 'management_dashboard' %}#announcements" class="sidebar-link mgmt-nav-link" data-tab="announcements" onclick="switchMgmtTab('announcements');return false;">
-    <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3z"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span> Announcements</a>
-  <div class="sidebar-divider"></div>
-  <a href="{% url 'management_invite_teacher' %}" class="sidebar-link">
+  <a href="{% url 'management_announcements' %}" class="sidebar-link {% if request.resolver_match.url_name == 'management_announcements' %}active{% endif %}">
+    <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span> Announcements</a>
+  <a href="{% url 'management_invite_teacher' %}" class="sidebar-link {% if request.resolver_match.url_name == 'management_invite_teacher' %}active{% endif %}">
     <span class="sl-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg></span> Invite Teacher</a>
 
   {% elif user.role == 'teacher' %}
@@ -143,9 +140,6 @@ function toggleSidebar() {
 }
 </script>
 
-{% if user.is_authenticated and user.role == 'management' %}
-<script src="{% static 'js/management.js' %}"></script>
-{% endif %}
 </body>
 </html>
 

@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}Announcement Details{% endblock %}
+{% block extra_css %}
+<style>
+:root {
+  --brand:       #4c68d7;
+  --brand-dark:  #3a54c0;
+  --brand-soft:  #eef1fb;
+  --page-bg:     #f4f5f9;
+  --card-bg:     #ffffff;
+  --border:      #e8e8ec;
+  --text-1:      #1a1f36;
+  --text-2:      #5a5f7a;
+  --text-3:      #9496a8;
+  --radius-lg:   14px;
+  --shadow-sm:   0 1px 4px rgba(26,31,54,.06);
+  --shadow-md:   0 4px 20px rgba(26,31,54,.10);
+  --font:        'Inter', sans-serif;
+}
+.ann-page { padding: 28px 32px; display: flex; flex-direction: column; gap: 22px; }
+.card { background: var(--card-bg); border: 1.5px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+.card-head { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.card-title { font-size: 16px; font-weight: 700; }
+.card-meta { color: var(--text-3); font-size: 13px; }
+.ann-item { padding: 18px 22px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; gap: 16px; }
+.ann-item:last-child { border-bottom: none; }
+.ann-left { flex: 1; }
+.ann-title { font-size: 15px; font-weight: 700; color: var(--text-1); }
+.ann-meta { font-size: 12px; color: var(--text-3); margin-top: 6px; display: flex; gap: 10px; flex-wrap: wrap; }
+.ann-body { font-size: 14px; color: var(--text-2); margin-top: 10px; line-height: 1.7; }
+.badge { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 18px; display: inline-block; white-space: nowrap; }
+.badge-all { background: var(--brand-soft); color: var(--brand); }
+.badge-teachers { background: #e0f2fe; color: #0369a1; }
+.badge-students { background: #fef3c7; color: #92400e; }
+.pin-badge { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-left: 8px; }
+.alert { padding: 14px 18px; border-radius: 14px; margin-bottom: 12px; font-size: 13px; }
+.alert-success { background: #dcfce7; color: #166534; border: 1px solid #a7f3d0; }
+.alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; font-family: var(--font); font-size: 13px; font-weight: 600; cursor: pointer; border: none; text-decoration: none; }
+.btn-primary { background: var(--brand); color: #fff; }
+.btn-primary:hover { background: var(--brand-dark); }
+.btn-danger { background: #dc2626; color: #fff; }
+.btn-danger:hover { background: #b91c1c; }
+.empty-state { padding: 48px; text-align: center; color: var(--text-3); font-size: 13px; }
+@media (max-width: 768px) { .ann-page { padding: 16px; } .ann-item { flex-direction: column; } .ann-right { width: 100%; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ann-page">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="card-title">{{ title }}</div>
+        <div class="card-meta">{{ subtitle }}</div>
+      </div>
+      <a href="{% url 'management_announcements' %}" class="btn btn-primary">← Back to summary</a>
+    </div>
+    {% if messages %}
+      <div style="padding:18px 22px;">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags|default:'success' }}" style="margin-bottom:12px;">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% if announcements %}
+      {% for ann in announcements %}
+      <div class="ann-item">
+        <div class="ann-left">
+          <div class="ann-title">
+            {{ ann.title }}
+            {% if ann.is_pinned %}<span class="pin-badge">PINNED</span>{% endif %}
+          </div>
+          <div class="ann-meta">
+            <span>{{ ann.created_at|date:"M j, Y \a\t H:i" }}</span>
+            <span class="badge badge-{{ ann.target }}">{{ ann.get_target_display }}</span>
+            <span>By {{ ann.posted_by.get_full_name|default:ann.posted_by.username }}</span>
+          </div>
+          <div class="ann-body">{{ ann.body }}</div>
+          {% if ann.meet_link %}
+          <div style="margin-top:10px;"><a href="{{ ann.meet_link }}" target="_blank" class="btn btn-primary">Join Meeting</a></div>
+          {% endif %}
+        </div>
+        <div class="ann-right" style="display:flex;align-items:flex-start; gap:10px;">
+          <form method="POST" onsubmit="return confirm('Delete this announcement? This action cannot be undone.');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="announcement_id" value="{{ ann.id }}">
+            <button type="submit" class="btn btn-danger">Delete</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <div style="font-size:48px; margin-bottom:12px">📭</div>
+        <p style="font-size:15px; font-weight:600; margin-bottom:8px; color:var(--text-2)">No announcements found</p>
+        <p>There are no announcements in this category yet. Go back to the summary page to choose a different filter.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

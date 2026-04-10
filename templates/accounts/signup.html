@@ -2,12 +2,11 @@
 {% block title %}Sign Up — EduPlatform{% endblock %}
 {% block content %}
 <style>
-  body { overflow: hidden; }
+  body { margin: 0; }
 
   .signup-page {
-    height: calc(100vh - 56px);
+    height: 100vh;
     display: flex;
-    overflow: hidden;
     background: var(--page-bg);
   }
 
@@ -115,7 +114,6 @@
     justify-content: center;
     align-items: center;
     padding: 40px;
-    overflow-y: auto;
   }
 
   .signup-card {
@@ -186,11 +184,121 @@
 
   .signup-footer a:hover { text-decoration: underline; }
 
+  /* ── Responsive Design ── */
+  @media (max-width: 1024px) {
+    .signup-welcome {
+      flex: 0.8;
+      padding: 40px;
+    }
+    .signup-welcome h1 {
+      font-size: 1.8rem;
+    }
+    .signup-welcome p {
+      font-size: 0.9rem;
+    }
+    .welcome-steps {
+      margin-top: 30px;
+      gap: 16px;
+    }
+    .step-text {
+      font-size: 0.8rem;
+    }
+    .signup-card {
+      padding: 32px;
+      max-width: 400px;
+    }
+  }
+
   @media (max-width: 768px) {
-    .signup-welcome { display: none; }
-    .signup-form-panel { padding: 24px; }
-    body { overflow: auto; }
-    .signup-page { height: auto; min-height: calc(100vh - 56px); }
+    .signup-page {
+      flex-direction: column;
+      height: auto;
+      min-height: 100vh;
+    }
+    .signup-welcome {
+      display: none;
+    }
+    .signup-form-panel {
+      flex: 1;
+      padding: 20px;
+      justify-content: flex-start;
+      padding-top: 40px;
+    }
+    .signup-card {
+      padding: 24px;
+      max-width: 100%;
+      border-radius: 12px;
+    }
+    .signup-card h2 {
+      font-size: 1.3rem;
+    }
+    .signup-card .subtitle {
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+    }
+    .form-label {
+      font-size: 0.8rem;
+    }
+    .form-control {
+      height: 44px;
+      font-size: 0.95rem;
+      padding: 10px 14px;
+    }
+    .btn-signup {
+      padding: 10px;
+      font-size: 0.95rem;
+    }
+    .auth-notice large {
+      font-size: 11px;
+    }
+    .signup-footer {
+      font-size: 0.8rem;
+      margin-top: 16px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .signup-form-panel {
+      padding: 16px;
+      padding-top: 30px;
+    }
+    .signup-card {
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    }
+    .signup-card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 4px;
+    }
+    .signup-card .subtitle {
+      font-size: 0.8rem;
+      margin-bottom: 16px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-row {
+      flex-direction: column;
+    }
+    .form-control {
+      height: 40px;
+      padding: 8px 12px;
+      font-size: 0.9rem;
+    }
+    .btn-signup {
+      height: 40px;
+      padding: 8px;
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+    .auth-notice {
+      padding: 8px 10px;
+      margin-top: 12px;
+    }
+    .auth-notice small {
+      font-size: 10px;
+    }
   }
 </style>
 
