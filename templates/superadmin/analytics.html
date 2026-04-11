@@ -123,9 +123,15 @@
         {{ school_breakdown|length }} school{{ school_breakdown|length|pluralize }}
       </span>
     </h2>
-    <button class="btn-export" onclick="exportCSV()">
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Export CSV
+    <button class="btn-export" onclick="exportExcel()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Export Excel
     </button>
   </div>
 
@@ -292,17 +298,46 @@ function goPage(p) {
   currentPage = p; renderTable();
 }
 
-function exportCSV() {
+function exportExcel() {
   const headers = ['#','School Name','Status','Students','Teachers','Classrooms','Performance'];
-  const csvRows = [headers.join(',')];
-  const avg = allRows.reduce((s, r) => s + r.performance, 0) / allRows.length;
-  filtered.forEach((r, i) => {
-    csvRows.push([i+1, `"${r.name.replace(/"/g,'""')}"`, r.active?'Active':'Suspended', r.sc, r.tc, r.cc, r.performance>=avg?'High':'Low'].join(','));
+
+  let table = '<table border="1"><tr>';
+  
+  // Header row
+  headers.forEach(h => {
+    table += `<th>${h}</th>`;
   });
-  const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = 'school_breakdown.csv'; a.click();
+  table += '</tr>';
+
+  // Calculate avg
+  const avg = allRows.reduce((s, r) => s + r.performance, 0) / allRows.length;
+
+  // Data rows
+  filtered.forEach((r, i) => {
+    table += '<tr>';
+    table += `<td>${i+1}</td>`;
+    table += `<td>${r.name}</td>`;
+    table += `<td>${r.active ? 'Active' : 'Suspended'}</td>`;
+    table += `<td>${r.sc}</td>`;
+    table += `<td>${r.tc}</td>`;
+    table += `<td>${r.cc}</td>`;
+    table += `<td>${r.performance >= avg ? 'High' : 'Low'}</td>`;
+    table += '</tr>';
+  });
+
+  table += '</table>';
+
+  const blob = new Blob(
+    ['\ufeff', table], // UTF-8 fix
+    { type: 'application/vnd.ms-excel' }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'school_report.xls'; // Excel file
+  a.click();
+
   URL.revokeObjectURL(url);
 }
 

@@ -1,8 +1,11 @@
 {# superadmin/_concept_card.html — included inside course_detail.html #}
-<div class="concept-card" id="concept-{{ concept.pk }}">
+<div class="concept-card" id="concept-{{ concept.pk }}" data-id="{{ concept.pk }}">
 
   <!-- Header -->
   <div class="concept-header-row">
+    <div class="concept-drag-handle" title="Drag to reorder concept">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+    </div>
     <div style="flex:1;">
       <div class="inline-edit-wrap">
         <div class="view-text {% if not concept.header %}empty{% endif %}"
@@ -44,25 +47,134 @@
 
     <!-- Videos tab -->
     <div class="tab-pane active" id="videos-{{ concept.pk }}">
+      <div class="video-list" id="video-list-{{ concept.pk }}" data-concept="{{ concept.pk }}">
       {% for video in concept.videos.all %}
-      <div class="video-item" id="video-{{ video.pk }}">
+      <div class="video-item" id="video-{{ video.pk }}" draggable="true" data-id="{{ video.pk }}" data-title="{{ video.title|default:'Untitled Video'|escapejs }}" data-has-cover="{{ video.cover_image|yesno:'true,false' }}">
+        <!-- Drag handle -->
+        <div class="drag-handle" title="Drag to reorder">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></svg>
+        </div>
         {% if video.file %}
         <div class="video-item-thumb" onclick="playVideo('{{ video.file.url }}','{{ video.title|default:'Untitled'|escapejs }}','file'); scrollToPlayer();">
-          <video muted preload="metadata">
-            <source src="{{ video.file.url }}#t=0.5" type="video/mp4">
-          </video>
+          {% if video.cover_image %}
+            <div style="
+              width:100%;
+              height:100%;
+              background-image:url('{{ video.cover_image.url }}');
+              background-size:cover;
+              background-position:center;
+              border-radius:6px;
+              position:relative;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+            ">
+              <!-- Play overlay -->
+              <div style="
+                background:rgba(0,0,0,0.6);
+                border-radius:50%;
+                width:32px;
+                height:32px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                color:white;
+                font-size:14px;
+              ">▶</div>
+            </div>
+          {% else %}
+            <video muted preload="metadata">
+              <source src="{{ video.file.url }}#t=0.5" type="video/mp4">
+            </video>
+          {% endif %}
         </div>
         <div class="video-play-btn" onclick="playVideo('{{ video.file.url }}','{{ video.title|default:'Untitled'|escapejs }}','file'); scrollToPlayer();">
-          {{ video.title|default:"Untitled Video" }}
-          <div style="font-size:11px;color:var(--muted);margin-top:2px;">Click to play ▶</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;font-size:13px;color:var(--ink);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                {{ video.title|default:"Untitled Video" }}
+              </div>
+              <div style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px;">
+                <span>Click to play ▶</span>
+                {% if video.duration_seconds > 0 %}
+                  <span style="color:var(--blue);font-weight:600;" id="duration-{{ video.pk }}">{{ video.duration_seconds }}s</span>
+                {% endif %}
+              </div>
+            </div>
+            {% if video.cover_image %}
+              <div style="
+                background:#e8f5e8;
+                color:#2d7d32;
+                padding:2px 6px;
+                border-radius:10px;
+                font-size:10px;
+                font-weight:600;
+                margin-left:8px;
+                flex-shrink:0;
+              ">📷</div>
+            {% endif %}
+          </div>
         </div>
         {% elif video.video_url %}
         <div class="video-item-thumb video-external-item" data-url="{{ video.video_url }}" data-title="{{ video.title|default:'Untitled'|escapejs }}" data-video-id="{{ video.pk }}" style="background:#1a1a2e;cursor:pointer;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          {% if video.cover_image %}
+            <div style="
+              width:100%;
+              height:100%;
+              background-image:url('{{ video.cover_image.url }}');
+              background-size:cover;
+              background-position:center;
+              border-radius:6px;
+              position:relative;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+            ">
+              <!-- Play overlay -->
+              <div style="
+                background:rgba(0,0,0,0.6);
+                border-radius:50%;
+                width:32px;
+                height:32px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                color:white;
+                font-size:14px;
+              ">▶</div>
+            </div>
+          {% else %}
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          {% endif %}
         </div>
         <div class="video-play-btn video-external-item" data-url="{{ video.video_url }}" data-title="{{ video.title|default:'Untitled'|escapejs }}" data-video-id="{{ video.pk }}">
-          {{ video.title|default:"Untitled Video" }}
-          <div style="font-size:11px;color:var(--muted);margin-top:2px;">Click to play (external link) ▶</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;font-size:13px;color:var(--ink);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                {{ video.title|default:"Untitled Video" }}
+              </div>
+              <div style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px;">
+                <span>Click to play (external link) ▶</span>
+                {% if video.duration_seconds > 0 %}
+                  <span style="color:var(--blue);font-weight:600;" id="duration-{{ video.pk }}">{{ video.duration_seconds }}s</span>
+                {% else %}
+                  <span style="color:var(--accent);">Duration: Unknown</span>
+                {% endif %}
+              </div>
+            </div>
+            {% if video.cover_image %}
+              <div style="
+                background:#e8f5e8;
+                color:#2d7d32;
+                padding:2px 6px;
+                border-radius:10px;
+                font-size:10px;
+                font-weight:600;
+                margin-left:8px;
+                flex-shrink:0;
+              ">📷</div>
+            {% endif %}
+          </div>
         </div>
         {% else %}
         <div class="video-item-thumb" style="background:#1a1a2e;font-size:24px;">▶</div>
@@ -70,11 +182,20 @@
           <div style="font-size:11px;color:var(--muted);margin-top:2px;">No file attached</div>
         </div>
         {% endif %}
+        {% if video.video_url and video.duration_seconds == 0 %}
+        <button class="btn btn-ghost btn-sm" onclick="refreshVideoDuration({{ video.pk }})" title="Refresh Duration" style="margin-right:4px;padding:4px 8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        </button>
+        {% endif %}
+        <button class="btn btn-ghost btn-sm" onclick="editVideo({{ video.pk }})" title="Edit Video" style="margin-right:4px;padding:4px 8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </button>
         <button class="delete-btn" onclick="deleteVideo({{ video.pk }}, this)"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
       </div>
       {% empty %}
       <p style="font-size:13px;color:var(--muted);padding:8px 0;">No videos yet.</p>
       {% endfor %}
+      </div><!-- /video-list -->
 
       <!-- Add video inline -->
       <div class="add-video-form" id="add-video-form-{{ concept.pk }}" style="display:none;">
@@ -85,6 +206,26 @@
         </div>
         <div style="margin-bottom:10px;">
           <input type="text" class="edit-input" placeholder="Or paste YouTube / video URL here" id="vu-{{ concept.pk }}" style="width:100%;">
+        </div>
+        <div style="margin-bottom:10px;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">📷 Cover Image (optional)</label>
+          <div style="
+            border: 2px dashed #ddd;
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            background: #fafafa;
+            transition: all 0.3s ease;
+          " onclick="document.getElementById('vc-{{ concept.pk }}').click()" id="cover-area-{{ concept.pk }}">
+            <span style="font-size: 20px; display: block; margin-bottom: 4px;">📁</span>
+            <span style="font-size: 12px; color: #666;">Click to select cover image</span>
+          </div>
+          <input type="file" class="edit-input" accept="image/*" id="vc-{{ concept.pk }}" style="display:none;" onchange="handleCoverPreview(this, {{ concept.pk }})">
+          <div id="cover-preview-{{ concept.pk }}" style="margin-top: 8px; display: none;">
+            <img id="cover-img-{{ concept.pk }}" style="max-width: 100px; max-height: 60px; border-radius: 4px; border: 1px solid #ddd;">
+            <p id="cover-name-{{ concept.pk }}" style="margin: 4px 0 0 0; font-size: 11px; color: #666;"></p>
+          </div>
         </div>
         <div class="flex gap-8">
           <button class="btn-save" onclick="uploadVideo({{ concept.pk }})">Save</button>

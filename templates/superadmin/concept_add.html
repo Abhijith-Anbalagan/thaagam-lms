@@ -613,9 +613,12 @@
               <span style="font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;">Link</span>
             </div>
             <!-- file input (default) -->
-            <input type="file" name="video_files" class="vfile-input form-control" accept="video/*" style="grid-column:3;">
-            <!-- url input (hidden by default) -->
-            <input type="url" name="video_urls" class="vurl-input form-control" placeholder="https://youtube.com/watch?v=..." style="display:none;grid-column:3;">
+            <div style="grid-column:3;display:flex;flex-direction:column;gap:8px;">
+              <input type="file" name="video_files" class="vfile-input form-control" accept="video/*">
+              <!-- url input (hidden by default) -->
+              <input type="url" name="video_urls" class="vurl-input form-control" placeholder="https://youtube.com/watch?v=..." style="display:none;">
+              <input type="file" name="cover_images" class="form-control" accept="image/*" placeholder="Cover image (optional)" style="font-size:11px;">
+            </div>
             <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)" style="visibility:hidden;grid-column:4;">✕</button>
           </div>
         </div>
@@ -981,8 +984,11 @@ function addVideoRow() {
       </label>
       <span style="font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;">Link</span>
     </div>
-    <input type="file" name="video_files" class="vfile-input form-control" accept="video/*" style="grid-column:3;">
-    <input type="url" name="video_urls" class="vurl-input form-control" placeholder="https://youtube.com/watch?v=..." style="display:none;grid-column:3;">
+    <div style="grid-column:3;display:flex;flex-direction:column;gap:8px;">
+      <input type="file" name="video_files" class="vfile-input form-control" accept="video/*">
+      <input type="url" name="video_urls" class="vurl-input form-control" placeholder="https://youtube.com/watch?v=..." style="display:none;">
+      <input type="file" name="cover_images" class="form-control" accept="image/*" placeholder="Cover image (optional)" style="font-size:11px;">
+    </div>
     <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)" style="grid-column:4;">✕</button>
   `;
   container.appendChild(row);

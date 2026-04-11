@@ -110,13 +110,52 @@ class GlobalCourse(models.Model):
     def __str__(self):
         return self.title
 
+    @property
+    def computed_hours(self):
+        """Sum of all video duration_seconds across all concepts, converted to hours."""
+        from django.db.models import Sum
+        total = GlobalConceptVideo.objects.filter(
+            concept__course=self
+        ).aggregate(total=Sum('duration_seconds'))['total'] or 0
+        return round(total / 3600, 1)
+
+    @property
+    def total_duration_seconds(self):
+        """Raw total seconds of all uploaded videos in this course."""
+        from django.db.models import Sum
+        return GlobalConceptVideo.objects.filter(
+            concept__course=self
+        ).aggregate(total=Sum('duration_seconds'))['total'] or 0
+
+    @property
+    def duration_display(self):
+        """Human-readable duration: e.g. '2h 15m 30s', '45m 10s', '30s'"""
+        secs = self.total_duration_seconds
+        if not secs:
+            return '0m'
+        h = secs // 3600
+        m = (secs % 3600) // 60
+        s = secs % 60
+        if h > 0:
+            return f'{h}h {m}m {s}s' if s else (f'{h}h {m}m' if m else f'{h}h')
+        if m > 0:
+            return f'{m}m {s}s' if s else f'{m}m'
+        return f'{s}s'
+
+    def sync_total_hours(self):
+        """Recalculate and save total_hours from actual video durations."""
+        self.total_hours = self.computed_hours
+        self.save(update_fields=['total_hours'])
+
         
 class GlobalConceptVideo(models.Model):
-    concept   = models.ForeignKey('GlobalConcept', on_delete=models.CASCADE, related_name='videos')
-    title     = models.CharField(max_length=200, blank=True)
-    file      = models.FileField(upload_to='global_concepts/videos/', blank=True, null=True)
-    video_url = models.URLField(max_length=500, blank=True)
-    order     = models.PositiveIntegerField(default=0)
+    concept          = models.ForeignKey('GlobalConcept', on_delete=models.CASCADE, related_name='videos')
+    title            = models.CharField(max_length=200, blank=True)
+    file             = models.FileField(upload_to='global_concepts/videos/', blank=True, null=True)
+    video_url        = models.URLField(max_length=500, blank=True)
+    cover_image      = models.ImageField(upload_to='global_concepts/video_covers/', blank=True, null=True)
+    order            = models.PositiveIntegerField(default=0)
+    duration_seconds = models.PositiveIntegerField(default=0)  # stored when video is uploaded
 
     class Meta:
         db_table = 'superadmin_globalconceptvideo'

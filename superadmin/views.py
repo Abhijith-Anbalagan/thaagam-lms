@@ -82,6 +82,87 @@ def extract_video_src(raw):
     return parse_to_embed_url(raw)
 
 
+def get_youtube_duration(video_id):
+    """
+    Fetch duration in seconds for a YouTube video using the Data API v3.
+    Returns 0 if API key is missing or request fails.
+    """
+    import urllib.request
+    import json
+    from django.conf import settings
+    api_key = getattr(settings, 'YOUTUBE_API_KEY', '') or os.environ.get('YOUTUBE_API_KEY', '')
+    if not api_key or api_key == 'YOUR_API_KEY_HERE':
+        return 0
+    try:
+        url = (
+            'https://www.googleapis.com/youtube/v3/videos'
+            '?part=contentDetails&id=' + video_id + '&key=' + api_key
+        )
+        with urllib.request.urlopen(url, timeout=5) as resp:
+            data = json.loads(resp.read())
+        items = data.get('items', [])
+        if not items:
+            return 0
+        # duration is ISO 8601 e.g. PT1H2M3S
+        iso = items[0]['contentDetails']['duration']
+        import re
+        h = int((re.search(r'(\d+)H', iso) or type('', (), {'group': lambda s, n: 0})()).group(1) or 0)
+        m = int((re.search(r'(\d+)M', iso) or type('', (), {'group': lambda s, n: 0})()).group(1) or 0)
+        s = int((re.search(r'(\d+)S', iso) or type('', (), {'group': lambda s, n: 0})()).group(1) or 0)
+        return h * 3600 + m * 60 + s
+    except Exception:
+        return 0
+
+
+def get_vimeo_duration(video_id):
+    """
+    Fetch duration in seconds for a Vimeo video using their oEmbed API.
+    Returns 0 if request fails.
+    """
+    import urllib.request
+    import json
+    try:
+        # Try oEmbed API first (more reliable)
+        url = f'https://vimeo.com/api/oembed.json?url=https://vimeo.com/{video_id}'
+        with urllib.request.urlopen(url, timeout=5) as resp:
+            data = json.loads(resp.read())
+        duration = data.get('duration', 0)
+        if duration > 0:
+            return duration
+            
+        # Fallback: try Vimeo API v2 (no auth required for basic info)
+        url = f'https://vimeo.com/api/v2/video/{video_id}.json'
+        with urllib.request.urlopen(url, timeout=5) as resp:
+            data = json.loads(resp.read())
+        if data and len(data) > 0:
+            return data[0].get('duration', 0)
+            
+    except Exception:
+        pass
+    return 0
+
+
+def get_external_video_duration(video_url):
+    """
+    Extract duration from external video URLs (YouTube, Vimeo, etc.).
+    Returns duration in seconds, or 0 if unable to determine.
+    """
+    import re
+    
+    # YouTube
+    yt_match = re.search(r'youtube\.com/embed/([A-Za-z0-9_-]{11})', video_url)
+    if yt_match:
+        return get_youtube_duration(yt_match.group(1))
+    
+    # Vimeo
+    vimeo_match = re.search(r'player\.vimeo\.com/video/(\d+)', video_url)
+    if vimeo_match:
+        return get_vimeo_duration(vimeo_match.group(1))
+    
+    # For other platforms, return 0 (could be extended in the future)
+    return 0
+
+
 @role_required('super_admin')
 def school_detail(request, school_id):
     school = get_object_or_404(School, pk=school_id)
@@ -347,6 +428,54 @@ def delete_admin(request, admin_id):
 
 
 @role_required('super_admin')
+def api_course_edit(request, course_id):
+    """AJAX edit for course basic fields from all_courses page."""
+    if request.method == 'GET':
+        course = get_object_or_404(GlobalCourse, pk=course_id)
+        return JsonResponse({
+            'id':              course.pk,
+            'title':           course.title,
+            'description':     course.description,
+            'language':        course.language,
+            'is_free':         course.is_free,
+            'has_certificate': course.has_certificate,
+            'summary':         course.summary,
+            'status':          course.status,
+            'cover_image':     course.cover_image.url if course.cover_image else '',
+        })
+    if request.method == 'POST':
+        course = get_object_or_404(GlobalCourse, pk=course_id)
+        course.title           = request.POST.get('title', course.title).strip()
+        course.description     = request.POST.get('description', course.description).strip()
+        course.language        = request.POST.get('language', course.language)
+        course.is_free         = request.POST.get('is_free') == '1'
+        course.has_certificate = request.POST.get('has_certificate') == '1'
+        course.summary         = request.POST.get('summary', course.summary).strip()
+        course.status          = request.POST.get('status', course.status)
+        if request.FILES.get('cover_image'):
+            course.cover_image = request.FILES['cover_image']
+        elif request.POST.get('remove_cover') == '1':
+            course.cover_image.delete(save=False)
+            course.cover_image = None
+        if not course.title:
+            return JsonResponse({'success': False, 'error': 'Title is required'})
+        course.save()
+        return JsonResponse({
+            'success':         True,
+            'id':              course.pk,
+            'title':           course.title,
+            'description':     course.description,
+            'language':        course.language,
+            'is_free':         course.is_free,
+            'has_certificate': course.has_certificate,
+            'status':          course.status,
+            'statusLabel':     course.get_status_display(),
+            'cover_image':     course.cover_image.url if course.cover_image else '',
+        })
+    return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
+
+
+@role_required('super_admin')
 def delete_course(request, course_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
@@ -543,11 +672,27 @@ def course_detail(request, course_id):
         'all_schools':            School.objects.filter(is_active=True),
         'teacher_enrollments':    teacher_enrollments,
         'video_map_json':         json.dumps(video_map),
+        'total_duration_seconds':  course.total_duration_seconds,
     })
     response['Cache-Control'] = 'no-store, no-cache, must-revalidate'
     response['Pragma'] = 'no-cache'
     response['Referrer-Policy'] = 'strict-origin-when-cross-origin' 
     return response
+
+
+@role_required('super_admin')
+def concept_reorder(request):
+    """Save new concept order after drag-and-drop."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    try:
+        import json as _json
+        order_list = _json.loads(request.body)  # [{id, order}, ...]
+        for item in order_list:
+            GlobalConcept.objects.filter(pk=item['id']).update(order=item['order'])
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 
 @role_required('super_admin')
@@ -578,8 +723,103 @@ def video_delete(request, video_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     video = get_object_or_404(GlobalConceptVideo, pk=video_id)
+    course = video.concept.course
+    duration = video.duration_seconds
     video.delete()
-    return JsonResponse({'success': True})
+    course.sync_total_hours()
+    return JsonResponse({'success': True, 'duration': duration})
+
+
+@role_required('super_admin')
+def video_edit(request, video_id):
+    """Edit video title and cover image."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    video = get_object_or_404(GlobalConceptVideo, pk=video_id)
+    
+    try:
+        title = request.POST.get('title', '').strip()
+        cover_image = request.FILES.get('cover_image')
+        remove_cover = request.POST.get('remove_cover') == 'true'
+        
+        # Only update title if it's different from current title
+        if title and title != video.title:
+            video.title = title
+        
+        # Handle cover image removal
+        if remove_cover:
+            if video.cover_image:
+                try:
+                    video.cover_image.delete(save=False)
+                except Exception:
+                    pass
+                video.cover_image = None
+        
+        # Handle new cover image upload
+        elif cover_image:
+            # Delete old cover image if exists
+            if video.cover_image:
+                try:
+                    video.cover_image.delete(save=False)
+                except Exception:
+                    pass
+            video.cover_image = cover_image
+        
+        video.save()
+        
+        return JsonResponse({
+            'success': True,
+            'title': video.title,
+            'cover_image_url': video.cover_image.url if video.cover_image else None,
+            'has_cover': bool(video.cover_image)
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@role_required('super_admin')
+def video_set_duration(request, video_id):
+    """Set duration for a video (used by client-side YouTube API calls)."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    video = get_object_or_404(GlobalConceptVideo, pk=video_id)
+    try:
+        duration = int(request.POST.get('duration', 0))
+        if duration > 0:
+            video.duration_seconds = duration
+            video.save(update_fields=['duration_seconds'])
+            video.concept.course.sync_total_hours()
+            
+            return JsonResponse({
+                'success': True, 
+                'duration': duration,
+                'total_seconds': video.concept.course.total_duration_seconds
+            })
+        else:
+            return JsonResponse({'error': 'Invalid duration'}, status=400)
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'Invalid duration format'}, status=400)
+
+
+@role_required('super_admin')
+def video_reorder(request, concept_id):
+    """Save new video order after drag-and-drop."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    concept = get_object_or_404(GlobalConcept, pk=concept_id)
+    try:
+        import json as _json
+        order_list = _json.loads(request.body)  # [{id, order}, ...]
+        for item in order_list:
+            GlobalConceptVideo.objects.filter(
+                pk=item['id'], concept=concept
+            ).update(order=item['order'])
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 
 @role_required('super_admin')
@@ -591,52 +831,117 @@ def video_add(request, concept_id):
     vfile   = request.FILES.get('video_files')
     vurl    = request.POST.get('video_urls', '').strip()
     title   = request.POST.get('video_titles', '').strip()
+    cover_image = request.FILES.get('cover_images')  # New cover image field
     order   = concept.videos.count()
-    
+
+    def get_video_duration(file):
+        """
+        Extract duration in seconds from an uploaded video file.
+        Tries mutagen first, then falls back to reading MP4 atoms directly.
+        """
+        import tempfile, os, struct
+        tmp_path = None
+        try:
+            suffix = os.path.splitext(getattr(file, 'name', '') or '.mp4')[1] or '.mp4'
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+            for chunk in file.chunks():
+                tmp.write(chunk)
+            tmp.close()
+            tmp_path = tmp.name
+            try: file.seek(0)
+            except Exception: pass
+
+            # ── Try mutagen first (works for mp4, webm, mkv, avi, etc.) ──
+            try:
+                from mutagen import File as MutagenFile
+                af = MutagenFile(tmp_path)
+                if af is not None and af.info is not None:
+                    return int(af.info.length)
+            except Exception:
+                pass
+
+            # ── Fallback: parse MP4 mvhd atom directly ──
+            try:
+                with open(tmp_path, 'rb') as f:
+                    data = f.read()
+                i = 0
+                while i < len(data) - 8:
+                    size = struct.unpack('>I', data[i:i+4])[0]
+                    name = data[i+4:i+8]
+                    if name == b'mvhd':
+                        version = data[i+8]
+                        if version == 1:
+                            time_scale = struct.unpack('>I', data[i+28:i+32])[0]
+                            duration   = struct.unpack('>Q', data[i+32:i+40])[0]
+                        else:
+                            time_scale = struct.unpack('>I', data[i+20:i+24])[0]
+                            duration   = struct.unpack('>I', data[i+24:i+28])[0]
+                        if time_scale > 0:
+                            return int(duration / time_scale)
+                    if size < 8:
+                        break
+                    i += size
+            except Exception:
+                pass
+
+            return 0
+        except Exception:
+            return 0
+        finally:
+            if tmp_path:
+                try: os.unlink(tmp_path)
+                except Exception: pass
+
     if vfile:
+        duration = get_video_duration(vfile)
         video = GlobalConceptVideo.objects.create(
-            concept=concept, 
-            file=vfile, 
-            title=title, 
-            order=order
+            concept=concept,
+            file=vfile,
+            title=title,
+            cover_image=cover_image,
+            order=order,
+            duration_seconds=duration,
         )
+        concept.course.sync_total_hours()
         return JsonResponse({
-            'success':   True,
-            'video_id':  video.pk,
-            'title':     video.title or 'Untitled',
-            'url':       video.file.url,
-            'type':      'file',
+            'success':  True,
+            'video_id': video.pk,
+            'title':    video.title or 'Untitled',
+            'url':      video.file.url,
+            'type':     'file',
+            'duration': duration,
         })
-    
+
     elif vurl:
         clean_url = extract_video_src(vurl)
-        
-        # Reject if the URL couldn't be parsed into a valid embed URL
         if not clean_url:
             return JsonResponse({'error': 'Invalid or unsupported video URL.'}, status=400)
-        
         is_instagram = 'instagram.com' in clean_url
-        
-        # Warn but still allow non-embeddable URLs to be saved
+
+        # Get duration for external videos (YouTube, Vimeo, etc.)
+        external_duration = get_external_video_duration(clean_url)
+
         video = GlobalConceptVideo.objects.create(
-            concept=concept, 
-            video_url=clean_url, 
-            title=title, 
-            order=order
+            concept=concept,
+            video_url=clean_url,
+            title=title,
+            cover_image=cover_image,
+            order=order,
+            duration_seconds=external_duration,
         )
-        
+        concept.course.sync_total_hours()
         response = {
             'success':   True,
             'video_id':  video.pk,
             'title':     video.title or 'Untitled',
             'embed_url': clean_url,
             'type':      'external',
+            'duration':  external_duration,
         }
         if is_instagram:
             response['warning'] = 'Instagram videos cannot be embedded. The link is saved but may not play inline.'
-        
         return JsonResponse(response)
-    
+
     else:
         return JsonResponse({'error': 'No file or URL provided.'}, status=400)
 
@@ -659,20 +964,65 @@ def concept_add(request, course_id):
         video_files  = request.FILES.getlist('video_files')
         video_titles = request.POST.getlist('video_titles')
         video_urls   = request.POST.getlist('video_urls')
+        cover_images = request.FILES.getlist('cover_images')  # New cover images field
         # zip titles with files; also handle URL-only rows
-        max_rows = max(len(video_files), len(video_urls))
+        max_rows = max(len(video_files), len(video_urls), len(cover_images))
         order = 0
         for i in range(max_rows):
             vfile = video_files[i] if i < len(video_files) else None
             vurl  = video_urls[i].strip() if i < len(video_urls) else ''
             title = video_titles[i] if i < len(video_titles) else ''
+            cover_img = cover_images[i] if i < len(cover_images) else None
             if vfile:
-                GlobalConceptVideo.objects.create(concept=concept, file=vfile, title=title, order=order)
+                dur = 0
+                try:
+                    import tempfile, os, struct
+                    suffix = os.path.splitext(getattr(vfile, 'name', '') or '.mp4')[1] or '.mp4'
+                    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+                    for chunk in vfile.chunks(): tmp.write(chunk)
+                    tmp.close()
+                    vfile.seek(0)
+                    # try mutagen
+                    try:
+                        from mutagen import File as MutagenFile
+                        af = MutagenFile(tmp.name)
+                        if af and af.info: dur = int(af.info.length)
+                    except Exception:
+                        pass
+                    # fallback: MP4 atom parser
+                    if not dur:
+                        try:
+                            with open(tmp.name, 'rb') as f:
+                                data = f.read()
+                            i = 0
+                            while i < len(data) - 8:
+                                sz = struct.unpack('>I', data[i:i+4])[0]
+                                nm = data[i+4:i+8]
+                                if nm == b'mvhd':
+                                    ver = data[i+8]
+                                    if ver == 1:
+                                        ts = struct.unpack('>I', data[i+28:i+32])[0]
+                                        dn = struct.unpack('>Q', data[i+32:i+40])[0]
+                                    else:
+                                        ts = struct.unpack('>I', data[i+20:i+24])[0]
+                                        dn = struct.unpack('>I', data[i+24:i+28])[0]
+                                    if ts > 0: dur = int(dn / ts)
+                                    break
+                                if sz < 8: break
+                                i += sz
+                        except Exception:
+                            pass
+                    os.unlink(tmp.name)
+                except Exception:
+                    pass
+                GlobalConceptVideo.objects.create(concept=concept, file=vfile, title=title, cover_image=cover_img, order=order, duration_seconds=dur)
                 order += 1
             elif vurl:
                 vurl = extract_video_src(vurl)
-                GlobalConceptVideo.objects.create(concept=concept, video_url=vurl, title=title, order=order)
+                external_duration = get_external_video_duration(vurl)
+                GlobalConceptVideo.objects.create(concept=concept, video_url=vurl, title=title, cover_image=cover_img, order=order, duration_seconds=external_duration)
                 order += 1
+        concept.course.sync_total_hours()
         messages.success(request, f'Concept "{concept.header}" added.')
         return redirect('superadmin_course_detail', course_id=course.pk)
     return render(request, 'superadmin/concept_add.html', {'form': form, 'course': course})
