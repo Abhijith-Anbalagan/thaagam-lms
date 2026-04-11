@@ -34,6 +34,7 @@ urlpatterns = [
 
     # Analytics
     path('analytics/', include('analytics.urls')),
+    path('rag/', include('rag.urls')),
 
     
 
