@@ -599,9 +599,16 @@ html, body {
   <div class="field-block">
     <label class="field-label" for="id_username">Username</label>
     <input type="text" id="id_username" name="username"
-           value="{{ user.username }}" class="prf-input"
+           value="{{ form.username.value|default:user.username }}" class="prf-input"
            placeholder="Username">
+    {% if form.username.errors %}
+    <div class="form-error">{{ form.username.errors.0 }}</div>
+    {% endif %}
   </div>
+
+  {% if form.avatar.errors %}
+  <div class="form-error" style="margin-bottom: 14px;">{{ form.avatar.errors.0 }}</div>
+  {% endif %}
 
   <button class="btn-changepw" type="button" onclick="openModal()">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -629,6 +636,9 @@ html, body {
 </form>
 
     </div><!-- end .prf-grid -->
+  {% if form.non_field_errors %}
+  <div class="form-error" style="text-align:center; margin-top:10px;">{{ form.non_field_errors.0 }}</div>
+  {% endif %}
   </div>
 </div>
 
@@ -715,19 +725,21 @@ function handleOverlayClick(e) {
 }
 function previewAvatar(input) {
   if (!input.files || !input.files[0]) return;
-  document.getElementById('avatar-input').addEventListener('change', function() {
-  previewAvatar(this);
-});
   const reader = new FileReader();
   reader.onload = function(e) {
     const preview  = document.getElementById('avatar-preview');
     const initials = document.getElementById('avatar-initials');
-    preview.src = e.target.result;
-    preview.style.display = 'block';
-    if (initials) initials.style.display = 'none';
+    if (preview) {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+    }
+    if (initials) {
+      initials.style.display = 'none';
+    }
   };
   reader.readAsDataURL(input.files[0]);
 }
+
 
 // Auto-open modal if password form has errors (after failed submit)
 {% if pw_form.errors %}

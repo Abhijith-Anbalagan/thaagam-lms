@@ -31,10 +31,9 @@ urlpatterns = [
     path('analytics/', include('analytics.urls')),
 ]
 
-# Always serve media files (dev + prod with daphne/ASGI)
-urlpatterns += [
-    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
-]
+# Always serve media files in development
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

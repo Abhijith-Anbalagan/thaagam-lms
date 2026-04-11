@@ -619,13 +619,14 @@ def profile_view(request):
         form = ProfileForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
             form.save()
-            # ← refresh user from DB so avatar shows immediately
             request.user.refresh_from_db()
             messages.success(request, 'Profile updated successfully.')
             return redirect('profile')
         else:
             messages.error(request, 'Please fix the errors below.')
+
     else:
+
         form = ProfileForm(instance=request.user)
 
     return render(request, 'shared/profile_settings.html', {

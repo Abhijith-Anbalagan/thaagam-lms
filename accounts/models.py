@@ -1,7 +1,9 @@
 import uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.validators import RegexValidator
 from django.utils import timezone
+
 from datetime import timedelta
 
 
@@ -15,11 +17,20 @@ class User(AbstractUser):
         ('public', 'Public'),
     ]
 
+    username_validator = RegexValidator(
+        r'^[\w.@+ -]+$',
+        'Enter a valid username. This value may contain only letters, numbers, and @/./+/-/_/space characters.',
+        'invalid'
+    )
+
+
+
     username = models.CharField(
         max_length=150,
         unique=False,
-        validators=[AbstractUser.username_validator],
+        validators=[username_validator],
     )
+
     email = models.EmailField(unique=True)     # ← email is the login field
 
     USERNAME_FIELD  = 'email'
