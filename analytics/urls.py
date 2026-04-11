@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .management_views import management_analytics_excel
 
 urlpatterns = [
     # Super Admin Analytics
@@ -10,6 +11,7 @@ urlpatterns = [
 
     # Management Analytics
     path('management/', views.management_analytics, name='management_analytics'),
+    path('management/excel/', management_analytics_excel, name='management_analytics_excel'),
 
     # Teacher Analytics
     path('teacher/', views.teacher_analytics, name='teacher_analytics'),

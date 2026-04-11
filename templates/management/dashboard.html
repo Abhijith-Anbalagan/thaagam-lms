@@ -149,27 +149,19 @@ a.bstat:hover { opacity: .75; }
       <div class="bstat"><div class="bstat-val">{{ total_teachers }}</div><div class="bstat-lbl">Teachers</div></div>
       <div class="bstat"><div class="bstat-val">{{ total_students }}</div><div class="bstat-lbl">Students</div></div>
       <div class="bstat"><div class="bstat-val">{{ total_classrooms }}</div><div class="bstat-lbl">Classrooms</div></div>
-      <div class="bstat"><div class="bstat-val">{{ avg_grade }}</div><div class="bstat-lbl">Avg Grade</div></div>
+      
     </div>
   </div>
 
-  <!-- Tabs -->
+  <!-- Tabs 
   <div class="tab-bar">
     <a class="tab-chip active" href="#teachers"      onclick="switchMgmtTab('teachers');return false;">👩‍🏫 Teachers</a>
     <a class="tab-chip"        href="#classrooms"    onclick="switchMgmtTab('classrooms');return false;">🏛 Classrooms</a>
     <a class="tab-chip"        href="#students"      onclick="switchMgmtTab('students');return false;">🎓 Students</a>
     <a class="tab-chip"        href="#analytics"     onclick="switchMgmtTab('analytics');return false;">📊 Analytics</a>
     <a class="tab-chip"        href="#announcements" onclick="switchMgmtTab('announcements');return false;">📢 Announcements</a>
-  </div>
+  </div> -->
 
-  <!-- TAB: TEACHERS -->
-  <div class="tab-pane active" id="tab-teachers">
-    <div class="stat-row">
-      <div class="s-card"><div class="s-icon">👩‍🏫</div><div class="s-val">{{ total_teachers }}</div><div class="s-lbl">Teachers</div></div>
-      <div class="s-card"><div class="s-icon">🏛</div><div class="s-val">{{ total_classrooms }}</div><div class="s-lbl">Active Classes</div></div>
-      <div class="s-card"><div class="s-icon">📝</div><div class="s-val">{{ total_assignments }}</div><div class="s-lbl">Assignments</div></div>
-      <div class="s-card"><div class="s-icon">🎬</div><div class="s-val">{{ total_videos }}</div><div class="s-lbl">Videos</div></div>
-    </div>
     <div class="card">
       <div class="card-head">
         <span class="card-title">Teachers I Manage</span>
@@ -178,7 +170,7 @@ a.bstat:hover { opacity: .75; }
       {% if teacher_data %}
       <div style="overflow-x:auto">
         <table class="dt">
-          <thead><tr><th>Teacher</th><th>Active Classes</th><th>Assignments</th><th>Videos</th><th>Students</th></tr></thead>
+          <thead><tr><th>Teacher</th><th>Class rooms</th><th>Students</th><th>Videos</th><th>Students</th></tr></thead>
           <tbody>
           {% for t in teacher_data %}
           <tr>
@@ -192,9 +184,10 @@ a.bstat:hover { opacity: .75; }
               </div>
             </td>
             <td><span class="badge badge-blue">{{ t.classes }}</span></td>
+            <td class="mono">{{ t.students }}</td>
             <td class="mono">{{ t.assignments }}</td>
             <td class="mono">{{ t.videos }}</td>
-            <td class="mono">{{ t.students }}</td>
+           
           </tr>
           {% endfor %}
           </tbody>
@@ -209,6 +202,62 @@ a.bstat:hover { opacity: .75; }
       </div>
       {% endif %}
     </div>
+  </div>
+
+  <!-- Dashboard Overview -->
+  <div class="card">
+    <div class="card-head"><span class="card-title">📅 Upcoming Deadlines</span></div>
+    {% if deadline_tracker %}
+    <div style="overflow-x:auto">
+      <table class="dt">
+        <thead><tr><th>Assignment</th><th>Classroom</th><th>Due Date</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for d in deadline_tracker|slice:":5" %}
+        <tr>
+          <td><div style="font-weight:600;">{{ d.title }}</div><div style="font-size:11px;color:var(--text-3);">{{ d.teacher }}</div></td>
+          <td>{{ d.classroom }}</td>
+          <td class="mono">{{ d.due_date|date:"M j" }}</td>
+          <td>
+            {% if d.status == 'overdue' %}<span class="badge" style="background:#fee2e2;color:#b91c1c;">Overdue</span>
+            {% elif d.status == 'on_time' %}<span class="badge badge-green">On Time</span>
+            {% else %}<span class="badge badge-amber">In Progress</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">No upcoming deadlines.</div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">📢 Recent Announcements</span>
+      {% if total_announcements > 3 %}
+        <a href="{% url 'management_announcements' %}" class="btn btn-ghost btn-sm">View All</a>
+      {% endif %}
+    </div>
+    {% if recent_announcements %}
+      <div style="display:flex;flex-direction:column;gap:14px;padding:18px;">
+        {% for ann in recent_announcements %}
+          <div class="ann-item" style="padding:18px;border-radius:14px;border:1px solid var(--border);background:var(--page-bg);">
+            <div class="ann-title">
+              {{ ann.title }}
+              {% if ann.is_pinned %}<span class="pin">PINNED</span>{% endif %}
+            </div>
+            <div class="ann-meta">
+              <span>{{ ann.created_at|date:"M j, H:i" }}</span>
+              <span class="tbadge tbadge-{{ ann.target|default:'all' }}">{{ ann.get_target_display|default:'All' }}</span>
+            </div>
+            <div class="ann-body">{{ ann.body }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">No recent announcements.</div>
+    {% endif %}
   </div>
 
   <!-- TAB: CLASSROOMS -->

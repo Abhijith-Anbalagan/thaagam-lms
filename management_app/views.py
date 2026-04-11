@@ -144,6 +144,10 @@ def dashboard(request):
     ann_students = Announcement.objects.filter(school=school, target='students').order_by('-created_at')[:10]
     ann_pinned   = Announcement.objects.filter(school=school, is_pinned=True).order_by('-created_at')[:10]
 
+    # Combined recent announcements for dashboard
+    recent_announcements = Announcement.objects.filter(school=school).order_by('-created_at')[:3]
+    total_announcements = Announcement.objects.filter(school=school).count()
+
     return render(request, 'management/dashboard.html', {
         # teachers tab
         'teachers':           teachers,
@@ -177,6 +181,8 @@ def dashboard(request):
         'ann_teachers':         ann_teachers,
         'ann_students':         ann_students,
         'ann_pinned':           ann_pinned,
+        'recent_announcements': recent_announcements,
+        'total_announcements':  total_announcements,
     })
 
 
@@ -300,3 +306,91 @@ def teachers_list(request):
     my_invites = request.user.sent_invites.filter(role='teacher', accepted=True).values_list('email', flat=True)
     teachers   = User.objects.filter(email__in=my_invites, role='teacher')
     return render(request, 'management/teachers_list.html', {'teachers': teachers})
+
+
+@role_required('management')
+def announcements_management(request):
+    from announcements.models import Announcement
+    from django.db.models import Q
+    
+    school = request.user.school
+    
+    # ── Handle POST requests for creating announcement ──
+    if request.method == 'POST' and request.POST.get('action') == 'create':
+        title     = request.POST.get('title', '').strip()
+        body      = request.POST.get('body', '').strip()
+        target    = request.POST.get('target', 'all')
+        is_pinned = bool(request.POST.get('is_pinned'))
+        meet_link = request.POST.get('meet_link', '').strip()
+        
+        if title and body:
+            Announcement.objects.create(
+                posted_by=request.user,
+                school=school,
+                title=title,
+                body=body,
+                target=target,
+                is_pinned=is_pinned,
+                meet_link=meet_link if meet_link else '',
+            )
+            messages.success(request, 'Announcement created successfully.')
+            return redirect('management_announcements')
+        else:
+            messages.error(request, 'Please fill in all required fields.')
+    
+    # ── Handle DELETE requests ──
+    if request.method == 'POST' and request.POST.get('action') == 'delete':
+        announcement_id = request.POST.get('announcement_id')
+        try:
+            announcement = Announcement.objects.get(id=announcement_id, school=school)
+            announcement.delete()
+            messages.success(request, 'Announcement deleted successfully.')
+        except Announcement.DoesNotExist:
+            messages.error(request, 'Announcement not found.')
+        return redirect('management_announcements')
+    
+    # ── Announcement counts for summary page ──
+    all_announcements = Announcement.objects.filter(school=school).select_related('posted_by')
+    sent_announcements = all_announcements.filter(posted_by__role='management')
+    from_announcements = all_announcements.exclude(posted_by__role='management')
+
+    return render(request, 'management/announcements.html', {
+        'sent_count': sent_announcements.count(),
+        'from_count': from_announcements.count(),
+    })
+
+
+@role_required('management')
+def announcements_detail(request, mode):
+    from announcements.models import Announcement
+
+    school = request.user.school
+
+    if request.method == 'POST' and request.POST.get('action') == 'delete':
+        announcement_id = request.POST.get('announcement_id')
+        try:
+            announcement = Announcement.objects.get(id=announcement_id, school=school)
+            announcement.delete()
+            messages.success(request, 'Announcement deleted successfully.')
+        except Announcement.DoesNotExist:
+            messages.error(request, 'Announcement not found.')
+        return redirect('management_announcements_detail', mode=mode)
+
+    all_announcements = Announcement.objects.filter(school=school).select_related('posted_by').order_by('-is_pinned', '-created_at')
+    if mode == 'sent':
+        announcements = all_announcements.filter(posted_by__role='management')
+        title = 'Sent Announcements'
+        subtitle = 'Announcements posted by management.'
+    elif mode == 'from':
+        announcements = all_announcements.exclude(posted_by__role='management')
+        title = 'Announcements from Others'
+        subtitle = 'Announcements posted by other roles.'
+    else:
+        return redirect('management_announcements')
+
+    return render(request, 'management/announcements_detail.html', {
+        'announcements': announcements,
+        'mode': mode,
+        'title': title,
+        'subtitle': subtitle,
+    })

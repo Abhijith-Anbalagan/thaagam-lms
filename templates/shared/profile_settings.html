@@ -2,38 +2,33 @@
 {% block title %}My Profile — EduPlatform{% endblock %}
 {% block extra_css %}
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
-
 :root {
-  --ink: #0f0e0d;
-  --paper: #faf8f5;
-  --cream: #f2ede6;
-  --accent: #c8401a;
-  --accent-light: #f5e8e3;
-  --muted: #7a7470;
-  --border: #e0d9d0;
-  --shadow: rgba(15,14,13,0.08);
-  --blue: #1d5fa8;
-  --blue-light: #e8f0fa;
-  --green: #2a9d5c;
-  --red: #b91c1c;
-  --red-light: #fee2e2;
+  --brand: #4f46e5;
+  --brand-dark: #111827;
+  --text-muted: #6b7280;
+  --page-bg: #f8fafc;
+  --card-bg: #ffffff;
+  --border: #e5e7eb;
+  --shadow: rgba(15, 23, 42, 0.08);
+  --accent: #4f46e5;
+  --accent-soft: #eef2ff;
 }
 
 html, body {
-  overflow: hidden;
+  overflow: auto;
+  background: var(--page-bg);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 .prf-page {
-  height:  calc(100vh - 60px);
+  height: 80vh;
   background: var(--paper);
   font-family: 'DM Sans', sans-serif;
   display: flex;
   flex-direction: column;   /* ← stack vertically */
   align-items: center;      /* ← centres horizontally only */
-  justify-content: flex-start; /* ← start from top, no overflow */
+  justify-content: center; /* ← center vertically */
   padding: 32px 24px;
 
 }
@@ -381,12 +376,81 @@ html, body {
 .btn-cancel:hover { background: var(--border); }
 
 /* ── Responsive ── */
+@media (max-width: 768px) {
+  .prf-page {
+    height: 90vh;
+    padding: 16px 12px;
+  }
+  .prf-header {
+    margin-bottom: 16px;
+    gap: 10px;
+  }
+  .prf-icon {
+    width: 36px; height: 36px;
+  }
+  .prf-title { font-size: 1.4rem; }
+  .prf-grid {
+    gap: 16px;
+  }
+  .prf-card-body { padding: 20px 16px 20px; }
+  .sidebar-card .prf-card-body {
+    padding: 20px 16px;
+  }
+  .prf-avatar-ring {
+    width: 72px; height: 72px;
+  }
+  .prf-avatar-initials {
+    font-size: 1.8rem;
+  }
+  .prf-identity-name {
+    font-size: 1rem;
+  }
+  .prf-role-pill {
+    font-size: 0.65rem;
+    padding: 2px 10px;
+  }
+  .prf-school-chip {
+    font-size: 0.65rem;
+    padding: 2px 8px;
+  }
+  .sidebar-meta-row {
+    font-size: 0.75rem;
+  }
+  .btn-changepw, .btn-signout {
+    width: 100%;
+    margin-top: 8px;
+  }
+  .form-card .prf-card-body { padding: 20px 16px 20px; }
+  .prf-card-title {
+    font-size: 1.1rem;
+  }
+  .field-block {
+    margin-bottom: 12px;
+  }
+  .prf-actions {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .btn-save {
+    width: 100%;
+  }
+  .modal-body { padding: 20px 16px 20px; }
+  .modal-actions {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .btn-pw, .btn-cancel {
+    width: 100%;
+  }
+}
 @media (max-width: 720px) {
   .prf-grid { grid-template-columns: 1fr; }
   .prf-title { font-size: 1.5rem; }
 }
 @media (max-width: 480px) {
-  .form-card .prf-card-body { padding: 22px 18px 26px; }
+  .form-card .prf-card-body { padding: 18px 14px 18px; }
   .form-grid-2 { grid-template-columns: 1fr; }
 }
 </style>
@@ -535,9 +599,16 @@ html, body {
   <div class="field-block">
     <label class="field-label" for="id_username">Username</label>
     <input type="text" id="id_username" name="username"
-           value="{{ user.username }}" class="prf-input"
+           value="{{ form.username.value|default:user.username }}" class="prf-input"
            placeholder="Username">
+    {% if form.username.errors %}
+    <div class="form-error">{{ form.username.errors.0 }}</div>
+    {% endif %}
   </div>
+
+  {% if form.avatar.errors %}
+  <div class="form-error" style="margin-bottom: 14px;">{{ form.avatar.errors.0 }}</div>
+  {% endif %}
 
   <button class="btn-changepw" type="button" onclick="openModal()">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -565,6 +636,9 @@ html, body {
 </form>
 
     </div><!-- end .prf-grid -->
+  {% if form.non_field_errors %}
+  <div class="form-error" style="text-align:center; margin-top:10px;">{{ form.non_field_errors.0 }}</div>
+  {% endif %}
   </div>
 </div>
 
@@ -651,19 +725,21 @@ function handleOverlayClick(e) {
 }
 function previewAvatar(input) {
   if (!input.files || !input.files[0]) return;
-  document.getElementById('avatar-input').addEventListener('change', function() {
-  previewAvatar(this);
-});
   const reader = new FileReader();
   reader.onload = function(e) {
     const preview  = document.getElementById('avatar-preview');
     const initials = document.getElementById('avatar-initials');
-    preview.src = e.target.result;
-    preview.style.display = 'block';
-    if (initials) initials.style.display = 'none';
+    if (preview) {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+    }
+    if (initials) {
+      initials.style.display = 'none';
+    }
   };
   reader.readAsDataURL(input.files[0]);
 }
+
 
 // Auto-open modal if password form has errors (after failed submit)
 {% if pw_form.errors %}
