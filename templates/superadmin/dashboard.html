@@ -22,6 +22,39 @@
     --radius-sm:   8px;
     --shadow-sm:   0 1px 3px rgba(0,0,0,0.06);
     --shadow-md:   0 4px 20px rgba(0,0,0,0.08);
+    
+    /* Gradient Color Schemes - You can change these! */
+    
+    /* Option 1: Modern Vibrant (Current) */
+    --grad-1: linear-gradient(135deg, #667eea, #764ba2); /* Schools - Purple */
+    --grad-2: linear-gradient(135deg, #f093fb, #f5576c); /* Management - Pink */
+    --grad-3: linear-gradient(135deg, #4facfe, #00f2fe); /* Teachers - Blue */
+    --grad-4: linear-gradient(135deg, #43e97b, #38f9d7); /* Students - Green */
+    --grad-5: linear-gradient(135deg, #fa709a, #fee140); /* Classrooms - Pink/Yellow */
+    
+    /* Option 2: Ocean Theme (Uncomment to use)
+    --grad-1: linear-gradient(135deg, #667db6, #0082c8);
+    --grad-2: linear-gradient(135deg, #f093fb, #f5576c);
+    --grad-3: linear-gradient(135deg, #4facfe, #00f2fe);
+    --grad-4: linear-gradient(135deg, #43e97b, #38f9d7);
+    --grad-5: linear-gradient(135deg, #667eea, #764ba2);
+    */
+    
+    /* Option 3: Sunset Theme (Uncomment to use)
+    --grad-1: linear-gradient(135deg, #ff9a9e, #fecfef);
+    --grad-2: linear-gradient(135deg, #ffecd2, #fcb69f);
+    --grad-3: linear-gradient(135deg, #a8edea, #fed6e3);
+    --grad-4: linear-gradient(135deg, #ffd89b, #19547b);
+    --grad-5: linear-gradient(135deg, #667eea, #764ba2);
+    */
+    
+    /* Option 4: Professional Theme (Uncomment to use)
+    --grad-1: linear-gradient(135deg, #2196F3, #1976D2);
+    --grad-2: linear-gradient(135deg, #E91E63, #C2185B);
+    --grad-3: linear-gradient(135deg, #00BCD4, #0097A7);
+    --grad-4: linear-gradient(135deg, #4CAF50, #388E3C);
+    --grad-5: linear-gradient(135deg, #FF9800, #F57C00);
+    */
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -36,16 +69,116 @@
 
   /* Stats */
   .sa-stat-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:28px; }
-  .sa-stat { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius); padding:18px 20px; text-decoration:none; color:inherit; display:block; transition:all .15s; position:relative; overflow:hidden; }
-  .sa-stat::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--accent),var(--accent-2)); border-radius:3px 3px 0 0; }
-  .sa-stat:nth-child(2)::before { background:linear-gradient(90deg,#00c896,#34d399); }
-  .sa-stat:nth-child(3)::before { background:linear-gradient(90deg,#f59e0b,#fbbf24); }
-  .sa-stat:nth-child(4)::before { background:linear-gradient(90deg,#ff4d6d,#fb7185); }
-  .sa-stat:nth-child(5)::before { background:linear-gradient(90deg,#0ea5e9,#38bdf8); }
-  .sa-stat:hover { transform:translateY(-3px); box-shadow:var(--shadow-md); text-decoration:none; }
-  .sa-stat-icon { display:block; margin-bottom:10px; line-height:1; }
-  .sa-stat-val { font-size:32px; font-weight:800; color:var(--ink); line-height:1; letter-spacing:-1px; }
-  .sa-stat-lbl { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-3); margin-top:6px; }
+  .sa-stat { 
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); 
+    border: none; 
+    border-radius: var(--radius); 
+    padding: 24px 20px; 
+    text-decoration: none; 
+    color: white; 
+    display: block; 
+    transition: all .3s cubic-bezier(0.4, 0, 0.2, 1); 
+    position: relative; 
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    transform: translateY(0);
+  }
+  
+  /* Individual gradient colors for each stat card */
+  .sa-stat:nth-child(1) { background: var(--grad-1); } /* Schools */
+  .sa-stat:nth-child(2) { background: var(--grad-2); } /* Management */
+  .sa-stat:nth-child(3) { background: var(--grad-3); } /* Teachers */
+  .sa-stat:nth-child(4) { background: var(--grad-4); } /* Students */
+  .sa-stat:nth-child(5) { background: var(--grad-5); } /* Classrooms */
+  
+  .sa-stat:hover { 
+    transform: translateY(-8px) scale(1.02); 
+    box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+    text-decoration: none; 
+  }
+  
+  .sa-stat:active {
+    transform: translateY(-4px) scale(1.01);
+    transition: all .1s ease;
+  }
+  
+  .sa-stat-icon { 
+    display: block; 
+    margin-bottom: 16px; 
+    line-height: 1;
+    opacity: 0.9;
+    transform: scale(1);
+    transition: transform .3s ease;
+  }
+  
+  .sa-stat:hover .sa-stat-icon {
+    transform: scale(1.1);
+  }
+  
+  .sa-stat-icon svg {
+    stroke: rgba(255,255,255,0.9) !important;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+  }
+  
+  .sa-stat-val { 
+    font-size: 36px; 
+    font-weight: 800; 
+    color: white; 
+    line-height: 1; 
+    letter-spacing: -1px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 8px;
+    transform: translateY(0);
+    transition: transform .3s ease;
+  }
+  
+  .sa-stat:hover .sa-stat-val {
+    transform: translateY(-2px);
+  }
+  
+  .sa-stat-lbl { 
+    font-size: 12px; 
+    font-weight: 600; 
+    text-transform: uppercase; 
+    letter-spacing: 0.1em; 
+    color: rgba(255,255,255,0.85); 
+    margin-top: 0;
+    transform: translateY(0);
+    transition: transform .3s ease;
+  }
+  
+  .sa-stat:hover .sa-stat-lbl {
+    transform: translateY(-1px);
+  }
+  
+  /* Add subtle shine effect */
+  .sa-stat::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.6s ease;
+  }
+  
+  .sa-stat:hover::before {
+    left: 100%;
+  }
+  
+  /* Add subtle pattern overlay */
+  .sa-stat::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 50%);
+    pointer-events: none;
+  }
 
   /* Cards */
   .sa-card { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:20px; }
@@ -97,8 +230,22 @@
   .empty-state { text-align:center; padding:40px 24px; color:var(--ink-3); font-size:13px; }
 
   /* Responsive */
-  @media(max-width:1100px) { .sa-stat-grid { grid-template-columns:repeat(3,1fr); } }
-  @media(max-width:640px)  { .dash { padding:20px 16px 48px; } .sa-stat-grid { grid-template-columns:repeat(2,1fr); } }
+  @media(max-width:1100px) { 
+    .sa-stat-grid { grid-template-columns:repeat(3,1fr); } 
+    .sa-stat { padding: 20px 16px; }
+    .sa-stat-val { font-size: 28px; }
+  }
+  @media(max-width:640px)  { 
+    .dash { padding:20px 16px 48px; } 
+    .sa-stat-grid { grid-template-columns:repeat(2,1fr); gap: 12px; } 
+    .sa-stat { padding: 18px 14px; }
+    .sa-stat-val { font-size: 24px; }
+    .sa-stat-lbl { font-size: 11px; }
+  }
+  @media(max-width:480px) {
+    .sa-stat-grid { grid-template-columns: 1fr; }
+    .sa-stat { padding: 20px 16px; }
+  }
 </style>
 {% endblock %}
 

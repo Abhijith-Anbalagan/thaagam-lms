@@ -17,12 +17,84 @@
     --blue-light: #e8f0fa;
     --green: #2a9d5c;
     --green-light: #e6f4ed;
+    
+    /* Beautiful Gradient Colors */
+    --grad-1: linear-gradient(135deg, #667eea, #764ba2); /* Total - Purple */
+    --grad-2: linear-gradient(135deg, #43e97b, #38f9d7); /* Published - Green */
+    --grad-3: linear-gradient(135deg, #fa709a, #fee140); /* Unpublished - Pink/Yellow */
   }
 
   * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+  }
+
+  /* Beautiful Gradient Stat Cards */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: var(--grad-1);
+    border: none;
+    border-radius: 14px;
+    padding: 24px 20px;
+    color: white;
+    transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    transform: translateY(0);
+    text-align: center;
+  }
+
+  .stat-card:nth-child(1) { background: var(--grad-1); } /* Total */
+  .stat-card:nth-child(2) { background: var(--grad-2); } /* Published */
+  .stat-card:nth-child(3) { background: var(--grad-3); } /* Unpublished */
+
+  .stat-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  }
+
+  .stat-value {
+    font-size: 32px;
+    font-weight: 800;
+    color: white;
+    line-height: 1;
+    letter-spacing: -1px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 8px;
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.85);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* Add subtle shine effect */
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.6s ease;
+  }
+
+  .stat-card:hover::before {
+    left: 100%;
   }
 
   .page-header {
@@ -75,7 +147,7 @@
   .course-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
+    {% comment %} gap: 8px; {% endcomment %}
   }
 
   .gc-card {
@@ -89,7 +161,7 @@
     transition: box-shadow .2s, transform .2s;
     cursor: pointer;
     min-width: 0;
-    width: 100%;
+    width: 90%;
   }
 
   .gc-card:hover {
@@ -129,7 +201,7 @@
   .gc-cover img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit:fill ;
   }
 
   .gc-cover-placeholder {
@@ -173,7 +245,7 @@
   .gc-lang-hours {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     margin-bottom: 8px;
     flex-wrap: wrap;
   }
