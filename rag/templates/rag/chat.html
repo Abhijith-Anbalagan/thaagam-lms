@@ -1,0 +1,214 @@
+{% extends 'student/base_student.html' %}
+{% load static %}
+
+{% block title %}AI Study Assistant - EduPlatform{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        height: calc(100vh - 200px);
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+    .message-bubble {
+        max-width: 80%;
+        border-radius: 1.5rem;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
+        position: relative;
+        animation: fadeIn 0.3s ease-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .user-message {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: white;
+        margin-left: auto;
+        border-bottom-right-radius: 0.25rem;
+    }
+    .ai-message {
+        background: white;
+        color: #1e293b;
+        margin-right: auto;
+        border-bottom-left-radius: 0.25rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+    .typing-indicator {
+        display: none;
+    }
+    .typing-dot {
+        width: 6px;
+        height: 6px;
+        background: #94a3b8;
+        border-radius: 50%;
+        display: inline-block;
+        animation: bounce 1.4s infinite ease-in-out;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+        0%, 80%, 100% { transform: scale(0); }
+        40% { transform: scale(1); }
+    }
+    /* Hide scrollbar but keep functionality */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-4xl">
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">AI Study Assistant</h1>
+            <p class="text-slate-500">Ask questions about your course materials.</p>
+        </div>
+        <div class="flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-600">
+            <span class="relative flex h-2 w-2">
+                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+            </span>
+            Connected to RAG Model
+        </div>
+    </div>
+
+    <!-- Chat Interface -->
+    <div class="chat-container relative flex flex-col rounded-[2.5rem] p-4 shadow-2xl">
+        <!-- Messages Area -->
+        <div id="chatWindow" class="no-scrollbar flex-1 overflow-y-auto px-2 py-4">
+            {% if not history %}
+            <div id="emptyState" class="flex h-full flex-col items-center justify-center text-center p-8">
+                <div class="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-indigo-50 text-6xl shadow-inner">
+                    📖
+                </div>
+                <h2 class="mb-2 text-2xl font-bold text-slate-900">Ask your doubts from your books!</h2>
+                <p class="max-w-xs text-slate-500">I can help you understand complex concepts, summarize chapters, or explain formulas.</p>
+                
+                <div class="mt-8 flex flex-wrap justify-center gap-2">
+                    <button onclick="fillInput('Explain the main concept of chapter 1')" class="rounded-full bg-white px-4 py-2 text-sm font-medium text-indigo-600 shadow-sm transition hover:bg-indigo-50">"Explain Chapter 1"</button>
+                    <button onclick="fillInput('Summarize the key points')" class="rounded-full bg-white px-4 py-2 text-sm font-medium text-indigo-600 shadow-sm transition hover:bg-indigo-50">"Summarize key points"</button>
+                    <button onclick="fillInput('Can you give me a practice question?')" class="rounded-full bg-white px-4 py-2 text-sm font-medium text-indigo-600 shadow-sm transition hover:bg-indigo-50">"Practice question?"</button>
+                </div>
+            </div>
+            {% endif %}
+
+            {% for chat in history %}
+            <div class="message-bubble user-message">
+                {{ chat.query }}
+                <div class="mt-1 text-[10px] opacity-70 text-right">{{ chat.timestamp|date:"H:i" }}</div>
+            </div>
+            <div class="message-bubble ai-message">
+                {{ chat.response|linebreaksbr }}
+                <div class="mt-1 text-[10px] text-slate-400">{{ chat.timestamp|date:"H:i" }}</div>
+            </div>
+            {% endfor %}
+            
+            <!-- Typing Indicator -->
+            <div id="typingIndicator" class="message-bubble ai-message typing-indicator">
+                <div class="flex items-center gap-1">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="mt-4 rounded-[2rem] bg-white p-2 shadow-inner border border-slate-100">
+            <form id="chatForm" class="flex items-center gap-2">
+                {% csrf_token %}
+                <input type="text" id="userInput" placeholder="Ask anything about your courses..." 
+                    class="flex-1 rounded-full border-none bg-transparent px-6 py-4 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-0">
+                <button type="submit" class="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg transition hover:bg-indigo-700 hover:scale-105 active:scale-95">
+                    <i data-lucide="send" class="h-5 w-5"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const chatWindow = document.getElementById('chatWindow');
+    const chatForm = document.getElementById('chatForm');
+    const userInput = document.getElementById('userInput');
+    const typingIndicator = document.getElementById('typingIndicator');
+
+    // Scroll to bottom on load
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+
+    function fillInput(text) {
+        userInput.value = text;
+        userInput.focus();
+    }
+
+    function addMessage(text, type, time = '') {
+        // Hide empty state if it exists
+        const emptyState = document.getElementById('emptyState');
+        if (emptyState) emptyState.style.display = 'none';
+
+        const now = time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const bubble = document.createElement('div');
+        bubble.className = `message-bubble ${type === 'user' ? 'user-message' : 'ai-message'}`;
+        
+        // Handle newlines
+        const content = text.replace(/\n/g, '<br>');
+        
+        bubble.innerHTML = `
+            ${content}
+            <div class="mt-1 text-[10px] ${type === 'user' ? 'opacity-70 text-right' : 'text-slate-400'}">${now}</div>
+        `;
+        
+        // Insert before typing indicator
+        chatWindow.insertBefore(bubble, typingIndicator);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const query = userInput.value.trim();
+        if (!query) return;
+
+        // Clear input and add user message
+        userInput.value = '';
+        addMessage(query, 'user');
+
+        // Show typing indicator
+        typingIndicator.style.display = 'block';
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+
+        try {
+            const formData = new FormData();
+            formData.append('query', query);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            const response = await fetch('{% url "rag_api_chat_proxy" %}', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            
+            // Hide typing indicator
+            typingIndicator.style.display = 'none';
+
+            if (data.success) {
+                addMessage(data.response, 'ai');
+            } else {
+                addMessage("Oops! " + data.error, 'ai');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            typingIndicator.style.display = 'none';
+            addMessage("Sorry, I encountered a connection error. Please try again.", 'ai');
+        }
+    });
+
+    // Initialize Lucide icons
+    lucide.createIcons();
+</script>
+{% endblock %}

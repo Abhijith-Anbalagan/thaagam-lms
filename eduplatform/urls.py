@@ -29,8 +29,10 @@ urlpatterns = [
     path('chat/', include('chat.urls')),
     path('announcements/', include('announcements.urls')),
     path('analytics/', include('analytics.urls')),
-]
 
+    path('rag/', include('rag.urls')),
+
+]
 # Always serve media files in development
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

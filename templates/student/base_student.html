@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,76 +31,118 @@
     <style>
         body {
             background:
-                radial-gradient(circle at top right, rgba(59,130,246,.12), transparent 24%),
-                radial-gradient(circle at bottom left, rgba(147,51,234,.10), transparent 20%),
+                radial-gradient(circle at top right, rgba(59, 130, 246, .12), transparent 24%),
+                radial-gradient(circle at bottom left, rgba(147, 51, 234, .10), transparent 20%),
                 #f8fafc;
         }
-        .sidebar-transition { transition: transform .3s ease-in-out; }
-        .mobile-overlay { backdrop-filter: blur(4px); }
-        .student-shell-card { background: rgba(255,255,255,.88); backdrop-filter: blur(12px); }
+
+        .sidebar-transition {
+            transition: transform .3s ease-in-out;
+        }
+
+        .mobile-overlay {
+            backdrop-filter: blur(4px);
+        }
+
+        .student-shell-card {
+            background: rgba(255, 255, 255, .88);
+            backdrop-filter: blur(12px);
+        }
+
         .student-nav-link.active {
             background: linear-gradient(135deg, #dbeafe 0%, #eef2ff 100%);
             color: #1d4ed8;
             box-shadow: inset 0 0 0 1px rgba(59, 130, 246, .14);
         }
+
         .student-tab.active {
             background: #2563eb;
             color: #fff;
             box-shadow: 0 10px 24px rgba(37, 99, 235, .18);
         }
-        .student-tab:hover { color: #1d4ed8; }
-        .student-tab.active:hover { color: #fff; }
+
+        .student-tab:hover {
+            color: #1d4ed8;
+        }
+
+        .student-tab.active:hover {
+            color: #fff;
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
-<body class="min-h-screen text-slate-900">
-    <div id="mobile-overlay" class="fixed inset-0 bg-slate-950/35 z-40 hidden lg:hidden mobile-overlay" onclick="toggleSidebar()"></div>
 
-    <aside id="sidebar" class="fixed left-0 top-0 z-50 h-full w-72 max-w-[85vw] -translate-x-full border-r border-white/70 bg-white/90 shadow-2xl sidebar-transition lg:translate-x-0">
+<body class="min-h-screen text-slate-900">
+    <div id="mobile-overlay" class="fixed inset-0 bg-slate-950/35 z-40 hidden lg:hidden mobile-overlay"
+        onclick="toggleSidebar()"></div>
+
+    <aside id="sidebar"
+        class="fixed left-0 top-0 z-50 h-full w-72 max-w-[85vw] -translate-x-full border-r border-slate-200 bg-white sidebar-transition lg:translate-x-0">
         <div class="flex h-full flex-col">
-            <div class="flex h-20 items-center justify-between border-b border-slate-200 px-6">
-                <a href="{% url 'student_dashboard' %}" class="flex items-center gap-3">
-                    <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-blue-500 to-violet-500 text-sm font-bold text-white shadow-lg shadow-blue-500/25">EP</div>
-                    <div>
-                        <div class="text-lg font-semibold text-slate-900">EduPlatform</div>
+            <a href="{% url 'profile' %}" class="flex h-28 flex-col justify-center gap-3 border-b border-slate-100 bg-slate-50/50 px-6 transition hover:bg-slate-100 group">
+                <div class="flex items-center gap-4">
+                    <div class="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-white shadow-md shrink-0 transition group-hover:border-blue-400">
+                        {% if request.user.avatar %}
+                        <img src="{{ request.user.avatar.url }}" alt="{{ request.user.get_full_name }}" class="h-full w-full object-cover">
+                        {% else %}
+                        <span class="text-sm font-bold text-slate-600">{{ request.user.first_name|first|default:request.user.username|first|upper }}{{ request.user.last_name|first|upper }}</span>
+                        {% endif %}
                     </div>
-                </a>
-                <button class="rounded-xl p-2 text-slate-500 hover:bg-slate-100 lg:hidden" onclick="toggleSidebar()" aria-label="Close sidebar">
-                    <i data-lucide="x" class="h-5 w-5"></i>
-                </button>
-            </div>
+                    <div class="flex min-w-0 flex-col">
+                        <div class="truncate text-base font-bold text-slate-900 leading-tight group-hover:text-blue-600 transition">{{ user.get_full_name|default:user.username }}</div>
+                        <div class="mt-1.5">
+                            <span class="inline-flex items-center rounded-full bg-blue-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm shadow-blue-200">
+                                {{ user.get_role_display }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </a>
 
             <nav class="flex-1 space-y-2 px-4 pb-6">
                 {% if nav_classroom %}
-                <a href="{% url 'student_dashboard' %}" class="student-nav-link {% if active_nav == 'dashboard' %}active{% endif %} flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
+                <a href="{% url 'student_dashboard' %}"
+                    class="student-nav-link {% if active_nav == 'dashboard' %}active{% endif %} flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
                     <i data-lucide="layout-dashboard" class="h-5 w-5"></i>
                     <span class="font-medium">Dashboard</span>
                 </a>
-                <a href="{% url 'student_classroom_courses' nav_classroom.id %}" class="student-nav-link {% if active_nav == 'courses' %}active{% endif %} flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
+                <a href="{% url 'student_classroom_courses' nav_classroom.id %}"
+                    class="student-nav-link {% if active_nav == 'courses' %}active{% endif %} flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
                     <i data-lucide="book-open" class="h-5 w-5"></i>
                     <span class="font-medium">My Courses</span>
                 </a>
-                <a href="{% url 'student_classroom_classwork' nav_classroom.id %}" class="student-nav-link {% if active_nav == 'classwork' %}active{% endif %} flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
+                <a href="{% url 'student_classroom_classwork' nav_classroom.id %}"
+                    class="student-nav-link {% if active_nav == 'classwork' %}active{% endif %} flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
                     <i data-lucide="clipboard-list" class="h-5 w-5"></i>
                     <span class="font-medium">Assignments</span>
                 </a>
-                <a href="{% url 'student_classroom_chat' nav_classroom.id %}" class="student-nav-link {% if active_nav == 'chat' %}active{% endif %} flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
+                <a href="{% url 'student_classroom_chat' nav_classroom.id %}"
+                    class="student-nav-link {% if active_nav == 'chat' %}active{% endif %} flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
                     <i data-lucide="message-circle" class="h-5 w-5"></i>
                     <span class="font-medium">Messages</span>
                     {% if unread_count > 0 %}
-                    <span class="ml-auto rounded-full bg-rose-500 px-2 py-0.5 text-xs font-semibold text-white">{{ unread_count }}</span>
+                    <span class="ml-auto rounded-full bg-rose-500 px-2 py-0.5 text-xs font-semibold text-white">{{
+                        unread_count }}</span>
                     {% endif %}
                 </a>
-                <a href="{% url 'student_classroom_announce' nav_classroom.id %}" class="student-nav-link {% if active_nav == 'announcements' %}active{% endif %} flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
+                <a href="{% url 'student_classroom_announce' nav_classroom.id %}"
+                    class="student-nav-link {% if active_nav == 'announcements' %}active{% endif %} flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
                     <i data-lucide="megaphone" class="h-5 w-5"></i>
                     <span class="font-medium">Announcements</span>
                 </a>
-                <a href="{% url 'student_analytics' %}" class="student-nav-link {% if active_nav == 'analytics' %}active{% endif %} flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
+                <a href="{% url 'student_analytics' %}"
+                    class="student-nav-link {% if active_nav == 'analytics' %}active{% endif %} flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
                     <i data-lucide="bar-chart-3" class="h-5 w-5"></i>
                     <span class="font-medium">Analytics</span>
                 </a>
+                <a href="{% url 'rag_student_chat' %}"
+                    class="student-nav-link {% if active_nav == 'ai_chat' %}active{% endif %} flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
+                    <i data-lucide="bot" class="h-5 w-5"></i>
+                    <span class="font-medium">AI Assistant</span>
+                </a>
                 {% else %}
-                <a href="{% url 'student_join_class' %}" class="student-nav-link {% if active_nav == 'join_class' %}active{% endif %} flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
+                <a href="{% url 'student_join_class' %}"
+                    class="student-nav-link {% if active_nav == 'join_class' %}active{% endif %} flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
                     <i data-lucide="plus-circle" class="h-5 w-5"></i>
                     <span class="font-medium">Join a Class</span>
                 </a>
@@ -107,11 +150,13 @@
             </nav>
 
             <div class="border-t border-slate-200 px-4 py-4">
-                <a href="{% url 'profile' %}" class="flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
+                <a href="{% url 'profile' %}"
+                    class="flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 transition hover:bg-blue-50 hover:text-blue-600">
                     <i data-lucide="settings" class="h-5 w-5"></i>
                     <span class="font-medium">Settings</span>
                 </a>
-                <a href="{% url 'logout' %}" class="mt-2 flex items-center gap-3 rounded-2xl px-4 py-3 text-rose-600 transition hover:bg-rose-50">
+                <a href="{% url 'logout' %}"
+                    class="mt-2 flex items-center gap-3 rounded-2xl px-4 py-3 text-rose-600 transition hover:bg-rose-50">
                     <i data-lucide="log-out" class="h-5 w-5"></i>
                     <span class="font-medium">Sign Out</span>
                 </a>
@@ -120,118 +165,152 @@
     </aside>
 
     <div class="lg:ml-72">
-        <header class="sticky top-0 z-30 border-b border-white/70 bg-white/85 backdrop-blur-xl">
-            <div class="flex items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-                <div class="flex min-w-0 items-center gap-3">
+        <header class="sticky top-0 z-30 h-16 border-b border-white/70 bg-white/85 backdrop-blur-xl px-4 sm:px-6 lg:px-8">
+            <div class="flex h-full items-center justify-between">
+                <div class="flex items-center gap-4">
                     <button onclick="toggleSidebar()" class="rounded-2xl border border-slate-200 p-2.5 text-slate-600 hover:bg-slate-100 lg:hidden" aria-label="Open sidebar">
                         <i data-lucide="menu" class="h-5 w-5"></i>
                     </button>
-                    <div class="min-w-0">
-                        <div class="truncate text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">{% block topbar_context %}Student workspace{% endblock %}</div>
-                        <div class="truncate text-xl font-semibold text-slate-900">{% block topbar_title %}Learning portal{% endblock %}</div>
-                    </div>
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <button id="notificationBell" type="button" onclick="toggleNotificationModal()" class="relative rounded-2xl border border-slate-200 bg-white p-2.5 text-slate-600 transition hover:bg-slate-50 hover:text-blue-600" aria-label="Notifications"
+                    <button id="notificationBell" type="button" onclick="toggleNotificationModal()"
+                        class="relative rounded-2xl border border-slate-200 bg-white p-2.5 text-slate-600 transition hover:bg-slate-50 hover:text-blue-600"
+                        aria-label="Notifications"
                         title="{% if has_updates %}{{ unread_count }} unread chat{{ unread_count|pluralize }}, {{ new_announcements_count }} new announcement{{ new_announcements_count|pluralize }}, {{ new_assignments_count }} new assignment{{ new_assignments_count|pluralize }}, {{ new_grades_count }} graded assignment{{ new_grades_count|pluralize }}{% else %}No new notifications{% endif %}">
                         <i data-lucide="bell" class="h-5 w-5"></i>
                         {% if has_updates %}
-                        <span id="notificationBellDot" class="absolute -right-0.5 -top-0.5 inline-flex h-3 w-3 rounded-full bg-rose-500"></span>
+                        <span id="notificationBellDot"
+                            class="absolute -right-0.5 -top-0.5 inline-flex h-3 w-3 rounded-full bg-rose-500"></span>
                         {% else %}
-                        <span id="notificationBellDot" class="absolute -right-0.5 -top-0.5 hidden h-3 w-3 rounded-full bg-rose-500"></span>
+                        <span id="notificationBellDot"
+                            class="absolute -right-0.5 -top-0.5 hidden h-3 w-3 rounded-full bg-rose-500"></span>
                         {% endif %}
                     </button>
 
                     <!-- Notification Modal -->
-                    <div id="notificationModal" class="hidden fixed inset-0 z-50 flex items-start justify-end pt-20 pr-4 sm:pt-24 sm:pr-6 lg:pt-24 lg:pr-8" onclick="closeNotificationModal(event)">
-                        <div class="relative w-80 rounded-2xl border border-slate-200 bg-white shadow-xl" onclick="event.stopPropagation()">
+                    <div id="notificationModal"
+                        class="hidden fixed inset-0 z-50 flex items-start justify-end pt-20 pr-4 sm:pt-24 sm:pr-6 lg:pt-24 lg:pr-8"
+                        onclick="closeNotificationModal(event)">
+                        <div class="relative w-80 rounded-2xl border border-slate-200 bg-white shadow-xl"
+                            onclick="event.stopPropagation()">
                             <div class="border-b border-slate-200 px-5 py-4">
                                 <h3 class="text-lg font-semibold text-slate-900">Notifications</h3>
                             </div>
                             <div class="max-h-96 overflow-y-auto">
                                 {% if unread_count > 0 and nav_classroom %}
-                                <a id="messageNotificationItem" href="{% url 'student_classroom_chat' nav_classroom.id %}" class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 transition hover:bg-blue-50" onclick="closeNotificationModal()">
+                                <a id="messageNotificationItem"
+                                    href="{% url 'student_classroom_chat' nav_classroom.id %}"
+                                    class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 transition hover:bg-blue-50"
+                                    onclick="closeNotificationModal()">
                                     <div class="rounded-2xl bg-violet-100 p-2 text-violet-600">
                                         <i data-lucide="message-circle" class="h-5 w-5"></i>
                                     </div>
                                     <div class="flex-1">
-                                        <p id="messageNotificationText" class="font-medium text-slate-900">{{ unread_count }} unread message{{ unread_count|pluralize }}</p>
+                                        <p id="messageNotificationText" class="font-medium text-slate-900">{{
+                                            unread_count }} unread message{{ unread_count|pluralize }}</p>
                                     </div>
                                 </a>
                                 {% else %}
-                                <a id="messageNotificationItem" href="#" class="hidden flex items-center gap-3 border-b border-slate-100 px-5 py-4 transition hover:bg-blue-50" onclick="closeNotificationModal()">
+                                <a id="messageNotificationItem" href="#"
+                                    class="hidden flex items-center gap-3 border-b border-slate-100 px-5 py-4 transition hover:bg-blue-50"
+                                    onclick="closeNotificationModal()">
                                     <div class="rounded-2xl bg-violet-100 p-2 text-violet-600">
                                         <i data-lucide="message-circle" class="h-5 w-5"></i>
                                     </div>
                                     <div class="flex-1">
-                                        <p id="messageNotificationText" class="font-medium text-slate-900">0 unread messages</p>
+                                        <p id="messageNotificationText" class="font-medium text-slate-900">0 unread
+                                            messages</p>
                                     </div>
                                 </a>
                                 {% endif %}
 
                                 {% if new_announcements_count > 0 and nav_classroom %}
-                                <a id="announcementNotificationItem" href="{% url 'student_classroom_announce' nav_classroom.id %}" class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 transition hover:bg-blue-50" onclick="closeNotificationModal()">
+                                <a id="announcementNotificationItem"
+                                    href="{% url 'student_classroom_announce' nav_classroom.id %}"
+                                    class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 transition hover:bg-blue-50"
+                                    onclick="closeNotificationModal()">
                                     <div class="rounded-2xl bg-blue-100 p-2 text-blue-600">
                                         <i data-lucide="megaphone" class="h-5 w-5"></i>
                                     </div>
                                     <div class="flex-1">
-                                        <p id="announcementNotificationText" class="font-medium text-slate-900">{{ new_announcements_count }} new announcement{{ new_announcements_count|pluralize }}</p>
+                                        <p id="announcementNotificationText" class="font-medium text-slate-900">{{
+                                            new_announcements_count }} new announcement{{
+                                            new_announcements_count|pluralize }}</p>
                                     </div>
                                 </a>
                                 {% else %}
-                                <a id="announcementNotificationItem" href="#" class="hidden flex items-center gap-3 border-b border-slate-100 px-5 py-4 transition hover:bg-blue-50" onclick="closeNotificationModal()">
+                                <a id="announcementNotificationItem" href="#"
+                                    class="hidden flex items-center gap-3 border-b border-slate-100 px-5 py-4 transition hover:bg-blue-50"
+                                    onclick="closeNotificationModal()">
                                     <div class="rounded-2xl bg-blue-100 p-2 text-blue-600">
                                         <i data-lucide="megaphone" class="h-5 w-5"></i>
                                     </div>
                                     <div class="flex-1">
-                                        <p id="announcementNotificationText" class="font-medium text-slate-900">0 new announcements</p>
+                                        <p id="announcementNotificationText" class="font-medium text-slate-900">0 new
+                                            announcements</p>
                                     </div>
                                 </a>
                                 {% endif %}
 
                                 {% if new_assignments_count > 0 and nav_classroom %}
-                                <a id="assignmentNotificationItem" href="{% url 'student_classroom_classwork' nav_classroom.id %}" class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 transition hover:bg-blue-50" onclick="closeNotificationModal()">
+                                <a id="assignmentNotificationItem"
+                                    href="{% url 'student_classroom_classwork' nav_classroom.id %}"
+                                    class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 transition hover:bg-blue-50"
+                                    onclick="closeNotificationModal()">
                                     <div class="rounded-2xl bg-amber-100 p-2 text-amber-600">
                                         <i data-lucide="clipboard-list" class="h-5 w-5"></i>
                                     </div>
                                     <div class="flex-1">
-                                        <p id="assignmentNotificationText" class="font-medium text-slate-900">{{ new_assignments_count }} new assignment{{ new_assignments_count|pluralize }}</p>
+                                        <p id="assignmentNotificationText" class="font-medium text-slate-900">{{
+                                            new_assignments_count }} new assignment{{ new_assignments_count|pluralize }}
+                                        </p>
                                     </div>
                                 </a>
                                 {% else %}
-                                <a id="assignmentNotificationItem" href="#" class="hidden flex items-center gap-3 border-b border-slate-100 px-5 py-4 transition hover:bg-blue-50" onclick="closeNotificationModal()">
+                                <a id="assignmentNotificationItem" href="#"
+                                    class="hidden flex items-center gap-3 border-b border-slate-100 px-5 py-4 transition hover:bg-blue-50"
+                                    onclick="closeNotificationModal()">
                                     <div class="rounded-2xl bg-amber-100 p-2 text-amber-600">
                                         <i data-lucide="clipboard-list" class="h-5 w-5"></i>
                                     </div>
                                     <div class="flex-1">
-                                        <p id="assignmentNotificationText" class="font-medium text-slate-900">0 new assignments</p>
+                                        <p id="assignmentNotificationText" class="font-medium text-slate-900">0 new
+                                            assignments</p>
                                     </div>
                                 </a>
                                 {% endif %}
 
                                 {% if new_grades_count > 0 and new_grades_redirect_url %}
-                                <a id="gradeNotificationItem" href="{{ new_grades_redirect_url }}" class="flex items-center gap-3 px-5 py-4 transition hover:bg-blue-50" onclick="closeNotificationModal()">
+                                <a id="gradeNotificationItem" href="{{ new_grades_redirect_url }}"
+                                    class="flex items-center gap-3 px-5 py-4 transition hover:bg-blue-50"
+                                    onclick="clearGradeNotification(); closeNotificationModal()">
                                     <div class="rounded-2xl bg-emerald-100 p-2 text-emerald-600">
                                         <i data-lucide="award" class="h-5 w-5"></i>
                                     </div>
                                     <div class="flex-1">
-                                        <p id="gradeNotificationText" class="font-medium text-slate-900">{{ new_grades_count }} graded assignment{{ new_grades_count|pluralize }}</p>
+                                        <p id="gradeNotificationText" class="font-medium text-slate-900">{{
+                                            new_grades_count }} graded assignment{{ new_grades_count|pluralize }}</p>
                                     </div>
                                 </a>
                                 {% else %}
-                                <a id="gradeNotificationItem" href="#" class="hidden flex items-center gap-3 px-5 py-4 transition hover:bg-blue-50" onclick="closeNotificationModal()">
+                                <a id="gradeNotificationItem" href="#"
+                                    class="hidden flex items-center gap-3 px-5 py-4 transition hover:bg-blue-50"
+                                    onclick="closeNotificationModal()">
                                     <div class="rounded-2xl bg-emerald-100 p-2 text-emerald-600">
                                         <i data-lucide="award" class="h-5 w-5"></i>
                                     </div>
                                     <div class="flex-1">
-                                        <p id="gradeNotificationText" class="font-medium text-slate-900">0 graded assignments</p>
+                                        <p id="gradeNotificationText" class="font-medium text-slate-900">0 graded
+                                            assignments</p>
                                     </div>
                                 </a>
                                 {% endif %}
 
-                                <div id="emptyNotificationState" class="{% if has_updates %}hidden {% endif %}px-5 py-8 text-center">
-                                    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                                <div id="emptyNotificationState"
+                                    class="{% if has_updates %}hidden {% endif %}px-5 py-8 text-center">
+                                    <div
+                                        class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
                                         <i data-lucide="bell-off" class="h-6 w-6"></i>
                                     </div>
                                     <p class="mt-3 font-medium text-slate-900">No new updates</p>
@@ -240,19 +319,15 @@
                             </div>
                         </div>
                     </div>
-
-                    <a href="{% url 'profile' %}" class="rounded-2xl border border-slate-200 bg-white p-2.5 text-slate-600 transition hover:bg-slate-50 hover:text-blue-600" aria-label="Profile settings">
-                        <i data-lucide="settings-2" class="h-5 w-5"></i>
-                    </a>
                 </div>
             </div>
         </header>
 
         <main class="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
             {% if messages %}
-            <div class="mb-6 space-y-3">
+            <div id="message-container" class="mb-6 space-y-3">
                 {% for message in messages %}
-                <div class="rounded-2xl border px-4 py-3 text-sm {% if 'error' in message.tags %}border-rose-200 bg-rose-50 text-rose-800{% elif 'success' in message.tags %}border-emerald-200 bg-emerald-50 text-emerald-800{% else %}border-slate-200 bg-white text-slate-700{% endif %}">
+                <div class="message-alert rounded-2xl border px-4 py-3 text-sm transition-opacity duration-500 {% if 'error' in message.tags %}border-rose-200 bg-rose-50 text-rose-800{% elif 'success' in message.tags %}border-emerald-200 bg-emerald-50 text-emerald-800{% else %}border-slate-200 bg-white text-slate-700{% endif %}">
                     {{ message }}
                 </div>
                 {% endfor %}
@@ -264,6 +339,24 @@
 
     <script>
         lucide.createIcons();
+
+        // Auto-hide messages after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const messages = document.querySelectorAll('.message-alert');
+            messages.forEach(function(message) {
+                setTimeout(function() {
+                    message.style.opacity = '0';
+                    setTimeout(function() {
+                        message.remove();
+                        // Also remove container if empty
+                        const container = document.getElementById('message-container');
+                        if (container && container.children.length === 0) {
+                            container.remove();
+                        }
+                    }, 500);
+                }, 5000);
+            });
+        });
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -288,7 +381,7 @@
         }
 
         // Close modal on Escape key
-        document.addEventListener('keydown', function(event) {
+        document.addEventListener('keydown', function (event) {
             if (event.key === 'Escape') {
                 const modal = document.getElementById('notificationModal');
                 modal.classList.add('hidden');
@@ -310,6 +403,12 @@
 
             function pluralize(count, word) {
                 return `${count} ${word}${count === 1 ? '' : 's'}`;
+            }
+
+            function clearGradeNotification() {
+                counts.grades = 0;
+                updateItem('gradeNotificationItem', 'gradeNotificationText', 0, 'graded assignment');
+                updateBellTitle();
             }
 
             function updateBellTitle() {
@@ -344,33 +443,26 @@
                         window.location.href = data.url;
                         return;
                     }
+                    
+                    // Immediately refresh all counts from server to ensure accuracy
+                    window.refreshDashboardCounts();
+                    
                     if (data.type === 'chat') {
                         if (activeNav === 'chat' && currentClassroomId === data.classroom_id) {
                             return;
                         }
+                        // Local optimistic update
                         counts.unread += 1;
                         updateItem('messageNotificationItem', 'messageNotificationText', counts.unread, 'unread message', data.redirect_url);
-                        const unreadElement = document.getElementById('unread-count');
-                        if (unreadElement) {
-                            unreadElement.textContent = counts.unread;
-                        }
                     } else if (data.type === 'announcement') {
                         counts.announcements += 1;
                         updateItem('announcementNotificationItem', 'announcementNotificationText', counts.announcements, 'new announcement', data.redirect_url);
                     } else if (data.type === 'assignment') {
                         counts.assignments += 1;
                         updateItem('assignmentNotificationItem', 'assignmentNotificationText', counts.assignments, 'new assignment', data.redirect_url);
-                        const pendingElement = document.getElementById('pending-count');
-                        if (pendingElement) {
-                            pendingElement.textContent = counts.assignments;
-                        }
                     } else if (data.type === 'grade') {
                         counts.grades += 1;
                         updateItem('gradeNotificationItem', 'gradeNotificationText', counts.grades, 'graded assignment', data.redirect_url);
-                        const gradedElement = document.getElementById('graded-count');
-                        if (gradedElement) {
-                            gradedElement.textContent = counts.grades;
-                        }
                     }
                     updateBellTitle();
                     lucide.createIcons();
@@ -381,52 +473,85 @@
                 };
             }
 
+            window.refreshDashboardCounts = function() {
+                fetch('{% url "student_unread_count" %}')
+                    .then(r => r.json())
+                    .then(data => {
+                        const unreadElement = document.getElementById('unread-count');
+                        if (data.unread !== undefined) {
+                            counts.unread = data.unread;
+                            updateItem('messageNotificationItem', 'messageNotificationText', counts.unread, 'unread message');
+                            if (unreadElement) unreadElement.textContent = data.unread;
+                            updateBellTitle();
+                        }
+                    });
+                fetch('{% url "student_pending_count" %}')
+                    .then(r => r.json())
+                    .then(data => {
+                        const pendingElement = document.getElementById('pending-count');
+                        if (data.pending !== undefined) {
+                            if (pendingElement) pendingElement.textContent = data.pending;
+                        }
+                    });
+                fetch('{% url "student_new_announcements_count" %}')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.new_announcements !== undefined) {
+                            counts.announcements = data.new_announcements;
+                            updateItem('announcementNotificationItem', 'announcementNotificationText', counts.announcements, 'new announcement');
+                            updateBellTitle();
+                        }
+                    });
+                fetch('{% url "student_new_assignments_count" %}')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.new_assignments !== undefined) {
+                            counts.assignments = data.new_assignments;
+                            updateItem('assignmentNotificationItem', 'assignmentNotificationText', counts.assignments, 'new assignment');
+                            updateBellTitle();
+                        }
+                    });
+                fetch('{% url "student_graded_count" %}')
+                    .then(r => r.json())
+                    .then(data => {
+                        const gradedElement = document.getElementById('graded-count');
+                        if (data.graded !== undefined) {
+                            if (gradedElement) gradedElement.textContent = data.graded;
+                        }
+                    });
+                fetch('{% url "student_new_grades_count" %}')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.new_grades !== undefined) {
+                            counts.grades = data.new_grades;
+                            updateItem('gradeNotificationItem', 'gradeNotificationText', counts.grades, 'graded assignment');
+                            updateBellTitle();
+                        }
+                    });
+                fetch('{% url "student_course_count" %}')
+                    .then(r => r.json())
+                    .then(data => {
+                        const courseElement = document.getElementById('course-count');
+                        if (data.courses !== undefined) {
+                            if (courseElement) courseElement.textContent = data.courses;
+                        }
+                    });
+            };
+
             updateItem('announcementNotificationItem', 'announcementNotificationText', counts.announcements, 'new announcement');
             updateItem('assignmentNotificationItem', 'assignmentNotificationText', counts.assignments, 'new assignment');
             updateItem('gradeNotificationItem', 'gradeNotificationText', counts.grades, 'graded assignment');
             updateBellTitle();
             connectNotifications();
             connectPresence();
-            refreshDashboardCounts();
-            setInterval(refreshDashboardCounts, 10000);
-
-            function refreshDashboardCounts() {
-                fetch('{% url "student_unread_count" %}')
-                    .then(r => r.json())
-                    .then(data => {
-                        const unreadElement = document.getElementById('unread-count');
-                        if (unreadElement && data.unread !== undefined) unreadElement.textContent = data.unread;
-                    });
-                fetch('{% url "student_pending_count" %}')
-                    .then(r => r.json())
-                    .then(data => {
-                        const pendingElement = document.getElementById('pending-count');
-                        if (pendingElement && data.pending !== undefined) pendingElement.textContent = data.pending;
-                    });
-                fetch('{% url "student_graded_count" %}')
-                    .then(r => r.json())
-                    .then(data => {
-                        const gradedElement = document.getElementById('graded-count');
-                        if (gradedElement && data.graded !== undefined) gradedElement.textContent = data.graded;
-                    });
-                fetch('{% url "student_course_count" %}')
-                    .then(r => r.json())
-                    .then(data => {
-                        const courseElement = document.getElementById('course-count');
-                        if (courseElement && data.courses !== undefined) courseElement.textContent = data.courses;
-                    });
-            }
+            window.refreshDashboardCounts();
+            setInterval(() => window.refreshDashboardCounts(), 10000);
         })();
 
         function connectPresence() {
             const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
             const presenceSocket = new WebSocket(`${proto}://${window.location.host}/ws/presence/`);
-
-            presenceSocket.onmessage = (event) => {
-                // Presence updates for status-dot/status-text are handled
-                // by the chat page's own dedicated presence socket.
-            };
-
+            presenceSocket.onmessage = (event) => {};
             presenceSocket.onclose = () => {
                 setTimeout(connectPresence, 3000);
             };
@@ -435,4 +560,5 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>

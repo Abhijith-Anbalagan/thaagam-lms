@@ -165,9 +165,11 @@ def classroom_detail(request, classroom_id):
 
         # Remove student
         elif request.POST.get('remove_student'):
+            from accounts.models import User as UserModel
             student_id = request.POST.get('remove_student')
             classroom.students.remove(student_id)
-            notify_students([student_id], {'type': 'forced_redirect', 'url': '/student/join/'})
+            UserModel.objects.filter(pk=student_id).update(role='public', school=None)
+            notify_students([student_id], {'type': 'forced_redirect', 'url': '/public-dashboard/'})
             messages.success(request, 'Student removed.')
 
         # Delete Announcement
@@ -658,8 +660,10 @@ def classroom_peoples(request, classroom_id):
     if request.method == 'POST':
         student_id = request.POST.get('remove_student')
         if student_id:
+            from accounts.models import User as UserModel
             classroom.students.remove(student_id)
-            notify_students([student_id], {'type': 'forced_redirect', 'url': '/student/join/'})
+            UserModel.objects.filter(pk=student_id).update(role='public', school=None)
+            notify_students([student_id], {'type': 'forced_redirect', 'url': '/public-dashboard/'})
             messages.success(request, 'Student removed.')
             return redirect('teacher_classroom_peoples', classroom_id=classroom_id)
 

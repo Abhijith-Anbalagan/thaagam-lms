@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'chat',
     'announcements',
     'analytics',
+    'rag',
 ]
 
 MIDDLEWARE = [
