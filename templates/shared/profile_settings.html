@@ -1,5 +1,7 @@
-{% extends 'base.html' %}
+{% extends base_template|default:'base.html' %}
 {% block title %}My Profile — EduPlatform{% endblock %}
+{% block topbar_context %}Personal settings{% endblock %}
+{% block topbar_title %}My Profile{% endblock %}
 {% block extra_css %}
 <style>
 :root {
@@ -14,12 +16,28 @@
   --accent-soft: #eef2ff;
 }
 
-html, body {
-  overflow: auto;
-  background: var(--page-bg);
-}
+  :root {
+    --ink: #0f0e0d;
+    --paper: #faf8f5;
+    --cream: #f2ede6;
+    --accent: #c8401a;
+    --accent-light: #f5e8e3;
+    --muted: #7a7470;
+    --border: #e0d9d0;
+    --shadow: rgba(15, 14, 13, 0.08);
+    --blue: #1d5fa8;
+    --blue-light: #e8f0fa;
+    --green: #2a9d5c;
+    --green-light: #e6f4ed;
+    --red: #b91c1c;
+    --red-light: #fee2e2;
+  }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 
 .prf-page {
   height: 80vh;
@@ -378,36 +396,235 @@ html, body {
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .prf-page {
-    height: 90vh;
-    padding: 16px 12px;
+    min-height: {% if base_template == 'base.html' %}100vh{% else %}auto{% endif %};
+    background: {% if base_template == 'base.html' %}var(--paper){% else %}transparent{% endif %};
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: {% if base_template == 'base.html' %}48px 24px 80px{% else %}0px 0px 40px{% endif %};
   }
   .prf-header {
     margin-bottom: 16px;
     gap: 10px;
   }
   .prf-icon {
-    width: 36px; height: 36px;
+    width: 44px;
+    height: 44px;
+    background: var(--accent);
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
   }
-  .prf-title { font-size: 1.4rem; }
-  .prf-grid {
-    gap: 16px;
+
+  .prf-icon svg {
+    color: #fff;
+  }
+
+  .prf-eyebrow {
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
   }
   .prf-card-body { padding: 20px 16px 20px; }
   .sidebar-card .prf-card-body {
     padding: 20px 16px;
   }
-  .prf-avatar-ring {
-    width: 72px; height: 72px;
+
+  /* ── Two-column grid ── */
+  .prf-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
   }
+
+  .prf-col {
+    animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .prf-col:nth-child(1) {
+    animation-delay: 0.07s;
+  }
+
+  .prf-col:nth-child(2) {
+    animation-delay: 0.16s;
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* ── Shared card shell ── */
+  .prf-card {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 2px 24px var(--shadow);
+  }
+
+  .prf-stripe {
+    height: 5px;
+    background: linear-gradient(90deg, var(--accent) 0%, #e8642e 60%, #f5a623 100%);
+  }
+
+  .prf-stripe-blue {
+    height: 5px;
+    background: linear-gradient(90deg, #1d5fa8 0%, #3b82f6 60%, #60a5fa 100%);
+  }
+
+  .prf-card-body {
+    padding: 32px 36px 36px;
+  }
+
+  /* ── Card title ── */
+  .prf-card-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .prf-card-title-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .prf-card-title-icon.orange {
+    background: var(--accent-light);
+  }
+
+  .prf-card-title-icon.orange svg {
+    color: var(--accent);
+  }
+
+  .prf-card-title-icon.blue {
+    background: var(--blue-light);
+  }
+
+  .prf-card-title-icon.blue svg {
+    color: var(--blue);
+  }
+
+  /* ── Avatar hero ── */
+  .prf-avatar-hero {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding-bottom: 28px;
+    margin-bottom: 28px;
+    border-bottom: 1.5px solid var(--border);
+  }
+
+  .prf-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .prf-avatar-ring {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    border: 2.5px solid var(--border);
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background: var(--cream);
+    cursor: pointer;
+    position: relative;
+  }
+
+  .prf-avatar-ring img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
   .prf-avatar-initials {
     font-size: 1.8rem;
   }
+
+  .prf-avatar-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 14, 13, 0.45);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .prf-avatar-ring:hover .prf-avatar-overlay {
+    opacity: 1;
+  }
+
+  .prf-avatar-overlay svg {
+    color: #fff;
+  }
+
+  .prf-cam-badge {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 22px;
+    height: 22px;
+    background: var(--accent);
+    border-radius: 50%;
+    border: 2px solid #fff;
+    display: grid;
+    place-items: center;
+  }
+
+  .prf-cam-badge svg {
+    color: #fff;
+  }
+
+  .prf-identity {
+    flex: 1;
+    min-width: 0;
+  }
+
   .prf-identity-name {
     font-size: 1rem;
   }
   .prf-role-pill {
-    font-size: 0.65rem;
-    padding: 2px 10px;
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: #fff;
+
+    background: {
+        {
+        user.role_color
+      }
+    }
+
+    ;
   }
   .prf-school-chip {
     font-size: 0.65rem;
@@ -416,13 +633,74 @@ html, body {
   .sidebar-meta-row {
     font-size: 0.75rem;
   }
-  .btn-changepw, .btn-signout {
+
+  .prf-school-chip svg {
+    color: var(--accent);
+    opacity: 0.7;
+  }
+
+  /* ── Section label ── */
+  .prf-section-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+
+  .prf-section-label::after {
+    content: '';
+    flex: 1;
+    height: 1.5px;
+    background: var(--border);
+    border-radius: 2px;
+  }
+
+  /* ── Form fields ── */
+  .form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .field-block {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 14px;
+  }
+
+  .field-block:last-of-type {
+    margin-bottom: 0;
+  }
+
+  .field-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .prf-input {
     width: 100%;
     margin-top: 8px;
   }
-  .form-card .prf-card-body { padding: 20px 16px 20px; }
-  .prf-card-title {
-    font-size: 1.1rem;
+
+  .prf-input::placeholder {
+    color: #bbb5ae;
+    font-weight: 300;
+  }
+
+  .prf-input:focus {
+    border-color: var(--accent);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(200, 64, 26, 0.1);
   }
   .field-block {
     margin-bottom: 12px;
@@ -433,16 +711,101 @@ html, body {
     align-items: stretch;
   }
   .btn-save {
-    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 22px;
+    background: var(--accent);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 14px rgba(200, 64, 26, 0.28);
   }
-  .modal-body { padding: 20px 16px 20px; }
-  .modal-actions {
-    flex-direction: column;
-    gap: 8px;
-    align-items: stretch;
+
+  .btn-save:hover {
+    background: #b03516;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(200, 64, 26, 0.36);
   }
-  .btn-pw, .btn-cancel {
-    width: 100%;
+
+  .btn-save:active {
+    transform: translateY(0);
+  }
+
+  .btn-signout {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.86rem;
+    font-weight: 500;
+    color: var(--red);
+    text-decoration: none;
+    border-radius: 10px;
+    border: 1.5px solid #fca5a5;
+    background: var(--red-light);
+    margin-left: auto;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .btn-signout:hover {
+    background: #fecaca;
+    border-color: var(--red);
+  }
+
+  .btn-pw {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 22px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #fff;
+    background: var(--blue);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 14px rgba(29, 95, 168, 0.28);
+    margin-top: 4px;
+  }
+
+  .btn-pw:hover {
+    background: #174e8a;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(29, 95, 168, 0.36);
+  }
+
+  .btn-pw:active {
+    transform: translateY(0);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 760px) {
+    .prf-columns {
+      grid-template-columns: 1fr;
+    }
+
+    .prf-title {
+      font-size: 1.55rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .prf-card-body {
+      padding: 22px 18px 26px;
+    }
+
+    .form-grid-2 {
+      grid-template-columns: 1fr;
+    }
   }
 }
 @media (max-width: 720px) {
@@ -463,8 +826,10 @@ html, body {
     <!-- Page Header -->
     <div class="prf-header">
       <div class="prf-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
         </svg>
       </div>
       <div>
@@ -481,84 +846,112 @@ html, body {
         <div class="prf-stripe"></div>
         <div class="prf-card-body">
 
-          <!-- Avatar -->
-         <div class="prf-avatar-wrap">
-  <label for="avatar-input" style="cursor:pointer;">
-    <div class="prf-avatar-ring">
-
-      {% if user.avatar %}
-        <img src="{{ user.avatar.url }}" 
-             id="avatar-preview" 
-             alt="avatar"
-             style="width:100%; height:100%; object-fit:cover;">
-      {% else %}
-        <div class="prf-avatar-initials" id="avatar-initials">
-          {{ user.username|first|upper }}
-        </div>
-        <img src="" id="avatar-preview" 
-             style="display:none; width:100%; height:100%; object-fit:cover;" 
-             alt="avatar">
-      {% endif %}
-
-      <div class="prf-avatar-overlay">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" 
-             stroke="currentColor" stroke-width="2" 
-             stroke-linecap="round" stroke-linejoin="round">
-          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-          <circle cx="12" cy="13" r="4"/>
-        </svg>
-      </div>
-
-    </div>
-  </label>
-
-  <div class="prf-cam-badge">
-    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" 
-         stroke="currentColor" stroke-width="2.5" 
-         stroke-linecap="round" stroke-linejoin="round">
-      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-      <circle cx="12" cy="13" r="4"/>
-    </svg>
-  </div>
-
-</div>
-          <!-- Identity -->
-          <div class="prf-identity-name">{{ user.get_full_name|default:user.username }}</div>
-          <span class="prf-role-pill">{{ user.get_role_display }}</span><br>
-          {% if user.school %}
-          <span class="prf-school-chip">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-            {{ user.school.name }}
-          </span>
-          {% endif %}
-
-          <div class="sidebar-divider"></div>
-
-          <!-- Meta rows -->
-          <div class="sidebar-meta">
-            <div class="sidebar-meta-row">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
-              </svg>
-              Email
-              <span>{{ user.email }}</span>
+            <div class="prf-card-title">
+              <span class="prf-card-title-icon orange">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </span>
+              Profile Info
             </div>
-            <div class="sidebar-meta-row">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-              </svg>
-              Joined
-              <span>{{ user.date_joined|date:"M Y" }}</span>
+
+            <!-- Avatar hero -->
+            <div class="prf-avatar-hero">
+              <div class="prf-avatar-wrap">
+                <label for="avatar-input" style="cursor:pointer;">
+                  <div class="prf-avatar-ring">
+                    {% if user.avatar %}
+                    <img src="{{ user.avatar.url }}" id="avatar-preview" alt="avatar">
+                    {% else %}
+                    <div class="prf-avatar-initials" id="avatar-initials">
+                      {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                    </div>
+                    <img src="" id="avatar-preview" style="display:none;width:100%;height:100%;object-fit:cover;">
+                    {% endif %}
+                    <div class="prf-avatar-overlay">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                    </div>
+                  </div>
+                </label>
+                <div class="prf-cam-badge">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                  </svg>
+                </div>
+              </div>
+              <div class="prf-identity">
+                <div class="prf-identity-name">{{ user.get_full_name|default:user.username }}</div>
+                <div class="prf-identity-meta">
+                  <span class="prf-role-pill">{{ user.get_role_display }}</span>
+                  {% if user.school %}
+                  <span class="prf-school-chip">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                      <polyline points="9 22 9 12 15 12 15 22" />
+                    </svg>
+                    {{ user.school.name }}
+                  </span>
+                  {% endif %}
+                </div>
+              </div>
             </div>
-            <div class="sidebar-meta-row">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-              </svg>
-              Status
-              <span style="color:var(--green); font-weight:500;">Active</span>
-            </div>
+
+            <!-- Profile form -->
+            <form method="post" enctype="multipart/form-data" id="profile-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="profile">
+              <input type="file" name="avatar" id="avatar-input" accept="image/*" style="display:none;"
+                onchange="previewAvatar(this)">
+
+              <div class="prf-section-label">Personal Info</div>
+
+              <div class="form-grid-2">
+                <div class="field-block">
+                  <label class="field-label" for="id_first_name">First Name</label>
+                  <input type="text" id="id_first_name" name="first_name" value="{{ user.first_name }}"
+                    class="prf-input" placeholder="First name">
+                </div>
+                <div class="field-block">
+                  <label class="field-label" for="id_last_name">Last Name</label>
+                  <input type="text" id="id_last_name" name="last_name" value="{{ user.last_name }}" class="prf-input"
+                    placeholder="Last name">
+                </div>
+              </div>
+
+              <div class="field-block">
+                <label class="field-label" for="id_email">Email</label>
+                <input type="email" id="id_email" name="email" value="{{ user.email }}" class="prf-input"
+                  placeholder="your@email.com">
+              </div>
+              <!--
+              <div class="field-block">
+                <label class="field-label" for="id_phone">Phone</label>
+                <input type="text" id="id_phone" name="phone" value="{{ user.phone }}" class="prf-input" placeholder="+91 00000 00000">
+              </div> -->
+
+              <div class="prf-actions">
+                <button type="submit" class="btn-save">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                    <polyline points="17 21 17 13 7 13 7 21" />
+                    <polyline points="7 3 7 8 15 8" />
+                  </svg>
+                  Save Changes
+                </button>
+
+              </div>
+            </form>
+
           </div>
 
         
@@ -568,10 +961,66 @@ html, body {
         </div>
       </div>
 
-      <!-- ── RIGHT: Profile Form ── -->
-      <div class="form-card prf-card">
-        <div class="prf-stripe"></div>
-        <div class="prf-card-body">
+      <!-- ── RIGHT: Change Password ── -->
+      <div class="prf-col">
+        <div class="prf-card">
+          <div class="prf-stripe-blue"></div>
+          <div class="prf-card-body">
+
+            <div class="prf-card-title">
+              <span class="prf-card-title-icon blue">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </span>
+              Change Password
+            </div>
+
+            <form method="post" action="{% url 'password_change' %}">
+              {% csrf_token %}
+
+              <div class="prf-section-label">Security</div>
+
+              <div class="field-block">
+                <label class="field-label" for="id_old_password">Current Password</label>
+                <input type="password" id="id_old_password" name="old_password" class="prf-input blue-focus"
+                  placeholder="Enter current password">
+                {% if pw_form.old_password.errors %}
+                <div class="form-error">{{ pw_form.old_password.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="field-block">
+                <label class="field-label" for="id_new_password1">New Password</label>
+                <input type="password" id="id_new_password1" name="new_password1" class="prf-input blue-focus"
+                  placeholder="New password">
+                {% if pw_form.new_password1.errors %}
+                <div class="form-error">{{ pw_form.new_password1.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="field-block">
+                <label class="field-label" for="id_new_password2">Confirm Password</label>
+                <input type="password" id="id_new_password2" name="new_password2" class="prf-input blue-focus"
+                  placeholder="Confirm new password">
+                {% if pw_form.new_password2.errors %}
+                <div class="form-error">{{ pw_form.new_password2.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="prf-actions" style="border-top: none; padding-top: 8px; margin-top: 8px;">
+                <button type="submit" class="btn-pw">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  Update Password
+                </button>
+              </div>
+            </form>
 
           <div class="prf-card-title">
             <span class="prf-card-title-icon orange">
@@ -714,41 +1163,17 @@ html, body {
 
 {% block extra_js %}
 <script>
-function openModal() {
-  document.getElementById('pw-modal').classList.add('open');
-}
-function closeModal() {
-  document.getElementById('pw-modal').classList.remove('open');
-}
-function handleOverlayClick(e) {
-  if (e.target === document.getElementById('pw-modal')) closeModal();
-}
-function previewAvatar(input) {
-  if (!input.files || !input.files[0]) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const preview  = document.getElementById('avatar-preview');
-    const initials = document.getElementById('avatar-initials');
-    if (preview) {
+  function previewAvatar(input) {
+    if (!input.files || !input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const preview = document.getElementById('avatar-preview');
+      const initials = document.getElementById('avatar-initials');
       preview.src = e.target.result;
       preview.style.display = 'block';
-    }
-    if (initials) {
-      initials.style.display = 'none';
-    }
-  };
-  reader.readAsDataURL(input.files[0]);
-}
-
-
-// Auto-open modal if password form has errors (after failed submit)
-{% if pw_form.errors %}
-document.addEventListener('DOMContentLoaded', openModal);
-{% endif %}
-
-// Close on Escape key
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') closeModal();
-});
+      if (initials) initials.style.display = 'none';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
 </script>
 {% endblock %}
