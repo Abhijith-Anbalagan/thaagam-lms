@@ -30,7 +30,7 @@ urlpatterns = [
     path('my-learning/<int:course_id>/enroll/',                             course_enroll,               name='teacher_course_enroll'),
     path('messages/',                                                       teacher_messages,            name='teacher_messages'),
     path('announcements/',                                                  teacher_announcements,       name='teacher_announcements'),
-    path('announce/',                                                       post_announcement,           name='teacher_post_announcement'),
+    path('announce/',                                                       teacher_announcements,       name='teacher_post_announcement'),
 
     path('classroom/<int:classroom_id>/',                                   classroom_detail,            name='teacher_classroom_detail'),
     path('classroom/<int:classroom_id>/assign-course/<int:course_id>/',     assign_course_to_classroom,  name='teacher_assign_course'),

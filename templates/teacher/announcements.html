@@ -47,13 +47,69 @@
   <div class="wb-orb" style="right:-30px;top:-70px;width:240px;height:240px;background:rgba(255,255,255,.05)"></div>
   <div style="flex:1;z-index:1">
     <h2>Announcements 📢</h2>
-    <p>All announcements posted by you across your classrooms.</p>
+    <p>Post updates and view history across all your classrooms.</p>
   </div>
-  <div style="z-index:1">
-    <a href="{% url 'teacher_post_announcement' %}" class="btn btn-primary" style="background:#fff; color:#0f6e56; border:none; padding:12px 28px; font-weight:800; border-radius:12px; box-shadow: 0 4px 12px rgba(0,0,0,.1);">
-      + New Announcement
-    </a>
-  </div>
+</div>
+
+<!-- 1. Post Announcement Form (Integrated) -->
+<div class="card" style="margin-bottom: 32px; padding: 32px; border-radius: var(--radius-xl); border: 2px solid var(--border);">
+  <form method="post">
+    {% csrf_token %}
+    <div style="display: flex; gap: 24px; margin-bottom: 24px;">
+      <div style="flex: 2;">
+        <label style="display: block; font-size: 11px; font-weight: 800; color: var(--brand-dark); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Heading</label>
+        <input type="text" name="title" class="form-control" placeholder="Enter title..." required style="height: 44px; border-radius: 12px; font-weight: 600;">
+      </div>
+      <div style="flex: 1;">
+        <label style="display: block; font-size: 11px; font-weight: 800; color: var(--brand-dark); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Autodelete in...</label>
+        <select name="expiry_days" class="form-control" style="height: 44px; border-radius: 12px; cursor: pointer; border: 2px solid #e2e8f0; background: #fff; font-weight: 600;">
+          <option value="7">1 Week (Default)</option>
+          <option value="1">1 Day</option>
+          <option value="3">3 Days</option>
+          <option value="14">2 Weeks</option>
+          <option value="30">1 Month</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 24px;">
+      <label style="display: block; font-size: 11px; font-weight: 800; color: var(--brand-dark); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Your Message</label>
+      <textarea name="body" class="form-control" rows="4" placeholder="Detail your announcement here..." required style="border-radius: 12px; padding: 16px;"></textarea>
+    </div>
+
+    <div style="display: flex; gap: 24px; margin-bottom: 24px; align-items: flex-end;">
+      <div style="flex: 1;">
+        <label style="display: block; font-size: 11px; font-weight: 800; color: var(--brand-dark); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Meeting Link (Optional)</label>
+        <input type="url" name="meet_link" class="form-control" placeholder="https://meet.google.com/..." style="height: 44px; border-radius: 12px;">
+      </div>
+      <label style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #f8fafc; border-radius: 12px; border: 1px solid var(--border); cursor: pointer; height: 44px;">
+        <input type="checkbox" name="is_pinned" style="width: 18px; height: 18px; accent-color: var(--brand-blue);">
+        <span style="font-size: 12px; font-weight: 700; color: var(--brand-dark);">📌 Pin to Top</span>
+      </label>
+    </div>
+
+    <div style="border-top: 1px solid var(--border); padding-top: 24px; display: flex; justify-content: space-between; align-items: flex-start;">
+      <div style="flex: 1;">
+        <label style="display: block; font-size: 11px; font-weight: 800; color: var(--brand-dark); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">Post To Classrooms</label>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          {% for classroom in classrooms %}
+          <label style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; background: #fff; border: 2px solid var(--border); border-radius: 30px; cursor: pointer; transition: all .2s;" class="classroom-label">
+            <input type="checkbox" name="classrooms" value="{{ classroom.id }}" style="width:16px; height:16px;">
+            <span style="font-size: 12px; font-weight: 600;">{{ classroom.name }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="padding: 12px 48px; border-radius: 12px; font-weight: 800; box-shadow: 0 10px 24px rgba(15, 110, 86, 0.3); background: #0f6e56; color: #fff; font-size: 14px; border: none; transition: transform 0.2s, background 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.background='#0c5d48'" onmouseout="this.style.transform='translateY(0)'; this.style.background='#0f6e56'">
+        🚀 PUBLISH ANNOUNCEMENT
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- 2. Announcement History -->
+<div class="card-head" style="margin-bottom: 12px; background: none; border: none; padding-left: 0;">
+  <div class="card-title" style="font-size: 16px;">Announcement History</div>
 </div>
 
 <div class="card">
@@ -75,6 +131,9 @@
         {% else %}
           <span class="badge badge-green">All Classes</span>
         {% endif %}
+        {% if ann.expires_at %}
+          <span class="badge" style="background: #fff1f2; color: #e11d48; font-size: 10px;">Expires: {{ ann.expires_at|date:"M j" }}</span>
+        {% endif %}
       </div>
       <div class="ann-body">{{ ann.body }}</div>
       <div class="ann-meta">
@@ -87,7 +146,22 @@
     </div>
   </div>
   {% empty %}
-  <div class="empty-state">No announcements found.</div>
+  <div class="empty-state" style="padding: 60px 40px;">
+    <div style="font-size: 40px; margin-bottom: 20px;">📭</div>
+    <div style="font-weight: 700; color: var(--brand-dark); font-size: 16px;">No announcements yet</div>
+    <div style="color: var(--text-muted); font-size: 13px; margin-top: 8px;">Use the form above to post your first update!</div>
+  </div>
   {% endfor %}
 </div>
+
 {% endblock %}
+
+{% block extra_js %}
+<style>
+  .classroom-label:has(input:checked) {
+    border-color: var(--teacher) !important;
+    background: var(--teacher-bg) !important;
+  }
+</style>
+{% endblock %}
+

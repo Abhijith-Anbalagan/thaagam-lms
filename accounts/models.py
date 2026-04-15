@@ -149,3 +149,26 @@ class Testimonial(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.status}"
+
+class StudentCredentialLog(models.Model):
+    ACTION_CHOICES = [
+        ('create', 'Account Creation'),
+        ('reset', 'Password Reset'),
+    ]
+    school           = models.ForeignKey('superadmin.School', on_delete=models.CASCADE)
+    student_name     = models.CharField(max_length=200)
+    generated_id     = models.CharField(max_length=200)
+    plain_password   = models.CharField(max_length=200)
+    action_type      = models.CharField(max_length=20, choices=ACTION_CHOICES, default='create')
+    teacher          = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_credentials')
+    created_at       = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.student_name} ({self.generated_id})"
+
+    def get_student_user(self):
+        """Returns the actual User object associated with this log's generated ID."""
+        return User.objects.filter(email=self.generated_id, role='student').first()

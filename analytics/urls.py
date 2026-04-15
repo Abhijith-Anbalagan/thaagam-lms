@@ -15,6 +15,9 @@ urlpatterns = [
 
     # Teacher Analytics
     path('teacher/', views.teacher_analytics, name='teacher_analytics'),
+    path('teacher/export/', views.export_overall_analytics, name='export_overall_analytics'),
+    path('teacher/classroom/<int:classroom_id>/', views.classroom_analytics, name='teacher_classroom_analytics'),
+    path('teacher/classroom/<int:classroom_id>/export/', views.export_classroom_analytics, name='export_classroom_analytics'),
 
     # Student Analytics
     path('student/', views.student_analytics, name='student_analytics'),

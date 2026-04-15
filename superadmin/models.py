@@ -54,6 +54,7 @@ def parse_to_embed_url(raw: str) -> str:
 
 class School(models.Model):
     name       = models.CharField(max_length=200)
+    domain     = models.CharField(max_length=100, blank=True, help_text="e.g. thaagam.org")
     address    = models.TextField(blank=True)
     is_active  = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -15,6 +15,7 @@ class Announcement(models.Model):
     meet_link  = models.URLField(blank=True)
     target     = models.CharField(max_length=10, choices=TARGET, default='all')
     is_pinned  = models.BooleanField(default=False)
+    expires_at = models.DateTimeField(null=True, blank=True, help_text="Announcement will be deleted 1 day after this date.")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

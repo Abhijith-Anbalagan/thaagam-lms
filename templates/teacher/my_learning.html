@@ -158,145 +158,113 @@
     transform: translateY(-3px);
   }
 
-  .cc-cover {
-    width: 200px;
-    height: 100%;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #f0f3ff 0%, #e0e6ff 100%);
-    flex-shrink: 0;
-  }
+.cc-cover {
+  height: 130px; position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #eef1fb 0%, #dde3f8 100%);
+}
+.cc-cover img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+.cc-cover-icon { font-size: 38px; opacity: .45; }
+.cc-enrolled-badge {
+  position: absolute; top: 10px; left: 10px;
+  background: var(--teacher); color: #fff;
+  font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px;
+  display: flex; align-items: center; gap: 4px;
+}
+.cc-free-badge {
+  position: absolute; top: 10px; right: 10px;
+  background: rgba(255,255,255,.92); color: var(--teacher);
+  font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px;
+}
+.cc-body { padding: 15px 16px; flex: 1; }
+.cc-title { font-size: 14px; font-weight: 700; color: var(--text-1); margin-bottom: 5px; line-height: 1.4; }
+.cc-desc  {
+  font-size: 12.5px; color: var(--text-2); line-height: 1.5; margin-bottom: 12px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.cc-chips { display: flex; gap: 7px; flex-wrap: wrap; }
+.chip {
+  font-size: 11.5px; color: var(--text-2); background: var(--page-bg);
+  border: 1px solid var(--border); border-radius: 20px;
+  padding: 3px 10px; display: inline-flex; align-items: center; gap: 4px;
+}
+.cc-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-top: 1px solid var(--border);
+}
+.cc-concepts { font-family: var(--mono); font-size: 11.5px; color: var(--text-3); }
+.cc-deadline { margin-top: 10px; font-size: 12px; font-weight: 600; color: var(--teacher); }
 
-  .cc-cover img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    position: absolute;
-    inset: 0;
-  }
+/* BUTTONS */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 18px; border-radius: 40px;
+  font-family: var(--font); font-size: 13px; font-weight: 600;
+  cursor: pointer; border: none; transition: all .15s; text-decoration: none;
+}
+.btn-enroll   { background: var(--brand); color: #fff; box-shadow: 0 2px 8px rgba(76,104,215,.25); }
+.btn-enroll:hover   { background: var(--brand-dark); }
+.btn-unenroll { background: var(--teacher-bg); color: var(--teacher); }
+.btn-unenroll:hover { background: #c3e9d8; }
+.btn-loading  { opacity: .6; pointer-events: none; }
 
-  .cc-cover-icon {
-    font-size: 38px;
-    opacity: .45;
-  }
+/* SECTION */
+.section { display: none; }
+.section.active { display: block; }
 
-  .cc-enrolled-badge {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background: #0f6e56;
-    color: #fff;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
+/* EMPTY */
+.empty-state { padding: 56px 20px; text-align: center; color: var(--text-3); }
+.empty-state .es-icon { font-size: 44px; margin-bottom: 14px; }
+.empty-state h3 { font-size: 15px; font-weight: 700; color: var(--text-2); margin-bottom: 6px; }
+.empty-state p  { font-size: 13px; }
 
-  .cc-free-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(255, 255, 255, .92);
-    color: #0f6e56;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 20px;
-  }
+/* TOAST */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--dark); color: #fff;
+  padding: 12px 20px; border-radius: var(--radius-md);
+  font-size: 13px; font-weight: 500; box-shadow: var(--shadow-md);
+  transform: translateY(70px); opacity: 0; transition: all .28s; z-index: 9999;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { border-left: 3px solid #16a34a; }
+.toast.error   { border-left: 3px solid #ef4444; }
 
-  .cc-body {
-    padding: 15px 16px;
-    flex: 1;
-  }
-
-  .cc-title {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--brand-dark);
-    margin-bottom: 5px;
-    line-height: 1.4;
-  }
-
-  .cc-desc {
-    font-size: 12.5px;
-    color: var(--text-muted);
-    line-height: 1.5;
-    margin-bottom: 12px;
-  }
-
-  .cc-chips {
-    display: flex;
-    gap: 7px;
-    flex-wrap: wrap;
-  }
-
-  .chip {
-    font-size: 11.5px;
-    color: var(--text-muted);
-    background: var(--page-bg);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 3px 10px;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .cc-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    border-top: 1px solid var(--border);
-    background: #fafaf8;
-  }
-
-  .cc-concepts {
-    font-size: 11.5px;
-    color: var(--text-muted);
-  }
-
-  .cc-deadline {
-    margin-top: 10px;
-    font-size: 12px;
-    font-weight: 600;
-    color: #0f6e56;
-  }
-
-  .section {
-    display: none;
-  }
-
-  .section.active {
-    display: block;
-  }
+@media (max-width: 768px) {
+  :root { --nav-w: 0px; }
+  .sidebar { display: none; }
+  .wb-stats { display: none; }
+  .page { padding: 16px; }
+  .course-grid { grid-template-columns: 1fr; padding: 16px; }
+}
 </style>
 {% endblock %}
-
 {% block content %}
-<div class="wb">
-  <div class="wb-orb" style="right:-30px;top:-70px;width:240px;height:240px;background:rgba(255,255,255,.05)"></div>
-  <div style="flex:1;z-index:1">
-    <h2>My Learning 📚</h2>
-    <p>Browse and enroll in courses assigned to your school.</p>
-  </div>
-  <div class="wb-stats">
-    <div class="bstat">
-      <div class="bstat-val">{{ enrolled_courses|length }}</div>
-      <div class="bstat-lbl">Enrolled</div>
+<div class="page">
+
+    <!-- Banner -->
+    <div class="wb">
+      <div class="wb-orb" style="right:-30px;top:-70px;width:240px;height:240px;background:rgba(255,255,255,.05)"></div>
+      <div class="wb-orb" style="right:120px;bottom:-90px;width:160px;height:160px;background:rgba(255,255,255,.04)"></div>
+      <div style="flex:1;z-index:1">
+        <h2>My Learning 📚</h2>
+        <p>Browse and enroll in courses assigned to your school.</p>
+      </div>
+      <div class="wb-stats">
+        <div class="bstat">
+          <div class="bstat-val">{{ enrolled_courses|length }}</div>
+          <div class="bstat-lbl">Enrolled</div>
+        </div>
+        <div class="bstat">
+          <div class="bstat-val">{{ unenrolled_courses|length }}</div>
+          <div class="bstat-lbl">Available</div>
+        </div>
+        <div class="bstat">
+          <div class="bstat-val" id="total-val">{{ enrolled_courses|length|add:unenrolled_courses|length }}</div>
+          <div class="bstat-lbl">Total</div>
+        </div>
+      </div>
     </div>
-    <div class="bstat">
-      <div class="bstat-val">{{ unenrolled_courses|length }}</div>
-      <div class="bstat-lbl">Available</div>
-    </div>
-  </div>
-</div>
 
 <div class="tab-row">
   <button class="tab-btn active" id="tab-enrolled" onclick="switchTab('enrolled', this)">

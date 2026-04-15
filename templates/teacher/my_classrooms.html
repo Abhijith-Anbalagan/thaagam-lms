@@ -5,95 +5,377 @@
 
 {% block extra_css %}
 <style>
-/* My Classrooms Specific Styles */
-:root {
-  --teacher:     #0f6e56;
-  --teacher-bg:  #e1f5ee;
-  --radius-xl:   20px;
-}
+  :root {
+    --teacher: #0f6e56;
+    --teacher-bg: #e1f5ee;
+    --radius-xl: 20px;
+  }
 
-.wb {
-  background: linear-gradient(135deg, #0c3326 0%, #0f6e56 55%, #186b49 100%);
-  border-radius: var(--radius-xl);
-  padding: 30px 36px;
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(15,110,86,.22);
-  margin-bottom: 24px;
-}
-.wb-orb { position: absolute; border-radius: 50%; pointer-events: none; }
-.wb h2 { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 5px; }
-.wb p { font-size: 13.5px; color: rgba(255,255,255,.62); }
+  .wb {
+    background: linear-gradient(135deg, #0c3326 0%, #0f6e56 55%, #186b49 100%);
+    border-radius: var(--radius-xl);
+    padding: 30px 36px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(15, 110, 86, .22);
+    margin-bottom: 24px;
+  }
 
-.card { background: var(--card-bg); border: 1.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
-.card-head { padding: 17px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-.card-title { font-size: 14px; font-weight: 700; color: var(--brand-dark); }
+  .wb-orb {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
 
-.cc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 18px; padding: 22px; }
-.class-card { border: 1.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: var(--card-bg); transition: box-shadow .2s, transform .15s; }
-.class-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
-.cc-head { padding: 18px 18px 14px; }
-.cc-blue  .cc-head { background: linear-gradient(135deg,#eef1fb,#dde3f8); }
-.cc-green .cc-head { background: linear-gradient(135deg,#e1f5ee,#c6edd9); }
-.cc-amber .cc-head { background: linear-gradient(135deg,#fdf0e0,#f9ddb5); }
-.cc-purple.cc-head { background: linear-gradient(135deg,#eeedfe,#dbd8fc); }
-.cc-name { font-size: 15px; font-weight: 700; color: var(--brand-dark); }
-.cc-body { padding: 14px 18px 16px; }
-.cc-badge { font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: var(--radius-sm); color: #fff; }
-.cc-blue  .cc-badge { background: var(--brand-blue); }
-.cc-green .cc-badge { background: var(--teacher); }
-.cc-amber .cc-badge { background: #9a5a00; }
-.cc-purple.cc-badge { background: #534ab7; }
+  .wb h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 5px;
+    letter-spacing: -.3px;
+  }
 
-.tc { font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 30px; border: 1.5px solid var(--border); background: var(--page-bg); color: var(--text-body); text-decoration: none; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 4px; }
-.tc:hover { border-color: var(--brand-blue); color: var(--brand-blue); background: var(--brand-blue-light); }
+  .wb p {
+    font-size: 13.5px;
+    color: rgba(255, 255, 255, .62);
+  }
 
-.code-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px); background: var(--brand-dark); color: #fff; padding: 10px 22px; border-radius: 30px; font-size: 13px; font-weight: 500; box-shadow: 0 4px 16px rgba(0,0,0,.18); opacity: 0; transition: all .25s; z-index: 9999; pointer-events: none; white-space: nowarp; }
-.code-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  /* Banner Stats Row */
+  .wb-stats {
+    display: flex;
+    gap: 0;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+
+  .bstat {
+    text-align: center;
+    padding: 0 26px;
+  }
+
+  .bstat+.bstat {
+    border-left: 1px solid rgba(255, 255, 255, .12);
+  }
+
+  .bstat-val {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+  }
+
+  .bstat-lbl {
+    font-size: 11px;
+    color: rgba(255, 255, 255, .45);
+    margin-top: 4px;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .card-head {
+    padding: 17px 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--brand-dark);
+  }
+
+  .cc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 18px;
+    padding: 22px;
+  }
+
+  .class-card {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--card-bg);
+    transition: box-shadow .2s, transform .15s;
+  }
+
+  .class-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
+  .cc-head {
+    padding: 18px 18px 14px;
+  }
+
+  .cc-blue .cc-head {
+    background: linear-gradient(135deg, #eef1fb, #dde3f8);
+  }
+
+  .cc-green .cc-head {
+    background: linear-gradient(135deg, #e1f5ee, #c6edd9);
+  }
+
+  .cc-amber .cc-head {
+    background: linear-gradient(135deg, #fdf0e0, #f9ddb5);
+  }
+
+  .cc-purple.cc-head {
+    background: linear-gradient(135deg, #eeedfe, #dbd8fc);
+  }
+
+  .cc-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--brand-dark);
+  }
+
+  .cc-body {
+    padding: 14px 18px 16px;
+  }
+
+  .cc-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    color: #fff;
+  }
+
+  .cc-blue .cc-badge {
+    background: var(--brand-blue);
+  }
+
+  .cc-green .cc-badge {
+    background: var(--teacher);
+  }
+
+  .cc-amber .cc-badge {
+    background: #9a5a00;
+  }
+
+  .cc-purple.cc-badge {
+    background: #534ab7;
+  }
+
+  .tc {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 30px;
+    border: 1.5px solid var(--border);
+    background: var(--page-bg);
+    color: var(--text-body);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 4px;
+  }
+
+  .tc:hover {
+    border-color: var(--brand-blue);
+    color: var(--brand-blue);
+    background: var(--brand-blue-light);
+  }
+
+  .code-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--brand-dark);
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .18);
+    opacity: 0;
+    transition: all .25s;
+    z-index: 9999;
+    pointer-events: none;
+    white-space: nowarp;
+  }
+
+  .code-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* EMPTY */
+  .empty-state {
+    padding: 56px 20px;
+    text-align: center;
+    color: var(--text-3);
+  }
+
+  .empty-state .es-icon {
+    font-size: 44px;
+    margin-bottom: 14px;
+  }
+
+  .empty-state h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-2);
+    margin-bottom: 6px;
+  }
+
+  .empty-state p {
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 768px) {
+    :root {
+      --nav-w: 0px;
+    }
+
+    .sidebar {
+      display: none;
+    }
+
+    .wb-stats {
+      display: none;
+    }
+
+    .cc-grid {
+      grid-template-columns: 1fr;
+      padding: 16px;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="wb">
-  <div class="wb-orb" style="right:-30px;top:-70px;width:240px;height:240px;background:rgba(255,255,255,.05)"></div>
-  <div style="flex:1;z-index:1">
-    <h2>My Classrooms 🏫</h2>
-    <p>Manage your active classrooms and share codes with students.</p>
-  </div>
-</div>
-
-<div class="card">
-  <div class="card-head">
-    <div class="card-title">All Classrooms</div>
-    <a href="{% url 'teacher_create_classroom' %}" class="btn btn-primary btn-sm">+ New Classroom</a>
-  </div>
-  <div class="cc-grid">
-    {% for classroom in classrooms %}
-    <div class="class-card {% cycle 'cc-blue' 'cc-green' 'cc-amber' 'cc-purple' %}">
-      <a href="{% url 'teacher_classroom_detail' classroom.id %}" style="text-decoration:none;">
-        <div class="cc-head">
-          <div class="mb-12"><span class="cc-badge">{{ classroom.code }}</span></div>
-          <div class="cc-name">{{ classroom.name }}</div>
-        </div>
-      </a>
-      <div class="cc-body">
-        <div class="flex gap-12 mb-12 caption">
-          <span>👥 {{ classroom.students.count }} student{{ classroom.students.count|pluralize }}</span>
-          <span>📝 {{ classroom.assignments.count }} task{{ classroom.assignments.count|pluralize }}</span>
-        </div>
-        <div class="cc-tabs">
-          <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=announce" class="tc">📢 Announce</a>
-          <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=classwork" class="tc">📝 Classwork</a>
-          <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=people" class="tc">👥 Students</a>
-        </div>
+<div class="page">
+  <!-- Banner -->
+  <div class="wb">
+    <div class="wb-orb" style="right:-30px;top:-70px;width:240px;height:240px;background:rgba(255,255,255,.05)"></div>
+    <div class="wb-orb" style="right:120px;bottom:-90px;width:160px;height:160px;background:rgba(255,255,255,.04)">
+    </div>
+    <div style="flex:1;z-index:1">
+      <h2>My Classrooms 🏫</h2>
+      <p>Share the class code with students so they can join. Use the copy or share buttons on each card.</p>
+    </div>
+    <div class="wb-stats">
+      <div class="bstat">
+        <div class="bstat-val">{{ classrooms|length }}</div>
+        <div class="bstat-lbl">Classrooms</div>
+      </div>
+      <div class="bstat">
+        <div class="bstat-val">{{ classrooms|length|add:"0" }}</div>
+        <div class="bstat-lbl">Total Students</div>
       </div>
     </div>
-    {% empty %}
-    <div class="empty-state">No classrooms found.</div>
-    {% endfor %}
   </div>
-</div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">All Classrooms</div>
+      <a href="{% url 'teacher_create_classroom' %}" class="btn btn-primary btn-sm">+ New Classroom</a>
+    </div>
+    <div class="cc-grid">
+      {% for classroom in classrooms %}
+      <div class="class-card {% cycle 'cc-blue' 'cc-green' 'cc-amber' 'cc-purple' %}">
+        <div class="cc-head">
+          <div class="flex items-center justify-between mb-8">
+            <span class="cc-badge">{{ classroom.code }}</span>
+            <div class="flex gap-4">
+              <button class="icon-btn" onclick="copyCode(event, '{{ classroom.code }}', this)"
+                title="Copy Code">📋</button>
+              <button class="icon-btn"
+                onclick="shareCode(event, '{{ classroom.code }}', '{{ classroom.name|escapejs }}')"
+                title="Share">🔗</button>
+            </div>
+          </div>
+          <a href="{% url 'teacher_classroom_detail' classroom.id %}" style="text-decoration:none;">
+            <div class="cc-name">{{ classroom.name }}</div>
+          </a>
+        </div>
+        <div class="cc-body">
+          <div class="flex gap-12 mb-12 caption">
+            <span>👥 {{ classroom.students.count }} students</span>
+            <span>📝 {{ classroom.assignments.count }} tasks</span>
+          </div>
+          <div class="flex flex-wrap gap-4">
+            <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=announce" class="tc">📢 Announce</a>
+            <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=classwork" class="tc">📝 Classwork</a>
+            <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=people" class="tc">👥 Students</a>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="empty-state">No classrooms found.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="code-toast" id="codeToast"></div>
+
+  <script>
+    // Profile dropdown
+    const profileBtn = document.getElementById('profileBtn');
+    const profileDropdown = document.getElementById('profileDropdown');
+    if (profileBtn) {
+      profileBtn.addEventListener('click', e => { e.stopPropagation(); profileDropdown.classList.toggle('open'); });
+    }
+    document.addEventListener('click', () => profileDropdown && profileDropdown.classList.remove('open'));
+
+    // ── Copy / Share ─────────────────────────────────────────────────────────────
+    function showCodeToast(msg) {
+      const t = document.getElementById('codeToast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2400);
+    }
+
+    const COPY_ICON = `<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" stroke-width="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"/></svg>`;
+    const CHECK_ICON = `<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+    function copyCode(e, code, btn) {
+      e.preventDefault(); e.stopPropagation();
+      const doIt = () => {
+        btn.classList.add('done');
+        btn.innerHTML = CHECK_ICON;
+        showCodeToast('✓ Code copied: ' + code);
+        setTimeout(() => { btn.classList.remove('done'); btn.innerHTML = COPY_ICON; }, 2000);
+      };
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(code).then(doIt).catch(doIt);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = code; ta.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+        document.body.removeChild(ta); doIt();
+      }
+    }
+
+    function shareCode(e, code, className) {
+      e.preventDefault(); e.stopPropagation();
+      const loginUrl = window.location.origin + '/login/';
+      const text = `Join my class "${className}" on EduPlatform!\nLogin here: ${loginUrl}\nClass code: ${code}`;
+      if (navigator.share) {
+        navigator.share({ title: 'Join ' + className, text }).catch(() => { });
+      } else {
+        navigator.clipboard.writeText(text)
+          .then(() => showCodeToast('📋 Share text copied!'))
+          .catch(() => showCodeToast('Code: ' + code));
+      }
+    }
+  </script>
 {% endblock %}

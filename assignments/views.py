@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from accounts.decorators import role_required
 from .models import Assignment, Submission
-from chat.realtime import notify_students
+from chat.realtime import notify_user
 
 
 @role_required('teacher')
@@ -24,8 +24,8 @@ def assignment_detail(request, assignment_id):
             sub.feedback = feedback
             sub.save()
             if was_ungraded and sub.score is not None:
-                notify_students(
-                    [sub.student_id],
+                notify_user(
+                    sub.student_id,
                     {
                         'type': 'grade',
                         'classroom_id': classroom.id,

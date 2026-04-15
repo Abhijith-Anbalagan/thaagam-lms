@@ -1,161 +1,399 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Announcements — {{ classroom.name }}</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+
+{% block title %}Announcements — {{ classroom.name }}{% endblock %}
+
+{% block extra_css %}
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--brand:#4c68d7;--brand-dark:#3a54c0;--brand-soft:#eef1fb;--dark:#1a1f36;--page-bg:#f4f5f9;--card-bg:#fff;--border:#e8e8ec;--text-1:#1a1f36;--text-2:#5a5f7a;--text-3:#9496a8;--teacher:#0f6e56;--teacher-bg:#e1f5ee;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-xl:20px;--shadow-sm:0 1px 4px rgba(26,31,54,.06);--shadow-md:0 4px 20px rgba(26,31,54,.10);--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;--nav-w:252px;--topbar-h:52px}
-html,body{height:100%}
-body{font-family:var(--font);background:var(--page-bg);color:var(--text-1);font-size:14px;line-height:1.6;display:flex}
-.sidebar{width:var(--nav-w);min-height:100vh;background:var(--dark);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:200;box-shadow:2px 0 16px rgba(0,0,0,.18)}
-.sidebar-logo{padding:22px 20px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.07);text-decoration:none}
-.logo-mark{width:36px;height:36px;background:linear-gradient(135deg,var(--brand),#7b93f0);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;flex-shrink:0}
-.logo-text{font-size:15px;font-weight:700;color:#fff}.logo-sub{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.7px;text-transform:uppercase;margin-top:1px}
-.nav-group{padding:10px 0 4px}.nav-label{font-size:10px;font-weight:600;letter-spacing:.9px;text-transform:uppercase;color:rgba(255,255,255,.22);padding:6px 20px 4px}
-.nav-item{display:flex;align-items:center;gap:11px;padding:10px 20px;color:rgba(255,255,255,.5);text-decoration:none;font-size:13.5px;font-weight:500;cursor:pointer;transition:all .15s;position:relative}
-.nav-item:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.05)}
-.nav-item.active{color:#fff;background:rgba(76,104,215,.18)}
-.nav-item.active::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;background:var(--brand);border-radius:0 3px 3px 0}
-.nav-icon{width:17px;height:17px;flex-shrink:0}
-.sidebar-spacer{flex:1}.sidebar-bottom{padding:14px 12px;border-top:1px solid rgba(255,255,255,.07)}
-.user-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-md);cursor:pointer;transition:background .15s}
-.user-card:hover{background:rgba(255,255,255,.07)}
-.av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teacher),#1a9e7a);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
-.user-name{font-size:13px;font-weight:600;color:#fff}.user-role{font-size:11px;color:rgba(255,255,255,.38);margin-top:1px}
-.main{margin-left:var(--nav-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
-.topbar{background:var(--card-bg);border-bottom:1px solid var(--border);padding:0 32px;height:var(--topbar-h);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-sm)}
-.search-wrap{position:relative;width:320px}
-.search-box{display:flex;align-items:center;gap:8px;background:var(--page-bg);border:1.5px solid var(--border);border-radius:40px;padding:7px 14px;transition:border-color .15s}
-.search-box:focus-within{border-color:var(--brand)}
-.search-box input{border:none;background:none;font-family:var(--font);font-size:13px;color:var(--text-1);outline:none;width:100%}
-.search-box input::placeholder{color:var(--text-3)}
-.topbar-profile{position:relative}
-.topbar-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--teacher),#1a9e7a);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;border:2px solid var(--teacher-bg);cursor:pointer;user-select:none}
-.profile-dropdown{display:none;position:absolute;right:0;top:calc(100% + 8px);background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-md);min-width:160px;overflow:hidden;z-index:300}
-.profile-dropdown.open{display:block}
-.pd-item{display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:13px;font-weight:500;color:var(--text-1);text-decoration:none;transition:background .12s}
-.pd-item:hover{background:var(--page-bg)}.pd-item svg{width:15px;height:15px;color:var(--text-3);flex-shrink:0}
-.pd-item.danger{color:#b03030}.pd-item.danger svg{color:#b03030}
-.pd-divider{height:1px;background:var(--border);margin:2px 0}
-.page{padding:28px 32px;display:flex;flex-direction:column;gap:20px}
-/* TABS */
-.tabs-row{display:flex;gap:6px;flex-wrap:wrap}
-.tab{font-size:13px;font-weight:500;padding:8px 16px;border-radius:30px;border:1.5px solid var(--border);background:var(--card-bg);color:var(--text-2);text-decoration:none;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
-.tab:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-soft)}
-.tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
-/* CONTENT */
-.two-col{display:grid;grid-template-columns:1fr 340px;gap:22px}
-.ann-card{background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;box-shadow:var(--shadow-sm);margin-bottom:14px}
-.ann-card.pinned{border-left:3px solid var(--brand)}
-.ann-card-title{font-size:15px;font-weight:700;margin-bottom:6px}
-.ann-card-body{font-size:13.5px;color:var(--text-2);line-height:1.6}
-.ann-card-meta{font-size:12px;color:var(--text-3);margin-top:10px}
-.meet-link{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:13px;font-weight:600;color:var(--brand);text-decoration:none}
-.meet-link:hover{text-decoration:underline}
-.form-card{background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow-sm);position:sticky;top:calc(var(--topbar-h) + 16px)}
-.form-card h3{font-size:14px;font-weight:700;margin-bottom:18px}
-.form-group{margin-bottom:16px}
-.form-label{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px}
-.form-card input[type=text],.form-card input[type=url],.form-card textarea{width:100%;padding:9px 12px;font-family:var(--font);font-size:13px;border:1.5px solid var(--border);border-radius:var(--radius-md);background:var(--page-bg);color:var(--text-1);outline:none;transition:border-color .15s;resize:vertical}
-.form-card input:focus,.form-card textarea:focus{border-color:var(--brand);background:#fff}
-.form-card input::placeholder,.form-card textarea::placeholder{color:var(--text-3)}
-.pin-row{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
-.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:40px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;text-decoration:none}
-.btn-primary{background:var(--brand);color:#fff;box-shadow:0 4px 12px rgba(76,104,215,.3)}
-.btn-primary:hover{background:var(--brand-dark)}
-.badge{font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:20px;display:inline-block}
-.badge-blue{background:var(--brand-soft);color:var(--brand)}
-.empty-state{text-align:center;padding:48px 20px;color:var(--text-3);font-size:13px}
-.empty-state .icon{font-size:40px;margin-bottom:12px}
-@media(max-width:1024px){.two-col{grid-template-columns:1fr}}
-@media(max-width:768px){:root{--nav-w:0px}.sidebar{display:none}.page{padding:16px}}
+  .wb {
+    background: #0f6e56;
+    border-radius: 24px;
+    padding: 40px;
+    min-height: 220px;
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+    margin-bottom: 28px;
+  }
+
+  .wb-content { flex: 1; z-index: 1; }
+  .wb h2 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+  .wb-info { font-size: 14px; opacity: 0.8; margin-bottom: 32px; font-family: var(--mono); }
+  .wb-tabs { display: flex; flex-wrap: wrap; gap: 10px; }
+
+  .wb-tab {
+    background: rgba(255, 255, 255, .12);
+    border: none; border-radius: 40px; padding: 8px 18px;
+    color: #fff; font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+    text-decoration: none; transition: all .2s;
+  }
+  .wb-tab:hover, .wb-tab.active {
+    background: rgba(255, 255, 255, .25); color: #fff;
+  }
+
+  .wb-stats-group { display: flex; gap: 40px; align-items: flex-start; z-index: 1; }
+  .w-stat { text-align: center; }
+  .w-stat-val { font-size: 36px; font-weight: 700; display: block; }
+  .w-stat-lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; opacity: 0.6; letter-spacing: 0.05em; margin-top: 4px; }
+
+  .bg-orb {
+    position: absolute; width: 300px; height: 300px;
+    background: rgba(255, 255, 255, .05); border-radius: 50%;
+  }
+
+  /* ── Landscape Post Form ── */
+  .post-form-card {
+    background: #fff;
+    border: 1.5px solid #e8f5f0;
+    border-radius: 20px;
+    padding: 24px 28px;
+    margin-bottom: 28px;
+    box-shadow: 0 2px 12px rgba(15, 110, 86, 0.06);
+  }
+
+  .post-form-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1.5px solid #f1f5f9;
+  }
+
+  .post-form-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+
+  .post-form-header h3 {
+    font-size: 16px; font-weight: 700; color: #1e293b; margin: 0;
+  }
+
+  .post-form-header p {
+    font-size: 12px; color: #94a3b8; margin: 2px 0 0;
+  }
+
+  /* Landscape grid: fields in a row */
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr 1fr 180px;
+    gap: 14px;
+    align-items: start;
+    margin-bottom: 14px;
+  }
+
+  .form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto auto;
+    gap: 14px;
+    align-items: start;
+  }
+
+  @media (max-width: 1024px) {
+    .form-row { grid-template-columns: 1fr 1fr; }
+    .form-row-2 { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .form-row, .form-row-2 { grid-template-columns: 1fr; }
+  }
+
+  .form-group { display: flex; flex-direction: column; }
+
+  .form-label {
+    font-size: 11.5px; font-weight: 700; color: #475569;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+
+  .form-control-inp {
+    padding: 10px 14px;
+    font-family: inherit; font-size: 13px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc; color: #1e293b;
+    outline: none; transition: border-color 0.15s, background 0.15s;
+    width: 100%; box-sizing: border-box;
+  }
+
+  .form-control-inp:focus {
+    border-color: #10b981; background: #fff;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  }
+
+  textarea.form-control-inp {
+    resize: none; min-height: 90px;
+  }
+
+  .form-control-select {
+    padding: 10px 14px;
+    font-family: inherit; font-size: 13px;
+    border: 1.5px solid #e2e8f0; border-radius: 10px;
+    background: #f8fafc; color: #1e293b;
+    outline: none; width: 100%; box-sizing: border-box;
+    cursor: pointer; transition: border-color 0.15s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+
+  .form-control-select:focus { border-color: #10b981; background-color: #fff; }
+
+  .pin-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    color: #475569; padding: 10px 0;
+    white-space: nowrap;
+  }
+
+  .pin-row input[type=checkbox] {
+    width: 16px; height: 16px; accent-color: #4f46e5; cursor: pointer;
+  }
+
+  .btn-post {
+    padding: 11px 28px;
+    border: none; border-radius: 12px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 8px;
+    white-space: nowrap; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+
+  .btn-post:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  }
+
+  /* ── Announcements List ── */
+  .ann-section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .ann-section-title {
+    font-size: 15px; font-weight: 700; color: #1e293b;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .ann-count-badge {
+    font-size: 11px; font-weight: 700; color: #10b981;
+    background: #ecfdf5; padding: 2px 9px; border-radius: 20px;
+  }
+
+  .ann-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+
+  .ann-card {
+    background: #fff;
+    border: 1.5px solid #f1f5f9;
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: box-shadow 0.2s, transform 0.15s;
+    position: relative;
+  }
+
+  .ann-card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
+    transform: translateY(-2px);
+  }
+
+  .ann-card.pinned {
+    border-left: 4px solid #4f46e5;
+    background: linear-gradient(135deg, #fefefe, #f8f7ff);
+  }
+
+  .ann-pin-badge {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+    background: #eef2ff; color: #4f46e5;
+    padding: 2px 9px; border-radius: 20px;
+    display: inline-flex; align-items: center; gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .ann-card-title {
+    font-size: 14.5px; font-weight: 700; color: #1e293b; margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .ann-card-body {
+    font-size: 13.5px; color: #64748b; line-height: 1.65;
+    white-space: pre-wrap;
+  }
+
+  .ann-card-meta {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11.5px; color: #94a3b8; margin-top: 12px;
+    padding-top: 12px; border-top: 1px solid #f1f5f9;
+    flex-wrap: wrap;
+  }
+
+  .meet-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 10px; font-size: 13px; font-weight: 600;
+    color: #4f46e5; text-decoration: none;
+    background: #eef2ff; padding: 5px 12px; border-radius: 20px;
+    transition: background 0.15s;
+  }
+
+  .meet-link:hover { background: #e0e7ff; }
+
+  .expiry-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 600;
+    color: #e11d48; background: #fff1f2; padding: 2px 8px; border-radius: 20px;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: #94a3b8;
+    background: #fff; border: 1.5px dashed #e2e8f0; border-radius: 16px;
+  }
+
+  .empty-state .icon { font-size: 44px; margin-bottom: 14px; }
+  .empty-state p { font-size: 14px; color: #64748b; margin: 4px 0; }
+  .empty-state small { font-size: 12px; color: #94a3b8; }
 </style>
-</head>
-<body>
-<aside class="sidebar">
-  <a class="sidebar-logo" href="{% url 'teacher_dashboard' %}">
-    <div class="logo-mark">EP</div>
-    <div><div class="logo-text">EduPlatform</div><div class="logo-sub">Teacher Portal</div></div>
-  </a>
-  <nav class="nav-group">
-    <div class="nav-label">Main</div>
-    <a class="nav-item" href="{% url 'teacher_dashboard' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke-width="2"/></svg>Dashboard</a>
-    <a class="nav-item active" href="{% url 'teacher_my_classrooms' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>My Classrooms</a>
-    <a class="nav-item" href="{% url 'teacher_my_learning' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>My Learning</a>
-    <a class="nav-item" href="{% url 'teacher_messages' %}"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Announcements</a>
-  </nav>
- <!-- <div class="sidebar-spacer"></div>
-  <div class="sidebar-bottom">
-    <div class="user-card">
-      <div class="av">{{ request.user.get_full_name|slice:":2"|upper }}</div>
-      <div><div class="user-name">{{ request.user.get_full_name }}</div><div class="user-role">Teacher</div></div>
-    </div>
-  </div>-->
-</aside>
-<div class="main">
-  <header class="topbar">
-    <div class="breadcrumb" style="flex:1;display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text-3)">
-      <a href="{% url 'teacher_dashboard' %}" style="color:var(--text-3);text-decoration:none">Dashboard</a><span>›</span>
-      <a href="{% url 'teacher_my_classrooms' %}" style="color:var(--text-3);text-decoration:none">My Classrooms</a><span>›</span>
-      <a href="{% url 'teacher_classroom_detail' classroom.id %}" style="color:var(--text-3);text-decoration:none">{{ classroom.name }}</a><span>›</span>
-      <span style="color:var(--text-1);font-weight:600">Announce</span>
-    </div>
-   <!-- <div class="topbar-profile">
-      <div class="topbar-av" id="profileBtn" style="{% if request.user.avatar %}padding:0;overflow:hidden;{% endif %}">{% if request.user.avatar %}<img src="{{ request.user.avatar.url }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">{% else %}{{ request.user.get_full_name|slice:":2"|upper }}{% endif %}</div>
-      <div class="profile-dropdown" id="profileDropdown">
-        <a href="{% url 'profile' %}" class="pd-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>View Profile</a>
-        <div class="pd-divider"></div>
-        <a href="{% url 'logout' %}" class="pd-item danger"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Log Out</a>
+{% endblock %}
+
+
+{% block content %}
+<div class="page">
+  <!-- Banner -->
+  <div class="wb">
+    <div class="bg-orb" style="bottom: -150px; left: -100px;"></div>
+    <div class="bg-orb" style="top: -100px; right: -50px; width: 400px; height: 400px;"></div>
+
+    <div class="wb-content">
+      <h2>{{ classroom.name }}</h2>
+      <div class="wb-info">{{ classroom.code }} · {{ classroom.students.count }} student{{ classroom.students.count|pluralize }} · Announcements</div>
+      <div class="wb-tabs">
+        <a class="wb-tab" href="{% url 'teacher_classroom_detail' classroom.id %}">🏠 Home</a>
+        <a class="wb-tab active" href="{% url 'teacher_classroom_announce' classroom.id %}">📢 Announce</a>
+        <a class="wb-tab" href="{% url 'teacher_classroom_courses' classroom.id %}">📘 Courses</a>
+        <a class="wb-tab" href="{% url 'teacher_classroom_classwork' classroom.id %}">📝 Classwork</a>
+        <a class="wb-tab" href="{% url 'teacher_classroom_peoples' classroom.id %}">👥 Students</a>
+        <a class="wb-tab" href="{% url 'teacher_classroom_grade' classroom.id %}">📊 Progress</a>
+        <a class="wb-tab" href="{% url 'teacher_classroom_analytics' classroom.id %}">📈 Analytics</a>
+        <a class="wb-tab" href="{% url 'teacher_classroom_chat' classroom.id %}">💬 Chat</a>
       </div>
-    </div> -->
-  </header>
-  <div class="page">
-    <div class="tabs-row">
-      <a class="tab active" href="{% url 'teacher_classroom_announce' classroom.id %}">📢 Announce</a>
-      <a class="tab" href="{% url 'teacher_classroom_courses' classroom.id %}">📚 Courses</a>
-      <a class="tab" href="{% url 'teacher_classroom_classwork' classroom.id %}">📝 Classwork</a>
-      <a class="tab" href="{% url 'teacher_classroom_peoples' classroom.id %}">👥 People</a>
-      <a class="tab" href="{% url 'teacher_classroom_grade' classroom.id %}">📊 Progress</a>
-      <a class="tab" href="{% url 'teacher_classroom_chat' classroom.id %}">💬 Chat</a>
     </div>
-    <div class="two-col">
-      <div>
-        {% for a in announcements %}
-        <div class="ann-card {% if a.is_pinned %}pinned{% endif %}">
-          {% if a.is_pinned %}<span class="badge badge-blue" style="margin-bottom:8px;display:inline-block;">📌 Pinned</span>{% endif %}
-          <div class="ann-card-title">{{ a.title }}</div>
-          <div class="ann-card-body">{{ a.body }}</div>
-          {% if a.meet_link %}<a href="{{ a.meet_link }}" target="_blank" class="meet-link">🎥 Join Live Class</a>{% endif %}
-          <div class="ann-card-meta">{{ a.created_at|date:"M d, Y · H:i" }}</div>
-        </div>
-        {% empty %}
-        <div class="empty-state"><div class="icon">📢</div><p>No announcements yet. Post one using the form.</p></div>
-        {% endfor %}
-      </div>
-      <div>
-        <div class="form-card">
-          <h3>Post Announcement</h3>
-          <form method="post">
-            {% csrf_token %}
-            <div class="form-group"><label class="form-label">Title</label><input type="text" name="title" required placeholder="e.g. Week 3 Quiz reminder"></div>
-            <div class="form-group"><label class="form-label">Message</label><textarea name="body" rows="4" required placeholder="Details…"></textarea></div>
-            <div class="form-group"><label class="form-label">Google Meet Link <span style="color:var(--text-3);font-weight:400">(optional)</span></label><input type="url" name="meet_link" placeholder="https://meet.google.com/…"></div>
-            <div class="form-group"><label class="pin-row"><input type="checkbox" name="is_pinned" style="margin-right:4px"> Pin this announcement</label></div>
-            <button type="submit" class="btn btn-primary" style="width:100%">Post Announcement</button>
-          </form>
-        </div>
+
+    <div class="wb-stats-group">
+      <div class="w-stat">
+        <span class="w-stat-val">{{ announcements|length }}</span>
+        <span class="w-stat-lbl">Posts</span>
       </div>
     </div>
   </div>
+
+  <!-- ── LANDSCAPE POST FORM ── -->
+  <div class="post-form-card">
+    <div class="post-form-header">
+      <div class="post-form-icon">📢</div>
+      <div>
+        <h3>Post Announcement</h3>
+        <p>Broadcast to all {{ classroom.students.count }} student{{ classroom.students.count|pluralize }} in this classroom</p>
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <!-- Row 1: Title + Message + Meet Link + Autodelete -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Title <span style="color:#e11d48;">*</span></label>
+          <input type="text" name="title" required class="form-control-inp"
+            placeholder="e.g. Week 3 Quiz Reminder">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Message <span style="color:#e11d48;">*</span></label>
+          <textarea name="body" rows="3" required class="form-control-inp"
+            placeholder="Write your announcement here…"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Google Meet Link <span style="color:#94a3b8;font-weight:400;">(optional)</span></label>
+          <input type="url" name="meet_link" class="form-control-inp"
+            placeholder="https://meet.google.com/…">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Auto-delete after</label>
+          <select name="expiry_days" class="form-control-select">
+            <option value="">Never</option>
+            <option value="1">1 Day</option>
+            <option value="3">3 Days</option>
+            <option value="7">1 Week</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Row 2: Pin + Submit -->
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+        <label class="pin-row">
+          <input type="checkbox" name="is_pinned">
+          📌 Pin this announcement to the top
+        </label>
+        <button type="submit" class="btn-post">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M22 2L11 13" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M22 2L15 22 11 13 2 9l20-7z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Post Announcement
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── ANNOUNCEMENTS LIST ── -->
+  <div class="ann-section-header">
+    <div class="ann-section-title">
+      Recent Announcements
+      <span class="ann-count-badge">{{ announcements|length }}</span>
+    </div>
+  </div>
+
+  {% if announcements %}
+  <div class="ann-grid">
+    {% for a in announcements %}
+    <div class="ann-card {% if a.is_pinned %}pinned{% endif %}">
+      {% if a.is_pinned %}
+      <div class="ann-pin-badge">📌 Pinned</div>
+      {% endif %}
+      <div class="ann-card-title">{{ a.title }}</div>
+      <div class="ann-card-body">{{ a.body }}</div>
+      {% if a.meet_link %}
+      <a href="{{ a.meet_link }}" target="_blank" class="meet-link">🎥 Join Live Class</a>
+      {% endif %}
+      <div class="ann-card-meta">
+        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="flex-shrink:0;">
+          <circle cx="12" cy="12" r="10" stroke-width="2"/>
+          <path d="M12 6v6l4 2" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        {{ a.created_at|date:"M d, Y · H:i" }}
+        {% if a.expires_at %}
+        <span class="expiry-tag">🗑️ Deletes {{ a.expires_at|date:"M d" }}</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">📢</div>
+    <p><strong>Nothing posted yet</strong></p>
+    <small>Use the form above to post your first announcement to this classroom.</small>
+  </div>
+  {% endif %}
+
 </div>
-<script>
-  const btn=document.getElementById('profileBtn'),dropdown=document.getElementById('profileDropdown');
-  btn.addEventListener('click',e=>{e.stopPropagation();dropdown.classList.toggle('open')});
-  document.addEventListener('click',()=>dropdown.classList.remove('open'));
-</script>
-</body>
-</html>
+{% endblock %}

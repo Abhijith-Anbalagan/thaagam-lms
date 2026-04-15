@@ -1,296 +1,666 @@
+{% extends 'base.html' %}
 {% load static %}
 {% load tz %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Chat — {{ classroom.name }}</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-<style>
-body{background:radial-gradient(circle at top right,rgba(59,130,246,.10),transparent 24%),radial-gradient(circle at bottom left,rgba(147,51,234,.08),transparent 20%),#f8fafc;}
-.chat-window{height:420px;overflow-y:auto;scroll-behavior:smooth;}
-.student-item{transition:background .12s;}
-.student-item.active{background:linear-gradient(135deg,#dbeafe,#eef2ff);}
-.bubble-time{font-size:10px;opacity:.6;text-align:right;}
-</style>
-</head>
-<body class="min-h-screen text-slate-900">
 
-<!-- Sidebar -->
-<aside class="fixed left-0 top-0 z-50 h-full w-64 border-r border-slate-200 bg-slate-900 flex flex-col">
-  <a href="{% url 'teacher_dashboard' %}" class="flex items-center gap-3 border-b border-white/10 px-5 py-5 no-underline">
-    <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-violet-500 text-sm font-bold text-white">EP</div>
-    <div><p class="text-sm font-bold text-white">EduPlatform</p><p class="text-xs text-white/30 uppercase tracking-wider">Teacher</p></div>
-  </a>
-  <nav class="flex-1 space-y-1 px-3 py-4">
-    <a href="{% url 'teacher_dashboard' %}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/50 hover:bg-white/5 hover:text-white transition no-underline">
-      <i data-lucide="layout-dashboard" class="h-4 w-4"></i> Dashboard
-    </a>
-    <a href="{% url 'teacher_my_classrooms' %}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/50 hover:bg-white/5 hover:text-white transition no-underline">
-      <i data-lucide="layers" class="h-4 w-4"></i> My Classrooms
-    </a>
-    <a href="{% url 'teacher_messages' %}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/50 hover:bg-white/5 hover:text-white transition no-underline">
-      <i data-lucide="megaphone" class="h-4 w-4"></i> Announcements
-    </a>
-  </nav>
-  <div class="border-t border-white/10 px-4 py-4">
-    <div class="flex items-center gap-3">
-      <div class="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 text-xs font-bold text-white">{{ request.user.get_full_name|slice:":2"|upper }}</div>
-      <div><p class="text-sm font-semibold text-white">{{ request.user.get_full_name }}</p><p class="text-xs text-white/40">Teacher</p></div>
+{% block title %}Chat — {{ classroom.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .wb {
+    background: #0f6e56;
+    border-radius: 24px;
+    padding: 40px;
+    min-height: 220px;
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+    margin-bottom: 28px;
+  }
+
+  .wb-content {
+    flex: 1;
+    z-index: 1;
+  }
+
+  .wb h2 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .wb-info {
+    font-size: 14px;
+    opacity: 0.8;
+    margin-bottom: 32px;
+    font-family: var(--mono);
+  }
+
+  .wb-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .wb-tab {
+    background: rgba(255, 255, 255, .12);
+    border: none;
+    border-radius: 40px;
+    padding: 8px 18px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: all .2s;
+  }
+
+  .wb-tab:hover,
+  .wb-tab.active {
+    background: rgba(255, 255, 255, .25);
+    color: #fff;
+  }
+
+  .wb-stats-group {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+    z-index: 1;
+  }
+
+  .w-stat {
+    text-align: center;
+  }
+
+  .w-stat-val {
+    font-size: 36px;
+    font-weight: 700;
+    display: block;
+  }
+
+  .w-stat-lbl {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    opacity: 0.6;
+    letter-spacing: 0.05em;
+    margin-top: 4px;
+  }
+
+  .bg-orb {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    background: rgba(255, 255, 255, .05);
+    border-radius: 50%;
+  }
+
+  /* Chat Layout */
+  .chat-container {
+    display: flex;
+    border: 1.5px solid #f1f5f9;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #fff;
+    height: calc(100vh - 380px);
+    min-height: 400px;
+  }
+
+  /* Student Sidebar */
+  .chat-sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    border-right: 1.5px solid #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    background: #fafbfc;
+  }
+
+  .chat-sidebar-head {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #94a3b8;
+  }
+
+  .chat-sidebar-list {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .chat-student-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.15s;
+  }
+
+  .chat-student-item:hover {
+    background: #f1f5f9;
+  }
+
+  .chat-student-item.active {
+    background: #ecfdf5;
+    border-left: 3px solid #10b981;
+  }
+
+  .chat-student-av {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .online-dot {
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid #fafbfc;
+  }
+
+  .online-dot.on {
+    background: #22c55e;
+  }
+
+  .online-dot.off {
+    background: #94a3b8;
+  }
+
+  .chat-student-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .chat-student-role {
+    font-size: 11px;
+    color: #94a3b8;
+  }
+
+  /* Chat Main Panel */
+  .chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .chat-header {
+    padding: 16px 24px;
+    border-bottom: 1.5px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fafbfc;
+  }
+
+  .chat-header-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .chat-header-av {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .chat-header-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .chat-header-status {
+    font-size: 12px;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .status-dot.online {
+    background: #22c55e;
+  }
+
+  .status-dot.offline {
+    background: #ef4444;
+  }
+
+  .connection-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: #10b981;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .connection-badge .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+  }
+
+  /* Messages */
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #f8fafc;
+    scroll-behavior: smooth;
+  }
+
+  .msg-row {
+    display: flex;
+  }
+
+  .msg-row.sent {
+    justify-content: flex-end;
+  }
+
+  .msg-row.recv {
+    justify-content: flex-start;
+  }
+
+  .bubble {
+    max-width: 70%;
+    border-radius: 18px;
+    padding: 12px 18px;
+    font-size: 14px;
+    line-height: 1.5;
+    position: relative;
+  }
+
+  .bubble.sent {
+    background: #10b981;
+    color: #fff;
+    border-bottom-right-radius: 6px;
+  }
+
+  .bubble.recv {
+    background: #fff;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+    border-bottom-left-radius: 6px;
+  }
+
+  .bubble-time {
+    font-size: 10px;
+    opacity: 0.6;
+    margin-top: 4px;
+    text-align: right;
+  }
+
+  .bubble-file {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: opacity 0.15s;
+    margin-bottom: 4px;
+  }
+
+  .bubble-file:hover {
+    opacity: 0.85;
+  }
+
+  .bubble.sent .bubble-file {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+  }
+
+  .bubble.recv .bubble-file {
+    background: #f1f5f9;
+    color: #334155;
+  }
+
+  /* Input */
+  .chat-input-area {
+    padding: 16px 24px;
+    border-top: 1.5px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #fff;
+  }
+
+  .chat-input {
+    flex: 1;
+    padding: 12px 18px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 14px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .chat-input:focus {
+    border-color: #10b981;
+  }
+
+  .btn-attach {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #94a3b8;
+    transition: all 0.15s;
+  }
+
+  .btn-attach:hover {
+    border-color: #10b981;
+    color: #10b981;
+  }
+
+  .btn-send {
+    padding: 12px 24px;
+    border-radius: 14px;
+    border: none;
+    background: #10b981;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn-send:hover {
+    background: #059669;
+  }
+
+  /* Empty state */
+  .chat-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    padding: 60px;
+    text-align: center;
+  }
+
+  .chat-empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+
+  .chat-empty h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 8px;
+  }
+
+  .chat-empty p {
+    font-size: 13px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="wb">
+    <div class="bg-orb" style="bottom: -150px; left: -100px;"></div>
+    <div class="bg-orb" style="top: -100px; right: -50px; width: 400px; height: 400px;"></div>
+
+    <div class="wb-content">
+      <h2>{{ classroom.name }}</h2>
+      <div class="wb-info">{{ classroom.code }} · {{ classroom.students.count }} student{{ classroom.students.count|pluralize }} · Chat</div>
+      <div class="wb-tabs">
+        <a class="wb-tab" href="{% url 'teacher_classroom_detail' classroom.id %}">🏠 Home</a>
+        <a class="wb-tab" href="{% url 'teacher_classroom_announce' classroom.id %}">📢 Announce</a>
+        <a class="wb-tab" href="{% url 'teacher_classroom_courses' classroom.id %}">📘 Courses</a>
+        <a class="wb-tab" href="{% url 'teacher_classroom_classwork' classroom.id %}">📝 Classwork</a>
+        <a class="wb-tab" href="{% url 'teacher_classroom_peoples' classroom.id %}">👥 Students</a>
+        <a class="wb-tab" href="{% url 'teacher_classroom_grade' classroom.id %}">📊 Progress</a>
+        <a class="wb-tab" href="{% url 'teacher_classroom_analytics' classroom.id %}">📈 Analytics</a>
+        <a class="wb-tab active" href="{% url 'teacher_classroom_chat' classroom.id %}">💬 Chat</a>
+      </div>
     </div>
-    <div class="mt-3 flex gap-2">
-      <a href="{% url 'profile' %}" class="flex-1 rounded-xl border border-white/10 py-1.5 text-center text-xs text-white/50 hover:bg-white/5 transition no-underline">Settings</a>
-      <a href="{% url 'logout' %}" class="flex-1 rounded-xl border border-rose-500/30 py-1.5 text-center text-xs text-rose-400 hover:bg-rose-500/10 transition no-underline">Sign out</a>
+
+    <div class="wb-stats-group">
+      <div class="w-stat">
+        <span class="w-stat-val">{{ students.count }}</span>
+        <span class="w-stat-lbl">Students</span>
+      </div>
     </div>
   </div>
-</aside>
 
-<!-- Main -->
-<div class="ml-64 flex flex-col min-h-screen">
-
-  <!-- Topbar -->
-  <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/85 backdrop-blur-xl px-8 py-3 flex items-center gap-3">
-    <div class="flex items-center gap-2 text-xs text-slate-400">
-      <a href="{% url 'teacher_dashboard' %}" class="hover:text-blue-600 transition">Dashboard</a>
-      <i data-lucide="chevron-right" class="h-3 w-3"></i>
-      <a href="{% url 'teacher_my_classrooms' %}" class="hover:text-blue-600 transition">Classrooms</a>
-      <i data-lucide="chevron-right" class="h-3 w-3"></i>
-      <a href="{% url 'teacher_classroom_detail' classroom.id %}" class="hover:text-blue-600 transition">{{ classroom.name }}</a>
-      <i data-lucide="chevron-right" class="h-3 w-3"></i>
-      <span class="font-semibold text-slate-700">Chat</span>
-    </div>
-    <div class="ml-auto relative">
-      <div id="profileBtn" class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 text-xs font-bold text-white">{{ request.user.get_full_name|slice:":2"|upper }}</div>
-      <div id="profileDropdown" class="hidden absolute right-0 top-full mt-2 w-44 rounded-2xl border border-slate-200 bg-white shadow-xl z-50 overflow-hidden">
-        <a href="{% url 'profile' %}" class="flex items-center gap-2 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition"><i data-lucide="settings" class="h-4 w-4 text-slate-400"></i> Profile</a>
-        <div class="border-t border-slate-100"></div>
-        <a href="{% url 'logout' %}" class="flex items-center gap-2 px-4 py-3 text-sm text-rose-600 hover:bg-rose-50 transition"><i data-lucide="log-out" class="h-4 w-4"></i> Sign out</a>
+  <!-- Chat Interface -->
+  <div class="chat-container">
+    <!-- Student List Sidebar -->
+    <aside class="chat-sidebar">
+      <div class="chat-sidebar-head">Students</div>
+      <div class="chat-sidebar-list">
+        {% for student in students %}
+        <a href="?student={{ student.pk }}"
+          class="chat-student-item {% if selected_student and selected_student.pk == student.pk %}active{% endif %}">
+          <div class="chat-student-av">
+            {{ student.first_name|first|default:student.username|first|upper }}
+            <span class="online-dot student-dot-{{ student.pk }} off"></span>
+          </div>
+          <div>
+            <div class="chat-student-name">{{ student.get_full_name|default:student.username }}</div>
+            <div class="chat-student-role">Student</div>
+          </div>
+          {% if student.unread_count > 0 %}
+          <div class="unread-badge"
+            style="margin-left: auto; background: #10b981; min-width: 18px; height: 18px; padding: 0 5px; font-size: 10px; border-radius: 9px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700;">
+            {{ student.unread_count }}
+          </div>
+          {% endif %}
+        </a>
+        {% empty %}
+        <div style="padding: 24px; text-align: center; color: #94a3b8; font-size: 13px;">No students enrolled yet.</div>
+        {% endfor %}
       </div>
-    </div>
-  </header>
+    </aside>
 
-  <div class="flex-1 px-8 py-6 flex flex-col gap-5">
-
-    <!-- Hero -->
-    <section class="rounded-[2rem] bg-gradient-to-r from-blue-600 via-blue-500 to-violet-500 p-7 text-white shadow-2xl shadow-blue-500/20">
-      <p class="text-xs font-bold uppercase tracking-widest text-blue-200">{{ classroom.name }}</p>
-      <h1 class="mt-1 text-2xl font-bold">Student Messages</h1>
-      <p class="mt-1 text-sm text-blue-100">Reply to your students directly.</p>
-    </section>
-
-    <!-- Classroom tabs -->
-    <nav class="flex flex-wrap gap-3">
-      <a href="{% url 'teacher_classroom_announce' classroom.id %}" class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-200 no-underline">📢 Announce</a>
-      <a href="{% url 'teacher_classroom_courses' classroom.id %}" class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-200 no-underline">📚 Courses</a>
-      <a href="{% url 'teacher_classroom_classwork' classroom.id %}" class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-200 no-underline">📝 Classwork</a>
-      <a href="{% url 'teacher_classroom_peoples' classroom.id %}" class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-200 no-underline">👥 People</a>
-      <a href="{% url 'teacher_classroom_grade' classroom.id %}" class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-200 no-underline">📊 Progress</a>
-      <a href="{% url 'teacher_classroom_chat' classroom.id %}" class="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow no-underline">💬 Chat</a>
-    </nav>
-
-    <!-- Chat layout -->
-    <div class="flex overflow-hidden rounded-[1.75rem] border border-white/70 bg-white shadow-lg" style="min-height:560px;">
-
-      <!-- Student sidebar -->
-      <aside class="w-64 flex-shrink-0 flex flex-col border-r border-slate-200">
-        <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
-          <p class="text-xs font-bold uppercase tracking-widest text-slate-400">Students</p>
-        </div>
-        <div class="flex-1 overflow-y-auto">
-          {% for student in students %}
-          <a href="?student={{ student.pk }}"
-             class="student-item flex items-center gap-3 border-b border-slate-100 px-4 py-3 hover:bg-blue-50 no-underline {% if selected_student and selected_student.pk == student.pk %}active{% endif %}">
-            <div class="relative flex-shrink-0">
-              <div class="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-violet-500 text-xs font-bold text-white">
-                {{ student.first_name|first|default:student.username|first|upper }}
-              </div>
-              <span class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white student-dot-{{ student.pk }} bg-slate-300"></span>
-            </div>
-            <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-semibold text-slate-900">{{ student.get_full_name|default:student.username }}</p>
-              <p class="text-xs text-slate-400">Student</p>
-            </div>
-          </a>
-          {% empty %}
-          <p class="px-4 py-6 text-sm text-slate-400">No students yet.</p>
-          {% endfor %}
-        </div>
-      </aside>
-
-      <!-- Chat panel -->
-      <div class="flex flex-1 flex-col min-w-0">
-        {% if selected_student %}
-
-        <!-- Header with student status -->
-        <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
-          <div class="flex items-center gap-3">
-            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-violet-500 text-sm font-bold text-white">
-              {{ selected_student.first_name|first|default:selected_student.username|first|upper }}
-            </div>
-            <div>
-              <p class="font-semibold text-slate-900">{{ selected_student.get_full_name|default:selected_student.username }}</p>
-              <div class="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
-                <span id="peer-status-dot" class="inline-block h-2 w-2 rounded-full bg-red-400"></span>
-                <span id="peer-status-text">{% if selected_student.last_seen %}Last seen {{ selected_student.last_seen|timesince }} ago{% else %}Offline{% endif %}</span>
-              </div>
+    <!-- Chat Panel -->
+    <div class="chat-main">
+      {% if selected_student %}
+      <!-- Chat Header -->
+      <div class="chat-header">
+        <div class="chat-header-info">
+          <div class="chat-header-av">{{ selected_student.first_name|first|default:selected_student.username|first|upper
+            }}</div>
+          <div>
+            <div class="chat-header-name">{{ selected_student.get_full_name|default:selected_student.username }}</div>
+            <div class="chat-header-status">
+              <span id="peer-status-dot" class="status-dot offline"></span>
+              <span id="peer-status-text">{% if selected_student_online %}Online{% else %}Offline{% endif %}</span>
             </div>
           </div>
-          <div class="flex items-center gap-2 text-xs text-slate-500">
-            <span id="chat-status-dot" class="inline-block h-2 w-2 rounded-full bg-amber-400"></span>
-            <span id="chat-status-text">Connecting…</span>
-          </div>
         </div>
+        <div class="connection-badge">
+          <span id="chat-status-dot" class="dot" style="background: #f59e0b;"></span>
+          <span id="chat-status-text">Connecting…</span>
+        </div>
+      </div>
 
-        <!-- Messages -->
-        <div id="chat-messages" class="chat-window bg-slate-50 p-5">
-          {% for msg in chat_messages %}
-          <div class="mb-3 flex {% if msg.sender == request.user %}justify-end{% else %}justify-start{% endif %}">
-            {% if msg.sender == request.user %}
-            <div class="bubble bg-blue-600 text-white max-w-[72%] rounded-2xl shadow-sm text-sm leading-relaxed">
+      <!-- Messages -->
+      <div id="chat-messages" class="chat-messages">
+        {% for msg in chat_messages %}
+        <div class="msg-row {% if msg.sender == request.user %}sent{% else %}recv{% endif %}">
+          <div class="bubble {% if msg.sender == request.user %}sent{% else %}recv{% endif %}">
+            {% if msg.attachment %}
+            {% if msg.attachment.name|lower|slice:"-4:" == ".jpg" or msg.attachment.name|lower|slice:"-5:" == ".jpeg" or msg.attachment.name|lower|slice:"-4:" == ".png" or msg.attachment.name|lower|slice:"-4:" == ".gif" or msg.attachment.name|lower|slice:"-5:" == ".webp" %}
+            <a href="{{ msg.attachment.url }}" target="_blank" style="display:block;">
+              <img src="{{ msg.attachment.url }}"
+                style="width:100%; max-height:240px; min-width:160px; border-radius:12px; object-fit:cover;"
+                alt="image">
+            </a>
+            {% if msg.body %}<p style="margin-top:8px;">{{ msg.body }}</p>{% endif %}
             {% else %}
-            <div class="bubble bg-white text-slate-900 border border-slate-200 max-w-[72%] rounded-2xl shadow-sm text-sm leading-relaxed">
+            <a href="{{ msg.attachment.url }}" target="_blank" class="bubble-file">
+              <span style="font-size:20px;">📎</span>
+              <div style="flex:1; min-width:0;">
+                <div
+                  style="font-weight:600; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                  {{ msg.attachment.name|slice:"17:" }}</div>
+                <div style="font-size:11px; opacity:0.7; margin-top:2px;">Tap to download</div>
+              </div>
+            </a>
+            {% if msg.body %}<p>{{ msg.body }}</p>{% endif %}
             {% endif %}
-              {% if msg.attachment %}
-                {% if msg.attachment.name|lower|slice:"-4:" == ".jpg" or msg.attachment.name|lower|slice:"-5:" == ".jpeg" or msg.attachment.name|lower|slice:"-4:" == ".png" or msg.attachment.name|lower|slice:"-4:" == ".gif" or msg.attachment.name|lower|slice:"-5:" == ".webp" %}
-                  <a href="{{ msg.attachment.url }}" target="_blank" class="block">
-                    <img src="{{ msg.attachment.url }}" class="w-full rounded-xl object-cover" style="max-height:240px;min-width:160px;" alt="image"/>
-                  </a>
-                  {% if msg.body %}<p class="px-3 pt-2 pb-1">{{ msg.body }}</p>{% endif %}
-                  <div class="bubble-time px-3 pb-2">{{ msg.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
-                {% else %}
-                  <a href="{{ msg.attachment.url }}" target="_blank"
-                     class="flex items-center gap-3 rounded-xl border {% if msg.sender == request.user %}bg-blue-500 border-blue-400{% else %}bg-slate-50 border-slate-200{% endif %} px-4 py-3 no-underline hover:opacity-80 transition">
-                    <span class="text-2xl flex-shrink-0">📎</span>
-                    <div class="min-w-0 flex-1">
-                      <p class="truncate font-medium text-sm {% if msg.sender == request.user %}text-white{% else %}text-slate-800{% endif %}">{{ msg.attachment.name|slice:"17:" }}</p>
-                      <p class="text-xs mt-0.5 {% if msg.sender == request.user %}text-blue-200{% else %}text-slate-400{% endif %}">Tap to download</p>
-                    </div>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0 {% if msg.sender == request.user %}text-blue-200{% else %}text-slate-400{% endif %}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                  </a>
-                  {% if msg.body %}<p class="px-1 pt-2 pb-1">{{ msg.body }}</p>{% endif %}
-                  <div class="bubble-time pt-1 pb-1 px-1">{{ msg.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
-                {% endif %}
-              {% else %}
-                <p class="px-4 py-3">{{ msg.body }}</p>
-                <div class="bubble-time px-4 pb-2">{{ msg.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
-              {% endif %}
-            </div>
+            {% else %}
+            <p>{{ msg.body }}</p>
+            {% endif %}
+            <div class="bubble-time">{{ msg.created_at|timezone:"Asia/Kolkata"|date:"h:i A" }}</div>
           </div>
-          {% empty %}
-          <div class="flex h-full flex-col items-center justify-center py-16 text-center text-slate-400">
-            <i data-lucide="message-circle" class="h-10 w-10 mb-3"></i>
-            <p class="font-semibold text-slate-600">No messages yet</p>
-            <p class="mt-1 text-sm">Start the conversation below.</p>
-          </div>
-          {% endfor %}
         </div>
-
-        <!-- Input with file attachment -->
-        <div class="border-t border-slate-200 bg-white px-5 py-4">
-          <div id="chat-file-preview" class="hidden mb-3"></div>
-          <div class="flex items-center gap-2">
-            <button id="chat-file-btn" type="button" title="Attach file"
-                class="flex-shrink-0 rounded-2xl border border-slate-200 p-2.5 text-slate-500 transition hover:bg-slate-100 hover:text-blue-600">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a4 4 0 00-5.656-5.656L5.757 10.757a6 6 0 108.486 8.486L20 13"/>
-              </svg>
-            </button>
-            <input type="file" id="chat-file-input" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip">
-            <input type="text" id="chat-input"
-                class="flex-1 rounded-2xl border border-slate-300 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                placeholder="Type a reply…" autocomplete="off">
-            <button id="chat-send"
-                class="flex-shrink-0 rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">Send</button>
-          </div>
-          <!-- hidden targets so chat.js setStatus() doesn't overwrite peer status -->
-          <span id="chat-status-dot-hidden" class="hidden"></span>
+        {% empty %}
+        <div class="chat-empty">
+          <div class="chat-empty-icon">💬</div>
+          <h4>No messages yet</h4>
+          <p>Start the conversation below.</p>
         </div>
-
-        <script>
-          window.CHAT_CLASSROOM_ID = {{ classroom.pk }};
-          window.CHAT_MY_ID        = {{ request.user.pk }};
-          window.CHAT_RECEIVER_ID  = {{ selected_student.pk }};
-          window.CHAT_CSRF_TOKEN   = '{{ csrf_token }}';
-        </script>
-        <script src="{% static 'js/chat.js' %}"></script>
-        <script>
-        (function () {
-          const studentId   = Number(window.CHAT_RECEIVER_ID);
-          const classroomId = Number(window.CHAT_CLASSROOM_ID);
-          const proto       = window.location.protocol === 'https:' ? 'wss' : 'ws';
-
-          function setStudentStatus(online, lastSeenIso) {
-            const dot  = document.getElementById('peer-status-dot');
-            const text = document.getElementById('peer-status-text');
-            // Also update sidebar dot
-            const sidebarDot = document.querySelector('.student-dot-' + studentId);
-            if (dot) dot.style.backgroundColor = online ? '#22c55e' : '#ef4444';
-            if (sidebarDot) sidebarDot.style.backgroundColor = online ? '#22c55e' : '#ef4444';
-            if (!text) return;
-            if (online) {
-              text.textContent = 'Online';
-            } else if (lastSeenIso) {
-              text.textContent = formatLastSeen(lastSeenIso);
-            } else {
-              text.textContent = 'Offline';
-            }
-          }
-
-          function formatLastSeen(iso) {
-            const now  = new Date(), seen = new Date(iso);
-            const diff = Math.floor((now - seen) / 1000);
-            if (diff < 60)   return 'Last seen just now';
-            if (diff < 3600) { const m = Math.floor(diff/60); return 'Last seen ' + m + ' minute' + (m===1?'':'s') + ' ago'; }
-            if (now.toDateString() === seen.toDateString())
-              return 'Last seen today at ' + seen.toLocaleTimeString([],{hour:'numeric',minute:'2-digit',hour12:true});
-            const yest = new Date(now); yest.setDate(now.getDate()-1);
-            if (yest.toDateString() === seen.toDateString())
-              return 'Last seen yesterday at ' + seen.toLocaleTimeString([],{hour:'numeric',minute:'2-digit',hour12:true});
-            return 'Last seen ' + seen.toLocaleDateString([],{day:'numeric',month:'short'});
-          }
-
-          function connect() {
-            // PresenceConsumer tracks login/logout site-wide — correct source of truth
-            const ws = new WebSocket(`${proto}://${window.location.host}/ws/presence/`);
-            ws.onmessage = (e) => {
-              const data = JSON.parse(e.data);
-              if (data.type === 'presence.snapshot') {
-                const online = Array.isArray(data.online_users) && data.online_users.includes(studentId);
-                const lastSeen = data.last_seen && data.last_seen[String(studentId)];
-                setStudentStatus(online, online ? null : lastSeen);
-              }
-              if (data.type === 'presence.update' && Number(data.user_id) === studentId) {
-                setStudentStatus(data.status === 'online', data.status === 'online' ? null : data.last_seen);
-              }
-            };
-            ws.onclose = () => setTimeout(connect, 3000);
-          }
-
-          connect();
-        })();
-        </script>
-
-        {% else %}
-        <div class="flex flex-1 flex-col items-center justify-center text-center text-slate-400 py-20">
-          <i data-lucide="arrow-left" class="h-10 w-10 mb-3"></i>
-          <p class="font-semibold text-slate-600">Select a student</p>
-          <p class="mt-1 text-sm">Choose a student from the left to start chatting.</p>
-        </div>
-        {% endif %}
+        {% endfor %}
       </div>
 
-    </div><!-- /chat layout -->
-  </div><!-- /page -->
-</div><!-- /main -->
+      <!-- Input Area -->
+      <div class="chat-input-area">
+        <div id="chat-file-preview" style="display:none;"></div>
+        <button id="chat-file-btn" type="button" class="btn-attach" title="Attach file">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a4 4 0 00-5.656-5.656L5.757 10.757a6 6 0 108.486 8.486L20 13" />
+          </svg>
+        </button>
+        <input type="file" id="chat-file-input" style="display:none"
+          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip">
+        <input type="text" id="chat-input" class="chat-input" placeholder="Type a reply…" autocomplete="off">
+        <button id="chat-send" class="btn-send">Send</button>
+      </div>
 
+      <!-- Chat JS -->
+      <span id="chat-status-dot-hidden" style="display:none;"></span>
+      {% else %}
+      <div class="chat-empty">
+        <div class="chat-empty-icon">👈</div>
+        <h4>Select a student</h4>
+        <p>Choose a student from the left to start chatting.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if selected_student %}
 <script>
-  lucide.createIcons();
-  const btn = document.getElementById('profileBtn');
-  const dd  = document.getElementById('profileDropdown');
-  if (btn) btn.addEventListener('click', e => { e.stopPropagation(); dd.classList.toggle('hidden'); });
-  document.addEventListener('click', () => { if (dd) dd.classList.add('hidden'); });
+  window.CHAT_CLASSROOM_ID = {{ classroom.pk }};
+  window.CHAT_MY_ID = {{ request.user.pk }};
+  window.CHAT_RECEIVER_ID = {{ selected_student.pk }};
+  window.CHAT_CSRF_TOKEN = '{{ csrf_token }}';
 </script>
-</body>
-</html>
+<script src="{% static 'js/chat.js' %}"></script>
+<script>
+  (function () {
+    const studentId = Number(window.CHAT_RECEIVER_ID);
+    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+
+    function setStudentStatus(online, lastSeenIso) {
+      const dot = document.getElementById('peer-status-dot');
+      const text = document.getElementById('peer-status-text');
+      const sidebarDot = document.querySelector('.student-dot-' + studentId);
+      if (dot) { dot.className = 'status-dot ' + (online ? 'online' : 'offline'); }
+      if (sidebarDot) { sidebarDot.className = 'online-dot student-dot-' + studentId + (online ? ' on' : ' off'); }
+      if (!text) return;
+      if (online) {
+        text.textContent = 'Online';
+      } else if (lastSeenIso) {
+        text.textContent = formatLastSeen(lastSeenIso);
+      } else {
+        text.textContent = 'Offline';
+      }
+    }
+
+    function formatLastSeen(iso) {
+      const now = new Date(), seen = new Date(iso);
+      const diff = Math.floor((now - seen) / 1000);
+      if (diff < 60) return 'Last seen just now';
+      if (diff < 3600) { const m = Math.floor(diff / 60); return 'Last seen ' + m + ' minute' + (m === 1 ? '' : 's') + ' ago'; }
+      if (now.toDateString() === seen.toDateString())
+        return 'Last seen today at ' + seen.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+      const yest = new Date(now); yest.setDate(now.getDate() - 1);
+      if (yest.toDateString() === seen.toDateString())
+        return 'Last seen yesterday at ' + seen.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+      return 'Last seen ' + seen.toLocaleDateString([], { day: 'numeric', month: 'short' });
+    }
+
+    function connect() {
+      const ws = new WebSocket(proto + '://' + window.location.host + '/ws/presence/');
+      ws.onmessage = function (e) {
+        const data = JSON.parse(e.data);
+        if (data.type === 'presence.snapshot') {
+          const online = Array.isArray(data.online_users) && data.online_users.includes(studentId);
+          const lastSeen = data.last_seen && data.last_seen[String(studentId)];
+          setStudentStatus(online, online ? null : lastSeen);
+        }
+        if (data.type === 'presence.update' && Number(data.user_id) === studentId) {
+          setStudentStatus(data.status === 'online', data.status === 'online' ? null : data.last_seen);
+        }
+      };
+      ws.onclose = function () { setTimeout(connect, 3000); };
+    }
+
+    connect();
+  })();
+</script>
+{% endif %}
+{% endblock %}

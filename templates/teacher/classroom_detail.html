@@ -1,233 +1,176 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load tz %}
 
 {% block title %}{{ classroom.name }} — EduPlatform{% endblock %}
 
 {% block extra_css %}
 <style>
-/* Classroom Detail Specific Styles */
-.wb {
-  background: linear-gradient(135deg, #0c3326 0%, #0f6e56 55%, #186b49 100%);
-  border-radius: var(--radius-xl); padding: 30px 36px;
-  display: flex; align-items: center; gap: 32px;
-  position: relative; overflow: hidden;
-  box-shadow: 0 8px 32px rgba(15,110,86,.22);
-  margin-bottom: 24px;
-}
-.wb h2 { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 5px; }
-.wb p  { font-size: 13.5px; color: rgba(255,255,255,.62); }
-.wb-actions { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
-.wb-stats { display: flex; gap: 0; flex-shrink: 0; z-index: 1; }
-.bstat { text-align: center; padding: 0 26px; }
-.bstat + .bstat { border-left: 1px solid rgba(255,255,255,.12); }
-.bstat-val { font-family: var(--mono); font-size: 28px; font-weight: 700; color: #fff; }
-.bstat-lbl { font-size: 11px; color: rgba(255,255,255,.45); }
+  .wb {
+    background: #0f6e56;
+    border-radius: 24px;
+    padding: 34px;
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+    margin-bottom: 24px;
+  }
+  .wb-content { position: relative; z-index: 2; }
+  .wb h2 { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+  .wb-info { font-size: 13px; opacity: 0.8; margin-bottom: 24px; font-family: var(--mono); }
+  .wb-tabs { display: flex; flex-wrap: wrap; gap: 8px; position: relative; z-index: 2; }
+  .wb-tab {
+    background: rgba(255,255,255,.1);
+    border: none; border-radius: 40px; padding: 7px 16px;
+    color: #fff; font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; gap: 6px;
+    text-decoration: none; transition: all .2s;
+  }
+  .wb-tab:hover, .wb-tab.active { background: rgba(255,255,255,.2); color: #fff; transform: translateY(-1px); }
+  .wb-stats-group { display: flex; gap: 32px; margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
+  .w-stat { text-align: left; }
+  .w-stat-val { font-size: 24px; font-weight: 700; display: block; line-height: 1; }
+  .w-stat-lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; opacity: 0.6; margin-top: 4px; letter-spacing: 0.05em; }
+  .bg-orb { position: absolute; background: rgba(255,255,255,.05); border-radius: 50%; z-index: 1; }
 
-.btn-glass { background: rgba(255,255,255,.13); color: #fff; border: 1.5px solid rgba(255,255,255,.2); border-radius: 40px; padding: 6px 16px; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: all .15s; }
-.btn-glass:hover, .btn-glass.active { background: rgba(255,255,255,.25); border-color: rgba(255,255,255,.4); }
+  /* Card & Table */
+  .card { border-radius: 16px; overflow: hidden; background: #fff; border: 1px solid #eff2f6; margin-bottom: 24px; }
+  .card-head { padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f4f9; }
+  .card-head h3 { font-size: 15px; font-weight: 700; margin: 0; color: #1e293b; }
+  .card-head p { font-size: 12px; color: #94a3b8; margin: 4px 0 0; }
+  .dt { width: 100%; border-collapse: collapse; }
+  .dt th { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; padding: 12px 24px; text-align: left; background: #f8fafc; border-bottom: 1px solid #f1f4f9; }
+  .dt td { padding: 14px 24px; border-bottom: 1px solid #f1f4f9; vertical-align: middle; font-size: 13px; color: #334155; }
+  .dt tr:last-child td { border-bottom: none; }
+  .dt tr:hover td { background: #fafbfc; }
 
-.tab-pane { display: none; }
-.tab-pane.active { display: block; }
-
-/* Students Table */
-.dt { width: 100%; border-collapse: collapse; }
-.dt th { font-size: 11px; font-weight: 700; color: var(--text-muted); text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border); text-transform: uppercase; }
-.dt td { padding: 12px 16px; font-size: 13.5px; border-bottom: 1px solid var(--border); }
-
-/* Chat */
-.chat-wrap { background: var(--card-bg); border: 1.5px solid var(--border); border-radius: var(--radius-lg); display: flex; height: 600px; overflow: hidden; }
-.chat-sidebar { width: 220px; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-.chat-main { flex: 1; display: flex; flex-direction: column; }
-.chat-messages { flex: 1; padding: 16px; overflow-y: auto; background: var(--page-bg); }
-.bubble { max-width: 80%; padding: 10px 14px; border-radius: 12px; margin-bottom: 8px; font-size: 13.5px; }
-.bubble.sent { background: var(--brand-blue); color: #fff; align-self: flex-end; margin-left: auto; }
-.bubble.recv { background: #fff; border: 1px solid var(--border); color: var(--brand-dark); align-self: flex-start; }
-
-.course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; padding: 16px; }
-.course-card { border: 1.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: var(--card-bg); }
-
-.form-card { background: var(--card-bg); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+  .student-col { display: flex; align-items: center; gap: 12px; }
+  .student-av { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #4f46e5, #7c3aed); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .student-email { font-size: 13px; color: #64748b; }
+  .prog-bar-container { display: flex; align-items: center; gap: 10px; }
+  .prog-bg { width: 60px; height: 5px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+  .prog-fill { height: 100%; background: #10b981; border-radius: 4px; }
+  .prog-val { font-size: 12px; font-weight: 700; color: #64748b; }
+  .grade-badge { font-family: var(--mono); font-weight: 800; font-size: 14px; color: #10b981; background: #ecfdf5; padding: 4px 12px; border-radius: 8px; display: inline-block; }
+  .status-pill { padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 700; background: #dbeafe; color: #1e40af; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 30px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; text-decoration: none; }
+  .btn-ghost { background: transparent; color: #64748b; border: 1.5px solid #e2e8f0; }
+  .btn-ghost:hover { border-color: #10b981; color: #10b981; }
+  .btn-sm { padding: 6px 12px; font-size: 11px; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="wb">
-  <div style="flex:1;z-index:1">
-    <h2>{{ classroom.name }}</h2>
-    <p>Code: <strong style="font-family:var(--mono)">{{ classroom.code }}</strong> · {{ classroom.students.count }} students</p>
-    <div class="wb-actions">
-      <button class="btn-glass active" onclick="switchTab('home', this)">🏠 Home</button>
-      <button class="btn-glass" onclick="switchTab('announce', this)">📢 Announce</button>
-      <button class="btn-glass" onclick="switchTab('courses', this)">📚 Courses</button>
-      <button class="btn-glass" onclick="switchTab('classwork', this)">📝 Classwork</button>
-      <button class="btn-glass" onclick="switchTab('people', this)">👥 Students</button>
-      <button class="btn-glass" onclick="switchTab('chat', this)">💬 Chat</button>
-    </div>
-  </div>
-  <div class="wb-stats">
-    <div class="bstat"><div class="bstat-val">{{ classroom.students.count }}</div><div class="bstat-lbl">Students</div></div>
-    <div class="bstat"><div class="bstat-val">{{ assignment_count }}</div><div class="bstat-lbl">Assignments</div></div>
-  </div>
-</div>
+  <div class="bg-orb" style="bottom: -150px; left: -100px;"></div>
+  <div class="bg-orb" style="top: -100px; right: -50px; width: 400px; height: 400px;"></div>
 
-<div class="tab-pane active" id="tab-home">
-  <div class="card">
-    <div class="card-head"><div class="card-title">Enrolled Students</div></div>
-    <table class="dt">
-      <thead><tr><th>Student</th><th>Submissions</th><th>Avg Score</th></tr></thead>
-      <tbody>
-        {% for s in student_data %}
-        <tr>
-          <td><strong>{{ s.user.get_full_name }}</strong><br><small>{{ s.user.email }}</small></td>
-          <td>{{ s.submitted }} / {{ s.total_assignments }}</td>
-          <td>{{ s.avg_pct }}% ({{ s.grade_letter }})</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<div class="tab-pane" id="tab-announce">
-  <div class="grid grid-cols-3 gap-24">
-    <div class="col-span-2">
-      {% for a in announcements %}
-      <div class="card mb-12 p-16">
-        <div class="font-bold border-b pb-8 mb-8">{{ a.title }}</div>
-        <div class="text-sm">{{ a.body }}</div>
-        <div class="text-xs text-muted mt-8">{{ a.created_at|date:"M d, Y" }}</div>
+  <div class="wb-content">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+      <div>
+        <h2>{{ classroom.name }}</h2>
+        <div class="wb-info">{{ classroom.code }} · {{ classroom.students.count }} student{{ classroom.students.count|pluralize }} · {{ assignment_count }} tasks</div>
       </div>
-      {% endfor %}
+      <button onclick="shareClassroom('{{ classroom.name }}', '{{ classroom.code }}')" class="btn" style="background: rgba(255,255,255,0.1); color: #fff; border: 1.5px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px);">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8.684 10.348l6.632-3.316M8.684 13.652l6.632 3.316M17.5 7.5A2.5 2.5 0 1112.5 7.5a2.5 2.5 0 015 0zm-10 5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zm10 5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Share Code
+      </button>
     </div>
+
+    <div class="wb-tabs">
+      <a class="wb-tab active" href="{% url 'teacher_classroom_detail' classroom.id %}">🏠 Home</a>
+      <a class="wb-tab" href="{% url 'teacher_classroom_announce' classroom.id %}">📢 Announce</a>
+      <a class="wb-tab" href="{% url 'teacher_classroom_courses' classroom.id %}">📘 Courses</a>
+      <a class="wb-tab" href="{% url 'teacher_classroom_classwork' classroom.id %}">📝 Classwork</a>
+      <a class="wb-tab" href="{% url 'teacher_classroom_peoples' classroom.id %}">👥 Students</a>
+      <a class="wb-tab" href="{% url 'teacher_classroom_grade' classroom.id %}">📊 Progress</a>
+      <a class="wb-tab" href="{% url 'teacher_classroom_analytics' classroom.id %}">📈 Analytics</a>
+      <a class="wb-tab" href="{% url 'teacher_classroom_chat' classroom.id %}">💬 Chat</a>
+    </div>
+
+    <div class="wb-stats-group">
+      <div class="w-stat">
+        <span class="w-stat-val">{{ classroom.students.count }}</span>
+        <span class="w-stat-lbl">Students</span>
+      </div>
+      <div class="w-stat">
+        <span class="w-stat-val">{{ assignment_count }}</span>
+        <span class="w-stat-lbl">Assignments</span>
+      </div>
+      <div class="w-stat">
+        <span class="w-stat-val">{{ assigned_course_count }}</span>
+        <span class="w-stat-lbl">Courses</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Home Tab: Student Overview -->
+<div class="card">
+  <div class="card-head">
     <div>
-      <div class="form-card">
-        <h3 class="font-bold mb-12">Post Announcement</h3>
-        <form method="post">
-          {% csrf_token %}
-          <input type="hidden" name="_action" value="announce">
-          <div class="mb-12"><label class="text-xs font-bold">Title</label><input type="text" name="title" class="form-control" required></div>
-          <div class="mb-12"><label class="text-xs font-bold">Message</label><textarea name="body" class="form-control" rows="4" required></textarea></div>
-          <button type="submit" class="btn btn-primary w-full">Post</button>
-        </form>
-      </div>
+      <h3>Enrolled Students</h3>
+      <p>{{ classroom.students.count }} student{{ classroom.students.count|pluralize }}</p>
     </div>
+    <a class="btn btn-ghost btn-sm" href="{% url 'teacher_classroom_peoples' classroom.id %}">Manage Students →</a>
   </div>
-</div>
-
-<div class="tab-pane" id="tab-courses">
-  <div class="course-grid">
-    {% for course in all_courses %}
-    <div class="course-card">
-      <div class="p-16 border-b font-bold">{{ course.title }}</div>
-      <div class="p-16 text-sm">{{ course.description|truncatewords:15 }}</div>
-      <div class="p-16 border-t">
-        <button class="btn {% if course.id in assigned_course_ids %}btn-ghost{% else %}btn-primary{% endif %} btn-sm w-full" onclick="toggleAssign('{{ course.id }}')">
-          {% if course.id in assigned_course_ids %}Unassign{% else %}Assign{% endif %}
-        </button>
-      </div>
-    </div>
-    {% endfor %}
-  </div>
-</div>
-
-<div class="tab-pane" id="tab-classwork">
-  <div class="grid grid-cols-3 gap-24">
-    <div class="col-span-2">
-      {% for a in assignments %}
-      <div class="card mb-12">
-        <div class="card-head"><div class="card-title">{{ a.title }}</div></div>
-        <div class="p-16 text-xs text-muted">Due: {{ a.due_date|date:"M d, Y" }} · {{ a.submission_count }} submitted</div>
-      </div>
+  <table class="dt">
+    <thead>
+      <tr>
+        <th>Student</th>
+        <th>Submitted</th>
+        <th>Avg Score</th>
+        <th>Grade</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in student_data %}
+      <tr>
+        <td>
+          <div class="student-col">
+            <div class="student-av">{{ s.user.first_name|first }}</div>
+            <span class="student-email">{{ s.user.email }}</span>
+          </div>
+        </td>
+        <td>{{ s.submitted }} / {{ s.total_assignments }}</td>
+        <td>
+          <div class="prog-bar-container">
+            <div class="prog-bg">
+              <div class="prog-fill" style="width:{{ s.avg_pct|default:0|floatformat:0 }}%;"></div>
+            </div>
+            <span class="prog-val">{{ s.avg_pct|default:0 }}%</span>
+          </div>
+        </td>
+        <td><div class="grade-badge">{{ s.grade_letter|default:"-" }}</div></td>
+        <td><span class="status-pill">In progress</span></td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5" style="text-align:center; padding: 40px; color: #94a3b8;">No students enrolled yet.</td>
+      </tr>
       {% endfor %}
-    </div>
-    <div>
-      <div class="form-card">
-        <h3 class="font-bold mb-12">New Assignment</h3>
-        <form method="post" enctype="multipart/form-data">
-          {% csrf_token %}
-          <div class="mb-12"><label class="text-xs font-bold">Title</label><input type="text" name="title" class="form-control" required></div>
-          <div class="mb-12"><label class="text-xs font-bold">Due Date</label><input type="datetime-local" name="due_date" class="form-control" required></div>
-          <button type="submit" class="btn btn-primary w-full">Create</button>
-        </form>
-      </div>
-    </div>
-  </div>
+    </tbody>
+  </table>
 </div>
 
-<div class="tab-pane" id="tab-people">
-  <div class="card">
-    <table class="dt">
-      <thead><tr><th>Student</th><th>Action</th></tr></thead>
-      <tbody>
-        {% for row in student_data %}
-        <tr>
-          <td>{{ row.user.get_full_name }}</td>
-          <td>
-            <form method="post" onsubmit="return confirm('Remove student?')">
-              {% csrf_token %}
-              <input type="hidden" name="remove_student" value="{{ row.user.pk }}">
-              <button class="text-red-500 hover:underline">Remove</button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<div class="tab-pane" id="tab-chat">
-  <div class="chat-wrap">
-    <div class="chat-sidebar">
-      <div class="p-12 border-b font-bold text-xs uppercase text-muted">Students</div>
-      {% for student in chat_students %}
-      <a href="?student={{ student.pk }}&tab=chat" class="p-12 border-b block hover:bg-gray-100 {% if selected_student.pk == student.pk %}bg-blue-50 text-blue-600{% endif %}">
-        {{ student.get_full_name }}
-      </a>
-      {% endfor %}
-    </div>
-    <div class="chat-main">
-      {% if selected_student %}
-      <div class="p-12 border-b font-bold bg-gray-50">{{ selected_student.get_full_name }}</div>
-      <div class="chat-messages" id="chat-messages">
-        {% for msg in chat_messages %}
-        <div class="bubble {% if msg.sender == request.user %}sent{% else %}recv{% endif %}">
-          {{ msg.body }}
-        </div>
-        {% endfor %}
-      </div>
-      {% else %}
-      <div class="flex-1 flex items-center justify-center text-muted">Select a student to chat</div>
-      {% endif %}
-    </div>
-  </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
 <script>
-function switchTab(name, btn) {
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.btn-glass').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  btn.classList.add('active');
-}
-
-async function toggleAssign(courseId) {
-  const res = await fetch(`/teacher/classroom/{{ classroom.id }}/assign-course/${courseId}/`, {
-    method: 'POST',
-    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-  });
-  if (res.ok) window.location.reload();
-}
-
-// Handle URL param tab
-const urlParams = new URLSearchParams(window.location.search);
-const tab = urlParams.get('tab');
-if (tab) {
-  const btn = document.querySelector(`[onclick="switchTab('${tab}', this)"]`);
-  if (btn) switchTab(tab, btn);
-}
+  function shareClassroom(name, code) {
+    const loginUrl = window.location.origin + '/login/';
+    const shareText = `Join my classroom *${name}* on EduPlatform! 🏫\n\n🔑 Class Code: *${code}*\n🚀 Login here: ${loginUrl}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: name + ' Classroom',
+        text: shareText,
+        url: loginUrl
+      }).catch(err => {
+        console.log('Share error:', err);
+      });
+    } else {
+      // Fallback for desktop/non-share browsers
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+      window.open(whatsappUrl, '_blank');
+    }
+  }
 </script>
 {% endblock %}

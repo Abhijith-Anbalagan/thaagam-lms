@@ -159,7 +159,7 @@ class SchoolAdminAnalyticsService(BaseAnalyticsService):
     def get_classroom_performance(self):
         """Get performance metrics for classrooms in the school."""
         return Classroom.objects.filter(school=self.school).annotate(
-            student_count=Count('students'),
+            total_students_count=Count('students'),
             assignment_count=Count('assignments'),
             submission_count=Count('assignments__submissions'),
             avg_score=Avg('assignments__submissions__score'),
@@ -315,13 +315,14 @@ class ManagementAnalyticsService(BaseAnalyticsService):
 class TeacherAnalyticsService(BaseAnalyticsService):
     """Analytics service for Teacher dashboard."""
 
-    def __init__(self, user):
+    def __init__(self, user, classroom_id=None):
         self.user = user
+        self.classroom_id = classroom_id
 
     def get_class_performance(self):
         """Get performance metrics for teacher's classrooms."""
         return Classroom.objects.filter(teacher=self.user).annotate(
-            student_count=Count('students'),
+            total_students_count=Count('students'),
             assignment_count=Count('assignments'),
             avg_score=Avg('assignments__submissions__score'),
             submission_rate=Case(
@@ -330,30 +331,38 @@ class TeacherAnalyticsService(BaseAnalyticsService):
                 output_field=IntegerField()
             )
         ).values(
-            'id', 'name', 'student_count', 'assignment_count',
+            'id', 'name', 'code', 'total_students_count', 'assignment_count',
             'avg_score', 'submission_rate'
         )
 
-    def get_student_wise_performance(self):
+    def get_student_wise_performance(self, classroom_id=None):
         """Get performance data for each student."""
-        return User.objects.filter(
+        queryset = User.objects.filter(
             joined_classrooms__teacher=self.user
-        ).distinct().annotate(
+        )
+        if classroom_id:
+            queryset = queryset.filter(joined_classrooms__id=classroom_id)
+            
+        return queryset.distinct().annotate(
             classroom_count=Count('joined_classrooms', distinct=True),
-            assignment_count=Count('submissions__assignment', distinct=True),
-            submission_count=Count('submissions'),
-            avg_score=Avg('submissions__score'),
-            completed_count=Count('submissions', filter=Q(submissions__score__isnull=False))
+            assignment_count=Count('submissions__assignment', distinct=True, filter=Q(submissions__assignment__classroom_id=classroom_id) if classroom_id else Q()),
+            submission_count=Count('submissions', filter=Q(submissions__assignment__classroom_id=classroom_id) if classroom_id else Q()),
+            avg_score=Avg('submissions__score', filter=Q(submissions__assignment__classroom_id=classroom_id) if classroom_id else Q()),
+            completed_count=Count('submissions', filter=Q(submissions__score__isnull=False, submissions__assignment__classroom_id=classroom_id) if classroom_id else Q())
         ).values(
             'id', 'username', 'email', 'classroom_count', 'assignment_count',
             'submission_count', 'avg_score', 'completed_count'
         ).order_by('-avg_score')
 
-    def get_assignment_analytics(self):
+    def get_assignment_analytics(self, classroom_id=None):
         """Get detailed assignment analytics."""
-        return Assignment.objects.filter(
+        queryset = Assignment.objects.filter(
             classroom__teacher=self.user
-        ).annotate(
+        )
+        if classroom_id:
+            queryset = queryset.filter(classroom_id=classroom_id)
+            
+        return queryset.annotate(
             total_students=Count('classroom__students'),
             submissions_count=Count('submissions'),
             late_submissions=Count('submissions', filter=Q(submissions__submitted_at__gt=F('due_date'))),
@@ -364,18 +373,67 @@ class TeacherAnalyticsService(BaseAnalyticsService):
                 output_field=IntegerField()
             )
         ).values(
-            'id', 'title', 'due_date', 'total_students', 'submissions_count',
+            'id', 'title', 'classroom__name', 'due_date', 'total_students', 'submissions_count',
             'late_submissions', 'avg_score', 'submission_rate'
         )
 
     def identify_weak_students(self):
         """Identify students who need attention."""
+        queryset = User.objects.filter(
+            joined_classrooms__teacher=self.user
+        )
+        if self.classroom_id:
+            queryset = queryset.filter(joined_classrooms__id=self.classroom_id)
+            
+        return queryset.distinct().annotate(
+            avg_score=Avg('submissions__score', filter=Q(submissions__assignment__classroom_id=self.classroom_id) if self.classroom_id else Q()),
+            submission_count=Count('submissions', filter=Q(submissions__assignment__classroom_id=self.classroom_id) if self.classroom_id else Q()),
+            late_count=Count('submissions', filter=Q(
+                submissions__submitted_at__gt=F('submissions__assignment__due_date'),
+                submissions__assignment__classroom_id=self.classroom_id if self.classroom_id else Q()
+            ))
+        ).filter(
+            Q(avg_score__lt=60) | Q(submission_count=0)
+        ).values(
+            'id', 'username', 'email', 'avg_score', 'submission_count', 'late_count'
+        ).order_by('avg_score')
+
+    def get_classroom_performance_metrics(self, classroom_id):
+        """Get detailed metrics for a specific classroom."""
+        classroom = Classroom.objects.filter(teacher=self.user, id=classroom_id).annotate(
+            total_students_count=Count('students', distinct=True),
+            assignment_count=Count('assignments', distinct=True),
+            submission_count=Count('assignments__submissions'),
+            avg_score=Avg('assignments__submissions__score'),
+            submission_rate=Case(
+                When(students__isnull=True, then=0),
+                default=Count('assignments__submissions') * 100.0 / (Count('assignments') * Count('students')),
+                output_field=IntegerField()
+            )
+        ).first()
+        
+        if not classroom:
+            return None
+            
+        return {
+            'classroom': classroom,
+            'students_performance': self.get_student_wise_performance(classroom_id),
+            'assignments_analytics': self.get_assignment_analytics(classroom_id),
+            'weak_students': self.identify_weak_students_for_classroom(classroom_id),
+        }
+
+    def identify_weak_students_for_classroom(self, classroom_id):
+        """Identify weak students in a specific classroom."""
         return User.objects.filter(
+            joined_classrooms__id=classroom_id,
             joined_classrooms__teacher=self.user
         ).distinct().annotate(
-            avg_score=Avg('submissions__score'),
-            submission_count=Count('submissions'),
-            late_count=Count('submissions', filter=Q(submissions__submitted_at__gt=F('submissions__assignment__due_date')))
+            avg_score=Avg('submissions__score', filter=Q(submissions__assignment__classroom_id=classroom_id)),
+            submission_count=Count('submissions', filter=Q(submissions__assignment__classroom_id=classroom_id)),
+            late_count=Count('submissions', filter=Q(
+                submissions__submitted_at__gt=F('submissions__assignment__due_date'),
+                submissions__assignment__classroom_id=classroom_id
+            ))
         ).filter(
             Q(avg_score__lt=60) | Q(submission_count=0)
         ).values(

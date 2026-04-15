@@ -44,7 +44,7 @@ class SignupForm(forms.ModelForm):
 
 # ─── Login ────────────────────────────────────────────────────────────────────
 class LoginForm(forms.Form):
-    email    = forms.EmailField(label='Email', widget=forms.EmailInput(attrs={'autofocus': True}))
+    email    = forms.CharField(label='Email', widget=forms.TextInput(attrs={'autofocus': True}))
     password = forms.CharField(label='Password', widget=forms.PasswordInput)
 
     error_messages = {
@@ -68,8 +68,8 @@ class LoginForm(forms.Form):
             except User.DoesNotExist:
                 raise forms.ValidationError(self.error_messages['invalid_login'])
 
-            # Skip email verification check for admin/staff users
-            if not user.is_superuser and not user.is_staff:
+            # Skip email verification check for admin/staff/students/public users
+            if not user.is_superuser and not user.is_staff and user.role not in ['student', 'public']:
                 if not user.is_active or not user.email_verified:
                     raise forms.ValidationError(
                         f'Your email is not verified. '

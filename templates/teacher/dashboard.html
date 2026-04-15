@@ -69,48 +69,59 @@
 {% endblock %}
 
 {% block content %}
-<div class="wb">
-  <div class="wb-orb" style="right:-30px;top:-70px;width:240px;height:240px;background:rgba(255,255,255,.05)"></div>
-  <div style="flex:1;z-index:1">
-    <h2>Welcome back, {{ request.user.first_name }}! 🎓</h2>
-    <p>{{ today|date:"l, F j, Y" }} &nbsp;·&nbsp; {{ pending_grading }} assignments waiting</p>
-    <div class="wb-actions">
-      <a href="{% url 'teacher_create_classroom' %}" class="btn btn-glass">New Classroom</a>
-      <a href="{% url 'teacher_post_announcement' %}" class="btn btn-glass">Announce</a>
-    </div>
-  </div>
-  <div class="wb-stats">
-    <div class="bstat"><div class="bstat-val">{{ classrooms|length }}</div><div class="bstat-lbl">Classrooms</div></div>
-    <div class="bstat"><div class="bstat-val">{{ total_students }}</div><div class="bstat-lbl">Students</div></div>
-  </div>
-</div>
-
-<div class="card">
-  <div class="card-head">
-    <div class="card-title">My Classrooms</div>
-    <a href="{% url 'teacher_my_classrooms' %}" class="btn btn-ghost btn-sm">View all →</a>
-  </div>
-  <div class="cc-grid">
-    {% for classroom in classrooms %}
-    <div class="class-card {% cycle 'cc-blue' 'cc-green' 'cc-amber' 'cc-purple' %}">
-      <a href="{% url 'teacher_classroom_detail' classroom.id %}" style="text-decoration:none;">
-        <div class="cc-head">
-          <div class="mb-8"><span class="cc-badge">{{ classroom.code }}</span></div>
-          <div class="cc-name">{{ classroom.name }}</div>
-        </div>
-      </a>
-      <div class="cc-body">
-        <div class="flex gap-12 mb-12 caption">
-          <span>👥 {{ classroom.students.count }} students</span>
-          <span>📝 {{ classroom.assignments.count }} tasks</span>
-        </div>
-        <div class="flex flex-wrap gap-4">
-          <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=announce" class="tc">📢 Announce</a>
-          <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=classwork" class="tc">📝 Classwork</a>
-        </div>
+<div class="page">
+  <!-- Welcome Banner -->
+  <div class="wb">
+    <div class="wb-orb" style="right:-30px;top:-70px;width:240px;height:240px;background:rgba(255,255,255,.05)"></div>
+    <div class="wb-orb" style="right:120px;bottom:-90px;width:160px;height:160px;background:rgba(255,255,255,.04)"></div>
+    <div style="flex:1;z-index:1">
+      <h2>Welcome back, {{ request.user.first_name|default:request.user.username }}! 🎓</h2>
+      <p>{{ today|date:"l, F j, Y" }} &nbsp;·&nbsp; {{ pending_grading }} assignments waiting</p>
+      <div class="wb-actions">
+        <a href="{% url 'teacher_create_classroom' %}" class="btn btn-glass">New Classroom</a>
+        <a href="{% url 'teacher_post_announcement' %}" class="btn btn-glass">Announce</a>
       </div>
     </div>
-    {% endfor %}
+    <div class="wb-stats">
+      <div class="bstat">
+        <div class="bstat-val">{{ classrooms|length }}</div>
+        <div class="bstat-lbl">Classrooms</div>
+      </div>
+      <div class="bstat">
+        <div class="bstat-val">{{ total_students }}</div>
+        <div class="bstat-lbl">Students</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- My Classrooms Section -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">My Classrooms</div>
+      <a href="{% url 'teacher_my_classrooms' %}" class="btn btn-ghost btn-sm">View all →</a>
+    </div>
+    <div class="cc-grid">
+      {% for classroom in classrooms %}
+      <div class="class-card {% cycle 'cc-blue' 'cc-green' 'cc-amber' 'cc-purple' %}">
+        <a href="{% url 'teacher_classroom_detail' classroom.id %}" style="text-decoration:none;">
+          <div class="cc-head">
+            <div class="mb-8"><span class="cc-badge">{{ classroom.code }}</span></div>
+            <div class="cc-name">{{ classroom.name }}</div>
+          </div>
+        </a>
+        <div class="cc-body">
+          <div class="flex gap-12 mb-12 caption" style="font-size: 12px; color: var(--text-muted); opacity: 0.8;">
+            <span>👥 {{ classroom.students.count }} students</span>
+            <span>📝 {{ classroom.assignments.count }} tasks</span>
+          </div>
+          <div class="flex flex-wrap gap-4">
+            <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=announce" class="tc">📢 Announce</a>
+            <a href="{% url 'teacher_classroom_detail' classroom.id %}?tab=classwork" class="tc">📝 Classwork</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
   </div>
 </div>
 {% endblock %}

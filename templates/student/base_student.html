@@ -336,7 +336,7 @@
             }
 
             function connectNotifications() {
-                const socket = new WebSocket(`${proto}://${window.location.host}/ws/student-notifications/`);
+                const socket = new WebSocket(`${proto}://${window.location.host}/ws/notifications/`);
 
                 socket.onmessage = (event) => {
                     const data = JSON.parse(event.data);

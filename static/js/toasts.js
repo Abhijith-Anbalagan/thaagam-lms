@@ -93,11 +93,32 @@ const observer = new MutationObserver((mutations) => {
   });
 });
 
-// Observe the toast container for changes
+// Observer the toast container for changes
 const toastContainer = document.querySelector('.toast-container');
 if (toastContainer) {
   observer.observe(toastContainer, {
     childList: true,
     subtree: false,
   });
+}
+
+/**
+ * Public helper to show a toast message
+ * @param {string} message 
+ * @param {string} type - 'success', 'error', 'warning', 'info'
+ */
+function showToast(message, type = 'info') {
+  let container = document.querySelector('.toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+    // Restart observation on new container
+    observer.observe(container, { childList: true });
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
 }

@@ -72,20 +72,20 @@ def upload_attachment(request, classroom_id):
 
     channel_layer = get_channel_layer()
     if channel_layer:
-        # Notify student if receiver is student
-        if msg.receiver.role == 'student':
-            async_to_sync(channel_layer.group_send)(
-                f'student_notifications_{msg.receiver_id}',
-                {
-                    'type': 'student_notification',
-                    'payload': {
-                        'type': 'chat',
-                        'classroom_id': classroom_id,
-                        'redirect_url': f'/student/classroom/{classroom_id}/chat/',
-                        'sender_name': payload['sender_name'],
-                    },
+        # Notify receiver
+        async_to_sync(channel_layer.group_send)(
+            f'notifications_{msg.receiver_id}',
+            {
+                'type': 'notification',
+                'payload': {
+                    'type': 'chat',
+                    'classroom_id': classroom_id,
+                    'redirect_url': f'{"/student" if msg.receiver.role == "student" else "/teacher"}/classroom/{classroom_id}/chat/',
+                    'sender_name': payload['sender_name'],
+                    'body': '📎 Attached a file' + (f': {body}' if body else ''),
                 },
-            )
+            },
+        )
         for room in [f'user_{user.pk}', f'user_{receiver_id}']:
             async_to_sync(channel_layer.group_send)(room, payload)
 

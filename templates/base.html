@@ -15,6 +15,12 @@
   <style>
     .sl-icon svg { width:17px; height:17px; display:block; flex-shrink:0; }
     .sl-icon { display:inline-flex; align-items:center; justify-content:center; width:20px; }
+    .nav-badge {
+      background: #ef4444; color: #fff; font-size: 10px; font-weight: 700;
+      padding: 2px 6px; border-radius: 10px; margin-left: auto;
+      line-height: 1; display: inline-flex; align-items: center; justify-content: center;
+    }
+    .sidebar-link { display: flex; align-items: center; }
   </style>
 </head>
 <body>
@@ -93,12 +99,21 @@
     <a href="{% url 'teacher_my_learning' %}" class="sidebar-link {% if request.resolver_match.url_name == 'teacher_my_learning' %}active{% endif %}">
       <span class="sl-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span> My Learning</a>
     <a href="{% url 'teacher_messages' %}" class="sidebar-link {% if request.resolver_match.url_name == 'teacher_messages' %}active{% endif %}">
-      <span class="sl-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Messages</a>
+      <span class="sl-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span> 
+      Messages
+      {% if unread_messages_count > 0 %}
+        <span class="nav-badge">{{ unread_messages_count }}</span>
+      {% endif %}
+    </a>
   </div>
   <div class="nav-group">
     <div class="nav-label">Tools</div>
     <a href="{% url 'teacher_announcements' %}" class="sidebar-link {% if request.resolver_match.url_name == 'teacher_announcements' %}active{% endif %}">
       <span class="sl-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Announcements</a>
+    <a href="{% url 'teacher_analytics' %}" class="sidebar-link {% if request.resolver_match.url_name == 'teacher_analytics' %}active{% endif %}">
+      <span class="sl-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Analytics</a>
+    <a href="{% url 'teacher_student_credentials' %}" class="sidebar-link {% if request.resolver_match.url_name == 'teacher_student_credentials' %}active{% endif %}">
+      <span class="sl-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Student IDs</a>
   </div>
 
   {% elif user.role == 'student' %}
@@ -154,6 +169,50 @@ function toggleSidebar() {
   overlay.classList.toggle('show');
   document.body.classList.toggle('sidebar-open');
 }
+
+// ── Real-time Notifications ──────────────────────────────────────────────
+(function() {
+  const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+  let socket;
+
+  function connect() {
+    socket = new WebSocket(`${proto}://${window.location.host}/ws/notifications/`);
+    
+    socket.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      console.log('Notification received:', data);
+
+      // If we are on the messages list page, refresh it to show the new message
+      if (window.location.pathname === '{% url "teacher_messages" %}') {
+         window.location.reload();
+         return;
+      }
+
+      // Show toast notification
+      if (data.type === 'chat') {
+        // Skip toast if we are already in a chat session with this sender
+        if (typeof window.CHAT_RECEIVER_ID !== 'undefined' && window.CHAT_RECEIVER_ID == data.sender_id) {
+           return;
+        }
+        if (typeof showToast === 'function') {
+          showToast(`💬 ${data.sender_name}: ${data.body}`, 'info');
+        }
+      } else if (data.type === 'announcement') {
+        if (typeof showToast === 'function') {
+          showToast(`📢 New Announcement: ${data.title}`, 'info');
+        }
+      }
+    };
+
+    socket.onclose = () => {
+      setTimeout(connect, 3000);
+    };
+  }
+
+  {% if user.is_authenticated %}
+    connect();
+  {% endif %}
+})();
 </script>
 
 </body>

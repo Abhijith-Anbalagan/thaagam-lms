@@ -77,19 +77,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'created_at':  message.created_at.astimezone(CHAT_TIMEZONE).strftime('%I:%M %p'),
         }
 
-        if message.receiver.role == 'student':
-            await self.channel_layer.group_send(
-                f'student_notifications_{message.receiver_id}',
-                {
-                    'type': 'student_notification',
-                    'payload': {
-                        'type': 'chat',
-                        'classroom_id': int(self.classroom_id),
-                        'redirect_url': f'/student/classroom/{self.classroom_id}/chat/',
-                        'sender_name': payload['sender_name'],
-                    },
+        # Notify receiver (if they have a notification group)
+        await self.channel_layer.group_send(
+            f'notifications_{message.receiver_id}',
+            {
+                'type': 'notification',
+                'payload': {
+                    'type': 'chat',
+                    'classroom_id': int(self.classroom_id),
+                    'redirect_url': f'{"/student" if message.receiver.role == "student" else "/teacher"}/classroom/{self.classroom_id}/chat/',
+                    'sender_name': payload['sender_name'],
+                    'body': body[:100],
                 },
-            )
+            },
+        )
 
         # Deliver to sender's personal room (echo back) and receiver's personal room
         for room in [f'user_{user.pk}', f'user_{receiver_id}']:
@@ -289,15 +290,16 @@ class PresenceConsumer(AsyncWebsocketConsumer):
         return online_ids, last_seen_map
 
 
-class StudentNotificationConsumer(AsyncWebsocketConsumer):
+class NotificationConsumer(AsyncWebsocketConsumer):
+    """Generic consumer for user notifications (both students and teachers)."""
 
     async def connect(self):
         user = self.scope['user']
-        if not user.is_authenticated or user.role != 'student':
+        if not user.is_authenticated:
             await self.close()
             return
 
-        self.group_name = f'student_notifications_{user.pk}'
+        self.group_name = f'notifications_{user.pk}'
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
@@ -305,6 +307,6 @@ class StudentNotificationConsumer(AsyncWebsocketConsumer):
         if hasattr(self, 'group_name'):
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
-    async def student_notification(self, event):
+    async def notification(self, event):
         await self.send(text_data=json.dumps(event['payload']))
 

@@ -3,7 +3,7 @@ from accounts.decorators import role_required
 from .superadmin_views import superadmin_analytics
 from .school_admin_views import school_admin_analytics
 from .management_views import management_analytics
-from .teacher_views import teacher_analytics
+from .teacher_views import teacher_analytics, classroom_analytics, export_classroom_analytics, export_overall_analytics
 from .student_views import student_analytics, student_assignment_tracking
 
 # Legacy function for backward compatibility

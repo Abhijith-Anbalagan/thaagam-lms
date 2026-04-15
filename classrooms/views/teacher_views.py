@@ -8,7 +8,7 @@ from accounts.decorators import role_required
 from classrooms.models import Classroom, CourseContent
 from classrooms.forms import ClassroomForm
 from assignments.models import Assignment, Submission
-from chat.realtime import notify_students
+from chat.realtime import notify_user, notify_users
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -170,6 +170,14 @@ def classroom_detail(request, classroom_id):
             notify_students([student_id], {'type': 'forced_redirect', 'url': '/student/join/'})
             messages.success(request, 'Student removed.')
 
+        # Delete Announcement
+        elif action == 'delete_announcement':
+            from announcements.models import Announcement
+            ann_id = request.POST.get('announcement_id')
+            ann = get_object_or_404(Announcement, id=ann_id, classroom=classroom)
+            ann.delete()
+            messages.success(request, 'Announcement deleted.')
+
         # Create assignment
         elif request.POST.get('title') and not request.POST.get('body'):
             from assignments.forms import AssignmentForm
@@ -299,6 +307,19 @@ def classroom_detail(request, classroom_id):
     assigned_course_count = len(assigned_course_ids)
     assignment_count      = Assignment.objects.filter(classroom=classroom).count()
 
+    # Check teacher completion for each course
+    from superadmin.models import GlobalConcept, ConceptProgress
+    teacher_completed_ids = set()
+    for course in all_courses:
+        total_concepts = course.concepts.count()
+        if total_concepts > 0:
+            completed_concepts = ConceptProgress.objects.filter(
+                student=request.user, 
+                concept__course=course
+            ).count()
+            if completed_concepts >= total_concepts:
+                teacher_completed_ids.add(course.pk)
+
     return render(request, 'teacher/classroom_detail.html', {
         'classroom':             classroom,
         'student_data':          student_data,
@@ -309,6 +330,7 @@ def classroom_detail(request, classroom_id):
         'all_courses':           all_courses,
         'assigned_course_ids':   assigned_course_ids,
         'assigned_course_count': assigned_course_count,
+        'teacher_completed_ids': teacher_completed_ids,
         'assignment_count':      assignment_count,
         'chat_students':         students,
         'selected_student':      selected_student,
@@ -379,10 +401,70 @@ def create_classroom(request):
 @role_required('teacher')
 def teacher_announcements(request):
     from announcements.models import Announcement
+    from django.utils import timezone
+    from datetime import timedelta
+
+    # 1. Automatical delete: clean up announcements expired > 1 day ago
+    # This runs every time a teacher visits their announcements page.
+    Announcement.objects.filter(
+        expires_at__lt=timezone.now() - timedelta(days=1)
+    ).delete()
+
+    classrooms = Classroom.objects.filter(
+        teacher=request.user, school=request.user.school
+    )
+
+    # 2. Handle Posting (Unified View)
+    if request.method == 'POST':
+        title      = request.POST.get('title', '').strip()
+        body       = request.POST.get('body', '').strip()
+        meet_link  = request.POST.get('meet_link', '').strip()
+        is_pinned  = bool(request.POST.get('is_pinned'))
+        expiry_days = request.POST.get('expiry_days')  # New: Number of days until expiry
+        classroom_ids = request.POST.getlist('classrooms')
+
+        if title and body and classroom_ids:
+            # Default to 7 days if no expiry is chosen to keep the system clean
+            expires_at = timezone.now() + timedelta(days=7)
+            if expiry_days and expiry_days.isdigit():
+                expires_at = timezone.now() + timedelta(days=int(expiry_days))
+
+            for cid in classroom_ids:
+                classroom = get_object_or_404(Classroom, pk=cid, teacher=request.user)
+                announcement = Announcement.objects.create(
+                    posted_by=request.user,
+                    school=request.user.school,
+                    classroom=classroom,
+                    title=title,
+                    body=body,
+                    meet_link=meet_link,
+                    is_pinned=is_pinned,
+                    expires_at=expires_at,
+                    target='students',
+                )
+                notify_users(
+                    classroom.students.values_list('id', flat=True),
+                    {
+                        'type': 'announcement',
+                        'classroom_id': classroom.id,
+                        'redirect_url': f'/student/classroom/{classroom.id}/announce/',
+                        'title': announcement.title,
+                    },
+                )
+            messages.success(request, 'Announcement posted successfully.')
+            return redirect('teacher_announcements')
+        else:
+            messages.error(request, 'Please fill in all required fields and select at least one classroom.')
+
+    # 3. List History
     announcements = Announcement.objects.filter(
         posted_by=request.user
     ).select_related('classroom').order_by('-created_at')
-    return render(request, 'teacher/announcements.html', {'announcements': announcements})
+
+    return render(request, 'teacher/announcements.html', {
+        'announcements': announcements,
+        'classrooms': classrooms
+    })
 
 
 # ── Post Announcement (dashboard button) ─────────────────────────────────────
@@ -412,7 +494,7 @@ def post_announcement(request):
                     is_pinned=is_pinned,
                     target='students',
                 )
-                notify_students(
+                notify_users(
                     classroom.students.values_list('id', flat=True),
                     {
                         'type': 'announcement',
@@ -434,13 +516,23 @@ def post_announcement(request):
 def classroom_announce(request, classroom_id):
     classroom = _get_classroom(request, classroom_id)
     from announcements.models import Announcement
+    from django.utils import timezone
+    from datetime import timedelta
+
+    # Cleanup expired
+    Announcement.objects.filter(classroom=classroom, expires_at__lt=timezone.now() - timedelta(days=1)).delete()
 
     if request.method == 'POST':
         title     = request.POST.get('title', '').strip()
         body      = request.POST.get('body', '').strip()
         meet_link = request.POST.get('meet_link', '').strip()
         is_pinned = bool(request.POST.get('is_pinned'))
+        expiry_days = request.POST.get('expiry_days')
         if title and body:
+            expires_at = None
+            if expiry_days and expiry_days.isdigit():
+                expires_at = timezone.now() + timedelta(days=int(expiry_days))
+
             announcement = Announcement.objects.create(
                 posted_by=request.user,
                 school=request.user.school,
@@ -449,9 +541,10 @@ def classroom_announce(request, classroom_id):
                 body=body,
                 meet_link=meet_link,
                 is_pinned=is_pinned,
+                expires_at=expires_at,
                 target='students',
             )
-            notify_students(
+            notify_users(
                 classroom.students.values_list('id', flat=True),
                 {
                     'type': 'announcement',
@@ -513,42 +606,6 @@ def classroom_courses(request, classroom_id):
         'assigned_courses':     assigned_courses,
         'assigned_course_ids':  assigned_course_ids,
         'active_tab':           'courses',
-    })# ── Courses ───────────────────────────────────────────────────────────────────
-
-@role_required('teacher')
-def classroom_courses(request, classroom_id):
-    classroom = _get_classroom(request, classroom_id)
-
-    try:
-        from superadmin.models import GlobalCourse, ClassroomCourseAssignment
-
-        # All published courses for the school
-        all_courses = GlobalCourse.objects.filter(
-            schools=request.user.school,
-            status='published'
-        ).prefetch_related('concepts')
-
-        # IDs already assigned to THIS classroom
-        assigned_course_ids = set(
-            ClassroomCourseAssignment.objects.filter(
-                classroom=classroom
-            ).values_list('course_id', flat=True)
-        )
-
-        # Courses actually assigned to this classroom
-        assigned_courses = [c for c in all_courses if c.pk in assigned_course_ids]
-
-    except Exception:
-        all_courses         = []
-        assigned_course_ids = set()
-        assigned_courses    = []
-
-    return render(request, 'teacher/classroom_courses.html', {
-        'classroom':            classroom,
-        'all_courses':          all_courses,
-        'assigned_courses':     assigned_courses,
-        'assigned_course_ids':  assigned_course_ids,
-        'active_tab':           'courses',
     })
 
 # ── Classwork ─────────────────────────────────────────────────────────────────
@@ -571,7 +628,7 @@ def classroom_classwork(request, classroom_id):
         assignment           = form.save(commit=False)
         assignment.classroom = classroom
         assignment.save()
-        notify_students(
+        notify_users(
             classroom.students.values_list('id', flat=True),
             {
                 'type': 'assignment',
@@ -659,8 +716,8 @@ def classroom_grade(request, classroom_id):
             sub.feedback = feedback
             sub.save()
             if was_ungraded and sub.score is not None:
-                notify_students(
-                    [sub.student_id],
+                notify_user(
+                    sub.student_id,
                     {
                         'type': 'grade',
                         'classroom_id': classroom.id,
@@ -984,7 +1041,11 @@ def classroom_chat(request, classroom_id):
     classroom = _get_classroom(request, classroom_id)
     from chat.models import Message
 
-    students = classroom.students.all().order_by('first_name', 'username', 'email')
+    from django.db.models import Count, Q
+    students = classroom.students.all().annotate(
+        unread_count=Count('sent_messages', filter=Q(sent_messages__receiver=request.user, sent_messages__is_read=False, sent_messages__classroom=classroom))
+    ).order_by('first_name', 'username', 'email')
+    
     student_id = request.GET.get('student')
     selected_student = None
     chat_messages = []
@@ -1000,7 +1061,14 @@ def classroom_chat(request, classroom_id):
             sender__in=[request.user, selected_student],
             receiver__in=[request.user, selected_student],
         ).select_related('sender').order_by('created_at')
-        chat_messages.filter(receiver=request.user, is_read=False).update(is_read=True)
+        
+        # Mark as read
+        Message.objects.filter(
+            classroom=classroom,
+            sender=selected_student,
+            receiver=request.user,
+            is_read=False
+        ).update(is_read=True)
 
     # Check student online status
     selected_student_online = False
