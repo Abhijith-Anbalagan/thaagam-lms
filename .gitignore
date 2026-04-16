@@ -9,4 +9,10 @@ staticfiles/
 .DS_Store
 .vscode/
 *.swp
-migrations/
+
+# Ignore Django migration files
+**/migrations/*.py
+**/migrations/*.pyc
+
+# Exception: Keep the __init__.py files so Django recognizes the directories
+!**/migrations/__init__.py

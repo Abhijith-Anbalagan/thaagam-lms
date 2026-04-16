@@ -614,7 +614,7 @@
             </div>
             <!-- file input (default) -->
             <div style="grid-column:3;display:flex;flex-direction:column;gap:8px;">
-              <input type="file" name="video_files" class="vfile-input form-control" accept="video/*">
+              {% comment %} <input type="file" name="video_files" class="vfile-input form-control" accept="video/*"> {% endcomment %}
               <!-- url input (hidden by default) -->
               <input type="url" name="video_urls" class="vurl-input form-control" placeholder="https://youtube.com/watch?v=..." style="display:none;">
               <input type="file" name="cover_images" class="form-control" accept="image/*" placeholder="Cover image (optional)" style="font-size:11px;">
@@ -624,9 +624,8 @@
         </div>
       </div>
     </div>
-
     <!-- ════════════════════════════════════════════
-         STEP 3 — Course PDF
+         STEP 3 — Course PDF 
     ═════════════════════════════════════════════ -->
     <div class="wizard-panel" id="step-3">
       <div class="card">
@@ -694,7 +693,7 @@
     <div class="wizard-panel" id="step-4">
       <div class="card">
         <div class="flex-between mb-16">
-          <h2 class="section-title">Quiz</h2>
+          <h2 class="section-title">Quiz <span style="color:#e53e3e;font-size:14px;">*</span> <span style="font-size:12px;font-weight:400;color:var(--muted);">Required</span></h2>
           <button type="button" class="btn btn-sm btn-ghost" onclick="addQuizQuestion()">+ Add Question</button>
         </div>
         <p style="font-size:13px;color:var(--text-muted,#718096);margin-bottom:16px;">
@@ -883,10 +882,63 @@ function validateStep(step) {
     if (!header.value.trim()) {
       header.classList.add('invalid');
       header.focus();
-      showToast('⚠️ Concept Header is required.', 'error');
+      showToast('Quiz is required — Concept Header is required.', 'error');
       valid = false;
     } else {
       header.classList.remove('invalid');
+    }
+  }
+
+  if (step === 4) {
+    /* Quiz is mandatory */
+    if (quizQuestions.length === 0) {
+      showToast('Quiz is required — add at least one question.', 'error');
+      document.getElementById('quiz-empty').style.border = '2px solid #e24b4a';
+      return false;
+    }
+    document.getElementById('quiz-empty').style.border = '';
+
+    for (var qi = 0; qi < quizQuestions.length; qi++) {
+      var q = quizQuestions[qi];
+
+      /* Question text required */
+      if (!q.question.trim()) {
+        showToast('Question ' + (qi + 1) + ' is empty — please enter the question text.', 'error');
+        /* highlight the input */
+        var inputs = document.querySelectorAll('#quiz-questions .quiz-question-card');
+        if (inputs[qi]) {
+          var qInput = inputs[qi].querySelector('input[type="text"]');
+          if (qInput) { qInput.classList.add('invalid'); qInput.focus(); }
+        }
+        return false;
+      }
+
+      /* All 4 options required */
+      for (var oi = 0; oi < q.options.length; oi++) {
+        if (!q.options[oi].trim()) {
+          showToast('Question ' + (qi + 1) + ': Option ' + (oi + 1) + ' is empty — all options are required.', 'error');
+          var cards = document.querySelectorAll('#quiz-questions .quiz-question-card');
+          if (cards[qi]) {
+            var optInputs = cards[qi].querySelectorAll('.quiz-option-item input[type="text"]');
+            if (optInputs[oi]) { optInputs[oi].classList.add('invalid'); optInputs[oi].focus(); }
+          }
+          return false;
+        }
+      }
+
+      /* Correct answer must be selected */
+      if (q.correct === null || q.correct === undefined) {
+        showToast('Question ' + (qi + 1) + ': Please select the correct answer.', 'error');
+        var cards2 = document.querySelectorAll('#quiz-questions .quiz-question-card');
+        if (cards2[qi]) {
+          cards2[qi].style.border = '2px solid #e24b4a';
+          cards2[qi].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return false;
+      } else {
+        var cards3 = document.querySelectorAll('#quiz-questions .quiz-question-card');
+        if (cards3[qi]) cards3[qi].style.border = '';
+      }
     }
   }
 
@@ -1163,6 +1215,8 @@ function renderQuiz() {
 function addQuizQuestion() {
   quizQuestions.push({ question: '', options: ['', '', '', ''], correct: null });
   renderQuiz();
+  /* clear empty-state error border */
+  document.getElementById('quiz-empty').style.border = '';
 }
 
 function removeQuestion(index) {

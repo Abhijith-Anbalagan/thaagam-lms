@@ -62,7 +62,7 @@
   <a href="{% url 'superadmin_all_admins' %}" class="sidebar-link {% if request.resolver_match.url_name == 'superadmin_all_admins' %}active{% endif %}"><span class="sl-icon">👤</span> Admins</a>
   <a href="{% url 'superadmin_all_courses' %}" class="sidebar-link {% if request.resolver_match.url_name in 'superadmin_all_courses,superadmin_course_list,superadmin_course_detail,superadmin_concept_add,superadmin_concept_edit,superadmin_video_add' %}active{% endif %}"><span class="sl-icon">📘</span> Courses</a>
   <a href="{% url 'superadmin_analytics' %}" class="sidebar-link {% if request.resolver_match.url_name == 'superadmin_analytics' %}active{% endif %}"><span class="sl-icon">📊</span> Analytics</a>
-
+  <a href="{% url 'rag_manage_documents' %}" class="sidebar-link {% if request.resolver_match.url_name == 'rag_manage_documents' %}active{% endif %}"><span class="sl-icon">🤖</span> AI Knowledge Base</a>
   
   <a href="{% url 'manage_testimonials' %}" 
    class="sidebar-link {% if request.resolver_match.url_name == 'manage_testimonials' %}active{% endif %}">

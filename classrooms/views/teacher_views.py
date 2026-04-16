@@ -1,5 +1,6 @@
 import string
 import random
+from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.db.models import Avg, Max
@@ -1027,7 +1028,7 @@ def teacher_messages(request):
                 'unread_count': unread_count,
             })
         classroom_chats.sort(
-            key=lambda x: x['latest_msg'].created_at if x['latest_msg'] else timezone.datetime.min.replace(tzinfo=timezone.utc),
+            key=lambda x: x['latest_msg'].created_at if x['latest_msg'] else datetime(1970, 1, 1).replace(tzinfo=timezone.utc),
             reverse=True
         )
     except Exception:

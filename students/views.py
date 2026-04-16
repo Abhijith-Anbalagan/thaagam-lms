@@ -33,7 +33,7 @@ def _student_layout_context(request, classroom=None, active_nav=None):
         except Exception:
             return default_time
 
-    baseline = timezone.make_aware(datetime.min)
+    baseline = timezone.make_aware(datetime(1970, 1, 1))
     last_seen_announce   = user.announcements_seen_at or baseline
     last_seen_assignment = user.assignments_seen_at   or baseline
 
@@ -103,9 +103,19 @@ def dashboard(request):
     graded_count  = 0
 
     for c in classrooms:
-        for a in c.assignments.filter(due_date__gte=timezone.now()):
-            if not Submission.objects.filter(assignment=a, student=request.user).exists():
-                pending.append(a)
+        try:
+            now = timezone.now()
+            for a in c.assignments.filter(due_date__gte=now):
+                try:
+                    # guard against out-of-range due_date values
+                    _ = a.due_date.year
+                    if a.due_date.year <= 9999:
+                        if not Submission.objects.filter(assignment=a, student=request.user).exists():
+                            pending.append(a)
+                except (OverflowError, ValueError, OSError):
+                    pass
+        except (OverflowError, ValueError, OSError):
+            pass
     
     # Get graded assignments count
     graded_count = Submission.objects.filter(
@@ -150,9 +160,16 @@ def upcoming_deadlines_fragment(request):
     classrooms = request.user.joined_classrooms.all()
     pending = []
     for c in classrooms:
-        for a in c.assignments.filter(due_date__gte=timezone.now()):
-            if not Submission.objects.filter(assignment=a, student=request.user).exists():
-                pending.append(a)
+        try:
+            for a in c.assignments.filter(due_date__gte=timezone.now()):
+                try:
+                    if a.due_date.year <= 9999:
+                        if not Submission.objects.filter(assignment=a, student=request.user).exists():
+                            pending.append(a)
+                except (OverflowError, ValueError, OSError):
+                    pass
+        except (OverflowError, ValueError, OSError):
+            pass
     return render(request, 'student/partials/upcoming_deadlines.html', {'pending_assignments': pending})
 
 
@@ -437,9 +454,16 @@ def pending_count_api(request):
     classrooms = request.user.joined_classrooms.all()
     count = 0
     for classroom in classrooms:
-        for assignment in classroom.assignments.filter(due_date__gte=timezone.now()):
-            if not Submission.objects.filter(assignment=assignment, student=request.user).exists():
-                count += 1
+        try:
+            for assignment in classroom.assignments.filter(due_date__gte=timezone.now()):
+                try:
+                    if assignment.due_date.year <= 9999:
+                        if not Submission.objects.filter(assignment=assignment, student=request.user).exists():
+                            count += 1
+                except (OverflowError, ValueError, OSError):
+                    pass
+        except (OverflowError, ValueError, OSError):
+            pass
     return JsonResponse({'pending': count})
 
 
@@ -493,7 +517,7 @@ def new_announcements_count_api(request):
     last_seen = request.user.announcements_seen_at
     if not last_seen:
         from datetime import datetime
-        last_seen = timezone.make_aware(datetime.min)
+        last_seen = timezone.make_aware(datetime(1970, 1, 1))
     
     count = Announcement.objects.filter(
         classroom__in=request.user.joined_classrooms.all(),
@@ -508,7 +532,7 @@ def new_assignments_count_api(request):
     last_seen = request.user.assignments_seen_at
     if not last_seen:
         from datetime import datetime
-        last_seen = timezone.make_aware(datetime.min)
+        last_seen = timezone.make_aware(datetime(1970, 1, 1))
     
     count = Assignment.objects.filter(
         classroom__in=request.user.joined_classrooms.all(),
